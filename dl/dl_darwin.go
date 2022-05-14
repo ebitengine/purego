@@ -6,21 +6,31 @@ package dl
 import (
 	"github.com/ebiten/purego/syscall"
 	"runtime"
+	"strings"
 	"unsafe"
 )
 
 const RTLD_DEFAULT = ^uintptr(1)
 
+func _CString(name string) *byte {
+	if strings.HasSuffix(name, "\x00") {
+		return &[]byte(name)[0]
+	}
+	var b = make([]byte, len(name)+1)
+	copy(b, name)
+	return &b[0]
+}
+
 func Open(name string, mode int) uintptr {
-	bs := []byte(name)
-	ret, _, _ := syscall.SyscallN(dlopenABI0, uintptr(unsafe.Pointer(&bs[0])), uintptr(mode), 0)
+	bs := _CString(name)
+	ret, _, _ := syscall.SyscallN(dlopenABI0, uintptr(unsafe.Pointer(bs)), uintptr(mode), 0)
 	runtime.KeepAlive(bs)
 	return ret
 }
 
 func Sym(handle uintptr, name string) uintptr {
-	bs := []byte(name)
-	ret, _, _ := syscall.SyscallN(dlsymABI0, handle, uintptr(unsafe.Pointer(&bs[0])), 0)
+	bs := _CString(name)
+	ret, _, _ := syscall.SyscallN(dlsymABI0, handle, uintptr(unsafe.Pointer(bs)), 0)
 	runtime.KeepAlive(bs)
 	return ret
 }
