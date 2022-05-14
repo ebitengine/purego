@@ -95,7 +95,7 @@ TEXT ·syscall6X(SB),NOSPLIT,$0
 	MOVQ	(1*8)(DI), DI // a1
 	// these may be float arguments
 	// so we put them also where C expects floats
-	MOVQ	DI, X0 // a1
+    MOVQ	DI, X0 // a1
     MOVQ	SI, X1 // a2
     MOVQ	DX, X2 // a3
     MOVQ	CX, X3 // a4
@@ -161,7 +161,7 @@ TEXT ·syscall9X(SB),NOSPLIT,$0
 	MOVQ	(1*8)(DI), DI  // a1
 	// these may be float arguments
 	// so we put them also where C expects floats
-	MOVQ	DI, X0 // a1
+    MOVQ	DI, X0 // a1
     MOVQ	SI, X1 // a2
     MOVQ	DX, X2 // a3
     MOVQ	CX, X3 // a4
