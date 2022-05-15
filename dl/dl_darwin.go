@@ -4,10 +4,11 @@
 package dl
 
 import (
-	"github.com/ebiten/purego/syscall"
 	"runtime"
 	"strings"
 	"unsafe"
+
+	"github.com/ebiten/purego/syscall"
 )
 
 const RTLD_DEFAULT = ^uintptr(1)
