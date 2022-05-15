@@ -4,7 +4,7 @@
 //go:build darwin
 // +build darwin
 
-package syscall
+package purego
 
 import "unsafe"
 

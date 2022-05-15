@@ -1,14 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2022 The Ebiten Authors
 
-package dl
+package purego
 
 import (
 	"runtime"
 	"strings"
 	"unsafe"
-
-	"github.com/ebiten/purego/syscall"
 )
 
 const RTLD_DEFAULT = ^uintptr(1)
@@ -22,16 +20,16 @@ func cString(name string) *byte {
 	return &b[0]
 }
 
-func Open(name string, mode int) uintptr {
+func DlOpen(name string, mode int) uintptr {
 	bs := cString(name)
-	ret, _, _ := syscall.SyscallN(dlopenABI0, uintptr(unsafe.Pointer(bs)), uintptr(mode), 0)
+	ret, _, _ := SyscallN(dlopenABI0, uintptr(unsafe.Pointer(bs)), uintptr(mode), 0)
 	runtime.KeepAlive(bs)
 	return ret
 }
 
-func Sym(handle uintptr, name string) uintptr {
+func DlSym(handle uintptr, name string) uintptr {
 	bs := cString(name)
-	ret, _, _ := syscall.SyscallN(dlsymABI0, handle, uintptr(unsafe.Pointer(bs)), 0)
+	ret, _, _ := SyscallN(dlsymABI0, handle, uintptr(unsafe.Pointer(bs)), 0)
 	runtime.KeepAlive(bs)
 	return ret
 }
