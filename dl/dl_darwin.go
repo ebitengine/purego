@@ -12,7 +12,7 @@ import (
 
 const RTLD_DEFAULT = ^uintptr(1)
 
-func _CString(name string) *byte {
+func cString(name string) *byte {
 	if strings.HasSuffix(name, "\x00") {
 		return &[]byte(name)[0]
 	}
@@ -22,14 +22,14 @@ func _CString(name string) *byte {
 }
 
 func Open(name string, mode int) uintptr {
-	bs := _CString(name)
+	bs := cString(name)
 	ret, _, _ := syscall.SyscallN(dlopenABI0, uintptr(unsafe.Pointer(bs)), uintptr(mode), 0)
 	runtime.KeepAlive(bs)
 	return ret
 }
 
 func Sym(handle uintptr, name string) uintptr {
-	bs := _CString(name)
+	bs := cString(name)
 	ret, _, _ := syscall.SyscallN(dlsymABI0, handle, uintptr(unsafe.Pointer(bs)), 0)
 	runtime.KeepAlive(bs)
 	return ret
