@@ -10,6 +10,9 @@ import (
 	"unsafe"
 )
 
+//go:linkname syscall_syscallX syscall.syscallX
+func syscall_syscallX(fn, a1, a2, a3 uintptr) (r1, r2, err uintptr)
+
 //go:linkname runtime_libcCall runtime.libcCall
 //go:linkname runtime_entersyscall runtime.entersyscall
 //go:linkname runtime_exitsyscall runtime.exitsyscall

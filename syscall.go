@@ -21,6 +21,11 @@ func SyscallN(fn uintptr, args ...uintptr) (r1, r2, err uintptr) {
 	if len(args) > maxArgs {
 		panic("too many arguments to SyscallN")
 	}
+	if len(args) <= 3 {
+		var tmp = make([]uintptr, maxArgs)
+		copy(tmp, args)
+		syscall_syscallX(fn, tmp[0], tmp[1], tmp[2])
+	}
 	if len(args) < maxArgs {
 		// add padding so there is no out-of-bounds slicing
 		var tmp = make([]uintptr, maxArgs)
