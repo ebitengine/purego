@@ -46,8 +46,8 @@ TEXT ·syscall9X(SB), NOSPLIT, $0
 	FMOVD R3, F3 // a4
 	FMOVD R4, F4 // a5
 	FMOVD R5, F5 // a6
-	FMOVD R6, F6 // a4
-	FMOVD R7, F7 // a5
+	FMOVD R6, F6 // a7
+	FMOVD R7, F7 // a8
 
 	MOVD R8, (RSP) // push a9 onto stack
 	MOVD 8(R0), R0 // a1
