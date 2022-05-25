@@ -37,6 +37,7 @@ TEXT ·syscall9X(SB), NOSPLIT, $0
 	MOVD 56(R0), R6 // a7
 	MOVD 64(R0), R7 // a8
 	MOVD 72(R0), R8 // a9
+	MOVD 8(R0), R0  // a1
 
 	// these may be float arguments
 	// so we put them also where C expects floats
@@ -46,12 +47,12 @@ TEXT ·syscall9X(SB), NOSPLIT, $0
 	FMOVD R3, F3 // a4
 	FMOVD R4, F4 // a5
 	FMOVD R5, F5 // a6
-	FMOVD R6, F6 // a4
-	FMOVD R7, F7 // a5
+	FMOVD R6, F6 // a7
+	FMOVD R7, F7 // a8
 
 	MOVD R8, (RSP) // push a9 onto stack
-	MOVD 8(R0), R0 // a1
-	BL   (R12)
+
+	BL (R12)
 
 	MOVD 8(RSP), R2     // pop structure pointer
 	ADD  $16, RSP

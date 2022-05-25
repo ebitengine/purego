@@ -51,7 +51,7 @@ TEXT ·syscall9X(SB), NOSPLIT, $0
 	MOVQ R11, X6 // a7
 	MOVQ R12, X7 // a8
 
-	// push the remainding paramters onto the stack
+	// push the remaining paramters onto the stack
 	MOVQ R11, 0(SP)  // push a7
 	MOVQ R12, 8(SP)  // push a8
 	MOVQ R13, 16(SP) // push a9
