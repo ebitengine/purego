@@ -20,6 +20,8 @@ const maxArgs = 9
 //
 // On amd64, if there are more than 8 floats the 9th and so on will be placed incorrectly on the
 // stack.
+//
+//go:nosplit
 func SyscallN(fn uintptr, args ...uintptr) (r1, r2, err uintptr) {
 	if len(args) > maxArgs {
 		panic("too many arguments to SyscallN")
