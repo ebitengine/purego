@@ -5,7 +5,6 @@ package purego
 
 import (
 	"runtime"
-	"strings"
 	"unsafe"
 )
 
@@ -13,8 +12,13 @@ const RTLD_GLOBAL = 0x8
 
 const RTLD_DEFAULT = ^uintptr(1)
 
+// HasSuffix tests whether the string s ends with suffix.
+func _HasSuffix(s, suffix string) bool {
+	return len(s) >= len(suffix) && s[len(s)-len(suffix):] == suffix
+}
+
 func cString(name string) *byte {
-	if strings.HasSuffix(name, "\x00") {
+	if _HasSuffix(name, "\x00") {
 		return &[]byte(name)[0]
 	}
 	var b = make([]byte, len(name)+1)
