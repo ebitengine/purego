@@ -44,9 +44,4 @@ func Dlsym(handle uintptr, name string) uintptr {
 //go:cgo_import_dynamic _dlsym dlsym "/usr/lib/libSystem.B.dylib"
 
 var dlopenABI0 uintptr
-
-func dlopen() // implemented in assembly
-
 var dlsymABI0 uintptr
-
-func dlsym() // implemented in assembly
