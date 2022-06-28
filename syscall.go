@@ -21,6 +21,9 @@ const maxArgs = 9
 //go:nosplit
 //go:uintptrescapes
 func SyscallN(fn uintptr, args ...uintptr) (r1, r2, err uintptr) {
+	if fn == 0 {
+		panic("fn is nil")
+	}
 	if len(args) > maxArgs {
 		panic("too many arguments to SyscallN")
 	}
