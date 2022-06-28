@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2022 The Ebiten Authors
 
+//go:build darwin
+// +build darwin
+
 package purego
 
 import (
@@ -40,8 +43,6 @@ func Dlsym(handle uintptr, name string) uintptr {
 	return ret
 }
 
-//go:cgo_import_dynamic _dlopen dlopen "/usr/lib/libSystem.B.dylib"
-//go:cgo_import_dynamic _dlsym dlsym "/usr/lib/libSystem.B.dylib"
-
+// these functions exist in dl_stubs.s and are calling C functions linked to in dlfcn_GOOS.go
 var dlopenABI0 uintptr
 var dlsymABI0 uintptr
