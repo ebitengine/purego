@@ -19,7 +19,7 @@ func hasSuffix(s, suffix string) bool {
 
 func cString(name string) *byte {
 	if hasSuffix(name, "\x00") {
-		return &[]byte(name)[0]
+		return &(*(*[]byte)(unsafe.Pointer(&name)))[0]
 	}
 	var b = make([]byte, len(name)+1)
 	copy(b, name)
