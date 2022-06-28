@@ -4,7 +4,7 @@ import "unsafe"
 
 func callc(fn uintptr, args unsafe.Pointer) {
 	runtime_entersyscall()
-	runtime_libcCall(unsafe.Pointer(fn), args)
+	runtime_libcCall(fn, args)
 	runtime_exitsyscall()
 }
 
