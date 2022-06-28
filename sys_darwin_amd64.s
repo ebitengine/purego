@@ -29,7 +29,7 @@ TEXT syscall9X(SB), NOSPLIT, $0
 	PUSHQ BP
 	MOVQ  SP, BP
 	SUBQ  $32, SP
-	MOVQ  DI, 24(BP)     // save the pointer
+	MOVQ  DI, 24(BP)               // save the pointer
 	MOVQ  syscall9Args_fn(DI), R10 // fn
 	MOVQ  syscall9Args_a2(DI), SI  // a2
 	MOVQ  syscall9Args_a3(DI), DX  // a3
@@ -60,7 +60,7 @@ TEXT syscall9X(SB), NOSPLIT, $0
 
 	CALL R10
 
-	MOVQ 24(BP), DI     // get the pointer back
+	MOVQ 24(BP), DI              // get the pointer back
 	MOVQ AX, syscall9Args_r1(DI) // r1
 	MOVQ DX, syscall9Args_r2(DI) // r2
 

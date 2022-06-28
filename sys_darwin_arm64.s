@@ -30,15 +30,16 @@ TEXT syscall9X(SB), NOSPLIT, $0
 	MOVD R0, 8(RSP)
 
 	MOVD syscall9Args_fn(R0), R12 // fn
-	MOVD syscall9Args_a2(R0), R1 // a2
-	MOVD syscall9Args_a3(R0), R2 // a3
-	MOVD syscall9Args_a4(R0), R3 // a4
-	MOVD syscall9Args_a5(R0), R4 // a5
-	MOVD syscall9Args_a6(R0), R5 // a6
-	MOVD syscall9Args_a7(R0), R6 // a7
-	MOVD syscall9Args_a8(R0), R7 // a8
-	MOVD syscall9Args_a9(R0), R8 // a9
+	MOVD syscall9Args_a2(R0), R1  // a2
+	MOVD syscall9Args_a3(R0), R2  // a3
+	MOVD syscall9Args_a4(R0), R3  // a4
+	MOVD syscall9Args_a5(R0), R4  // a5
+	MOVD syscall9Args_a6(R0), R5  // a6
+	MOVD syscall9Args_a7(R0), R6  // a7
+	MOVD syscall9Args_a8(R0), R7  // a8
+	MOVD syscall9Args_a9(R0), R8  // a9
 	MOVD syscall9Args_a1(R0), R0  // a1
+
 	// these may be float arguments
 	// so we put them also where C expects floats
 	FMOVD R0, F0 // a1
@@ -54,19 +55,19 @@ TEXT syscall9X(SB), NOSPLIT, $0
 
 	BL (R12)
 
-	MOVD 8(RSP), R2     // pop structure pointer
+	MOVD 8(RSP), R2               // pop structure pointer
 	ADD  $16, RSP
-	MOVD R0, syscall9Args_r1(R2)     // save r1
-	MOVD R1, syscall9Args_r2(R2)     // save r2
+	MOVD R0, syscall9Args_r1(R2)  // save r1
+	MOVD R1, syscall9Args_r2(R2)  // save r2
 	CMP  $-1, R0
 	BNE  ok
-	SUB  $16, RSP       // push structure pointer
+	SUB  $16, RSP                 // push structure pointer
 	MOVD R2, (RSP)
 	BL   libc_error(SB)
 	MOVW (R0), R0
-	MOVD (RSP), R2      // pop structure pointer
+	MOVD (RSP), R2                // pop structure pointer
 	ADD  $16, RSP
-	MOVD R0, syscall9Args_err(R2)     // save err
+	MOVD R0, syscall9Args_err(R2) // save err
 
 ok:
 	RET
