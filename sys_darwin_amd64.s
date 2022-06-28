@@ -64,18 +64,6 @@ TEXT syscall9X(SB), NOSPLIT, $0
 	MOVQ AX, syscall9Args_r1(DI) // r1
 	MOVQ DX, syscall9Args_r2(DI) // r2
 
-	// Standard libc functions return -1 on error
-	// and set errno.
-	CMPQ AX, $-1
-	JNE  ok
-
-	// Get error code from libc.
-	CALL    libc_error(SB)
-	MOVLQSX (AX), AX
-	MOVQ    (SP), DI
-	MOVQ    AX, syscall9Args_err(DI) // err
-
-ok:
 	XORL AX, AX  // no error (it's ignored anyway)
 	ADDQ $32, SP
 	MOVQ BP, SP
