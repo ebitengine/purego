@@ -43,6 +43,6 @@ func Dlsym(handle uintptr, name string) uintptr {
 	return ret
 }
 
-// these functions exist in dl_stubs.s and are calling C functions linked to in dlfcn_GOOS.go
+// these functions exist in dlfcn_stubs.s and are calling C functions linked to in dlfcn_GOOS.go
 var dlopenABI0 uintptr
 var dlsymABI0 uintptr
