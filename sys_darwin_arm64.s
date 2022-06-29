@@ -2,6 +2,7 @@
 // SPDX-FileCopyrightText: 2022 The Ebiten Authors
 
 #include "textflag.h"
+#include "go_asm.h"
 
 // syscall9X calls a function in libc on behalf of the syscall package.
 // syscall9X takes a pointer to a struct like:
@@ -23,21 +24,21 @@
 // syscall9X must be called on the g0 stack with the
 // C calling convention (use libcCall).
 GLOBL ·syscall9XABI0(SB), NOPTR|RODATA, $8
-DATA ·syscall9XABI0(SB)/8, $·syscall9X(SB)
-TEXT ·syscall9X(SB), NOSPLIT, $0
+DATA ·syscall9XABI0(SB)/8, $syscall9X(SB)
+TEXT syscall9X(SB), NOSPLIT, $0
 	SUB  $16, RSP   // push structure pointer
 	MOVD R0, 8(RSP)
 
-	MOVD 0(R0), R12 // fn
-	MOVD 16(R0), R1 // a2
-	MOVD 24(R0), R2 // a3
-	MOVD 32(R0), R3 // a4
-	MOVD 40(R0), R4 // a5
-	MOVD 48(R0), R5 // a6
-	MOVD 56(R0), R6 // a7
-	MOVD 64(R0), R7 // a8
-	MOVD 72(R0), R8 // a9
-	MOVD 8(R0), R0  // a1
+	MOVD syscall9Args_fn(R0), R12 // fn
+	MOVD syscall9Args_a2(R0), R1  // a2
+	MOVD syscall9Args_a3(R0), R2  // a3
+	MOVD syscall9Args_a4(R0), R3  // a4
+	MOVD syscall9Args_a5(R0), R4  // a5
+	MOVD syscall9Args_a6(R0), R5  // a6
+	MOVD syscall9Args_a7(R0), R6  // a7
+	MOVD syscall9Args_a8(R0), R7  // a8
+	MOVD syscall9Args_a9(R0), R8  // a9
+	MOVD syscall9Args_a1(R0), R0  // a1
 
 	// these may be float arguments
 	// so we put them also where C expects floats
@@ -54,19 +55,8 @@ TEXT ·syscall9X(SB), NOSPLIT, $0
 
 	BL (R12)
 
-	MOVD 8(RSP), R2     // pop structure pointer
+	MOVD 8(RSP), R2              // pop structure pointer
 	ADD  $16, RSP
-	MOVD R0, 80(R2)     // save r1
-	MOVD R1, 88(R2)     // save r2
-	CMP  $-1, R0
-	BNE  ok
-	SUB  $16, RSP       // push structure pointer
-	MOVD R2, (RSP)
-	BL   libc_error(SB)
-	MOVW (R0), R0
-	MOVD (RSP), R2      // pop structure pointer
-	ADD  $16, RSP
-	MOVD R0, 96(R2)     // save err
-
-ok:
+	MOVD R0, syscall9Args_r1(R2) // save r1
+	MOVD R1, syscall9Args_r2(R2) // save r2
 	RET

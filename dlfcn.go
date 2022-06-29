@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2022 The Ebiten Authors
 
+//go:build darwin
+// +build darwin
+
 package purego
 
 import (
@@ -19,7 +22,7 @@ func hasSuffix(s, suffix string) bool {
 
 func cString(name string) *byte {
 	if hasSuffix(name, "\x00") {
-		return &[]byte(name)[0]
+		return &(*(*[]byte)(unsafe.Pointer(&name)))[0]
 	}
 	var b = make([]byte, len(name)+1)
 	copy(b, name)
@@ -40,13 +43,6 @@ func Dlsym(handle uintptr, name string) uintptr {
 	return ret
 }
 
-//go:cgo_import_dynamic _dlopen dlopen "/usr/lib/libSystem.B.dylib"
-//go:cgo_import_dynamic _dlsym dlsym "/usr/lib/libSystem.B.dylib"
-
+// these functions exist in dlfcn_stubs.s and are calling C functions linked to in dlfcn_GOOS.go
 var dlopenABI0 uintptr
-
-func dlopen() // implemented in assembly
-
 var dlsymABI0 uintptr
-
-func dlsym() // implemented in assembly
