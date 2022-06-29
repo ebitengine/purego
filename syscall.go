@@ -22,10 +22,10 @@ const maxArgs = 9
 //go:uintptrescapes
 func SyscallN(fn uintptr, args ...uintptr) (r1, r2, err uintptr) {
 	if fn == 0 {
-		panic("fn is nil")
+		panic("purego: fn is nil")
 	}
 	if len(args) > maxArgs {
-		panic("too many arguments to SyscallN")
+		panic("purego: too many arguments to SyscallN")
 	}
 	// add padding so there is no out-of-bounds slicing
 	var tmp [maxArgs]uintptr
