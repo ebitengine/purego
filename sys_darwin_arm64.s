@@ -72,7 +72,7 @@ TEXT callbackWrapInternal<>(SB), NOSPLIT, $0-0
 	B    ·callbackWrap(SB)
 	RET
 
-TEXT ·callbackasm1(SB), NOSPLIT, $208-0
+TEXT callbackasm1(SB), NOSPLIT, $208-0
 	NO_LOCAL_POINTERS
 
 	// On entry, the trampoline in zcallback_windows_arm64.s left

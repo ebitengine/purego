@@ -81,7 +81,7 @@ TEXT callbackWrapInternal<>(SB), $0-0
 	CALL ·callbackWrap(SB)
 	RET
 
-TEXT ·callbackasm1(SB), NOSPLIT, $0
+TEXT callbackasm1(SB), NOSPLIT, $0
 	// remove return address from stack, we are not returning to callbackasm, but to its caller.
 	MOVQ 0(SP), AX
 	ADDQ $8, SP
@@ -98,12 +98,12 @@ TEXT ·callbackasm1(SB), NOSPLIT, $0
 	LEAQ  (SP), R8   // R8 = address of args vector
 
 	// determine index into runtime·cbs table
-	MOVQ $·callbackasm(SB), DX
+	MOVQ $callbackasm(SB), DX
 	SUBQ DX, AX
 	MOVQ $0, DX
-	MOVQ $5, CX                // divide by 5 because each call instruction in ·callbacks is 5 bytes long
+	MOVQ $5, CX               // divide by 5 because each call instruction in ·callbacks is 5 bytes long
 	DIVL CX
-	SUBQ $1, AX                // subtract 1 because return PC is to the next slot
+	SUBQ $1, AX               // subtract 1 because return PC is to the next slot
 
 	// Switch from the host ABI to the Go ABI.
 	PUSH_REGS_HOST_TO_ABI0()

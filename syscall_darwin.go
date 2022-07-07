@@ -81,10 +81,8 @@ const ptrSize = unsafe.Sizeof((*int)(nil))
 
 const callbackMaxFrame = 64 * ptrSize
 
+// Implemented in zcallback_GOOS_GOARCH.s
 var callbackasmABI0 uintptr
-
-func callbackasm()
-func callbackasm1()
 
 func callbackWrap(a *callbackArgs) {
 	(&cbs.lock).Lock()
