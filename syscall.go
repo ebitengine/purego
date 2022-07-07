@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2022 The Ebiten Authors
 
-//go:build darwin || windows
-// +build darwin windows
+//go:build darwin || windows || linux
+// +build darwin windows linux
 
 package purego
 
