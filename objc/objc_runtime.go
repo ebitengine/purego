@@ -6,6 +6,7 @@ import (
 	"unsafe"
 
 	"github.com/ebitengine/purego"
+	"github.com/ebitengine/purego/internal/strings"
 )
 
 //TODO: support try/catch?
@@ -54,19 +55,19 @@ func Send(cls Class, sel SEL, args ...interface{}) uintptr {
 type SEL uintptr
 
 func RegisterName(name string) SEL {
-	ret, _, _ := purego.SyscallN(sel_registerName, uintptr(unsafe.Pointer(cstring(name))))
+	ret, _, _ := purego.SyscallN(sel_registerName, uintptr(unsafe.Pointer(strings.CString(name, true))))
 	return SEL(ret)
 }
 
 type Class uintptr
 
 func GetClass(name string) Class {
-	ret, _, _ := purego.SyscallN(objc_getClass, uintptr(unsafe.Pointer(cstring(name))))
+	ret, _, _ := purego.SyscallN(objc_getClass, uintptr(unsafe.Pointer(strings.CString(name, true))))
 	return Class(ret)
 }
 
 func AllocateClassPair(super Class, name string, extraBytes uintptr) Class {
-	ret, _, _ := purego.SyscallN(objc_allocateClassPair, uintptr(super), uintptr(unsafe.Pointer(cstring(name))), extraBytes)
+	ret, _, _ := purego.SyscallN(objc_allocateClassPair, uintptr(super), uintptr(unsafe.Pointer(strings.CString(name, true))), extraBytes)
 	return Class(ret)
 }
 
@@ -75,7 +76,7 @@ func (c Class) Register() {
 }
 
 func (c Class) AddMethod(name SEL, imp _IMP, types string) bool {
-	ret, _, _ := purego.SyscallN(class_addMethod, uintptr(c), uintptr(name), uintptr(imp), uintptr(unsafe.Pointer(cstring(types))))
+	ret, _, _ := purego.SyscallN(class_addMethod, uintptr(c), uintptr(name), uintptr(imp), uintptr(unsafe.Pointer(strings.CString(types, true))))
 	return byte(ret) != 0
 }
 

@@ -1,0 +1,17 @@
+package fakecgo
+
+//go:cgo_import_dynamic libc_pthread_attr_init_x pthread_attr_init "/usr/lib/libSystem.B.dylib"
+//go:cgo_import_dynamic libc_pthread_attr_getstacksize_x pthread_attr_getstacksize "/usr/lib/libSystem.B.dylib"
+//go:cgo_import_dynamic libc_pthread_attr_destroy_x pthread_attr_destroy "/usr/lib/libSystem.B.dylib"
+//go:cgo_import_dynamic libc_pthread_sigmask_x pthread_sigmask "/usr/lib/libSystem.B.dylib"
+//go:cgo_import_dynamic libc_pthread_create_x pthread_create "/usr/lib/libSystem.B.dylib"
+//go:cgo_import_dynamic libc_pthread_detach_x pthread_detach "/usr/lib/libSystem.B.dylib"
+//go:cgo_import_dynamic libc_setenv_x setenv "/usr/lib/libSystem.B.dylib"
+//go:cgo_import_dynamic libc_unsetenv_x unsetenv "/usr/lib/libSystem.B.dylib"
+//go:cgo_import_dynamic libc_malloc_x malloc "/usr/lib/libSystem.B.dylib"
+//go:cgo_import_dynamic libc_free_x free "/usr/lib/libSystem.B.dylib"
+//go:cgo_import_dynamic libc_nanosleep_x nanosleep "/usr/lib/libSystem.B.dylib"
+//go:cgo_import_dynamic libc_sigfillset_x sigfillset "/usr/lib/libSystem.B.dylib"
+//go:cgo_import_dynamic libc_abort_x abort "/usr/lib/libSystem.B.dylib"
+//go:cgo_import_dynamic libc_dprintf_x dprintf "/usr/lib/libSystem.B.dylib"
+//go:cgo_import_dynamic libc_strerror_x strerror "/usr/lib/libSystem.B.dylib"
