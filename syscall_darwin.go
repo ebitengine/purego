@@ -65,13 +65,14 @@ func compileCallback(fn interface{}) uintptr {
 		in := ty.In(i)
 		switch in.Kind() {
 		case reflect.Struct, reflect.Float32, reflect.Float64,
-			reflect.Interface, reflect.Func, reflect.Slice, reflect.Chan, reflect.Complex128, reflect.Complex64:
+			reflect.Interface, reflect.Func, reflect.Slice,
+			reflect.Chan, reflect.Complex64, reflect.Complex128,
+			reflect.String, reflect.Map, reflect.Invalid:
 			panic("unsupported argument type: " + in.Kind().String())
 		}
 	}
-	//TODO: windows.NewCallback _requires_ exactly 1 pointer sized argument. Should we too?
-	if ty.NumOut() > 1 {
-		panic("callbacks can only have one pointer sized return")
+	if ty.NumOut() > 1 || ty.NumOut() == 1 && ty.Out(0).Size() != ptrSize {
+		panic("callbacks can only have one pointer-sized return")
 	}
 	(&cbs.lock).Lock()
 	defer (&cbs.lock).Unlock()
