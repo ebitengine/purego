@@ -87,6 +87,11 @@ const callbackMaxFrame = 64 * ptrSize
 // Implemented in zcallback_GOOS_GOARCH.s
 var callbackasmABI0 uintptr
 
+// this exists to remove the unused function error message
+var _ = callbackWrap
+
+// callbackWrap is called by assembly code which determines which Go function to call.
+// This function takes the arguments and passes them to the Go function and returns the result.
 func callbackWrap(a *callbackArgs) {
 	(&cbs.lock).Lock()
 	fn := cbs.funcs[a.index]
