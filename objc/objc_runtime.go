@@ -84,15 +84,15 @@ func AllocateClassPair(super Class, name string, extraBytes uintptr) Class {
 	return Class(ret)
 }
 
-func (c Class) Register() {
-	purego.SyscallN(objc_registerClassPair, uintptr(c))
-}
-
 func (c Class) AddMethod(name SEL, imp _IMP, types string) bool {
 	t := strings.CString(types, false)
 	ret, _, _ := purego.SyscallN(class_addMethod, uintptr(c), uintptr(name), uintptr(imp), uintptr(unsafe.Pointer(t)))
 	runtime.KeepAlive(t)
 	return byte(ret) != 0
+}
+
+func (c Class) Register() {
+	purego.SyscallN(objc_registerClassPair, uintptr(c))
 }
 
 // _IMP is unexported so that the only way to make this type is by providing a Go function and casting
