@@ -15,6 +15,7 @@ package objc
 import (
 	"fmt"
 	"reflect"
+	"runtime"
 	"unsafe"
 
 	"github.com/ebitengine/purego"
@@ -27,9 +28,7 @@ import (
 var (
 	objc = purego.Dlopen("/usr/lib/libobjc.A.dylib", purego.RTLD_GLOBAL)
 
-	// MsgSend is the C function pointer to objc_msgSend.
-	// You can call the function yourself or use the convenience function Send
-	MsgSend                = purego.Dlsym(objc, "objc_msgSend")
+	objc_msgSend           = purego.Dlsym(objc, "objc_msgSend")
 	sel_registerName       = purego.Dlsym(objc, "sel_registerName")
 	objc_getClass          = purego.Dlsym(objc, "objc_getClass")
 	objc_allocateClassPair = purego.Dlsym(objc, "objc_allocateClassPair")
@@ -60,26 +59,32 @@ func Send(cls Class, sel SEL, args ...interface{}) uintptr {
 			panic(fmt.Sprintf("unknown type %T", v))
 		}
 	}
-	ret, _, _ := purego.SyscallN(MsgSend, tmp...)
+	ret, _, _ := purego.SyscallN(objc_msgSend, tmp...)
 	return ret
 }
 
 type SEL uintptr
 
 func RegisterName(name string) SEL {
-	ret, _, _ := purego.SyscallN(sel_registerName, uintptr(unsafe.Pointer(strings.CString(name, true))))
+	n := strings.CString(name, false)
+	ret, _, _ := purego.SyscallN(sel_registerName, uintptr(unsafe.Pointer(n)))
+	runtime.KeepAlive(n)
 	return SEL(ret)
 }
 
 type Class uintptr
 
 func GetClass(name string) Class {
-	ret, _, _ := purego.SyscallN(objc_getClass, uintptr(unsafe.Pointer(strings.CString(name, true))))
+	n := strings.CString(name, false)
+	ret, _, _ := purego.SyscallN(objc_getClass, uintptr(unsafe.Pointer(n)))
+	runtime.KeepAlive(n)
 	return Class(ret)
 }
 
 func AllocateClassPair(super Class, name string, extraBytes uintptr) Class {
-	ret, _, _ := purego.SyscallN(objc_allocateClassPair, uintptr(super), uintptr(unsafe.Pointer(strings.CString(name, true))), extraBytes)
+	n := strings.CString(name, false)
+	ret, _, _ := purego.SyscallN(objc_allocateClassPair, uintptr(super), uintptr(unsafe.Pointer(n)), extraBytes)
+	runtime.KeepAlive(n)
 	return Class(ret)
 }
 
@@ -88,7 +93,9 @@ func (c Class) Register() {
 }
 
 func (c Class) AddMethod(name SEL, imp _IMP, types string) bool {
-	ret, _, _ := purego.SyscallN(class_addMethod, uintptr(c), uintptr(name), uintptr(imp), uintptr(unsafe.Pointer(strings.CString(types, true))))
+	t := strings.CString(types, false)
+	ret, _, _ := purego.SyscallN(class_addMethod, uintptr(c), uintptr(name), uintptr(imp), uintptr(unsafe.Pointer(t)))
+	runtime.KeepAlive(t)
 	return byte(ret) != 0
 }
 
