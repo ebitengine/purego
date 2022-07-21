@@ -79,6 +79,12 @@ func createArgs(out []uintptr, cls Id, sel SEL, args ...interface{}) {
 			out[i+2] = uintptr(v)
 		case _IMP:
 			out[i+2] = uintptr(v)
+		case bool:
+			if v {
+				out[i+2] = uintptr(1)
+			} else {
+				out[i+2] = uintptr(0)
+			}
 		case uintptr:
 			out[i+2] = v
 		case int:
