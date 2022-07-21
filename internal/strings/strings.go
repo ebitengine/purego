@@ -18,7 +18,7 @@ func CString(name string, requireNil bool) *byte {
 		return &(*(*[]byte)(unsafe.Pointer(&name)))[0]
 	}
 	if requireNil {
-		panic("null byte required")
+		panic("strings: null byte required")
 	}
 	var b = make([]byte, len(name)+1)
 	copy(b, name)
