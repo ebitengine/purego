@@ -37,7 +37,7 @@ var (
 
 type Id uintptr
 
-func (id Id) GetClass() Class {
+func (id Id) Class() Class {
 	ret, _, _ := purego.SyscallN(object_getClass, uintptr(id))
 	return Class(ret)
 }
@@ -58,7 +58,7 @@ func (id Id) SendSuper(sel SEL, args ...interface{}) Id {
 	}
 	var _super = &objc_super{
 		reciever:   id,
-		superClass: id.GetClass(),
+		superClass: id.Class(),
 	}
 	var tmp = make([]uintptr, len(args)+2)
 	createArgs(tmp, Id(unsafe.Pointer(_super)), sel, args...)
@@ -116,7 +116,7 @@ func AllocateClassPair(super Class, name string, extraBytes uintptr) Class {
 	return Class(ret)
 }
 
-func (c Class) Super() Class {
+func (c Class) SuperClass() Class {
 	ret, _, _ := purego.SyscallN(class_getSuperclass, uintptr(c))
 	return Class(ret)
 }
