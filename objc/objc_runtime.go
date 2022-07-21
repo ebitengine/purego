@@ -25,38 +25,70 @@ var (
 	objc = purego.Dlopen("/usr/lib/libobjc.A.dylib", purego.RTLD_GLOBAL)
 
 	objc_msgSend           = purego.Dlsym(objc, "objc_msgSend")
-	sel_registerName       = purego.Dlsym(objc, "sel_registerName")
+	objc_msgSendSuper2     = purego.Dlsym(objc, "objc_msgSendSuper2")
 	objc_getClass          = purego.Dlsym(objc, "objc_getClass")
 	objc_allocateClassPair = purego.Dlsym(objc, "objc_allocateClassPair")
 	objc_registerClassPair = purego.Dlsym(objc, "objc_registerClassPair")
+	sel_registerName       = purego.Dlsym(objc, "sel_registerName")
+	class_getSuperclass    = purego.Dlsym(objc, "class_getSuperclass")
 	class_addMethod        = purego.Dlsym(objc, "class_addMethod")
+	object_getClass        = purego.Dlsym(objc, "object_getClass")
 )
 
+type Id uintptr
+
+func (id Id) GetClass() Class {
+	ret, _, _ := purego.SyscallN(object_getClass, uintptr(id))
+	return Class(ret)
+}
+
 // Send is a convenience method for sending messages to objects.
-func Send(cls Class, sel SEL, args ...interface{}) uintptr {
-	var tmp = make([]uintptr, 2, len(args)+2)
-	tmp[0] = uintptr(cls)
-	tmp[1] = uintptr(sel)
-	for _, a := range args {
+func (id Id) Send(sel SEL, args ...interface{}) Id {
+	var tmp = make([]uintptr, len(args)+2)
+	createArgs(tmp, id, sel, args...)
+	ret, _, _ := purego.SyscallN(objc_msgSend, tmp...)
+	return Id(ret)
+}
+
+// SendSuper is a convenience method for sending message to object's super
+func (id Id) SendSuper(sel SEL, args ...interface{}) Id {
+	type objc_super struct {
+		reciever   Id
+		superClass Class
+	}
+	var _super = &objc_super{
+		reciever:   id,
+		superClass: id.GetClass(),
+	}
+	var tmp = make([]uintptr, len(args)+2)
+	createArgs(tmp, Id(unsafe.Pointer(_super)), sel, args...)
+	ret, _, _ := purego.SyscallN(objc_msgSendSuper2, tmp...)
+	return Id(ret)
+}
+
+func createArgs(out []uintptr, cls Id, sel SEL, args ...interface{}) {
+	out[0] = uintptr(cls)
+	out[1] = uintptr(sel)
+	for i, a := range args {
 		switch v := a.(type) {
+		case Id:
+			out[i+2] = uintptr(v)
 		case Class:
-			tmp = append(tmp, uintptr(v))
+			out[i+2] = uintptr(v)
 		case SEL:
-			tmp = append(tmp, uintptr(v))
+			out[i+2] = uintptr(v)
 		case _IMP:
-			tmp = append(tmp, uintptr(v))
+			out[i+2] = uintptr(v)
 		case uintptr:
-			tmp = append(tmp, v)
+			out[i+2] = v
 		case int:
-			tmp = append(tmp, uintptr(v))
+			out[i+2] = uintptr(v)
 		case uint:
-			tmp = append(tmp, uintptr(v))
+			out[i+2] = uintptr(v)
 		default:
 			panic(fmt.Sprintf("objc: unknown type %T", v))
 		}
 	}
-	ret, _, _ := purego.SyscallN(objc_msgSend, tmp...)
-	return ret
 }
 
 type SEL uintptr
@@ -81,6 +113,11 @@ func AllocateClassPair(super Class, name string, extraBytes uintptr) Class {
 	n := strings.CString(name, false)
 	ret, _, _ := purego.SyscallN(objc_allocateClassPair, uintptr(super), uintptr(unsafe.Pointer(n)), extraBytes)
 	runtime.KeepAlive(n)
+	return Class(ret)
+}
+
+func (c Class) Super() Class {
+	ret, _, _ := purego.SyscallN(class_getSuperclass, uintptr(c))
 	return Class(ret)
 }
 
