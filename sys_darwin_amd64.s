@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-FileCopyrightText: 2022 The Ebiten Authors
+// SPDX-FileCopyrightText: 2022 The Ebitengine Authors
 
 #include "textflag.h"
 #include "internal/abi/abi_amd64.h"
