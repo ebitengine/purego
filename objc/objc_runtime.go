@@ -52,7 +52,7 @@ func Send(cls Class, sel SEL, args ...interface{}) uintptr {
 		case uint:
 			tmp = append(tmp, uintptr(v))
 		default:
-			panic(fmt.Sprintf("unknown type %T", v))
+			panic(fmt.Sprintf("objc: unknown type %T", v))
 		}
 	}
 	ret, _, _ := purego.SyscallN(objc_msgSend, tmp...)
