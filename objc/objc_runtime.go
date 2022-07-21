@@ -67,30 +67,34 @@ func (id Id) SendSuper(sel SEL, args ...interface{}) Id {
 }
 
 func createArgs(out []uintptr, cls Id, sel SEL, args ...interface{}) {
+	if len(out) < len(args)+2 {
+		panic("objc: not enough reserved space for arguments")
+	}
 	out[0] = uintptr(cls)
 	out[1] = uintptr(sel)
-	for i, a := range args {
+	out = out[:2]
+	for _, a := range args {
 		switch v := a.(type) {
 		case Id:
-			out[i+2] = uintptr(v)
+			out = append(out, uintptr(v))
 		case Class:
-			out[i+2] = uintptr(v)
+			out = append(out, uintptr(v))
 		case SEL:
-			out[i+2] = uintptr(v)
+			out = append(out, uintptr(v))
 		case _IMP:
-			out[i+2] = uintptr(v)
+			out = append(out, uintptr(v))
 		case bool:
 			if v {
-				out[i+2] = uintptr(1)
+				out = append(out, uintptr(1))
 			} else {
-				out[i+2] = uintptr(0)
+				out = append(out, uintptr(0))
 			}
 		case uintptr:
-			out[i+2] = v
+			out = append(out, v)
 		case int:
-			out[i+2] = uintptr(v)
+			out = append(out, uintptr(v))
 		case uint:
-			out[i+2] = uintptr(v)
+			out = append(out, uintptr(v))
 		default:
 			panic(fmt.Sprintf("objc: unknown type %T", v))
 		}
