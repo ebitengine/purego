@@ -103,12 +103,10 @@ TEXT callbackasm1(SB), NOSPLIT, $208-0
 	MOVD R13, R1                         // frame (&callbackArgs{...})
 	MOVD $0, R3                          // ctxt uintptr
 
-/*
- * We still need to save all callee save register as before, and then
- *  push 3 args for fn (R0, R1, R3), skipping R2.
- * Also note that at procedure entry in gc world, 8(RSP) will be the
- *  first arg.
- */
+	// We still need to save all callee save register as before, and then
+	//  push 3 args for fn (R0, R1, R3), skipping R2.
+	// Also note that at procedure entry in gc world, 8(RSP) will be the
+	// first arg.
 	SUB  $(8*24), RSP
 	STP  (R0, R1), (8*1)(RSP)
 	MOVD R3, (8*3)(RSP)
