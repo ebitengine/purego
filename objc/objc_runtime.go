@@ -35,8 +35,10 @@ var (
 	object_getClass        = purego.Dlsym(objc, "object_getClass")
 )
 
+// Id is an opaque pointer to some Objective-C object
 type Id uintptr
 
+// Class returns the class of the object.
 func (id Id) Class() Class {
 	ret, _, _ := purego.SyscallN(object_getClass, uintptr(id))
 	return Class(ret)
@@ -44,32 +46,31 @@ func (id Id) Class() Class {
 
 // Send is a convenience method for sending messages to objects.
 func (id Id) Send(sel SEL, args ...interface{}) Id {
-	var tmp = make([]uintptr, len(args)+2)
-	createArgs(tmp, id, sel, args...)
+	tmp := createArgs(id, sel, args...)
 	ret, _, _ := purego.SyscallN(objc_msgSend, tmp...)
 	return Id(ret)
 }
 
+// sending a message to the super requires this struct instead of the object itself
+type objc_super struct {
+	receiver   Id
+	superClass Class
+}
+
 // SendSuper is a convenience method for sending message to object's super
 func (id Id) SendSuper(sel SEL, args ...interface{}) Id {
-	type objc_super struct {
-		reciever   Id
-		superClass Class
-	}
-	var _super = &objc_super{
-		reciever:   id,
+	var super = &objc_super{
+		receiver:   id,
 		superClass: id.Class(),
 	}
-	var tmp = make([]uintptr, len(args)+2)
-	createArgs(tmp, Id(unsafe.Pointer(_super)), sel, args...)
+	tmp := createArgs(0, sel, args...)
+	tmp[0] = uintptr(unsafe.Pointer(super)) // if createArgs splits the stack the pointer would be wrong
 	ret, _, _ := purego.SyscallN(objc_msgSendSuper2, tmp...)
 	return Id(ret)
 }
 
-func createArgs(out []uintptr, cls Id, sel SEL, args ...interface{}) {
-	if len(out) < len(args)+2 {
-		panic("objc: not enough reserved space for arguments")
-	}
+func createArgs(cls Id, sel SEL, args ...interface{}) (out []uintptr) {
+	out = make([]uintptr, len(args)+2)
 	out[0] = uintptr(cls)
 	out[1] = uintptr(sel)
 	out = out[:2]
@@ -89,6 +90,8 @@ func createArgs(out []uintptr, cls Id, sel SEL, args ...interface{}) {
 			} else {
 				out = append(out, uintptr(0))
 			}
+		case unsafe.Pointer:
+			out = append(out, uintptr(v))
 		case uintptr:
 			out = append(out, v)
 		case int:
@@ -99,10 +102,14 @@ func createArgs(out []uintptr, cls Id, sel SEL, args ...interface{}) {
 			panic(fmt.Sprintf("objc: unknown type %T", v))
 		}
 	}
+	return out
 }
 
+// SEL is an opaque type that represents a method selector
 type SEL uintptr
 
+// RegisterName registers a method with the Objective-C runtime system, maps the method name to a selector,
+// and returns the selector value.
 func RegisterName(name string) SEL {
 	n := strings.CString(name)
 	ret, _, _ := purego.SyscallN(sel_registerName, uintptr(unsafe.Pointer(n)))
@@ -110,8 +117,10 @@ func RegisterName(name string) SEL {
 	return SEL(ret)
 }
 
+// Class is an opaque type that represents an Objective-C class.
 type Class uintptr
 
+// GetClass returns the Class object for the named class, or nil if the class is not registered with the Objective-C runtime.
 func GetClass(name string) Class {
 	n := strings.CString(name)
 	ret, _, _ := purego.SyscallN(objc_getClass, uintptr(unsafe.Pointer(n)))
@@ -119,6 +128,7 @@ func GetClass(name string) Class {
 	return Class(ret)
 }
 
+// AllocateClassPair creates a new class and metaclass. Then returns the new class, or Nil if the class could not be created
 func AllocateClassPair(super Class, name string, extraBytes uintptr) Class {
 	n := strings.CString(name)
 	ret, _, _ := purego.SyscallN(objc_allocateClassPair, uintptr(super), uintptr(unsafe.Pointer(n)), extraBytes)
@@ -126,11 +136,17 @@ func AllocateClassPair(super Class, name string, extraBytes uintptr) Class {
 	return Class(ret)
 }
 
+// SuperClass returns the superclass of a class.
+// You should usually use NSObject‘s superclass method instead of this function.
 func (c Class) SuperClass() Class {
 	ret, _, _ := purego.SyscallN(class_getSuperclass, uintptr(c))
 	return Class(ret)
 }
 
+// AddMethod adds a new method to a class with a given name and implementation.
+// The types argument is a string containing the mapping of parameters and return type.
+// Since the function must take at least two arguments—self and _cmd, the second and third
+// characters must be “@:” (the first character is the return type).
 func (c Class) AddMethod(name SEL, imp _IMP, types string) bool {
 	t := strings.CString(types)
 	ret, _, _ := purego.SyscallN(class_addMethod, uintptr(c), uintptr(name), uintptr(imp), uintptr(unsafe.Pointer(t)))
@@ -138,6 +154,8 @@ func (c Class) AddMethod(name SEL, imp _IMP, types string) bool {
 	return byte(ret) != 0
 }
 
+// Register registers a class that was allocated using objc_allocateClassPair.
+// It can now be used to make objects by sending it either alloc and init or new.
 func (c Class) Register() {
 	purego.SyscallN(objc_registerClassPair, uintptr(c))
 }
@@ -147,7 +165,7 @@ func (c Class) Register() {
 type _IMP uintptr
 
 // IMP takes a Go function that takes (id, SEL) as its first two arguments. It returns an _IMP function
-// pointer that can be called by C code
+// pointer that can be called by Objective-C code. The function pointer is never deallocated.
 func IMP(fn interface{}) _IMP {
 	// this is only here so that it is easier to port C code to Go.
 	// this is not guaranteed to be here forever so make sure to port your callbacks to Go
