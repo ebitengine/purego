@@ -104,7 +104,7 @@ func createArgs(out []uintptr, cls Id, sel SEL, args ...interface{}) {
 type SEL uintptr
 
 func RegisterName(name string) SEL {
-	n := strings.CString(name, false)
+	n := strings.CString(name)
 	ret, _, _ := purego.SyscallN(sel_registerName, uintptr(unsafe.Pointer(n)))
 	runtime.KeepAlive(n)
 	return SEL(ret)
@@ -113,14 +113,14 @@ func RegisterName(name string) SEL {
 type Class uintptr
 
 func GetClass(name string) Class {
-	n := strings.CString(name, false)
+	n := strings.CString(name)
 	ret, _, _ := purego.SyscallN(objc_getClass, uintptr(unsafe.Pointer(n)))
 	runtime.KeepAlive(n)
 	return Class(ret)
 }
 
 func AllocateClassPair(super Class, name string, extraBytes uintptr) Class {
-	n := strings.CString(name, false)
+	n := strings.CString(name)
 	ret, _, _ := purego.SyscallN(objc_allocateClassPair, uintptr(super), uintptr(unsafe.Pointer(n)), extraBytes)
 	runtime.KeepAlive(n)
 	return Class(ret)
@@ -132,7 +132,7 @@ func (c Class) SuperClass() Class {
 }
 
 func (c Class) AddMethod(name SEL, imp _IMP, types string) bool {
-	t := strings.CString(types, false)
+	t := strings.CString(types)
 	ret, _, _ := purego.SyscallN(class_addMethod, uintptr(c), uintptr(name), uintptr(imp), uintptr(unsafe.Pointer(t)))
 	runtime.KeepAlive(t)
 	return byte(ret) != 0

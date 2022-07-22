@@ -18,14 +18,14 @@ const RTLD_GLOBAL = 0x8
 const RTLD_DEFAULT = ^uintptr(1)
 
 func Dlopen(name string, mode int) uintptr {
-	bs := strings.CString(name, false)
+	bs := strings.CString(name)
 	ret, _, _ := SyscallN(dlopenABI0, uintptr(unsafe.Pointer(bs)), uintptr(mode), 0)
 	runtime.KeepAlive(bs)
 	return ret
 }
 
 func Dlsym(handle uintptr, name string) uintptr {
-	bs := strings.CString(name, false)
+	bs := strings.CString(name)
 	ret, _, _ := SyscallN(dlsymABI0, handle, uintptr(unsafe.Pointer(bs)), 0)
 	runtime.KeepAlive(bs)
 	return ret

@@ -13,12 +13,9 @@ func hasSuffix(s, suffix string) bool {
 // CString converts a go string to *byte that can be passed to C code.
 // if requireNil is true it will panic if the passed string doesn't have
 // a null byte at the end.
-func CString(name string, requireNil bool) *byte {
+func CString(name string) *byte {
 	if hasSuffix(name, "\x00") {
 		return &(*(*[]byte)(unsafe.Pointer(&name)))[0]
-	}
-	if requireNil {
-		panic("strings: null byte required")
 	}
 	var b = make([]byte, len(name)+1)
 	copy(b, name)
