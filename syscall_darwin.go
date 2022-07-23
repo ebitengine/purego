@@ -68,9 +68,6 @@ func compileCallback(fn interface{}) uintptr {
 	if val.Kind() != reflect.Func {
 		panic("type is not a function")
 	}
-	if cbs.numFn >= maxCB {
-		panic("the maximum number of callbacks has been reached")
-	}
 	ty := val.Type()
 	for i := 0; i < ty.NumIn(); i++ {
 		in := ty.In(i)
@@ -82,11 +79,14 @@ func compileCallback(fn interface{}) uintptr {
 			panic("unsupported argument type: " + in.Kind().String())
 		}
 	}
-	if ty.NumOut() > 1 || ty.NumOut() == 1 && ty.Out(0).Size() != ptrSize {
+	if ty.NumOut() != 1 || ty.Out(0).Size() != ptrSize {
 		panic("callbacks can only have one pointer-sized return")
 	}
 	(&cbs.lock).Lock()
 	defer (&cbs.lock).Unlock()
+	if cbs.numFn >= maxCB {
+		panic("the maximum number of callbacks has been reached")
+	}
 	cbs.funcs[cbs.numFn] = val
 	cbs.numFn++
 	return callbackasmAddr(cbs.numFn - 1)
