@@ -29,9 +29,10 @@ func syscall_syscall9X(fn, a1, a2, a3, a4, a5, a6, a7, a8, a9 uintptr) (r1, r2, 
 
 // NewCallback converts a Go function to a function pointer conforming to the C calling convention
 // This is useful when interoperating with C code requiring callbacks. The argument is expected to be a
-// function with one uintptr-sized result. The function must not have arguments with size larger than the size
+// function with zero or one uintptr-sized result. The function must not have arguments with size larger than the size
 // of uintptr. Only a limited number of callbacks may be created in a single Go process, and any memory allocated
-// for these callbacks is never released. At least 2000 callbacks can always be created.
+// for these callbacks is never released. At least 2000 callbacks can always be created. Although this function
+// provides similar functionality to windows.NewCallback it is distinct.
 func NewCallback(fn interface{}) uintptr {
 	return compileCallback(fn)
 }
@@ -67,7 +68,7 @@ type callbackArgs struct {
 func compileCallback(fn interface{}) uintptr {
 	val := reflect.ValueOf(fn)
 	if val.Kind() != reflect.Func {
-		panic("type is not a function")
+		panic("purego: type is not a function")
 	}
 	ty := val.Type()
 	for i := 0; i < ty.NumIn(); i++ {
@@ -77,16 +78,16 @@ func compileCallback(fn interface{}) uintptr {
 			reflect.Interface, reflect.Func, reflect.Slice,
 			reflect.Chan, reflect.Complex64, reflect.Complex128,
 			reflect.String, reflect.Map, reflect.Invalid:
-			panic("unsupported argument type: " + in.Kind().String())
+			panic("purego: unsupported argument type: " + in.Kind().String())
 		}
 	}
-	if ty.NumOut() != 1 || ty.Out(0).Size() != ptrSize {
-		panic("callbacks can only have one pointer-sized return")
+	if ty.NumOut() > 1 || ty.NumOut() == 1 && ty.Out(0).Size() != ptrSize {
+		panic("purego: callbacks can only have one pointer-sized return")
 	}
 	(&cbs.lock).Lock()
 	defer (&cbs.lock).Unlock()
 	if cbs.numFn >= maxCB {
-		panic("the maximum number of callbacks has been reached")
+		panic("purego: the maximum number of callbacks has been reached")
 	}
 	cbs.funcs[cbs.numFn] = val
 	cbs.numFn++
@@ -113,7 +114,10 @@ func callbackWrap(a *callbackArgs) {
 		//TODO: support float32 and float64
 		args[i] = reflect.NewAt(fnType.In(i), unsafe.Pointer(&frame[i])).Elem()
 	}
-	a.result = uintptr(fn.Call(args)[0].Uint())
+	ret := fn.Call(args)
+	if len(ret) > 0 {
+		a.result = uintptr(ret[0].Uint())
+	}
 }
 
 // callbackasmAddr returns address of runtime.callbackasm
@@ -129,7 +133,7 @@ func callbackasmAddr(i int) uintptr {
 	var entrySize int
 	switch runtime.GOARCH {
 	default:
-		panic("unsupported architecture")
+		panic("purego: unsupported architecture")
 	case "386", "amd64":
 		entrySize = 5
 	case "arm", "arm64":

@@ -174,7 +174,7 @@ func IMP(fn interface{}) _IMP {
 	}
 	val := reflect.ValueOf(fn)
 	if val.Kind() != reflect.Func {
-		panic("not a function")
+		panic("objc: not a function")
 	}
 	// IMP is stricter than a normal callback
 	// id (*IMP)(id, SEL, ...)
@@ -184,7 +184,7 @@ func IMP(fn interface{}) _IMP {
 	case val.Type().In(0).Kind() != reflect.Uintptr:
 		fallthrough
 	case val.Type().In(1).Kind() != reflect.Uintptr:
-		panic("IMP must take a (id, SEL) as its first two arguments")
+		panic("objc: IMP must take a (id, SEL) as its first two arguments")
 	}
 	return _IMP(purego.NewCallback(fn))
 }
