@@ -115,10 +115,7 @@ func callbackWrap(a *callbackArgs) {
 		//TODO: support float32 and float64
 		args[i] = reflect.NewAt(fnType.In(i), unsafe.Pointer(&frame[i])).Elem()
 	}
-	ret := fn.Call(args)
-	if len(ret) > 0 {
-		a.result = uintptr(ret[0].Uint())
-	}
+	a.result = uintptr(fn.Call(args)[0].Uint())
 }
 
 // callbackasmAddr returns address of runtime.callbackasm
