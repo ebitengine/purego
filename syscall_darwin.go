@@ -84,8 +84,8 @@ func compileCallback(fn interface{}) uintptr {
 	if ty.NumOut() > 1 || ty.NumOut() == 1 && ty.Out(0).Size() != ptrSize {
 		panic("purego: callbacks can only have one pointer-sized return")
 	}
-	(&cbs.lock).Lock()
-	defer (&cbs.lock).Unlock()
+	cbs.lock.Lock()
+	defer cbs.lock.Unlock()
 	if cbs.numFn >= maxCB {
 		panic("purego: the maximum number of callbacks has been reached")
 	}
@@ -104,9 +104,9 @@ var callbackasmABI0 uintptr
 // callbackWrap is called by assembly code which determines which Go function to call.
 // This function takes the arguments and passes them to the Go function and returns the result.
 func callbackWrap(a *callbackArgs) {
-	(&cbs.lock).Lock()
+	cbs.lock.Lock()
 	fn := cbs.funcs[a.index]
-	(&cbs.lock).Unlock()
+	cbs.lock.Unlock()
 	fnType := fn.Type()
 	args := make([]reflect.Value, fnType.NumIn())
 	frame := (*[callbackMaxFrame]uintptr)(a.args)
