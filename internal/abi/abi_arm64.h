@@ -13,6 +13,7 @@
 // of ((offset)+0*8)(RSP) ~ ((offset)+7*8)(RSP).
 //
 // R29 is not saved because Go will save and restore it.
+
 #define SAVE_R19_TO_R28(offset) \
 	STP	(R19, R20), ((offset)+0*8)(RSP) \
 	STP	(R21, R22), ((offset)+2*8)(RSP) \
