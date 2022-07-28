@@ -75,10 +75,10 @@ TEXT syscall9X(SB), NOSPLIT, $0
 // runtime·cgocallback expects a call to the ABIInternal function
 // However, the tag <ABIInternal> is only available in the runtime :(
 // This is a small wrapper function that moves the parameter from AX to the stack
-// where the Go function can find it. It then calls callbackWrap
-TEXT callbackWrapInternal<>(SB), $0-0
-	MOVQ AX, 0(SP)
-	CALL ·callbackWrap(SB)
+// where the Go function can find it. It then jumps to callbackWrap
+TEXT callbackWrapInternal<>(SB), NOSPLIT, $0-0
+	MOVQ AX, arg+8(SP)
+	JMP  ·callbackWrap(SB)
 	RET
 
 TEXT callbackasm1(SB), NOSPLIT, $0
