@@ -116,7 +116,7 @@ func callbackWrap(a *callbackArgs) {
 	}
 	ret := fn.Call(args)
 	if len(ret) > 0 {
-		a.result = uintptr(ret[0].Uint())
+		a.result = uintptr(ret[0].Convert(reflect.TypeOf(uintptr(0))).Uint())
 	}
 }
 

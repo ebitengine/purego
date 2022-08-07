@@ -21,15 +21,18 @@ import (
 var (
 	objc = purego.Dlopen("/usr/lib/libobjc.A.dylib", purego.RTLD_GLOBAL)
 
-	objc_msgSend           = purego.Dlsym(objc, "objc_msgSend")
-	objc_msgSendSuper2     = purego.Dlsym(objc, "objc_msgSendSuper2")
-	objc_getClass          = purego.Dlsym(objc, "objc_getClass")
-	objc_allocateClassPair = purego.Dlsym(objc, "objc_allocateClassPair")
-	objc_registerClassPair = purego.Dlsym(objc, "objc_registerClassPair")
-	sel_registerName       = purego.Dlsym(objc, "sel_registerName")
-	class_getSuperclass    = purego.Dlsym(objc, "class_getSuperclass")
-	class_addMethod        = purego.Dlsym(objc, "class_addMethod")
-	object_getClass        = purego.Dlsym(objc, "object_getClass")
+	objc_msgSend              = purego.Dlsym(objc, "objc_msgSend")
+	objc_msgSendSuper2        = purego.Dlsym(objc, "objc_msgSendSuper2")
+	objc_getClass             = purego.Dlsym(objc, "objc_getClass")
+	objc_allocateClassPair    = purego.Dlsym(objc, "objc_allocateClassPair")
+	objc_registerClassPair    = purego.Dlsym(objc, "objc_registerClassPair")
+	sel_registerName          = purego.Dlsym(objc, "sel_registerName")
+	class_getSuperclass       = purego.Dlsym(objc, "class_getSuperclass")
+	class_getInstanceVariable = purego.Dlsym(objc, "class_getInstanceVariable")
+	class_addMethod           = purego.Dlsym(objc, "class_addMethod")
+	class_addIvar             = purego.Dlsym(objc, "class_addIvar")
+	ivar_getOffset            = purego.Dlsym(objc, "ivar_getOffset")
+	object_getClass           = purego.Dlsym(objc, "object_getClass")
 )
 
 // ID is an opaque pointer to some Objective-C object
@@ -152,10 +155,33 @@ func (c Class) AddMethod(name SEL, imp _IMP, types string) bool {
 	return byte(ret) != 0
 }
 
+func (c Class) AddIvar(name string, size uintptr, alignment uint8, types string) bool {
+	n := strings.CString(name)
+	t := strings.CString(types)
+	ret, _, _ := purego.SyscallN(class_addIvar, uintptr(c), uintptr(unsafe.Pointer(n)), size, uintptr(alignment), uintptr(unsafe.Pointer(t)))
+	runtime.KeepAlive(n)
+	runtime.KeepAlive(t)
+	return byte(ret) != 0
+}
+
+func (c Class) InstanceVariable(name string) Ivar {
+	n := strings.CString(name)
+	ret, _, _ := purego.SyscallN(class_getInstanceVariable, uintptr(c), uintptr(unsafe.Pointer(n)))
+	runtime.KeepAlive(n)
+	return Ivar(ret)
+}
+
 // Register registers a class that was allocated using objc_allocateClassPair.
 // It can now be used to make objects by sending it either alloc and init or new.
 func (c Class) Register() {
 	purego.SyscallN(objc_registerClassPair, uintptr(c))
+}
+
+type Ivar uintptr
+
+func (i Ivar) Offset() uintptr {
+	ret, _, _ := purego.SyscallN(ivar_getOffset, uintptr(i))
+	return ret
 }
 
 // _IMP is unexported so that the only way to make this type is by providing a Go function and casting
