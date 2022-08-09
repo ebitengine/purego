@@ -155,6 +155,13 @@ func (c Class) AddMethod(name SEL, imp _IMP, types string) bool {
 	return byte(ret) != 0
 }
 
+// AddIvar adds a new instance variable to a class.
+// It may only be called after AllocateClassPair and before Register.
+// Adding an instance variable to an existing class is not supported.
+// The class must not be a metaclass. Adding an instance variable to a metaclass is not supported.
+// The instance variable's minimum alignment in bytes is 1<<align. The minimum alignment of an
+// instance variable depends on the ivar's type and the machine architecture.
+// For variables of any pointer type, pass log2(sizeof(pointer_type)).
 func (c Class) AddIvar(name string, size uintptr, alignment uint8, types string) bool {
 	n := strings.CString(name)
 	t := strings.CString(types)
@@ -164,6 +171,7 @@ func (c Class) AddIvar(name string, size uintptr, alignment uint8, types string)
 	return byte(ret) != 0
 }
 
+// InstanceVariable returns an Ivar data structure containing information about the instance variable specified by name.
 func (c Class) InstanceVariable(name string) Ivar {
 	n := strings.CString(name)
 	ret, _, _ := purego.SyscallN(class_getInstanceVariable, uintptr(c), uintptr(unsafe.Pointer(n)))
@@ -177,8 +185,13 @@ func (c Class) Register() {
 	purego.SyscallN(objc_registerClassPair, uintptr(c))
 }
 
+// Ivar an opaque type that represents an instance variable.
 type Ivar uintptr
 
+// Offset returns the offset of an instance variable that can be used to assign and read the Ivar's value.
+//
+// For instance variables of type id or other object types, call Ivar and SetIvar instead
+// of using this offset to access the instance variable data directly.
 func (i Ivar) Offset() uintptr {
 	ret, _, _ := purego.SyscallN(ivar_getOffset, uintptr(i))
 	return ret

@@ -2,6 +2,7 @@ package objc
 
 import (
 	"fmt"
+	"github.com/ebitengine/purego"
 	"math"
 	"runtime"
 	"unsafe"
@@ -43,4 +44,14 @@ func ExampleClass_AddIvar() {
 	var foo = int(FooObject.Send(RegisterName("foo\x00")))
 	fmt.Println(foo)
 	// Output: 123
+}
+
+func ExampleIMP() {
+	imp := IMP(func(self ID, _cmd SEL) {
+		fmt.Println("IMP:", self, _cmd)
+	})
+
+	purego.SyscallN(uintptr(imp), 105, 567)
+
+	// Output: IMP: 105 567
 }
