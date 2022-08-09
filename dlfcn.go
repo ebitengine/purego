@@ -33,6 +33,8 @@ func Dlsym(handle uintptr, name string) uintptr {
 }
 
 func Dlerror() string {
+	// msg is only valid until the next call to Dlerror
+	// which is why it gets copied into a Go string
 	msg, _, _ := SyscallN(dlerrorABI0)
 	if msg == 0 {
 		return ""
