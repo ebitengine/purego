@@ -192,7 +192,7 @@ type Ivar uintptr
 
 // Offset returns the offset of an instance variable that can be used to assign and read the Ivar's value.
 //
-// For instance variables of type id or other object types, call Ivar and SetIvar instead
+// For instance variables of type ID or other object types, call Ivar and SetIvar instead
 // of using this offset to access the instance variable data directly.
 func (i Ivar) Offset() uintptr {
 	ret, _, _ := purego.SyscallN(ivar_getOffset, uintptr(i))
@@ -213,18 +213,18 @@ func IMP(fn interface{}) _IMP {
 	if x, ok := fn.(uintptr); ok {
 		return _IMP(x)
 	}
-	val := reflect.ValueOf(fn)
-	if val.Kind() != reflect.Func {
+	ty := reflect.TypeOf(fn)
+	if ty.Kind() != reflect.Func {
 		panic("objc: not a function")
 	}
 	// IMP is stricter than a normal callback
 	// id (*IMP)(id, SEL, ...)
 	switch {
-	case val.Type().NumIn() < 2:
+	case ty.NumIn() < 2:
 		fallthrough
-	case val.Type().In(0).Kind() != reflect.Uintptr:
+	case ty.In(0).Kind() != reflect.Uintptr:
 		fallthrough
-	case val.Type().In(1).Kind() != reflect.Uintptr:
+	case ty.In(1).Kind() != reflect.Uintptr:
 		panic("objc: IMP must take a (id, SEL) as its first two arguments")
 	}
 	return _IMP(purego.NewCallback(fn))

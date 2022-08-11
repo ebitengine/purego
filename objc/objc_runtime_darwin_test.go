@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2022 The Ebitengine Authors
 
-package objc
+package objc_test
 
 import (
 	"fmt"
@@ -9,6 +9,7 @@ import (
 	"unsafe"
 
 	"github.com/ebitengine/purego"
+	"github.com/ebitengine/purego/objc"
 )
 
 func init() {
@@ -20,42 +21,62 @@ func init() {
 }
 
 func ExampleAllocateClassPair() {
-	var class = AllocateClassPair(GetClass("NSObject\x00"), "FooObject\x00", 0)
-	class.AddMethod(RegisterName("run\x00"), IMP(func(self ID, _cmd SEL) {
+	var class = objc.AllocateClassPair(objc.GetClass("NSObject\x00"), "FooObject\x00", 0)
+	class.AddMethod(objc.RegisterName("run\x00"), objc.IMP(func(self objc.ID, _cmd objc.SEL) {
 		fmt.Println("Hello World!")
 	}), "v@:\x00")
 	class.Register()
 
-	var fooObject = ID(class).Send(RegisterName("new\x00"))
-	fooObject.Send(RegisterName("run\x00"))
+	var fooObject = objc.ID(class).Send(objc.RegisterName("new\x00"))
+	fooObject.Send(objc.RegisterName("run\x00"))
 	// Output: Hello World!
 }
 
 func ExampleClass_AddIvar() {
-	var class = AllocateClassPair(GetClass("NSObject\x00"), "BarObject\x00", 0)
+	var class = objc.AllocateClassPair(objc.GetClass("NSObject\x00"), "BarObject\x00", 0)
 	class.AddIvar("bar\x00", int(0), "q\x00")
 	var barOffset = class.InstanceVariable("bar\x00").Offset()
-	class.AddMethod(RegisterName("bar\x00"), IMP(func(self ID, _cmd SEL) int {
+	class.AddMethod(objc.RegisterName("bar\x00"), objc.IMP(func(self objc.ID, _cmd objc.SEL) int {
 		return *(*int)(unsafe.Pointer(uintptr(unsafe.Pointer(self)) + barOffset))
 	}), "q@:\x00")
-	class.AddMethod(RegisterName("setBar:\x00"), IMP(func(self ID, _cmd SEL, bar int) {
+	class.AddMethod(objc.RegisterName("setBar:\x00"), objc.IMP(func(self objc.ID, _cmd objc.SEL, bar int) {
 		*(*int)(unsafe.Pointer(uintptr(unsafe.Pointer(self)) + barOffset)) = bar
 	}), "v@:q\x00")
 	class.Register()
 
-	var barObject = ID(class).Send(RegisterName("new\x00"))
-	barObject.Send(RegisterName("setBar:\x00"), 123)
-	var bar = int(barObject.Send(RegisterName("bar\x00")))
+	var barObject = objc.ID(class).Send(objc.RegisterName("new\x00"))
+	barObject.Send(objc.RegisterName("setBar:\x00"), 123)
+	var bar = int(barObject.Send(objc.RegisterName("bar\x00")))
 	fmt.Println(bar)
 	// Output: 123
 }
 
 func ExampleIMP() {
-	imp := IMP(func(self ID, _cmd SEL) {
+	imp := objc.IMP(func(self objc.ID, _cmd objc.SEL) {
 		fmt.Println("IMP:", self, _cmd)
 	})
 
 	purego.SyscallN(uintptr(imp), 105, 567)
 
 	// Output: IMP: 105 567
+}
+
+func ExampleID_SendSuper() {
+	super := objc.AllocateClassPair(objc.GetClass("NSObject\x00"), "SuperObject\x00", 0)
+	super.AddMethod(objc.RegisterName("doSomething\x00"), objc.IMP(func(self objc.ID, _cmd objc.SEL) {
+		fmt.Println("In Super!")
+	}), "v@:\x00")
+	super.Register()
+
+	child := objc.AllocateClassPair(super, "ChildObject\x00", 0)
+	child.AddMethod(objc.RegisterName("doSomething\x00"), objc.IMP(func(self objc.ID, _cmd objc.SEL) {
+		fmt.Println("In Child")
+		self.SendSuper(_cmd)
+	}), "v@:\x00")
+	child.Register()
+
+	objc.ID(child).Send(objc.RegisterName("new\x00")).Send(objc.RegisterName("doSomething\x00"))
+
+	// Output: In Child
+	// In Super!
 }
