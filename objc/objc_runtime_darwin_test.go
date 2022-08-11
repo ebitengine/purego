@@ -27,8 +27,8 @@ func ExampleAllocateClassPair() {
 	}), "v@:\x00")
 	class.Register()
 
-	var FooObject = ID(class).Send(RegisterName("new\x00"))
-	FooObject.Send(RegisterName("run\x00"))
+	var fooObject = ID(class).Send(RegisterName("new\x00"))
+	fooObject.Send(RegisterName("run\x00"))
 	// Output: Hello World!
 }
 
@@ -44,9 +44,9 @@ func ExampleClass_AddIvar() {
 	}), "v@:q\x00")
 	class.Register()
 
-	var BarObject = ID(class).Send(RegisterName("new\x00"))
-	BarObject.Send(RegisterName("setBar:\x00"), 123)
-	var bar = int(BarObject.Send(RegisterName("bar\x00")))
+	var barObject = ID(class).Send(RegisterName("new\x00"))
+	barObject.Send(RegisterName("setBar:\x00"), 123)
+	var bar = int(barObject.Send(RegisterName("bar\x00")))
 	fmt.Println(bar)
 	// Output: 123
 }
