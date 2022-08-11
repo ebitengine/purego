@@ -5,7 +5,6 @@ package objc
 
 import (
 	"fmt"
-	"math"
 	"runtime"
 	"unsafe"
 
@@ -34,7 +33,7 @@ func ExampleAllocateClassPair() {
 
 func ExampleClass_AddIvar() {
 	var class = AllocateClassPair(GetClass("NSObject\x00"), "BarObject\x00", 0)
-	class.AddIvar("bar\x00", unsafe.Sizeof(int(0)), uint8(math.Log2(float64(unsafe.Alignof(int(0))))), "q\x00")
+	class.AddIvar("bar\x00", int(0), "q\x00")
 	var barOffset = class.InstanceVariable("bar\x00").Offset()
 	class.AddMethod(RegisterName("bar\x00"), IMP(func(self ID, _cmd SEL) int {
 		return *(*int)(unsafe.Pointer(uintptr(unsafe.Pointer(self)) + barOffset))

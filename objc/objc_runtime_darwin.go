@@ -7,6 +7,7 @@ package objc
 
 import (
 	"fmt"
+	"math"
 	"reflect"
 	"runtime"
 	"unsafe"
@@ -159,12 +160,13 @@ func (c Class) AddMethod(name SEL, imp _IMP, types string) bool {
 // It may only be called after AllocateClassPair and before Register.
 // Adding an instance variable to an existing class is not supported.
 // The class must not be a metaclass. Adding an instance variable to a metaclass is not supported.
-// The instance variable's minimum alignment in bytes is 1<<align. The minimum alignment of an
-// instance variable depends on the ivar's type and the machine architecture.
-// For variables of any pointer type, pass math.Log2(unsafe.Alignof(type)).
-func (c Class) AddIvar(name string, size uintptr, alignment uint8, types string) bool {
+// It takes the instance of the type of the Ivar and a string representing the type.
+func (c Class) AddIvar(name string, ty interface{}, types string) bool {
 	n := strings.CString(name)
 	t := strings.CString(types)
+	typeOf := reflect.TypeOf(ty)
+	size := typeOf.Size()
+	alignment := uint8(math.Log2(float64(typeOf.Align())))
 	ret, _, _ := purego.SyscallN(class_addIvar, uintptr(c), uintptr(unsafe.Pointer(n)), size, uintptr(alignment), uintptr(unsafe.Pointer(t)))
 	runtime.KeepAlive(n)
 	runtime.KeepAlive(t)
