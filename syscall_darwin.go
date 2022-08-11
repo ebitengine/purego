@@ -128,7 +128,7 @@ func callbackWrap(a *callbackArgs) {
 				a.result = 0
 			}
 		default:
-			panic("purego: unsupported kind: %s" + k.String())
+			panic("purego: unsupported kind: " + k.String())
 		}
 	}
 }
