@@ -7,6 +7,7 @@ package objc
 
 import (
 	"fmt"
+	"math"
 	"reflect"
 	"runtime"
 	"unsafe"
@@ -21,15 +22,18 @@ import (
 var (
 	objc = purego.Dlopen("/usr/lib/libobjc.A.dylib", purego.RTLD_GLOBAL)
 
-	objc_msgSend           = purego.Dlsym(objc, "objc_msgSend")
-	objc_msgSendSuper2     = purego.Dlsym(objc, "objc_msgSendSuper2")
-	objc_getClass          = purego.Dlsym(objc, "objc_getClass")
-	objc_allocateClassPair = purego.Dlsym(objc, "objc_allocateClassPair")
-	objc_registerClassPair = purego.Dlsym(objc, "objc_registerClassPair")
-	sel_registerName       = purego.Dlsym(objc, "sel_registerName")
-	class_getSuperclass    = purego.Dlsym(objc, "class_getSuperclass")
-	class_addMethod        = purego.Dlsym(objc, "class_addMethod")
-	object_getClass        = purego.Dlsym(objc, "object_getClass")
+	objc_msgSend              = purego.Dlsym(objc, "objc_msgSend")
+	objc_msgSendSuper2        = purego.Dlsym(objc, "objc_msgSendSuper2")
+	objc_getClass             = purego.Dlsym(objc, "objc_getClass")
+	objc_allocateClassPair    = purego.Dlsym(objc, "objc_allocateClassPair")
+	objc_registerClassPair    = purego.Dlsym(objc, "objc_registerClassPair")
+	sel_registerName          = purego.Dlsym(objc, "sel_registerName")
+	class_getSuperclass       = purego.Dlsym(objc, "class_getSuperclass")
+	class_getInstanceVariable = purego.Dlsym(objc, "class_getInstanceVariable")
+	class_addMethod           = purego.Dlsym(objc, "class_addMethod")
+	class_addIvar             = purego.Dlsym(objc, "class_addIvar")
+	ivar_getOffset            = purego.Dlsym(objc, "ivar_getOffset")
+	object_getClass           = purego.Dlsym(objc, "object_getClass")
 )
 
 // ID is an opaque pointer to some Objective-C object
@@ -152,17 +156,54 @@ func (c Class) AddMethod(name SEL, imp _IMP, types string) bool {
 	return byte(ret) != 0
 }
 
-// Register registers a class that was allocated using objc_allocateClassPair.
+// AddIvar adds a new instance variable to a class.
+// It may only be called after AllocateClassPair and before Register.
+// Adding an instance variable to an existing class is not supported.
+// The class must not be a metaclass. Adding an instance variable to a metaclass is not supported.
+// It takes the instance of the type of the Ivar and a string representing the type.
+func (c Class) AddIvar(name string, ty interface{}, types string) bool {
+	n := strings.CString(name)
+	t := strings.CString(types)
+	typeOf := reflect.TypeOf(ty)
+	size := typeOf.Size()
+	alignment := uint8(math.Log2(float64(typeOf.Align())))
+	ret, _, _ := purego.SyscallN(class_addIvar, uintptr(c), uintptr(unsafe.Pointer(n)), size, uintptr(alignment), uintptr(unsafe.Pointer(t)))
+	runtime.KeepAlive(n)
+	runtime.KeepAlive(t)
+	return byte(ret) != 0
+}
+
+// InstanceVariable returns an Ivar data structure containing information about the instance variable specified by name.
+func (c Class) InstanceVariable(name string) Ivar {
+	n := strings.CString(name)
+	ret, _, _ := purego.SyscallN(class_getInstanceVariable, uintptr(c), uintptr(unsafe.Pointer(n)))
+	runtime.KeepAlive(n)
+	return Ivar(ret)
+}
+
+// Register registers a class that was allocated using AllocateClassPair.
 // It can now be used to make objects by sending it either alloc and init or new.
 func (c Class) Register() {
 	purego.SyscallN(objc_registerClassPair, uintptr(c))
+}
+
+// Ivar an opaque type that represents an instance variable.
+type Ivar uintptr
+
+// Offset returns the offset of an instance variable that can be used to assign and read the Ivar's value.
+//
+// For instance variables of type id or other object types, call Ivar and SetIvar instead
+// of using this offset to access the instance variable data directly.
+func (i Ivar) Offset() uintptr {
+	ret, _, _ := purego.SyscallN(ivar_getOffset, uintptr(i))
+	return ret
 }
 
 // _IMP is unexported so that the only way to make this type is by providing a Go function and casting
 // it with the IMP function
 type _IMP uintptr
 
-// IMP takes a Go function that takes (id, SEL) as its first two arguments. It returns an _IMP function
+// IMP takes a Go function that takes (ID, SEL) as its first two arguments. It returns an _IMP function
 // pointer that can be called by Objective-C code. The function pointer is never deallocated.
 func IMP(fn interface{}) _IMP {
 	// this is only here so that it is easier to port C code to Go.
