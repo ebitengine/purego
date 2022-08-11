@@ -116,7 +116,20 @@ func callbackWrap(a *callbackArgs) {
 	}
 	ret := fn.Call(args)
 	if len(ret) > 0 {
-		a.result = uintptr(ret[0].Uint())
+		switch k := ret[0].Kind(); k {
+		case reflect.Uint, reflect.Uint64, reflect.Uint32, reflect.Uint16, reflect.Uint8, reflect.Uintptr:
+			a.result = uintptr(ret[0].Uint())
+		case reflect.Int, reflect.Int64, reflect.Int32, reflect.Int16, reflect.Int8:
+			a.result = uintptr(ret[0].Int())
+		case reflect.Bool:
+			if ret[0].Bool() {
+				a.result = 1
+			} else {
+				a.result = 0
+			}
+		default:
+			panic("purego: unsupported kind: %s" + k.String())
+		}
 	}
 }
 
