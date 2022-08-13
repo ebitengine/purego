@@ -21,32 +21,32 @@ func init() {
 }
 
 func ExampleAllocateClassPair() {
-	var class = objc.AllocateClassPair(objc.GetClass("NSObject\x00"), "FooObject\x00", 0)
-	class.AddMethod(objc.RegisterName("run\x00"), objc.IMP(func(self objc.ID, _cmd objc.SEL) {
+	var class = objc.AllocateClassPair(objc.GetClass("NSObject"), "FooObject", 0)
+	class.AddMethod(objc.RegisterName("run"), objc.IMP(func(self objc.ID, _cmd objc.SEL) {
 		fmt.Println("Hello World!")
-	}), "v@:\x00")
+	}), "v@:")
 	class.Register()
 
-	var fooObject = objc.ID(class).Send(objc.RegisterName("new\x00"))
-	fooObject.Send(objc.RegisterName("run\x00"))
+	var fooObject = objc.ID(class).Send(objc.RegisterName("new"))
+	fooObject.Send(objc.RegisterName("run"))
 	// Output: Hello World!
 }
 
 func ExampleClass_AddIvar() {
-	var class = objc.AllocateClassPair(objc.GetClass("NSObject\x00"), "BarObject\x00", 0)
-	class.AddIvar("bar\x00", int(0), "q\x00")
-	var barOffset = class.InstanceVariable("bar\x00").Offset()
-	class.AddMethod(objc.RegisterName("bar\x00"), objc.IMP(func(self objc.ID, _cmd objc.SEL) int {
+	var class = objc.AllocateClassPair(objc.GetClass("NSObject"), "BarObject", 0)
+	class.AddIvar("bar", int(0), "q")
+	var barOffset = class.InstanceVariable("bar").Offset()
+	class.AddMethod(objc.RegisterName("bar"), objc.IMP(func(self objc.ID, _cmd objc.SEL) int {
 		return *(*int)(unsafe.Pointer(uintptr(unsafe.Pointer(self)) + barOffset))
-	}), "q@:\x00")
-	class.AddMethod(objc.RegisterName("setBar:\x00"), objc.IMP(func(self objc.ID, _cmd objc.SEL, bar int) {
+	}), "q@:")
+	class.AddMethod(objc.RegisterName("setBar:"), objc.IMP(func(self objc.ID, _cmd objc.SEL, bar int) {
 		*(*int)(unsafe.Pointer(uintptr(unsafe.Pointer(self)) + barOffset)) = bar
-	}), "v@:q\x00")
+	}), "v@:q")
 	class.Register()
 
-	var barObject = objc.ID(class).Send(objc.RegisterName("new\x00"))
-	barObject.Send(objc.RegisterName("setBar:\x00"), 123)
-	var bar = int(barObject.Send(objc.RegisterName("bar\x00")))
+	var barObject = objc.ID(class).Send(objc.RegisterName("new"))
+	barObject.Send(objc.RegisterName("setBar:"), 123)
+	var bar = int(barObject.Send(objc.RegisterName("bar")))
 	fmt.Println(bar)
 	// Output: 123
 }
@@ -62,20 +62,20 @@ func ExampleIMP() {
 }
 
 func ExampleID_SendSuper() {
-	super := objc.AllocateClassPair(objc.GetClass("NSObject\x00"), "SuperObject\x00", 0)
-	super.AddMethod(objc.RegisterName("doSomething\x00"), objc.IMP(func(self objc.ID, _cmd objc.SEL) {
+	super := objc.AllocateClassPair(objc.GetClass("NSObject"), "SuperObject", 0)
+	super.AddMethod(objc.RegisterName("doSomething"), objc.IMP(func(self objc.ID, _cmd objc.SEL) {
 		fmt.Println("In Super!")
-	}), "v@:\x00")
+	}), "v@:")
 	super.Register()
 
-	child := objc.AllocateClassPair(super, "ChildObject\x00", 0)
-	child.AddMethod(objc.RegisterName("doSomething\x00"), objc.IMP(func(self objc.ID, _cmd objc.SEL) {
+	child := objc.AllocateClassPair(super, "ChildObject", 0)
+	child.AddMethod(objc.RegisterName("doSomething"), objc.IMP(func(self objc.ID, _cmd objc.SEL) {
 		fmt.Println("In Child")
 		self.SendSuper(_cmd)
-	}), "v@:\x00")
+	}), "v@:")
 	child.Register()
 
-	objc.ID(child).Send(objc.RegisterName("new\x00")).Send(objc.RegisterName("doSomething\x00"))
+	objc.ID(child).Send(objc.RegisterName("new")).Send(objc.RegisterName("doSomething"))
 
 	// Output: In Child
 	// In Super!
