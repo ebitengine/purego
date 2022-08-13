@@ -99,10 +99,14 @@ func createArgs(cls ID, sel SEL, args ...interface{}) (out []uintptr, keepAlive 
 			c := strings.CString(v)
 			alive = append(alive, c)
 			// NOTE: that although the pointer will be kept alive
-			// if there are any stack splits before this uintptr is no longer needed.
-			// the pointer will point to random memory.
+			// if there are any stack splits before this uintptr
+			// is no longer needed. the pointer will point to random memory.
 			out = append(out, uintptr(unsafe.Pointer(c)))
 		case unsafe.Pointer:
+			alive = append(alive, v)
+			// NOTE: that although the pointer will be kept alive
+			// if there are any stack splits before this uintptr
+			// is no longer needed. the pointer will point to random memory.
 			out = append(out, uintptr(v))
 		case uintptr:
 			out = append(out, v)
