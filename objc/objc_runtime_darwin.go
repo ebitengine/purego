@@ -47,7 +47,8 @@ func (id ID) Class() Class {
 
 // Send is a convenience method for sending messages to objects.
 func (id ID) Send(sel SEL, args ...interface{}) ID {
-	tmp := createArgs(id, sel, args...)
+	tmp, keepAlive := createArgs(id, sel, args...)
+	defer keepAlive()
 	ret, _, _ := purego.SyscallN(objc_msgSend, tmp...)
 	return ID(ret)
 }
@@ -66,16 +67,18 @@ func (id ID) SendSuper(sel SEL, args ...interface{}) ID {
 		receiver:   id,
 		superClass: id.Class(),
 	}
-	tmp := createArgs(0, sel, args...)
+	tmp, keepAlive := createArgs(0, sel, args...)
+	defer keepAlive()
 	tmp[0] = uintptr(unsafe.Pointer(super)) // if createArgs splits the stack the pointer would be wrong
 	ret, _, _ := purego.SyscallN(objc_msgSendSuper2, tmp...)
 	return ID(ret)
 }
 
-func createArgs(cls ID, sel SEL, args ...interface{}) (out []uintptr) {
+func createArgs(cls ID, sel SEL, args ...interface{}) (out []uintptr, keepAlive func()) {
 	out = make([]uintptr, 2, len(args)+2)
 	out[0] = uintptr(cls)
 	out[1] = uintptr(sel)
+	var alive []interface{}
 	for _, a := range args {
 		switch v := a.(type) {
 		case ID:
@@ -92,6 +95,13 @@ func createArgs(cls ID, sel SEL, args ...interface{}) (out []uintptr) {
 			} else {
 				out = append(out, uintptr(0))
 			}
+		case string:
+			c := strings.CString(v)
+			alive = append(alive, c)
+			// NOTE: that although the pointer will be kept alive
+			// if there are any stack splits before this uintptr is no longer needed.
+			// the pointer will point to random memory.
+			out = append(out, uintptr(unsafe.Pointer(c)))
 		case unsafe.Pointer:
 			out = append(out, uintptr(v))
 		case uintptr:
@@ -104,7 +114,9 @@ func createArgs(cls ID, sel SEL, args ...interface{}) (out []uintptr) {
 			panic(fmt.Sprintf("objc: unknown type %T", v))
 		}
 	}
-	return out
+	return out, func() {
+		runtime.KeepAlive(alive)
+	}
 }
 
 // SEL is an opaque type that represents a method selector
