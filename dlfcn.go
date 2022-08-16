@@ -65,7 +65,12 @@ func Dlerror() string {
 	}
 	// use unsafe.Slice once we reach 1.17
 	s := make([]byte, length)
-	copy(s, *(*[]byte)(unsafe.Pointer(&reflect.SliceHeader{Data: msg, Len: length, Cap: length})))
+	var src []byte
+	h := (*reflect.SliceHeader)(unsafe.Pointer(&src))
+	h.Data = msg
+	h.Len = length
+	h.Cap = length
+	copy(s, src)
 	return string(s)
 }
 
