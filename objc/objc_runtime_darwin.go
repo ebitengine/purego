@@ -7,6 +7,7 @@ package objc
 
 import (
 	"fmt"
+	"math"
 	"reflect"
 	"runtime"
 	"unsafe"
@@ -46,7 +47,8 @@ func (id ID) Class() Class {
 
 // Send is a convenience method for sending messages to objects.
 func (id ID) Send(sel SEL, args ...interface{}) ID {
-	tmp := createArgs(id, sel, args...)
+	tmp, keepAlive := createArgs(id, sel, args...)
+	defer keepAlive()
 	ret, _, _ := purego.SyscallN(objc_msgSend, tmp...)
 	return ID(ret)
 }
@@ -65,16 +67,18 @@ func (id ID) SendSuper(sel SEL, args ...interface{}) ID {
 		receiver:   id,
 		superClass: id.Class(),
 	}
-	tmp := createArgs(0, sel, args...)
+	tmp, keepAlive := createArgs(0, sel, args...)
+	defer keepAlive()
 	tmp[0] = uintptr(unsafe.Pointer(super)) // if createArgs splits the stack the pointer would be wrong
 	ret, _, _ := purego.SyscallN(objc_msgSendSuper2, tmp...)
 	return ID(ret)
 }
 
-func createArgs(cls ID, sel SEL, args ...interface{}) (out []uintptr) {
+func createArgs(cls ID, sel SEL, args ...interface{}) (out []uintptr, keepAlive func()) {
 	out = make([]uintptr, 2, len(args)+2)
 	out[0] = uintptr(cls)
 	out[1] = uintptr(sel)
+	var alive []interface{}
 	for _, a := range args {
 		switch v := a.(type) {
 		case ID:
@@ -91,7 +95,18 @@ func createArgs(cls ID, sel SEL, args ...interface{}) (out []uintptr) {
 			} else {
 				out = append(out, uintptr(0))
 			}
+		case string:
+			c := strings.CString(v)
+			alive = append(alive, c)
+			// NOTE: that although the pointer will be kept alive
+			// if there are any stack splits before this uintptr
+			// is no longer needed the pointer will point to random memory.
+			out = append(out, uintptr(unsafe.Pointer(c)))
 		case unsafe.Pointer:
+			alive = append(alive, v)
+			// NOTE: that although the pointer will be kept alive
+			// if there are any stack splits before this uintptr
+			// is no longer needed the pointer will point to random memory.
 			out = append(out, uintptr(v))
 		case uintptr:
 			out = append(out, v)
@@ -103,7 +118,9 @@ func createArgs(cls ID, sel SEL, args ...interface{}) (out []uintptr) {
 			panic(fmt.Sprintf("objc: unknown type %T", v))
 		}
 	}
-	return out
+	return out, func() {
+		runtime.KeepAlive(alive)
+	}
 }
 
 // SEL is an opaque type that represents a method selector
@@ -159,12 +176,13 @@ func (c Class) AddMethod(name SEL, imp _IMP, types string) bool {
 // It may only be called after AllocateClassPair and before Register.
 // Adding an instance variable to an existing class is not supported.
 // The class must not be a metaclass. Adding an instance variable to a metaclass is not supported.
-// The instance variable's minimum alignment in bytes is 1<<align. The minimum alignment of an
-// instance variable depends on the ivar's type and the machine architecture.
-// For variables of any pointer type, pass log2(sizeof(pointer_type)).
-func (c Class) AddIvar(name string, size uintptr, alignment uint8, types string) bool {
+// It takes the instance of the type of the Ivar and a string representing the type.
+func (c Class) AddIvar(name string, ty interface{}, types string) bool {
 	n := strings.CString(name)
 	t := strings.CString(types)
+	typeOf := reflect.TypeOf(ty)
+	size := typeOf.Size()
+	alignment := uint8(math.Log2(float64(typeOf.Align())))
 	ret, _, _ := purego.SyscallN(class_addIvar, uintptr(c), uintptr(unsafe.Pointer(n)), size, uintptr(alignment), uintptr(unsafe.Pointer(t)))
 	runtime.KeepAlive(n)
 	runtime.KeepAlive(t)
@@ -179,7 +197,7 @@ func (c Class) InstanceVariable(name string) Ivar {
 	return Ivar(ret)
 }
 
-// Register registers a class that was allocated using objc_allocateClassPair.
+// Register registers a class that was allocated using AllocateClassPair.
 // It can now be used to make objects by sending it either alloc and init or new.
 func (c Class) Register() {
 	purego.SyscallN(objc_registerClassPair, uintptr(c))
@@ -190,7 +208,7 @@ type Ivar uintptr
 
 // Offset returns the offset of an instance variable that can be used to assign and read the Ivar's value.
 //
-// For instance variables of type id or other object types, call Ivar and SetIvar instead
+// For instance variables of type ID or other object types, call Ivar and SetIvar instead
 // of using this offset to access the instance variable data directly.
 func (i Ivar) Offset() uintptr {
 	ret, _, _ := purego.SyscallN(ivar_getOffset, uintptr(i))
@@ -201,7 +219,7 @@ func (i Ivar) Offset() uintptr {
 // it with the IMP function
 type _IMP uintptr
 
-// IMP takes a Go function that takes (id, SEL) as its first two arguments. It returns an _IMP function
+// IMP takes a Go function that takes (ID, SEL) as its first two arguments. It returns an _IMP function
 // pointer that can be called by Objective-C code. The function pointer is never deallocated.
 func IMP(fn interface{}) _IMP {
 	// this is only here so that it is easier to port C code to Go.
@@ -211,18 +229,18 @@ func IMP(fn interface{}) _IMP {
 	if x, ok := fn.(uintptr); ok {
 		return _IMP(x)
 	}
-	val := reflect.ValueOf(fn)
-	if val.Kind() != reflect.Func {
+	ty := reflect.TypeOf(fn)
+	if ty.Kind() != reflect.Func {
 		panic("objc: not a function")
 	}
 	// IMP is stricter than a normal callback
 	// id (*IMP)(id, SEL, ...)
 	switch {
-	case val.Type().NumIn() < 2:
+	case ty.NumIn() < 2:
 		fallthrough
-	case val.Type().In(0).Kind() != reflect.Uintptr:
+	case ty.In(0).Kind() != reflect.Uintptr:
 		fallthrough
-	case val.Type().In(1).Kind() != reflect.Uintptr:
+	case ty.In(1).Kind() != reflect.Uintptr:
 		panic("objc: IMP must take a (id, SEL) as its first two arguments")
 	}
 	return _IMP(purego.NewCallback(fn))
