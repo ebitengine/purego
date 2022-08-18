@@ -22,7 +22,7 @@ func _cgo_sys_thread_start(ts *ThreadStart) {
 	// Leave stacklo=0 and set stackhi=size; mstart will do the rest.
 	ts.g.stackhi = uintptr(size)
 
-	err = _cgo_try_pthread_create(&p, &attr, uintptr(unsafe.Pointer(threadentry_trampolineABI0)), ts)
+	err = _cgo_try_pthread_create(&p, &attr, unsafe.Pointer(threadentry_trampolineABI0), ts)
 
 	pthread_sigmask(SIG_SETMASK, &oset, nil)
 
@@ -57,7 +57,7 @@ func threadentry(v unsafe.Pointer) unsafe.Pointer {
 	return nil
 }
 
-func setg_trampoline(setg uintptr, g uintptr)
+func setg_trampoline(setg uintptr, G uintptr)
 
 // here we will store a pointer to the provided setg func
 var setg_func uintptr

@@ -30,7 +30,7 @@ func pthread_create(thread *pthread_t, attr *pthread_attr_t, start, arg unsafe.P
 func pthread_detach(thread pthread_t) int32
 
 //go:noescape
-func pthread_sigmask(how sighow, ign *sigset_t, oset *sigset_t)
+func pthread_sigmask(how sighow, ign *sigset_t, oset *sigset_t) int32
 
 //go:noescape
 func pthread_attr_getstacksize(attr *pthread_attr_t, stacksize *size_t) int32
@@ -41,7 +41,7 @@ func pthread_attr_destroy(attr *pthread_attr_t) int32
 func abort()
 
 //go:noescape
-func sigfillset(ign *sigset_t) int32
+func sigfillset(set *sigset_t) int32
 
 //go:noescape
 func nanosleep(ts *timespec, rem *timespec) int32

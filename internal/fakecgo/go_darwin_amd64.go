@@ -22,7 +22,7 @@ func _cgo_sys_thread_start(ts *ThreadStart) {
 	// Leave stacklo=0 and set stackhi=size; mstart will do the rest.
 	ts.g.stackhi = uintptr(size)
 
-	err = _cgo_try_pthread_create(&p, &attr, uintptr(unsafe.Pointer(threadentry_trampolineABI0)), ts)
+	err = _cgo_try_pthread_create(&p, &attr, unsafe.Pointer(threadentry_trampolineABI0), ts)
 
 	pthread_sigmask(SIG_SETMASK, &oset, nil)
 

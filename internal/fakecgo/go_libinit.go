@@ -17,13 +17,13 @@ func x_cgo_notify_runtime_init_done() {
 // EAGAIN.
 //
 //go:nosplit
-func _cgo_try_pthread_create(thread *pthread_t, attr *pthread_attr_t, pfn uintptr, arg *ThreadStart) int {
+func _cgo_try_pthread_create(thread *pthread_t, attr *pthread_attr_t, pfn unsafe.Pointer, arg *ThreadStart) int {
 	var tries int
 	var err int
 	var ts timespec
 
 	for tries = 0; tries < 20; tries++ {
-		err = int(pthread_create(thread, attr, unsafe.Pointer(pfn), unsafe.Pointer(arg)))
+		err = int(pthread_create(thread, attr, pfn, unsafe.Pointer(arg)))
 		if err == 0 {
 			pthread_detach(*thread)
 			return 0
