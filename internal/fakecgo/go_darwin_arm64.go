@@ -18,8 +18,7 @@ func _cgo_sys_thread_start(ts *ThreadStart) {
 	pthread_attr_getstacksize(&attr, &size)
 	// Leave stacklo=0 and set stackhi=size; mstart will do the rest.
 	ts.g.stackhi = uintptr(size)
-	print("threadentry: ")
-	println(threadentry_trampolineABI0)
+
 	err = _cgo_try_pthread_create(&p, &attr, uintptr(unsafe.Pointer(threadentry_trampolineABI0)), ts)
 
 	pthread_sigmask(SIG_SETMASK, &oset, nil)
