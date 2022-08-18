@@ -5,20 +5,11 @@ package objc_test
 
 import (
 	"fmt"
-	"runtime"
 	"unsafe"
 
 	"github.com/ebitengine/purego"
 	"github.com/ebitengine/purego/objc"
 )
-
-func init() {
-	// this is here so that the program doesn't crash with:
-	// 		fatal error: schedule: in cgo
-	// this can be removed after purego#12 is solved.
-	// this is due to moving goroutines to different threads while in C code
-	runtime.LockOSThread()
-}
 
 func ExampleAllocateClassPair() {
 	var class = objc.AllocateClassPair(objc.GetClass("NSObject"), "FooObject", 0)
