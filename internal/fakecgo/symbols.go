@@ -7,6 +7,7 @@ func memmove(to, from unsafe.Pointer, n uintptr)
 
 func malloc(size uintptr) unsafe.Pointer
 
+//go:nosplit
 func free(ptr unsafe.Pointer)
 
 func setenv(name *byte, value *byte, overwrite int32) int32

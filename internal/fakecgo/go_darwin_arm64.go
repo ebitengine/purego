@@ -10,10 +10,6 @@ func _cgo_sys_thread_start(ts *ThreadStart) {
 	var size size_t
 	var err int
 
-	//print("fakecgo: _cgo_sys_thread_start: fn=")
-	//print(ts.fn)
-	//print(", g=")
-	//println(ts.g)
 	//fprintf(stderr, "runtime/cgo: _cgo_sys_thread_start: fn=%p, g=%p\n", ts->fn, ts->g); // debug
 	sigfillset(&ign)
 	pthread_sigmask(SIG_SETMASK, &ign, &oset)
@@ -24,7 +20,7 @@ func _cgo_sys_thread_start(ts *ThreadStart) {
 	ts.g.stackhi = uintptr(size)
 	print("threadentry: ")
 	println(threadentry_trampolineABI0)
-	err = _cgo_try_pthread_create(&p, &attr, threadentry_trampolineABI0, ts)
+	err = _cgo_try_pthread_create(&p, &attr, uintptr(unsafe.Pointer(threadentry_trampolineABI0)), ts)
 
 	pthread_sigmask(SIG_SETMASK, &oset, nil)
 
@@ -35,11 +31,14 @@ func _cgo_sys_thread_start(ts *ThreadStart) {
 	}
 }
 
-// threadentry_trampolineABI0 maps the C ABI to Go ABI then calls the Go functions
-var threadentry_trampolineABI0 uintptr
+// threadentry_trampolineABI0 maps the C ABI to Go ABI then calls the Go function
+//
+//go:linkname x_threadentry_trampoline threadentry_trampoline
+var x_threadentry_trampoline byte
+var threadentry_trampolineABI0 = &x_threadentry_trampoline
 
+//go:nosplit
 func threadentry(v unsafe.Pointer) unsafe.Pointer {
-	println("made it here")
 	ts := *(*ThreadStart)(v)
 	free(v)
 
@@ -47,10 +46,16 @@ func threadentry(v unsafe.Pointer) unsafe.Pointer {
 	//#if TARGET_OS_IPHONE
 	//	darwin_arm_init_thread_exception_port();
 	//#endif
-	_ = ts
+	setg_trampoline(setg_func, uintptr(unsafe.Pointer(ts.g)))
+
+	// faking funcs in go is a bit a... involved - but the following works :)
+	fn := uintptr(unsafe.Pointer(&ts.fn))
+	(*(*func())(unsafe.Pointer(&fn)))()
 	//	crosscall1(ts.fn, setg_gcc, (void*)ts.g);
 	return nil
 }
+
+func setg_trampoline(setg uintptr, g uintptr)
 
 // here we will store a pointer to the provided setg func
 var setg_func uintptr
