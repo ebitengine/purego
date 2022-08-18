@@ -32,7 +32,7 @@ TEXT x_cgo_notify_runtime_init_done_trampoline(SB), NOSPLIT, $0-0
 
 // func setg_trampoline(setg uintptr, g uintptr)
 TEXT ·setg_trampoline(SB), NOSPLIT, $0-16
-	MOVD _g+8(FP), R0
+	MOVD G+8(FP), R0
 	MOVD setg+0(FP), R1
 	CALL R1
 	RET
@@ -68,19 +68,19 @@ TEXT ·free(SB), NOSPLIT, $0-0
 	CALL libc_free(SB)
 	RET
 
-TEXT ·pthread_attr_init(SB), NOSPLIT, $0-8
+TEXT ·pthread_attr_init(SB), NOSPLIT, $0-12
 	MOVD attr+0(FP), R0
 	CALL libc_pthread_attr_init(SB)
 	MOVD R0, ret+8(FP)
 	RET
 
-TEXT ·pthread_detach(SB), NOSPLIT, $0-8
+TEXT ·pthread_detach(SB), NOSPLIT, $0-12
 	MOVD thread+0(FP), R0
 	CALL libc_pthread_detach(SB)
 	MOVD R0, ret+8(FP)
 	RET
 
-TEXT ·pthread_create(SB), NOSPLIT, $0-8
+TEXT ·pthread_create(SB), NOSPLIT, $0-36
 	MOVD thread+0(FP), R0
 	MOVD attr+8(FP), R1
 	MOVD start+16(FP), R2
@@ -104,8 +104,8 @@ TEXT ·pthread_attr_getstacksize(SB), NOSPLIT, $0-0
 
 TEXT ·pthread_sigmask(SB), NOSPLIT, $0-0
 	MOVD how+0(FP), R0
-	MOVD new+8(FP), R1
-	MOVD old+16(FP), R2
+	MOVD ign+8(FP), R1
+	MOVD oset+16(FP), R2
 	CALL libc_pthread_sigmask(SB)
 	MOVD R0, ret+24(FP)
 	RET
@@ -114,15 +114,15 @@ TEXT ·abort(SB), NOSPLIT, $0-0
 	CALL libc_abort(SB)
 	RET
 
-TEXT ·sigfillset(SB), NOSPLIT, $0-8
-	MOVD attr+0(FP), R0
+TEXT ·sigfillset(SB), NOSPLIT, $0-12
+	MOVD set+0(FP), R0
 	CALL libc_sigfillset(SB)
 	MOVD R0, ret+8(FP)
 	RET
 
-TEXT ·nanosleep(SB), NOSPLIT, $0-8
+TEXT ·nanosleep(SB), NOSPLIT, $0-20
 	MOVD ts+0(FP), R0
-	MOVD ts+8(FP), R1
+	MOVD rem+8(FP), R1
 	CALL libc_nanosleep(SB)
 	MOVD R0, ret+16(FP)
 	RET
