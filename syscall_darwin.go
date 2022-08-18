@@ -10,12 +10,6 @@ import (
 	"unsafe"
 )
 
-func callc(fn uintptr, args unsafe.Pointer) {
-	runtime_entersyscall()
-	runtime_libcCall(fn, args)
-	runtime_exitsyscall()
-}
-
 var syscall9XABI0 uintptr
 
 type syscall9Args struct{ fn, a1, a2, a3, a4, a5, a6, a7, a8, a9, r1, r2, err uintptr }
