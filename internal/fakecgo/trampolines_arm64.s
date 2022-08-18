@@ -27,8 +27,13 @@ TEXT x_cgo_notify_runtime_init_done_trampoline(SB), NOSPLIT, $0-0
 	CALL ·x_cgo_notify_runtime_init_done(SB)
 	RET
 
-GLOBL ·threadentry_trampolineABI0(SB), NOPTR|RODATA, $8
-DATA ·threadentry_trampolineABI0(SB)/8, $threadentry_trampoline(SB)
+// func setg_trampoline(setg uintptr, g uintptr)
+TEXT ·setg_trampoline(SB), NOSPLIT, $0-16
+	MOVD _g+8(FP), R0
+	MOVD setg+0(FP), R1
+	CALL R1
+	RET
+
 TEXT threadentry_trampoline(SB), NOSPLIT, $0-0
 	MOVD R0, 8(RSP)
 	CALL ·threadentry(SB)
