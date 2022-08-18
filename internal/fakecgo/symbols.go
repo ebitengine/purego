@@ -20,7 +20,7 @@ func unsetenv(name *byte) int32
 //go:noescape
 func pthread_attr_init(attr *pthread_attr_t) int32
 
-//go:nosplit
+//go:noescape
 func pthread_create(thread *pthread_t, attr *pthread_attr_t, start, arg unsafe.Pointer) int32
 
 func pthread_detach(thread pthread_t) int32
