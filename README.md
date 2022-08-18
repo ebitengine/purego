@@ -11,3 +11,6 @@ This is a list of the copied files:
 
 * `zcallback_darwin_*.s` from package `runtime`
 * `internal/abi/abi_*.h` from package `runtime/cgo`
+* `internal/fakecgo/callbacks.go` from package `runtime/cgo`
+* `internal/fakecgo/iscgo.go` from package `runtime/cgo`
+* `internal/fakecgo/setenv.go` from package `runtime/cgo`
