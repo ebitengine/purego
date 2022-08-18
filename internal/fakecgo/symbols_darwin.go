@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2022 The Ebitengine Authors
+
 package fakecgo
 
 //go:cgo_import_dynamic libc_malloc malloc "libSystem.dylib"
