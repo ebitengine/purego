@@ -1,8 +1,10 @@
+// Copyright 2011 The Go Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package fakecgo
 
-import (
-	_ "unsafe"
-)
+import _ "unsafe" // for go:linkname
 
 //go:linkname x_cgo_setenv_trampoline x_cgo_setenv_trampoline
 //go:linkname _cgo_setenv runtime._cgo_setenv
