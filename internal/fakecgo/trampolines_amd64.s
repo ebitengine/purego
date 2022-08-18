@@ -52,7 +52,7 @@ TEXT x_cgo_notify_runtime_init_done_trampoline(SB), NOSPLIT, $0
 
 // func setg_trampoline(setg uintptr, g uintptr)
 TEXT ·setg_trampoline(SB), NOSPLIT, $0-16
-	MOVQ _g+8(FP), DI
+	MOVQ G+8(FP), DI
 	MOVQ setg+0(FP), AX
 	CALL AX
 	RET
@@ -66,15 +66,15 @@ TEXT threadentry_trampoline(SB), NOSPLIT, $16
 TEXT ·setenv(SB), NOSPLIT, $0-0
 	MOVQ name+0(FP), DI
 	MOVQ value+8(FP), SI
-	MOVQ overwrite+16(FP), DX
+	MOVL overwrite+16(FP), DX
 	CALL libc_setenv(SB)
-	MOVQ AX, ret+24(FP)
+	MOVL AX, ret+24(FP)
 	RET
 
 TEXT ·unsetenv(SB), NOSPLIT, $0-0
 	MOVQ name+0(FP), DI
 	CALL libc_unsetenv(SB)
-	MOVQ AX, ret+8(FP)
+	MOVL AX, ret+8(FP)
 	RET
 
 TEXT ·malloc(SB), NOSPLIT, $0-0
@@ -88,61 +88,61 @@ TEXT ·free(SB), NOSPLIT, $0-0
 	CALL libc_free(SB)
 	RET
 
-TEXT ·pthread_attr_init(SB), NOSPLIT, $0-8
+TEXT ·pthread_attr_init(SB), NOSPLIT, $0-12
 	MOVQ attr+0(FP), DI
 	CALL libc_pthread_attr_init(SB)
-	MOVQ AX, ret+8(FP)
+	MOVL AX, ret+8(FP)
 	RET
 
-TEXT ·pthread_detach(SB), NOSPLIT, $0-8
+TEXT ·pthread_detach(SB), NOSPLIT, $0-12
 	MOVQ thread+0(FP), DI
 	CALL libc_pthread_detach(SB)
-	MOVQ AX, ret+8(FP)
+	MOVL AX, ret+8(FP)
 	RET
 
-TEXT ·pthread_create(SB), NOSPLIT, $0-8
+TEXT ·pthread_create(SB), NOSPLIT, $0-36
 	MOVQ thread+0(FP), DI
 	MOVQ attr+8(FP), SI
 	MOVQ start+16(FP), DX
 	MOVQ arg+24(FP), CX
 	CALL libc_pthread_create(SB)
-	MOVQ AX, ret+32(FP)
+	MOVL AX, ret+32(FP)
 	RET
 
 TEXT ·pthread_attr_destroy(SB), NOSPLIT, $0-0
 	MOVQ attr+0(FP), DI
 	CALL libc_pthread_attr_destroy(SB)
-	MOVQ AX, ret+8(FP)
+	MOVL AX, ret+8(FP)
 	RET
 
 TEXT ·pthread_attr_getstacksize(SB), NOSPLIT, $0-0
 	MOVQ attr+0(FP), DI
 	MOVQ stacksize+8(FP), SI
 	CALL libc_pthread_attr_getstacksize(SB)
-	MOVQ AX, ret+16(FP)
+	MOVL AX, ret+16(FP)
 	RET
 
 TEXT ·pthread_sigmask(SB), NOSPLIT, $0-0
-	MOVQ how+0(FP), DI
-	MOVQ new+8(FP), SI
-	MOVQ old+16(FP), DX
+	MOVL how+0(FP), DI
+	MOVQ ign+8(FP), SI
+	MOVQ oset+16(FP), DX
 	CALL libc_pthread_sigmask(SB)
-	MOVQ AX, ret+24(FP)
+	MOVL AX, ret+24(FP)
 	RET
 
 TEXT ·abort(SB), NOSPLIT, $0-0
 	CALL libc_abort(SB)
 	RET
 
-TEXT ·sigfillset(SB), NOSPLIT, $0-8
-	MOVQ attr+0(FP), DI
+TEXT ·sigfillset(SB), NOSPLIT, $0-12
+	MOVQ set+0(FP), DI
 	CALL libc_sigfillset(SB)
-	MOVQ AX, ret+8(FP)
+	MOVL AX, ret+8(FP)
 	RET
 
-TEXT ·nanosleep(SB), NOSPLIT, $0-8
+TEXT ·nanosleep(SB), NOSPLIT, $0-20
 	MOVQ ts+0(FP), DI
-	MOVQ ts+8(FP), SI
+	MOVQ rem+8(FP), SI
 	CALL libc_nanosleep(SB)
-	MOVQ AX, ret+16(FP)
+	MOVL AX, ret+16(FP)
 	RET
