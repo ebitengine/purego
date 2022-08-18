@@ -53,7 +53,7 @@ func threadentry(v unsafe.Pointer) unsafe.Pointer {
 	return nil
 }
 
-func setg_trampoline(setg uintptr, g uintptr)
+func setg_trampoline(setg uintptr, G uintptr)
 
 // here we will store a pointer to the provided setg func
 var setg_func uintptr
