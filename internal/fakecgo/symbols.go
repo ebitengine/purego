@@ -5,6 +5,8 @@ package fakecgo
 
 import "unsafe"
 
+func setg_trampoline(setg uintptr, G uintptr)
+
 //go:linkname memmove runtime.memmove
 func memmove(to, from unsafe.Pointer, n uintptr)
 
