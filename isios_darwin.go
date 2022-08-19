@@ -8,4 +8,4 @@ package purego
 // purego does not support this mode yet.
 // the fix is to set CGO_ENABLED=1 which will require
 // a C compiler.
-var _ = PUREGO_REQUIRES_CGO_ON_IOS
+var _ = _PUREGO_REQUIRES_CGO_ON_IOS
