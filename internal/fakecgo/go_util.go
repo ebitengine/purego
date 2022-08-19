@@ -17,6 +17,7 @@ func x_cgo_thread_start(arg *ThreadStart) {
 		println("fakecgo: out of memory in thread_start")
 		abort()
 	}
+	// *ts = *arg would cause a writebarrier so use memmove instead
 	memmove(unsafe.Pointer(ts), unsafe.Pointer(arg), unsafe.Sizeof(*ts))
 	_cgo_sys_thread_start(ts) /* OS-dependent half */
 }
