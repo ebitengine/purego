@@ -9,4 +9,7 @@ package purego
 // if CGO_ENABLED=1 import the Cgo runtime to ensure that it is set up properly.
 // This is required since some frameworks need TLS setup the C way which Go doesn't do.
 // We currently don't support ios in fakecgo mode so force Cgo or fail
+// this import is necessary because normally when `import "C"` is used this package
+// get imported automatically. It usually isn't possible to call into C without
+// using that import. However, with purego it is since we don't use `import "C"`!
 import _ "runtime/cgo"
