@@ -5,7 +5,14 @@ package fakecgo
 
 import "unsafe"
 
-/* Stub for creating a new thread */
+// _cgo_thread_start is split into three parts in cgo since only one part is system dependent (keep it here for easier handling)
+
+// _cgo_thread_start(ThreadStart *arg) (runtime/cgo/gcc_util.c)
+// This get's called instead of the go code for creating new threads
+// -> pthread_* stuff is used, so threads are setup correctly for C
+// If this is missing, TLS is only setup correctly on thread 1!
+// This function should be go:systemstack instead of go:nosplit (but that requires runtime)
+//
 //go:nosplit
 func x_cgo_thread_start(arg *ThreadStart) {
 	var ts *ThreadStart
