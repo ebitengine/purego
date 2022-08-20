@@ -16,7 +16,7 @@ import "unsafe"
 //go:nosplit
 func x_cgo_thread_start(arg *ThreadStart) {
 	var ts *ThreadStart
-	/* Make our own copy that can persist after we return. */
+	// Make our own copy that can persist after we return.
 	//	_cgo_tsan_acquire();
 	ts = (*ThreadStart)(malloc(unsafe.Sizeof(*ts)))
 	//	_cgo_tsan_release();
