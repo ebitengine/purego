@@ -221,13 +221,6 @@ type IMP uintptr
 // NewIMP takes a Go function that takes (ID, SEL) as its first two arguments. It returns an IMP function
 // pointer that can be called by Objective-C code. The function pointer is never deallocated.
 func NewIMP(fn interface{}) IMP {
-	// this is only here so that it is easier to port C code to Go.
-	// this is not guaranteed to be here forever so make sure to port your callbacks to Go
-	// If you have a C function pointer cast it to a uintptr before passing it
-	// to this function.
-	if x, ok := fn.(uintptr); ok {
-		return IMP(x)
-	}
 	ty := reflect.TypeOf(fn)
 	if ty.Kind() != reflect.Func {
 		panic("objc: not a function")
