@@ -2,24 +2,24 @@
 // SPDX-FileCopyrightText: 2022 The Ebitengine Authors
 
 /*
-    trampoline for emulating required C functions for cgo in go (see cgo.go)
-    (we convert cdecl calling convention to go and vice-versa)
+trampoline for emulating required C functions for cgo in go (see cgo.go)
+(we convert cdecl calling convention to go and vice-versa)
 
-    Since we're called from go and call into C we can cheat a bit with the calling conventions:
-     - in go all the registers are caller saved
-     - in C we have a couple of callee saved registers
+Since we're called from go and call into C we can cheat a bit with the calling conventions:
+ - in go all the registers are caller saved
+ - in C we have a couple of callee saved registers
 
-    => we can use BX, R12, R13, R14, R15 instead of the stack
+=> we can use BX, R12, R13, R14, R15 instead of the stack
 
-    C Calling convention cdecl used here (we only need integer args):
-    1. arg: DI
-    2. arg: SI
-    3. arg: DX
-    4. arg: CX
-    5. arg: R8
-    6. arg: R9
-    We don't need floats with these functions -> AX=0
-    return value will be in AX
+C Calling convention cdecl used here (we only need integer args):
+1. arg: DI
+2. arg: SI
+3. arg: DX
+4. arg: CX
+5. arg: R8
+6. arg: R9
+We don't need floats with these functions -> AX=0
+return value will be in AX
 */
 #include "textflag.h"
 #include "go_asm.h"
