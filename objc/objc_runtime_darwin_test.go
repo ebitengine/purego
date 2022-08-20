@@ -22,7 +22,7 @@ func init() {
 
 func ExampleAllocateClassPair() {
 	var class = objc.AllocateClassPair(objc.GetClass("NSObject"), "FooObject", 0)
-	class.AddMethod(objc.RegisterName("run"), objc.IMP(func(self objc.ID, _cmd objc.SEL) {
+	class.AddMethod(objc.RegisterName("run"), objc.NewIMP(func(self objc.ID, _cmd objc.SEL) {
 		fmt.Println("Hello World!")
 	}), "v@:")
 	class.Register()
@@ -36,10 +36,10 @@ func ExampleClass_AddIvar() {
 	var class = objc.AllocateClassPair(objc.GetClass("NSObject"), "BarObject", 0)
 	class.AddIvar("bar", int(0), "q")
 	var barOffset = class.InstanceVariable("bar").Offset()
-	class.AddMethod(objc.RegisterName("bar"), objc.IMP(func(self objc.ID, _cmd objc.SEL) int {
+	class.AddMethod(objc.RegisterName("bar"), objc.NewIMP(func(self objc.ID, _cmd objc.SEL) int {
 		return *(*int)(unsafe.Pointer(uintptr(unsafe.Pointer(self)) + barOffset))
 	}), "q@:")
-	class.AddMethod(objc.RegisterName("setBar:"), objc.IMP(func(self objc.ID, _cmd objc.SEL, bar int) {
+	class.AddMethod(objc.RegisterName("setBar:"), objc.NewIMP(func(self objc.ID, _cmd objc.SEL, bar int) {
 		*(*int)(unsafe.Pointer(uintptr(unsafe.Pointer(self)) + barOffset)) = bar
 	}), "v@:q")
 	class.Register()
@@ -52,7 +52,7 @@ func ExampleClass_AddIvar() {
 }
 
 func ExampleIMP() {
-	imp := objc.IMP(func(self objc.ID, _cmd objc.SEL) {
+	imp := objc.NewIMP(func(self objc.ID, _cmd objc.SEL) {
 		fmt.Println("IMP:", self, _cmd)
 	})
 
@@ -63,13 +63,13 @@ func ExampleIMP() {
 
 func ExampleID_SendSuper() {
 	super := objc.AllocateClassPair(objc.GetClass("NSObject"), "SuperObject", 0)
-	super.AddMethod(objc.RegisterName("doSomething"), objc.IMP(func(self objc.ID, _cmd objc.SEL) {
+	super.AddMethod(objc.RegisterName("doSomething"), objc.NewIMP(func(self objc.ID, _cmd objc.SEL) {
 		fmt.Println("In Super!")
 	}), "v@:")
 	super.Register()
 
 	child := objc.AllocateClassPair(super, "ChildObject", 0)
-	child.AddMethod(objc.RegisterName("doSomething"), objc.IMP(func(self objc.ID, _cmd objc.SEL) {
+	child.AddMethod(objc.RegisterName("doSomething"), objc.NewIMP(func(self objc.ID, _cmd objc.SEL) {
 		fmt.Println("In Child")
 		self.SendSuper(_cmd)
 	}), "v@:")

@@ -87,7 +87,7 @@ func createArgs(cls ID, sel SEL, args ...interface{}) (out []uintptr, keepAlive 
 			out = append(out, uintptr(v))
 		case SEL:
 			out = append(out, uintptr(v))
-		case _IMP:
+		case IMP:
 			out = append(out, uintptr(v))
 		case bool:
 			if v {
@@ -165,7 +165,7 @@ func (c Class) SuperClass() Class {
 // The types argument is a string containing the mapping of parameters and return type.
 // Since the function must take at least two arguments—self and _cmd, the second and third
 // characters must be “@:” (the first character is the return type).
-func (c Class) AddMethod(name SEL, imp _IMP, types string) bool {
+func (c Class) AddMethod(name SEL, imp IMP, types string) bool {
 	t := strings.CString(types)
 	ret, _, _ := purego.SyscallN(class_addMethod, uintptr(c), uintptr(name), uintptr(imp), uintptr(unsafe.Pointer(t)))
 	runtime.KeepAlive(t)
@@ -215,20 +215,12 @@ func (i Ivar) Offset() uintptr {
 	return ret
 }
 
-// _IMP is unexported so that the only way to make this type is by providing a Go function and casting
-// it with the IMP function
-type _IMP uintptr
+// IMP is a function pointer that can be called by Objective-C code.
+type IMP uintptr
 
-// IMP takes a Go function that takes (ID, SEL) as its first two arguments. It returns an _IMP function
+// NewIMP takes a Go function that takes (ID, SEL) as its first two arguments. It returns an IMP function
 // pointer that can be called by Objective-C code. The function pointer is never deallocated.
-func IMP(fn interface{}) _IMP {
-	// this is only here so that it is easier to port C code to Go.
-	// this is not guaranteed to be here forever so make sure to port your callbacks to Go
-	// If you have a C function pointer cast it to a uintptr before passing it
-	// to this function.
-	if x, ok := fn.(uintptr); ok {
-		return _IMP(x)
-	}
+func NewIMP(fn interface{}) IMP {
 	ty := reflect.TypeOf(fn)
 	if ty.Kind() != reflect.Func {
 		panic("objc: not a function")
@@ -241,7 +233,7 @@ func IMP(fn interface{}) _IMP {
 	case ty.In(0).Kind() != reflect.Uintptr:
 		fallthrough
 	case ty.In(1).Kind() != reflect.Uintptr:
-		panic("objc: IMP must take a (id, SEL) as its first two arguments")
+		panic("objc: NewIMP must take a (id, SEL) as its first two arguments")
 	}
-	return _IMP(purego.NewCallback(fn))
+	return IMP(purego.NewCallback(fn))
 }
