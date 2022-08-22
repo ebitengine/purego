@@ -18,7 +18,10 @@ const maxArgs = 9
 //
 // On amd64, if there are more than 8 floats the 9th and so on will be placed incorrectly on the
 // stack.
-//go:nosplit
+//
+// the pragma go:nosplit is not needed at this function declaration because it uses go:uintptrescapes
+// to push all the uintptr onto the heap where a stack split won't affect their memory location.
+//
 //go:uintptrescapes
 func SyscallN(fn uintptr, args ...uintptr) (r1, r2, err uintptr) {
 	if fn == 0 {
