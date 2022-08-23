@@ -19,7 +19,7 @@ const maxArgs = 9
 // On amd64, if there are more than 8 floats the 9th and so on will be placed incorrectly on the
 // stack.
 //
-// the pragma go:nosplit is not needed at this function declaration because it uses go:uintptrescapes
+// The pragma go:nosplit is not needed at this function declaration because it uses go:uintptrescapes
 // which forces all the objects that the uintptrs point to onto the heap where a stack split won't affect
 // their memory location.
 //
