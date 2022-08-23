@@ -20,7 +20,8 @@ const maxArgs = 9
 // stack.
 //
 // the pragma go:nosplit is not needed at this function declaration because it uses go:uintptrescapes
-// to push all the uintptr onto the heap where a stack split won't affect their memory location.
+// which forces all the objects that the uintptrs point to onto the heap where a stack split won't affect
+// their memory location.
 //
 //go:uintptrescapes
 func SyscallN(fn uintptr, args ...uintptr) (r1, r2, err uintptr) {
