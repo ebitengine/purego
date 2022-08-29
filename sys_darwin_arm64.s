@@ -65,11 +65,13 @@ TEXT syscall9X(SB), NOSPLIT, $0
 
 // runtime·cgocallback expects a call to the ABIInternal function
 // However, the tag <ABIInternal> is only available in the runtime :(
-// This is a small wrapper function that moves the parameter from R0 to the stack
-// where the Go function can find it. It then branches without link.
+// This is a small wrapper function that copies both whatever is in the register
+// and is on the stack and places both on the stack. It then calls callbackWrapPicker
+// which will choose which parameter should be used depending on the version of Go.
+// It then calls the real version of callbackWrap
 TEXT callbackWrapInternal<>(SB), NOSPLIT, $0-0
-	MOVD R0, 8(RSP)
-	B    ·callbackWrap(SB)
+	MOVD R0, 16(RSP)
+	B    ·callbackWrapPicker(SB)
 	RET
 
 TEXT callbackasm1(SB), NOSPLIT, $208-0
