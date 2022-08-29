@@ -6,7 +6,7 @@
 
 package purego
 
-// stackCallingConvention represents all versions of Go that use the stack
-// to pass parameters to functions. This is used to circumvent
+// stackCallingConvention represents whether the stacks or the
+// registers are used to pass parameters to functions. This is used to circumvent
 // the need for ABIInternal tag which is only allowed in the runtime.
 const stackCallingConvention = true
