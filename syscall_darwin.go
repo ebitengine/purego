@@ -95,6 +95,20 @@ const callbackMaxFrame = 64 * ptrSize
 // callbackasmABI0 is implemented in zcallback_GOOS_GOARCH.s
 var callbackasmABI0 uintptr
 
+// callbackWrapPicker gets whatever is on the stack and in the first register.
+// Depending on which version of Go that uses stack or register-based
+// calling it passes the respective argument to the real calbackWrap function.
+// The other argument is therefore invalid and points to undefined memory so don't use it.
+// This function is necessary since we can't use the ABIInternal selector which is only
+// valid in the runtime.
+func callbackWrapPicker(stack, register *callbackArgs) {
+	if stackCallingConvention {
+		callbackWrap(stack)
+	} else {
+		callbackWrap(register)
+	}
+}
+
 // callbackWrap is called by assembly code which determines which Go function to call.
 // This function takes the arguments and passes them to the Go function and returns the result.
 func callbackWrap(a *callbackArgs) {
