@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2022 The Ebitengine Authors
 
+//go:build darwin
+// +build darwin
+
 /*
 trampoline for emulating required C functions for cgo in go (see cgo.go)
 (we convert cdecl calling convention to go and vice-versa)
