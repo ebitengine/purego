@@ -2,6 +2,9 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+//go:build darwin
+// +build darwin
+
 // The runtime package contains an uninitialized definition
 // for runtime·iscgo. Override it to tell the runtime we're here.
 // There are various function pointers that should be set too,
