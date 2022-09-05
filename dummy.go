@@ -5,7 +5,7 @@
 // +build dummy
 
 // This file exists purely to prevent the Go toolchain from stripping
-// away the c source directories and files when `go mod vendor` is used
+// away the C source directories and files when `go mod vendor` is used
 // to populate a `vendor/` directory of a project depending on this package.
 
 package purego
