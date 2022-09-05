@@ -56,6 +56,21 @@ jobs:
           # Check cross-compiling Windows binaries.
           env GOOS=windows GOARCH=arm64 go build -v ./...
 
+      - name: go mod vendor
+        run: |
+          mkdir /tmp/vendoring
+          cd /tmp/vendoring
+          go mod init foo
+          echo 'package main' > main.go
+          echo 'import (' >> main.go
+          echo '  _ "github.com/ebitengine/purego"' >> main.go
+          echo ')' >> main.go
+          echo 'func main() {}' >> main.go
+          go mod edit -replace github.com/ebitengine/purego=$GITHUB_WORKSPACE
+          go mod tidy
+          go mod vendor
+          go build -v .
+
       - name: go test
         if: ${{ !startsWith(matrix.go, '1.15.') }} # TODO: Remove this condition after #27 is fixed.
         run: |
