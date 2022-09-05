@@ -70,7 +70,7 @@ jobs:
           go mod edit -replace github.com/ebitengine/purego=$GITHUB_WORKSPACE
           go mod tidy
           go mod vendor
-          go build ./...
+          go build -v .
 
       - name: go test
         if: ${{ !startsWith(matrix.go, '1.15.') }} # TODO: Remove this condition after #27 is fixed.
