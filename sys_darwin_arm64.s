@@ -77,7 +77,7 @@ TEXT callbackWrapInternal<>(SB), NOSPLIT, $0-0
 TEXT callbackasm1(SB), NOSPLIT, $208-0
 	NO_LOCAL_POINTERS
 
-	// On entry, the trampoline in zcallback_windows_arm64.s left
+	// On entry, the trampoline in zcallback_darwin_arm64.s left
 	// the callback index in R12 (which is volatile in the C ABI).
 
 	// Save callback register arguments R0-R7.
