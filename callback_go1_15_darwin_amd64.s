@@ -27,6 +27,9 @@ TEXT callbackasm1(SB), NOSPLIT, $0
 	MOVQ 0(SP), AX
 	ADDQ $8, SP
 
+	MOVQ 0(SP), R12 // get the return SP so that we can align register args with stack args
+	ADDQ $8, SP
+
 	// Construct args vector for cgocallback().
 	// The values are in registers.
 	ADJSP $6*8, SP
@@ -36,6 +39,8 @@ TEXT callbackasm1(SB), NOSPLIT, $0
 	MOVQ  CX, 24(SP)
 	MOVQ  R8, 32(SP)
 	MOVQ  R9, 40(SP)
+
+	PUSHQ R12 // push the stack pointer below registers
 
 	// determine index into runtime·cbctxts table
 	MOVQ $callbackasm(SB), DX
@@ -76,7 +81,11 @@ TEXT callbackasm1(SB), NOSPLIT, $0
 
 	POP_REGS_HOST_TO_ABI0()
 
-	MOVQ  -8(CX)(DX*1), AX // return value
-	POPQ  -8(CX)(DX*1)     // restore bytes just after the args
-	ADJSP $-6*8, SP        // remove arguments
+	MOVQ -8(CX)(DX*1), AX // return value
+	POPQ -8(CX)(DX*1)     // restore bytes just after the args
+
+	POPQ  R12        // get the SP back
+	ADJSP $-6*8, SP  // remove arguments
+	SUBQ  $8, SP     // readjust stack pointer
+	MOVQ  R12, 0(SP)
 	RET

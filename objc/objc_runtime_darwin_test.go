@@ -5,7 +5,6 @@ package objc_test
 
 import (
 	"fmt"
-	"log"
 	"unsafe"
 
 	"github.com/ebitengine/purego"
@@ -15,14 +14,12 @@ import (
 func ExampleAllocateClassPair() {
 	var class = objc.AllocateClassPair(objc.GetClass("NSObject"), "FooObject", 0)
 	class.AddMethod(objc.RegisterName("run"), objc.NewIMP(func(self objc.ID, _cmd objc.SEL) {
-		log.Println(self)
 		fmt.Println("Hello World!")
 	}), "v@:")
 	class.Register()
 
 	var fooObject = objc.ID(class).Send(objc.RegisterName("new"))
 	fooObject.Send(objc.RegisterName("run"))
-	log.Println(fooObject)
 	// Output: Hello World!
 }
 

@@ -25,6 +25,9 @@ TEXT callbackasm1(SB), NOSPLIT, $0
 	MOVQ 0(SP), AX
 	ADDQ $8, SP
 
+	MOVQ 0(SP), R12 // get the return SP so that we can align register args with stack args
+	ADDQ $8, SP
+
 	// make space for first six arguments below the frame
 	// TODO: check to make sure that arguments 7 and above are right after these six
 	ADJSP $6*8, SP
@@ -35,6 +38,8 @@ TEXT callbackasm1(SB), NOSPLIT, $0
 	MOVQ  R8, 32(SP)
 	MOVQ  R9, 40(SP)
 	LEAQ  (SP), R8   // R8 = address of args vector
+
+	PUSHQ R12 // push the stack pointer below registers
 
 	// determine index into runtime·cbs table
 	MOVQ $callbackasm(SB), DX
@@ -69,6 +74,11 @@ TEXT callbackasm1(SB), NOSPLIT, $0
 
 	POP_REGS_HOST_TO_ABI0()
 
+	POPQ R12 // get the SP back
+
 	ADJSP $-6*8, SP // remove arguments
+
+	SUBQ $8, SP     // readjust stack pointer
+	MOVQ R12, 0(SP)
 
 	RET
