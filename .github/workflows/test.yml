@@ -55,10 +55,6 @@ jobs:
         run: |
           # Check cross-compiling Windows binaries.
           env GOOS=windows GOARCH=arm64 go build -v ./...
-          
-          # Check cross-compiling macOS binaries.
-          env GOOS=darwin GOARCH=amd64 go build -tags=example -v ./...
-          env GOOS=darwin GOARCH=arm64 go build -tags=example -v ./...
 
       - name: go mod vendor
         run: |
@@ -77,4 +73,4 @@ jobs:
 
       - name: go test
         run: |
-          go test -tags=example ${{ !startsWith(matrix.go, '1.15.') && !startsWith(matrix.go, '1.16.') && '-shuffle=on' || '' }} -v -count=10 ./...
+          go test ${{ !startsWith(matrix.go, '1.15.') && !startsWith(matrix.go, '1.16.') && '-shuffle=on' || '' }} -v -count=10 ./...
