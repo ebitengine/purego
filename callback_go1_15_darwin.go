@@ -8,14 +8,9 @@ package purego
 
 import (
 	"reflect"
-	"runtime"
 	"sync"
 	"unsafe"
 )
-
-func NewCallback(fn interface{}) uintptr {
-	return compileCallback(fn)
-}
 
 // from runtime2.go
 // describes how to handle callback
@@ -36,30 +31,6 @@ var (
 	cbs     callbacks
 	cbctxts **callbackcontext = &cbs.ctxt[0] // to simplify access to cbs.ctxt in sys_windows_*.s
 )
-
-// callbackasmAddr returns address of runtime.callbackasm
-// function adjusted by i.
-// On x86 and amd64, runtime.callbackasm is a series of CALL instructions,
-// and we want callback to arrive at
-// correspondent call instruction instead of start of
-// runtime.callbackasm.
-// On ARM, runtime.callbackasm is a series of mov and branch instructions.
-// R12 is loaded with the callback index. Each entry is two instructions,
-// hence 8 bytes.
-func callbackasmAddr(i int) uintptr {
-	var entrySize int
-	switch runtime.GOARCH {
-	default:
-		panic("unsupported architecture")
-	case "386", "amd64":
-		entrySize = 5
-	case "arm":
-		// On ARM, each entry is a MOV instruction
-		// followed by a branch instruction
-		entrySize = 8
-	}
-	return callbackasmABI0 + uintptr(i*entrySize)
-}
 
 func compileCallback(fn interface{}) (code uintptr) {
 	val := reflect.ValueOf(fn)
@@ -98,35 +69,4 @@ func compileCallback(fn interface{}) (code uintptr) {
 	r := callbackasmAddr(n)
 	cbs.lock.Unlock()
 	return r
-	/*
-		lock(&cbs.lock) // We don't unlock this in a defer because this is used from the system stack.
-
-		n := cbs.n
-		for i := 0; i < n; i++ {
-			if cbs.ctxt[i].gobody == fn.data && cbs.ctxt[i].isCleanstack() == cleanstack {
-				r := callbackasmAddr(i)
-				unlock(&cbs.lock)
-				return r
-			}
-		}
-		if n >= cb_max {
-			unlock(&cbs.lock)
-			throw("too many callback functions")
-		}
-
-		c := new(callbackcontext)
-		c.gobody = fn.data
-		c.argsize = argsize
-		c.setCleanstack(cleanstack)
-		if cleanstack && argsize != 0 {
-			c.restorestack = argsize
-		} else {
-			c.restorestack = 0
-		}
-		cbs.ctxt[n] = c
-		cbs.n++
-
-		r := callbackasmAddr(n)
-		unlock(&cbs.lock)
-		return r*/
 }

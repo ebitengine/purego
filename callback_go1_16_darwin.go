@@ -8,20 +8,9 @@ package purego
 
 import (
 	"reflect"
-	"runtime"
 	"sync"
 	"unsafe"
 )
-
-// NewCallback converts a Go function to a function pointer conforming to the C calling convention.
-// This is useful when interoperating with C code requiring callbacks. The argument is expected to be a
-// function with zero or one uintptr-sized result. The function must not have arguments with size larger than the size
-// of uintptr. Only a limited number of callbacks may be created in a single Go process, and any memory allocated
-// for these callbacks is never released. At least 2000 callbacks can always be created. Although this function
-// provides similar functionality to windows.NewCallback it is distinct.
-func NewCallback(fn interface{}) uintptr {
-	return compileCallback(fn)
-}
 
 var cbs struct {
 	lock  sync.Mutex
@@ -122,28 +111,4 @@ func callbackWrap(a *callbackArgs) {
 			panic("purego: unsupported kind: " + k.String())
 		}
 	}
-}
-
-// callbackasmAddr returns address of runtime.callbackasm
-// function adjusted by i.
-// On x86 and amd64, runtime.callbackasm is a series of CALL instructions,
-// and we want callback to arrive at
-// correspondent call instruction instead of start of
-// runtime.callbackasm.
-// On ARM, runtime.callbackasm is a series of mov and branch instructions.
-// R12 is loaded with the callback index. Each entry is two instructions,
-// hence 8 bytes.
-func callbackasmAddr(i int) uintptr {
-	var entrySize int
-	switch runtime.GOARCH {
-	default:
-		panic("purego: unsupported architecture")
-	case "386", "amd64":
-		entrySize = 5
-	case "arm", "arm64":
-		// On ARM and ARM64, each entry is a MOV instruction
-		// followed by a branch instruction
-		entrySize = 8
-	}
-	return callbackasmABI0 + uintptr(i*entrySize)
 }
