@@ -72,6 +72,5 @@ jobs:
           go build -v .
 
       - name: go test
-        if: ${{ !startsWith(matrix.go, '1.15.') }} # TODO: Remove this condition after #27 is fixed.
         run: |
           go test -tags=example ${{ !startsWith(matrix.go, '1.15.') && !startsWith(matrix.go, '1.16.') && '-shuffle=on' || '' }} -v -count=10 ./...

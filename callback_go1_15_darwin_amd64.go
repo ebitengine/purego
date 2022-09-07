@@ -10,9 +10,5 @@ package purego
 // This function is necessary since we can't use the ABIInternal selector which is only
 // valid in the runtime.
 func callbackWrapPicker(stack, register *callbackArgs) {
-	if stackCallingConvention {
-		callbackWrap(stack)
-	} else {
-		callbackWrap(register)
-	}
+	callbackWrap(stack)
 }
