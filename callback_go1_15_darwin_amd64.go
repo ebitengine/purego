@@ -4,7 +4,7 @@
 package purego
 
 // callbackWrapPicker is here because Go 1.16+ needs it
-// to decide between stack and register arguments
+// to decide between stack and register arguments.
 // This only has a single pointer because Go 1.15 runtime.cgocallback
 // dereferences the argument once before passing it to this
 // function.
