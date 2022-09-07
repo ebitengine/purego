@@ -57,13 +57,13 @@ jobs:
           env GOOS=windows GOARCH=arm64 go build -v ./...
 
       - name: go build (iOS, Go 1.15)
-        if : ${{ startsWith(matrix.go, '1.15.') && startsWith(matrix.os, 'macos-') && }}
+        if : ${{ startsWith(matrix.go, '1.15.') && startsWith(matrix.os, 'macos-') }}
         run: |
           env CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 go build -v -tags=ios ./...
           env CGO_ENABLED=1 GOOS=darwin GOARCH=arm64 go build -v -tags=ios ./...
 
-      - name: go build (iOS, Go 1.16)
-        if : ${{ !startsWith(matrix.go, '1.15.') && startsWith(matrix.os, 'macos-') && }}
+      - name: go build (iOS, Go 1.16 and newer)
+        if : ${{ !startsWith(matrix.go, '1.15.') && startsWith(matrix.os, 'macos-') }}
         run: |
           env CGO_ENABLED=1 GOOS=ios GOARCH=amd64 go build -v ./...
           env CGO_ENABLED=1 GOOS=ios GOARCH=arm64 go build -v ./...
