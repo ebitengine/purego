@@ -115,23 +115,27 @@ TEXT callbackasm1(SB), NOSPLIT, $0
 
 	// Create a struct callbackArgs on our stack to be passed as
 	// the "frame" to cgocallback and on to callbackWrap.
-	// $24 to make enough room for the arguments to runtime.cgocallback
-	SUBQ $(24+callbackArgs__size), SP
-	MOVQ AX, (24+callbackArgs_index)(SP)  // callback index
-	MOVQ R8, (24+callbackArgs_args)(SP)   // address of args vector
-	MOVQ $0, (24+callbackArgs_result)(SP) // result
-	LEAQ 24(SP), AX                       // take the address of callbackArgs
+	// $32 to make enough room for the arguments to runtime.cgocallback
+	// and on Go 1.15 to take a pointer to the pointer to callbackArgs
+	SUBQ $(32+callbackArgs__size), SP
+	MOVQ AX, (32+callbackArgs_index)(SP)  // callback index
+	MOVQ R8, (32+callbackArgs_args)(SP)   // address of args vector
+	MOVQ $0, (32+callbackArgs_result)(SP) // result
+	LEAQ 32(SP), AX                       // take the address of callbackArgs
+
+	MOVQ AX, 24(SP) // get a **callbackArgs for go 1.15
+	LEAQ 24(SP), AX // ^^^^
 
 	// Call cgocallback, which will call callbackWrap(frame).
-	MOVQ $0, 16(SP)                      // context
+	MOVQ $8, 16(SP)                      // context is 0 or argsize (including return value) for Go 1.15
 	MOVQ AX, 8(SP)                       // frame (address of callbackArgs)
 	MOVQ $callbackWrapInternal<>(SB), BX
 	MOVQ BX, 0(SP)                       // PC of function value to call (callbackWrap)
 	CALL runtime·cgocallback(SB)         // runtime.cgocallback(fn, frame, ctxt uintptr)
 
 	// Get callback result.
-	MOVQ (24+callbackArgs_result)(SP), AX
-	ADDQ $(24+callbackArgs__size), SP     // remove callbackArgs struct
+	MOVQ (32+callbackArgs_result)(SP), AX
+	ADDQ $(32+callbackArgs__size), SP     // remove callbackArgs struct
 
 	POP_REGS_HOST_TO_ABI0()
 
