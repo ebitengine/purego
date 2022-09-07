@@ -55,6 +55,10 @@ jobs:
         run: |
           # Check cross-compiling Windows binaries.
           env GOOS=windows GOARCH=arm64 go build -v ./...
+          
+          # Check cross-compiling macOS binaries.
+          env GOOS=darwin GOARCH=amd64 go build -tags=example -v ./...
+          env GOOS=darwin GOARCH=arm64 go build -tags=example -v ./...
 
       - name: go mod vendor
         run: |
