@@ -3,7 +3,7 @@
 
 package purego
 
-// callbackWrapPicker gets whatever is on the stack and in the first register.
+// callbackWrapPicker gets called with whatever is on the stack and in the first register.
 // Depending on which version of Go that uses stack or register-based
 // calling it passes the respective argument to the real calbackWrap function.
 // The other argument is therefore invalid and points to undefined memory so don't use it.
