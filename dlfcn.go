@@ -55,10 +55,11 @@ func Dlerror() string {
 	if msg == 0 {
 		return ""
 	}
+	var b = *(**byte)(unsafe.Pointer(&msg))
 	var length int
 	for {
 		// use unsafe.Add once we reach 1.17
-		if *(*byte)(unsafe.Pointer(*(*uintptr)(unsafe.Pointer(&msg)) + uintptr(length))) == '\x00' {
+		if *(*byte)(unsafe.Pointer(uintptr(unsafe.Pointer(b)) + uintptr(length))) == '\x00' {
 			break
 		}
 		length++
