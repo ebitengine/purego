@@ -57,7 +57,7 @@ jobs:
           env GOOS=windows GOARCH=arm64 go build -v ./...
 
       - name: go build (macOS, ARM64)
-        # Pure go doesn't support the pair GOOS=darwin and GOARCH=arm64 with Go 1.15 so far (#37).
+        # Purego doesn't support the pair GOOS=darwin and GOARCH=arm64 with Go 1.15 so far (#37).
         if: ${{ !startsWith(matrix.go, '1.15.') }}
         run: |
           # Check cross-compiling macOS binaries.
