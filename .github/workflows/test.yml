@@ -57,6 +57,7 @@ jobs:
           env GOOS=windows GOARCH=arm64 go build -v ./...
 
       - name: go mod vendor
+        if: ${{ !startsWith(matrix.os, 'ubuntu-') }}
         run: |
           mkdir /tmp/vendoring
           cd /tmp/vendoring
