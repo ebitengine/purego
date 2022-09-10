@@ -1,7 +1,10 @@
 package main
 
-import _ "github.com/ebitengine/purego"
+import (
+	"fmt"
+	_ "github.com/ebitengine/purego"
+)
 
 func main() {
-
+	fmt.Println("Hello World")
 }
