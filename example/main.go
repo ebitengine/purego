@@ -11,4 +11,5 @@ import (
 )
 
 func main() {
+	// TODO: Add an implementation. This example exists only for testing so far.
 }
