@@ -25,6 +25,7 @@ var (
 	objc_msgSend              = purego.Dlsym(objc, "objc_msgSend")
 	objc_msgSendSuper2        = purego.Dlsym(objc, "objc_msgSendSuper2")
 	objc_getClass             = purego.Dlsym(objc, "objc_getClass")
+	objc_getProtocol          = purego.Dlsym(objc, "objc_getProtocol")
 	objc_allocateClassPair    = purego.Dlsym(objc, "objc_allocateClassPair")
 	objc_registerClassPair    = purego.Dlsym(objc, "objc_registerClassPair")
 	sel_registerName          = purego.Dlsym(objc, "sel_registerName")
@@ -32,6 +33,7 @@ var (
 	class_getInstanceVariable = purego.Dlsym(objc, "class_getInstanceVariable")
 	class_addMethod           = purego.Dlsym(objc, "class_addMethod")
 	class_addIvar             = purego.Dlsym(objc, "class_addIvar")
+	class_addProtocol         = purego.Dlsym(objc, "class_addProtocol")
 	ivar_getOffset            = purego.Dlsym(objc, "ivar_getOffset")
 	object_getClass           = purego.Dlsym(objc, "object_getClass")
 )
@@ -189,6 +191,14 @@ func (c Class) AddIvar(name string, ty interface{}, types string) bool {
 	return byte(ret) != 0
 }
 
+// AddProtocol adds a protocol to a class.
+// Returns true if the protocol was added successfully, otherwise NO (for example,
+// the class already conforms to that protocol).
+func (c Class) AddProtocol(protocol Protocol) bool {
+	ret, _, _ := purego.SyscallN(class_addProtocol, uintptr(c), uintptr(protocol))
+	return byte(ret) != 0
+}
+
 // InstanceVariable returns an Ivar data structure containing information about the instance variable specified by name.
 func (c Class) InstanceVariable(name string) Ivar {
 	n := strings.CString(name)
@@ -213,6 +223,16 @@ type Ivar uintptr
 func (i Ivar) Offset() uintptr {
 	ret, _, _ := purego.SyscallN(ivar_getOffset, uintptr(i))
 	return ret
+}
+
+// Protocol is a type that declares methods that can be implemented by any class.
+type Protocol uintptr
+
+// GetProtocol returns the protocol for the given name or nil if there is no protocol by that name.
+func GetProtocol(name string) Protocol {
+	n := strings.CString(name)
+	p, _, _ := purego.SyscallN(objc_getProtocol, uintptr(unsafe.Pointer(n)))
+	return Protocol(p)
 }
 
 // IMP is a function pointer that can be called by Objective-C code.
