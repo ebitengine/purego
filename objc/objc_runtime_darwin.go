@@ -194,8 +194,8 @@ func (c Class) AddIvar(name string, ty interface{}, types string) bool {
 // AddProtocol adds a protocol to a class.
 // Returns true if the protocol was added successfully, otherwise false (for example,
 // the class already conforms to that protocol).
-func (c Class) AddProtocol(protocol Protocol) bool {
-	ret, _, _ := purego.SyscallN(class_addProtocol, uintptr(c), uintptr(protocol))
+func (c Class) AddProtocol(protocol *Protocol) bool {
+	ret, _, _ := purego.SyscallN(class_addProtocol, uintptr(c), uintptr(unsafe.Pointer(protocol)))
 	return byte(ret) != 0
 }
 
@@ -229,10 +229,10 @@ func (i Ivar) Offset() uintptr {
 type Protocol uintptr
 
 // GetProtocol returns the protocol for the given name or nil if there is no protocol by that name.
-func GetProtocol(name string) Protocol {
+func GetProtocol(name string) *Protocol {
 	n := strings.CString(name)
 	p, _, _ := purego.SyscallN(objc_getProtocol, uintptr(unsafe.Pointer(n)))
-	return Protocol(p)
+	return *(**Protocol)(unsafe.Pointer(&p))
 }
 
 // IMP is a function pointer that can be called by Objective-C code.
