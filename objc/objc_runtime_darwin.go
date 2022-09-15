@@ -192,7 +192,7 @@ func (c Class) AddIvar(name string, ty interface{}, types string) bool {
 }
 
 // AddProtocol adds a protocol to a class.
-// Returns true if the protocol was added successfully, otherwise NO (for example,
+// Returns true if the protocol was added successfully, otherwise false (for example,
 // the class already conforms to that protocol).
 func (c Class) AddProtocol(protocol Protocol) bool {
 	ret, _, _ := purego.SyscallN(class_addProtocol, uintptr(c), uintptr(protocol))
