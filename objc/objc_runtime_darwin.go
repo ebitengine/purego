@@ -232,6 +232,7 @@ type Protocol uintptr
 func GetProtocol(name string) *Protocol {
 	n := strings.CString(name)
 	p, _, _ := purego.SyscallN(objc_getProtocol, uintptr(unsafe.Pointer(n)))
+	runtime.KeepAlive(n)
 	return *(**Protocol)(unsafe.Pointer(&p))
 }
 
