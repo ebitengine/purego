@@ -233,6 +233,7 @@ func GetProtocol(name string) *Protocol {
 	n := strings.CString(name)
 	p, _, _ := purego.SyscallN(objc_getProtocol, uintptr(unsafe.Pointer(n)))
 	runtime.KeepAlive(n)
+	// We take the address and then dereference it to trick go vet from creating a possible miss-use of unsafe.Pointer
 	return *(**Protocol)(unsafe.Pointer(&p))
 }
 
