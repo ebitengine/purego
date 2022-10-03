@@ -10,7 +10,8 @@ const maxArgs = 9
 
 // SyscallN takes fn, a C function pointer and a list of arguments as uintptr.
 // There is an internal maximum number of arguments that SyscallN can take. It panics
-// when the maximum is exceeded. It returns the result and the libc error code if there is one.
+// when the maximum is exceeded. It returns the integer result in r1 and the float result
+// in r2 and the libc error code if there is one.
 //
 // NOTE: SyscallN does not properly call functions that have both integer and float parameters.
 // See discussion comment https://github.com/ebiten/purego/pull/1#issuecomment-1128057607
