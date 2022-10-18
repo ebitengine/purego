@@ -11,7 +11,7 @@ import (
 	"github.com/ebitengine/purego/internal/strings"
 )
 
-// RegisterFuncHandle takes a pointer to a Go function representing the calling convention of the C function named name
+// RegisterLibFunc takes a pointer to a Go function representing the calling convention of the C function named name
 // found in the shared object provided by handle.
 // fptr will be set to a function that when called will call the C function given by name with the
 // parameters passed in the correct registers and stack.
@@ -22,7 +22,7 @@ import (
 // These conversions describe how a Go type in the fptr will be used to call
 // the C function. It is important to note that there is no way to verify that fptr
 // matches the C function. This also holds true for struct types where the padding
-// needs to be ensured to match that of C; RegisterFuncHandle does not verify this.
+// needs to be ensured to match that of C; RegisterLibFunc does not verify this.
 //
 // Type Conversions (Go => C)
 //
@@ -45,12 +45,12 @@ import (
 //	func => C function
 //	[]T, unsafe.Pointer, *T => void*
 //
-// There is a special case when the last argument of fptr is a variadic interface
-// it will be expanded into a call to the C function as if it had those arguments.
-func RegisterFuncHandle(fptr interface{}, handle uintptr, name string) {
+// There is a special case when the last argument of fptr is a variadic interface (or []interface}
+// it will be expanded into a call to the C function as if it had the arguments in that slice.
+func RegisterLibFunc(fptr interface{}, handle uintptr, name string) {
 	sym := Dlsym(handle, name)
 	if sym == 0 {
-		panic("purego: couldn't find symbol" + Dlerror())
+		panic("purego: couldn't find symbol: " + Dlerror())
 	}
 	registerFunc(sym, fptr)
 }
