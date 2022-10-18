@@ -11,18 +11,26 @@ import (
 	"github.com/ebitengine/purego/internal/strings"
 )
 
-// RegisterLibFunc takes a pointer to a Go function representing the calling convention of the C function named name
-// found in the shared object provided by handle.
-// fptr will be set to a function that when called will call the C function given by name with the
+// RegisterLibFunc is a wrapper around RegisterFunc that uses the C function returned from Dlsym(handle, name).
+// It panics if Dlsym fails.
+func RegisterLibFunc(fptr interface{}, handle uintptr, name string) {
+	sym := Dlsym(handle, name)
+	if sym == 0 {
+		panic("purego: couldn't find symbol: " + Dlerror())
+	}
+	RegisterFunc(fptr, sym)
+}
+
+// RegisterFunc takes a pointer to a Go function representing the calling convention of the C function.
+// fptr will be set to a function that when called will call the C function given by cfn with the
 // parameters passed in the correct registers and stack.
 //
-// A panic is produced if the name symbol cannot be found in handle or if the type is not a function
-// pointer or if the function returns more than 1 value.
+// A panic is produced if the type is not a function pointer or if the function returns more than 1 value.
 //
 // These conversions describe how a Go type in the fptr will be used to call
 // the C function. It is important to note that there is no way to verify that fptr
 // matches the C function. This also holds true for struct types where the padding
-// needs to be ensured to match that of C; RegisterLibFunc does not verify this.
+// needs to be ensured to match that of C; RegisterFunc does not verify this.
 //
 // Type Conversions (Go => C)
 //
@@ -47,17 +55,7 @@ import (
 //
 // There is a special case when the last argument of fptr is a variadic interface (or []interface}
 // it will be expanded into a call to the C function as if it had the arguments in that slice.
-func RegisterLibFunc(fptr interface{}, handle uintptr, name string) {
-	sym := Dlsym(handle, name)
-	if sym == 0 {
-		panic("purego: couldn't find symbol: " + Dlerror())
-	}
-	registerFunc(fptr, sym)
-}
-
-// registerFunc takes a C function ptr and a pointer to a Go function which
-// will be set to a function calling the C function with those arguments.
-func registerFunc(fptr interface{}, cfn uintptr) {
+func RegisterFunc(fptr interface{}, cfn uintptr) {
 	fn := reflect.ValueOf(fptr).Elem()
 	ty := fn.Type()
 	if ty.Kind() != reflect.Func {
@@ -130,7 +128,7 @@ func registerFunc(fptr interface{}, cfn uintptr) {
 		case reflect.Func:
 			// wrap this C function in a nicely typed Go function
 			v = reflect.New(outType)
-			registerFunc(v.Interface(), r1)
+			RegisterFunc(v.Interface(), r1)
 		case reflect.String:
 			v.SetString(strings.GoString(r1))
 		default:
