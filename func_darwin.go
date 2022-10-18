@@ -130,7 +130,7 @@ func registerFunc(fptr interface{}, cfn uintptr) {
 		case reflect.Func:
 			// wrap this C function in a nicely typed Go function
 			v = reflect.New(outType)
-			registerFunc(r1, v.Interface())
+			registerFunc(v.Interface(), r1)
 		case reflect.String:
 			v.SetString(strings.GoString(r1))
 		default:
