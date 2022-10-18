@@ -11,7 +11,7 @@ import (
 	"github.com/ebitengine/purego/internal/strings"
 )
 
-// FuncHandle takes a handle to a shared object returned from Dlopen, the name of a C function in that
+// RegisterFuncHandle takes a handle to a shared object returned from Dlopen, the name of a C function in that
 // shared object and a pointer to a Go function representing the calling convention of the C function.
 // fptr will be set to a function that when called will call the C function given by name with the
 // parameters passed in the correct registers and stack.
@@ -22,7 +22,7 @@ import (
 // These conversions describe how a Go type in the fptr will be used to call
 // the C function. It is important to note that there is no way to verify that fptr
 // matches the C function. This also holds true for struct types where the padding
-// needs to be ensured to match that of C; FuncHandle does not verify this.
+// needs to be ensured to match that of C; RegisterFuncHandle does not verify this.
 //
 // Conversion Type (Go => C)
 //
@@ -47,17 +47,17 @@ import (
 //
 // There is a special case when the last argument of fptr is a variadic interface
 // it will be expanded into a call to the C function as if it had those arguments.
-func FuncHandle(handle uintptr, name string, fptr interface{}) {
+func RegisterFuncHandle(handle uintptr, name string, fptr interface{}) {
 	sym := Dlsym(handle, name)
 	if sym == 0 {
 		panic("purego: couldn't find symbol" + Dlerror())
 	}
-	_Func(sym, fptr)
+	registerFunc(sym, fptr)
 }
 
-// _Func takes a C function ptr and a pointer to a Go function which
+// registerFunc takes a C function ptr and a pointer to a Go function which
 // will be set to a function calling the C function with those arguments.
-func _Func(cfn uintptr, fptr interface{}) {
+func registerFunc(cfn uintptr, fptr interface{}) {
 	fn := reflect.ValueOf(fptr).Elem()
 	ty := fn.Type()
 	if ty.Kind() != reflect.Func {
@@ -130,7 +130,7 @@ func _Func(cfn uintptr, fptr interface{}) {
 		case reflect.Func:
 			// wrap this C function in a nicely typed Go function
 			v = reflect.New(outType)
-			_Func(r1, v.Interface())
+			registerFunc(r1, v.Interface())
 		case reflect.String:
 			v.SetString(strings.GoString(r1))
 		default:
