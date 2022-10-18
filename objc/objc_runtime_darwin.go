@@ -15,8 +15,6 @@ import (
 //https://stackoverflow.com/questions/7062599/example-of-how-objective-cs-try-catch-implementation-is-executed-at-runtime
 
 var (
-	objc = purego.Dlopen("/usr/lib/libobjc.A.dylib", purego.RTLD_GLOBAL)
-
 	objc_msgSend              func(obj ID, cmd SEL, args ...interface{}) ID
 	objc_msgSendSuper2        func(super *objc_super, cmd SEL, args ...interface{}) ID
 	objc_getClass             func(name string) Class
@@ -34,6 +32,8 @@ var (
 )
 
 func init() {
+	objc := purego.Dlopen("/usr/lib/libobjc.A.dylib", purego.RTLD_GLOBAL)
+
 	purego.Func(objc, "objc_msgSend", &objc_msgSend)
 	purego.Func(objc, "objc_msgSendSuper2", &objc_msgSendSuper2)
 	purego.Func(objc, "object_getClass", &object_getClass)
