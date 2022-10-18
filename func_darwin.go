@@ -61,8 +61,7 @@ func Func(handle uintptr, name string, fptr interface{}) error {
 			// We take the address and then dereference it to trick go vet from creating a possible miss-use of unsafe.Pointer
 			v.SetPointer(*(*unsafe.Pointer)(unsafe.Pointer(&r1)))
 		case reflect.Ptr:
-			// We take the address and then dereference it to trick go vet from creating a possible miss-use of unsafe.Pointer
-			v = reflect.NewAt(outType, *(*unsafe.Pointer)(unsafe.Pointer(&r1))).Elem()
+			v = reflect.NewAt(outType, unsafe.Pointer(&r1)).Elem()
 		default:
 			panic("purego: unsupported return kind: " + outType.Kind().String())
 		}
