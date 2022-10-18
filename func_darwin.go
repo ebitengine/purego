@@ -10,17 +10,67 @@ import (
 	"github.com/ebitengine/purego/internal/strings"
 )
 
-// Func takes a handle to a shared object returned from Dlopen, the name of a C function in that
+// FuncHandle takes a handle to a shared object returned from Dlopen, the name of a C function in that
 // shared object and a pointer to a function representing the calling convention of the C function.
 // fptr will be set to a function that when called will call the C function given by name with the
 // parameters passed in the correct registers and stack.
-// An panic is produced if the name symbol cannot be found in handle or if the type is not a function
+//
+// A panic is produced if the name symbol cannot be found in handle or if the type is not a function
 // pointer or if the function returns more than 1 value.
-func Func(handle uintptr, name string, fptr interface{}) {
+//
+// These conversions describe how a Go type in the fptr will be used to call
+// the C function. It is important to note that there is no way to verify that fptr
+// matches the C function. This also holds true for struct types where the padding
+// needs to be ensured to match that of C; FuncHandle does not verify this.
+//
+// Conversion Type (Go => C)
+//
+//	string => char*
+//
+//	bool => _Bool
+//
+//	uintptr => uintptr_t
+//
+//	uint => System Dependent
+//
+//	uint8 => uint8_t
+//
+//	uint16 => uint16_t
+//
+//	uint32 => uint32_t
+//
+//	uint64 => uint64_t
+//
+//	int => System Dependent
+//
+//	int8 => int8_t
+//
+//	int16 => int16_t
+//
+//	int32 => int32_t
+//
+//	int64 => int64_t
+//
+//	float32 => float
+//
+//	float64 => double
+//
+//	struct => struct
+//
+//	func => C function
+//
+//	[]T, unsafe.Pointer, *T => void*
+func FuncHandle(handle uintptr, name string, fptr interface{}) {
 	sym := Dlsym(handle, name)
 	if sym == 0 {
 		panic("purego: couldn't find symbol" + Dlerror())
 	}
+	_Func(sym, fptr)
+}
+
+// _Func takes a C function ptr and a pointer to a Go function which
+// will be set to a function calling the C function with those arguments.
+func _Func(cfn uintptr, fptr interface{}) {
 	fn := reflect.ValueOf(fptr).Elem()
 	ty := fn.Type()
 	if ty.Kind() != reflect.Func {
@@ -65,7 +115,7 @@ func Func(handle uintptr, name string, fptr interface{}) {
 				panic("purego: unsupported kind: " + v.Kind().String())
 			}
 		}
-		r1, _, _ := SyscallN(sym, sysargs...)
+		r1, _, _ := SyscallN(cfn, sysargs...)
 		if ty.NumOut() == 0 {
 			return nil
 		}
@@ -83,6 +133,10 @@ func Func(handle uintptr, name string, fptr interface{}) {
 			v.SetPointer(*(*unsafe.Pointer)(unsafe.Pointer(&r1)))
 		case reflect.Ptr:
 			v = reflect.NewAt(outType, unsafe.Pointer(&r1)).Elem()
+		case reflect.Func:
+			// wrap this C function in a nicely typed Go function
+			v = reflect.New(outType)
+			_Func(r1, v.Interface())
 		default:
 			panic("purego: unsupported return kind: " + outType.Kind().String())
 		}
