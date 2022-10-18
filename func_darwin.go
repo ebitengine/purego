@@ -55,7 +55,7 @@ func Func(handle uintptr, name string, fptr interface{}) error {
 			v.SetInt(int64(r1))
 		case reflect.Bool:
 			v.SetBool(r1 != 0)
-		case reflect.Pointer:
+		case reflect.Ptr:
 			// We take the address and then dereference it to trick go vet from creating a possible miss-use of unsafe.Pointer
 			v = reflect.NewAt(outType, *(*unsafe.Pointer)(unsafe.Pointer(&r1))).Elem()
 		default:
