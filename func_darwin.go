@@ -12,7 +12,7 @@ import (
 )
 
 // FuncHandle takes a handle to a shared object returned from Dlopen, the name of a C function in that
-// shared object and a pointer to a function representing the calling convention of the C function.
+// shared object and a pointer to a Go function representing the calling convention of the C function.
 // fptr will be set to a function that when called will call the C function given by name with the
 // parameters passed in the correct registers and stack.
 //
@@ -27,39 +27,22 @@ import (
 // Conversion Type (Go => C)
 //
 //	string => char*
-//
 //	bool => _Bool
-//
 //	uintptr => uintptr_t
-//
 //	uint => System Dependent
-//
 //	uint8 => uint8_t
-//
 //	uint16 => uint16_t
-//
 //	uint32 => uint32_t
-//
 //	uint64 => uint64_t
-//
 //	int => System Dependent
-//
 //	int8 => int8_t
-//
 //	int16 => int16_t
-//
 //	int32 => int32_t
-//
 //	int64 => int64_t
-//
 //	float32 => float
-//
 //	float64 => double
-//
 //	struct => struct
-//
 //	func => C function
-//
 //	[]T, unsafe.Pointer, *T => void*
 //
 // There is a special case when the last argument of fptr is a variadic interface
