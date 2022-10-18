@@ -61,6 +61,9 @@ import (
 //	func => C function
 //
 //	[]T, unsafe.Pointer, *T => void*
+//
+// There is a special case when the last argument of fptr is a variadic interface
+// it will be expanded into a call to the C function as if it had those arguments.
 func FuncHandle(handle uintptr, name string, fptr interface{}) {
 	sym := Dlsym(handle, name)
 	if sym == 0 {
