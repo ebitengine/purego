@@ -30,6 +30,18 @@ func Func(handle uintptr, name string, fptr interface{}) {
 		panic("purego: function can only return zero or one values")
 	}
 	v := reflect.MakeFunc(ty, func(args []reflect.Value) (results []reflect.Value) {
+		if len(args) > 0 {
+			if variadic, ok := args[len(args)-1].Interface().([]interface{}); ok {
+				// subtract one from args bc the last argument in args is []interface{}
+				// which we are currently expanding
+				tmp := make([]reflect.Value, len(args)-1+len(variadic))
+				n := copy(tmp, args[:len(args)-1])
+				for i, v := range variadic {
+					tmp[n+i] = reflect.ValueOf(v)
+				}
+				args = tmp
+			}
+		}
 		var sysargs = make([]uintptr, len(args))
 		for i, v := range args {
 			switch v.Kind() {
