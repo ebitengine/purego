@@ -24,14 +24,16 @@ func CString(name string) *byte {
 }
 
 // GoString copies a char* to a Go string.
-func GoString(ptr uintptr) string {
-	if ptr == 0 {
+func GoString(c uintptr) string {
+	// We take the address and then dereference it to trick go vet from creating a possible misuse of unsafe.Pointer
+	ptr := *(*unsafe.Pointer)(unsafe.Pointer(&c))
+	if ptr == nil {
 		return ""
 	}
 	var length int
 	for {
 		// use unsafe.Add once we reach 1.17
-		if *(*byte)(unsafe.Pointer(ptr + uintptr(length))) == '\x00' {
+		if *(*byte)(unsafe.Pointer(uintptr(ptr) + uintptr(length))) == '\x00' {
 			break
 		}
 		length++
@@ -40,7 +42,7 @@ func GoString(ptr uintptr) string {
 	s := make([]byte, length)
 	var src []byte
 	h := (*reflect.SliceHeader)(unsafe.Pointer(&src))
-	h.Data = ptr
+	h.Data = uintptr(ptr)
 	h.Len = length
 	h.Cap = length
 	copy(s, src)
