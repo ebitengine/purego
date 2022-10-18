@@ -3,7 +3,10 @@
 
 package strings
 
-import "unsafe"
+import (
+	"reflect"
+	"unsafe"
+)
 
 // hasSuffix tests whether the string s ends with suffix.
 func hasSuffix(s, suffix string) bool {
@@ -18,4 +21,28 @@ func CString(name string) *byte {
 	var b = make([]byte, len(name)+1)
 	copy(b, name)
 	return &b[0]
+}
+
+// GoString copies a char* to a Go string.
+func GoString(ptr uintptr) string {
+	if ptr == 0 {
+		return ""
+	}
+	var length int
+	for {
+		// use unsafe.Add once we reach 1.17
+		if *(*byte)(unsafe.Pointer(ptr + uintptr(length))) == '\x00' {
+			break
+		}
+		length++
+	}
+	// use unsafe.Slice once we reach 1.17
+	s := make([]byte, length)
+	var src []byte
+	h := (*reflect.SliceHeader)(unsafe.Pointer(&src))
+	h.Data = ptr
+	h.Len = length
+	h.Cap = length
+	copy(s, src)
+	return string(s)
 }

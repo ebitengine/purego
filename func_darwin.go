@@ -148,6 +148,8 @@ func _Func(cfn uintptr, fptr interface{}) {
 			// wrap this C function in a nicely typed Go function
 			v = reflect.New(outType)
 			_Func(r1, v.Interface())
+		case reflect.String:
+			v.SetString(strings.GoString(r1))
 		default:
 			panic("purego: unsupported return kind: " + outType.Kind().String())
 		}

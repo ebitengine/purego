@@ -7,7 +7,6 @@
 package purego
 
 import (
-	"reflect"
 	"runtime"
 	"unsafe"
 
@@ -52,26 +51,7 @@ func Dlerror() string {
 	// msg is only valid until the next call to Dlerror
 	// which is why it gets copied into a Go string
 	msg, _, _ := SyscallN(dlerrorABI0)
-	if msg == 0 {
-		return ""
-	}
-	var length int
-	for {
-		// use unsafe.Add once we reach 1.17
-		if *(*byte)(unsafe.Pointer(msg + uintptr(length))) == '\x00' {
-			break
-		}
-		length++
-	}
-	// use unsafe.Slice once we reach 1.17
-	s := make([]byte, length)
-	var src []byte
-	h := (*reflect.SliceHeader)(unsafe.Pointer(&src))
-	h.Data = msg
-	h.Len = length
-	h.Cap = length
-	copy(s, src)
-	return string(s)
+	return strings.GoString(msg)
 }
 
 // Dlclose decrements the reference count on the dynamic library handle.
