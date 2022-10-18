@@ -29,12 +29,12 @@ import (
 //	string => char*
 //	bool => _Bool
 //	uintptr => uintptr_t
-//	uint => System Dependent
+//	uint => unsigned int
 //	uint8 => uint8_t
 //	uint16 => uint16_t
 //	uint32 => uint32_t
 //	uint64 => uint64_t
-//	int => System Dependent
+//	int => int
 //	int8 => int8_t
 //	int16 => int16_t
 //	int32 => int32_t
