@@ -5,6 +5,7 @@ package purego
 
 import (
 	"reflect"
+	"runtime"
 	"unsafe"
 
 	"github.com/ebitengine/purego/internal/strings"
@@ -93,16 +94,23 @@ func _Func(cfn uintptr, fptr interface{}) {
 			}
 		}
 		var sysargs = make([]uintptr, len(args))
+		var keepAlive []interface{}
+		defer func() {
+			runtime.KeepAlive(keepAlive)
+		}()
 		for i, v := range args {
 			switch v.Kind() {
 			case reflect.String:
-				sysargs[i] = uintptr(unsafe.Pointer(strings.CString(v.String()))) // TODO: keep alive
+				ptr := strings.CString(v.String())
+				keepAlive = append(keepAlive, ptr)
+				sysargs[i] = uintptr(unsafe.Pointer(ptr))
 			case reflect.Uintptr, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 				sysargs[i] = uintptr(v.Uint())
 			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 				sysargs[i] = uintptr(v.Int())
 			case reflect.Ptr, reflect.UnsafePointer, reflect.Slice:
-				sysargs[i] = v.Pointer() // TODO: keep alive
+				keepAlive = append(keepAlive, v.Pointer())
+				sysargs[i] = v.Pointer()
 			case reflect.Func:
 				sysargs[i] = NewCallback(v.Interface())
 			case reflect.Bool:
