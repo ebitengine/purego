@@ -55,6 +55,8 @@ func RegisterLibFunc(fptr interface{}, handle uintptr, name string) {
 //
 // There is a special case when the last argument of fptr is a variadic interface (or []interface}
 // it will be expanded into a call to the C function as if it had the arguments in that slice.
+// This means that using arg ...interface{} is like a cast to the function with the arguments inside arg.
+// This is not the same as C variadic.
 func RegisterFunc(fptr interface{}, cfn uintptr) {
 	fn := reflect.ValueOf(fptr).Elem()
 	ty := fn.Type()
