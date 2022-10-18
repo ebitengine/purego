@@ -52,12 +52,12 @@ func RegisterLibFunc(fptr interface{}, handle uintptr, name string) {
 	if sym == 0 {
 		panic("purego: couldn't find symbol: " + Dlerror())
 	}
-	registerFunc(sym, fptr)
+	registerFunc(fptr, sym)
 }
 
 // registerFunc takes a C function ptr and a pointer to a Go function which
 // will be set to a function calling the C function with those arguments.
-func registerFunc(cfn uintptr, fptr interface{}) {
+func registerFunc(fptr interface{}, cfn uintptr) {
 	fn := reflect.ValueOf(fptr).Elem()
 	ty := fn.Type()
 	if ty.Kind() != reflect.Func {
