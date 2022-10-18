@@ -1,10 +1,14 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2022 The Ebitengine Authors
+
 package purego
 
 import (
 	"errors"
-	"github.com/ebitengine/purego/internal/strings"
 	"reflect"
 	"unsafe"
+
+	"github.com/ebitengine/purego/internal/strings"
 )
 
 // Func takes a handle to a shared object returned from Dlopen, the name of a C function in that
