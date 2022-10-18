@@ -36,7 +36,7 @@ func Func(handle uintptr, name string, fptr interface{}) error {
 				sysargs[i] = uintptr(v.Uint())
 			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 				sysargs[i] = uintptr(v.Int())
-			case reflect.Ptr, reflect.UnsafePointer:
+			case reflect.Ptr, reflect.UnsafePointer, reflect.Slice:
 				sysargs[i] = v.Pointer() // TODO: keep alive
 			case reflect.Func:
 				sysargs[i] = NewCallback(v.Interface())
