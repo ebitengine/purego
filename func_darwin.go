@@ -11,8 +11,8 @@ import (
 	"github.com/ebitengine/purego/internal/strings"
 )
 
-// RegisterFuncHandle takes a handle to a shared object returned from Dlopen, the name of a C function in that
-// shared object and a pointer to a Go function representing the calling convention of the C function.
+// RegisterFuncHandle takes a pointer to a Go function representing the calling convention of the C function named name
+// found in the shared object provided by handle.
 // fptr will be set to a function that when called will call the C function given by name with the
 // parameters passed in the correct registers and stack.
 //
@@ -24,7 +24,7 @@ import (
 // matches the C function. This also holds true for struct types where the padding
 // needs to be ensured to match that of C; RegisterFuncHandle does not verify this.
 //
-// Conversion Type (Go => C)
+// Type Conversions (Go => C)
 //
 //	string => char*
 //	bool => _Bool
@@ -47,7 +47,7 @@ import (
 //
 // There is a special case when the last argument of fptr is a variadic interface
 // it will be expanded into a call to the C function as if it had those arguments.
-func RegisterFuncHandle(handle uintptr, name string, fptr interface{}) {
+func RegisterFuncHandle(fptr interface{}, handle uintptr, name string) {
 	sym := Dlsym(handle, name)
 	if sym == 0 {
 		panic("purego: couldn't find symbol" + Dlerror())
