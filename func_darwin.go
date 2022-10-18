@@ -47,9 +47,9 @@ func RegisterLibFunc(fptr interface{}, handle uintptr, name string) {
 //	int16 => int16_t
 //	int32 => int32_t
 //	int64 => int64_t
-//	float32 => float
-//	float64 => double
-//	struct => struct
+//	float32 => float (WIP)
+//	float64 => double (WIP)
+//	struct => struct (WIP)
 //	func => C function
 //	[]T, unsafe.Pointer, *T => void*
 //
