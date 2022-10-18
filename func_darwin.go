@@ -40,6 +40,12 @@ func Func(handle uintptr, name string, fptr interface{}) error {
 				sysargs[i] = v.Pointer() // TODO: keep alive
 			case reflect.Func:
 				sysargs[i] = NewCallback(v.Interface())
+			case reflect.Bool:
+				if v.Bool() {
+					sysargs[i] = 1
+				} else {
+					sysargs[i] = 0
+				}
 			default:
 				panic("purego: unsupported kind: " + v.Kind().String())
 			}
