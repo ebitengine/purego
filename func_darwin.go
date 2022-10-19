@@ -34,24 +34,25 @@ func RegisterLibFunc(fptr interface{}, handle uintptr, name string) {
 //
 // Type Conversions (Go => C)
 //
-//	string => char*
-//	bool => _Bool
-//	uintptr => uintptr_t
-//	uint => uint32_t or uint64_t
-//	uint8 => uint8_t
-//	uint16 => uint16_t
-//	uint32 => uint32_t
-//	uint64 => uint64_t
-//	int => int32_t or int64_t
-//	int8 => int8_t
-//	int16 => int16_t
-//	int32 => int32_t
-//	int64 => int64_t
-//	float32 => float (WIP)
-//	float64 => double (WIP)
-//	struct => struct (WIP)
-//	func => C function
-//	[]T, unsafe.Pointer, *T => void*
+//	string <=> char*
+//	bool <=> _Bool
+//	uintptr <=> uintptr_t
+//	uint <=> uint32_t or uint64_t
+//	uint8 <=> uint8_t
+//	uint16 <=> uint16_t
+//	uint32 <=> uint32_t
+//	uint64 <=> uint64_t
+//	int <=> int32_t or int64_t
+//	int8 <=> int8_t
+//	int16 <=> int16_t
+//	int32 <=> int32_t
+//	int64 <=> int64_t
+//	float32 <=> float (WIP)
+//	float64 <=> double (WIP)
+//	struct <=> struct (WIP)
+//	func <=> C function
+//	unsafe.Pointer, *T <=> void*
+//	[]T => void*
 //
 // There is a special case when the last argument of fptr is a variadic interface (or []interface}
 // it will be expanded into a call to the C function as if it had the arguments in that slice.
