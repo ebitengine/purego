@@ -85,7 +85,22 @@ func Dlclose(handle uintptr) bool {
 }
 
 // these functions exist in dlfcn_stubs.s and are calling C functions linked to in dlfcn_GOOS.go
-var dlopenABI0 uintptr
-var dlsymABI0 uintptr
-var dlcloseABI0 uintptr
-var dlerrorABI0 uintptr
+// the indirection is necessary because a function is actually a pointer to the pointer to the code.
+// sadly, I do not know of anyway to remove the assembly stubs entirely because //go:linkname doesn't
+// appear to work if you link directly to the C function on darwin arm64.
+
+//go:linkname dlopen dlopen
+var dlopen uintptr
+var dlopenABI0 = uintptr(unsafe.Pointer(&dlopen))
+
+//go:linkname dlsym dlsym
+var dlsym uintptr
+var dlsymABI0 = uintptr(unsafe.Pointer(&dlsym))
+
+//go:linkname dlclose dlclose
+var dlclose uintptr
+var dlcloseABI0 = uintptr(unsafe.Pointer(&dlclose))
+
+//go:linkname dlerror dlerror
+var dlerror uintptr
+var dlerrorABI0 = uintptr(unsafe.Pointer(&dlerror))

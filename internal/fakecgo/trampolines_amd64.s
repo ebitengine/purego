@@ -68,86 +68,13 @@ TEXT threadentry_trampoline(SB), NOSPLIT, $16
 	MOVQ 8(SP), AX
 	RET
 
-TEXT ·setenv(SB), NOSPLIT, $0-0
-	MOVQ name+0(FP), DI
-	MOVQ value+8(FP), SI
-	MOVL overwrite+16(FP), DX
-	CALL libc_setenv(SB)
-	MOVL AX, ret+24(FP)
-	RET
-
-TEXT ·unsetenv(SB), NOSPLIT, $0-0
-	MOVQ name+0(FP), DI
-	CALL libc_unsetenv(SB)
-	MOVL AX, ret+8(FP)
-	RET
-
-TEXT ·malloc(SB), NOSPLIT, $0-0
-	MOVQ size+0(FP), DI
-	CALL libc_malloc(SB)
-	MOVQ AX, ret+8(FP)
-	RET
-
-TEXT ·free(SB), NOSPLIT, $0-0
-	MOVQ ptr+0(FP), DI
-	CALL libc_free(SB)
-	RET
-
-TEXT ·pthread_attr_init(SB), NOSPLIT, $0-12
-	MOVQ attr+0(FP), DI
-	CALL libc_pthread_attr_init(SB)
-	MOVL AX, ret+8(FP)
-	RET
-
-TEXT ·pthread_detach(SB), NOSPLIT, $0-12
-	MOVQ thread+0(FP), DI
-	CALL libc_pthread_detach(SB)
-	MOVL AX, ret+8(FP)
-	RET
-
-TEXT ·pthread_create(SB), NOSPLIT, $0-36
-	MOVQ thread+0(FP), DI
-	MOVQ attr+8(FP), SI
-	MOVQ start+16(FP), DX
-	MOVQ arg+24(FP), CX
-	CALL libc_pthread_create(SB)
-	MOVL AX, ret+32(FP)
-	RET
-
-TEXT ·pthread_attr_destroy(SB), NOSPLIT, $0-0
-	MOVQ attr+0(FP), DI
-	CALL libc_pthread_attr_destroy(SB)
-	MOVL AX, ret+8(FP)
-	RET
-
-TEXT ·pthread_attr_getstacksize(SB), NOSPLIT, $0-0
-	MOVQ attr+0(FP), DI
-	MOVQ stacksize+8(FP), SI
-	CALL libc_pthread_attr_getstacksize(SB)
-	MOVL AX, ret+16(FP)
-	RET
-
-TEXT ·pthread_sigmask(SB), NOSPLIT, $0-0
-	MOVL how+0(FP), DI
-	MOVQ ign+8(FP), SI
-	MOVQ oset+16(FP), DX
-	CALL libc_pthread_sigmask(SB)
-	MOVL AX, ret+24(FP)
-	RET
-
-TEXT ·abort(SB), NOSPLIT, $0-0
-	CALL libc_abort(SB)
-	RET
-
-TEXT ·sigfillset(SB), NOSPLIT, $0-12
-	MOVQ set+0(FP), DI
-	CALL libc_sigfillset(SB)
-	MOVL AX, ret+8(FP)
-	RET
-
-TEXT ·nanosleep(SB), NOSPLIT, $0-20
-	MOVQ ts+0(FP), DI
-	MOVQ rem+8(FP), SI
-	CALL libc_nanosleep(SB)
-	MOVL AX, ret+16(FP)
+TEXT ·call5(SB), NOSPLIT, $0-0
+	MOVQ fn+0(FP), AX
+	MOVQ a1+8(FP), DI
+	MOVQ a2+16(FP), SI
+	MOVQ a3+24(FP), DX
+	MOVQ a4+32(FP), CX
+	MOVQ a5+40(FP), R8
+	CALL AX
+	MOVQ AX, ret+48(FP)
 	RET
