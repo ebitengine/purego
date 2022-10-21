@@ -8,20 +8,20 @@
 
 // func dlopen(path *byte, mode int) (ret uintptr)
 TEXT dlopen(SB), NOSPLIT, $0-0
-	JMP _dlopen(SB)
+	JMP purego_dlopen(SB)
 	RET
 
 // func dlsym(handle uintptr, symbol *byte) (ret uintptr)
 TEXT dlsym(SB), NOSPLIT, $0-0
-	JMP _dlsym(SB)
+	JMP purego_dlsym(SB)
 	RET
 
 // func dlerror() (ret *byte)
 TEXT dlerror(SB), NOSPLIT, $0-0
-	JMP _dlerror(SB)
+	JMP purego_dlerror(SB)
 	RET
 
 // func dlclose(handle uintptr) (ret int)
 TEXT dlclose(SB), NOSPLIT, $0-0
-	JMP _dlclose(SB)
+	JMP purego_dlclose(SB)
 	RET
