@@ -12,3 +12,7 @@ func syscall_syscall9X(fn, a1, a2, a3, a4, a5, a6, a7, a8, a9 uintptr) (r1, r2, 
 	runtime_cgocall(syscall9XABI0, unsafe.Pointer(&args))
 	return args.r1, args.r2, args.err
 }
+
+func NewCallback(_ interface{}) uintptr {
+	panic("purego: NewCallback not supported")
+}
