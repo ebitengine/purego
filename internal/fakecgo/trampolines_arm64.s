@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2022 The Ebitengine Authors
 
-//go:build darwin
-// +build darwin
+//go:build darwin || linux
+// +build darwin linux
 
 #include "textflag.h"
 #include "go_asm.h"

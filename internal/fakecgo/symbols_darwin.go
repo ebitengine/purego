@@ -12,6 +12,7 @@ package fakecgo
 //go:cgo_import_dynamic libc_pthread_detach pthread_detach "libSystem.dylib"
 //go:cgo_import_dynamic libc_pthread_attr_destroy pthread_attr_destroy "libSystem.dylib"
 //go:cgo_import_dynamic libc_pthread_attr_getstacksize pthread_attr_getstacksize "libSystem.dylib"
+//go:cgo_import_dynamic libc_pthread_sigmask pthread_sigmask "libSystem.dylib"
 //go:cgo_import_dynamic libc_abort abort "libSystem.dylib"
 //go:cgo_import_dynamic libc_sigfillset sigfillset "libSystem.dylib"
 //go:cgo_import_dynamic libc_nanosleep nanosleep "libSystem.dylib"
