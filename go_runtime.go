@@ -10,6 +10,5 @@ import (
 	"unsafe"
 )
 
-
 //go:linkname runtime_cgocall runtime.cgocall
 func runtime_cgocall(fn uintptr, arg unsafe.Pointer) int32 // from runtime/sys_libc.go
