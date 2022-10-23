@@ -10,10 +10,6 @@ import (
 	"unsafe"
 )
 
-const RTLD_GLOBAL = 0x8
-
-const RTLD_DEFAULT = ^uintptr(1)
-
 var (
 	fnDlopen  func(path string, mode int) uintptr
 	fnDlsym   func(handle uintptr, name string) uintptr
