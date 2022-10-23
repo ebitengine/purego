@@ -10,6 +10,8 @@ import (
 	"unsafe"
 )
 
+// Unix Specification for dlfcn.h: https://pubs.opengroup.org/onlinepubs/7908799/xsh/dlfcn.h.html
+
 var (
 	fnDlopen  func(path string, mode int) uintptr
 	fnDlsym   func(handle uintptr, name string) uintptr
