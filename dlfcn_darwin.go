@@ -5,7 +5,7 @@ package purego
 
 // Source for constants: https://opensource.apple.com/source/dyld/dyld-360.14/include/dlfcn.h.auto.html
 
-/* The MODE argument to `dlopen' contains one of the following: */
+// The MODE argument to `dlopen' contains one of the following:
 const (
 	RTLD_LAZY   = 0x1 // Relocations are performed at an implementation-dependent time.
 	RTLD_NOW    = 0x2 // Relocations are performed when the object is loaded.
