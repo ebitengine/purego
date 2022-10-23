@@ -14,10 +14,12 @@ const RTLD_GLOBAL = 0x8
 
 const RTLD_DEFAULT = ^uintptr(1)
 
-var fnDlopen func(path string, mode int) uintptr
-var fnDlsym func(handle uintptr, name string) uintptr
-var fnDlerror func() string
-var fnDlclose func(handle uintptr) bool
+var (
+	fnDlopen  func(path string, mode int) uintptr
+	fnDlsym   func(handle uintptr, name string) uintptr
+	fnDlerror func() string
+	fnDlclose func(handle uintptr) bool
+)
 
 func init() {
 	RegisterFunc(&fnDlopen, dlopenABI0)
