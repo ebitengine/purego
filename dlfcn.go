@@ -7,15 +7,24 @@
 package purego
 
 import (
-	"runtime"
 	"unsafe"
-
-	"github.com/ebitengine/purego/internal/strings"
 )
 
 const RTLD_GLOBAL = 0x8
 
 const RTLD_DEFAULT = ^uintptr(1)
+
+var fnDlopen func(path string, mode int) uintptr
+var fnDlsym func(handle uintptr, name string) uintptr
+var fnDlerror func() string
+var fnDlclose func(handle uintptr) bool
+
+func init() {
+	RegisterFunc(&fnDlopen, dlopenABI0)
+	RegisterFunc(&fnDlsym, dlsymABI0)
+	RegisterFunc(&fnDlerror, dlerrorABI0)
+	RegisterFunc(&fnDlclose, dlcloseABI0)
+}
 
 // Dlopen examines the dynamic library or bundle file specified by path. If the file is compatible
 // with the current process and has not already been loaded into the
@@ -26,10 +35,7 @@ const RTLD_DEFAULT = ^uintptr(1)
 // reference count for the handle will be incremented. Therefore, all
 // Dlopen calls should be balanced with a Dlclose call.
 func Dlopen(path string, mode int) uintptr {
-	bs := strings.CString(path)
-	ret, _, _ := SyscallN(dlopenABI0, uintptr(unsafe.Pointer(bs)), uintptr(mode), 0)
-	runtime.KeepAlive(bs)
-	return ret
+	return fnDlopen(path, mode)
 }
 
 // Dlsym takes a "handle" of a dynamic library returned by Dlopen and the symbol name.
@@ -37,10 +43,7 @@ func Dlopen(path string, mode int) uintptr {
 // in the specified library or any of the libraries that were automatically loaded by Dlopen
 // when that library was loaded, Dlsym returns zero.
 func Dlsym(handle uintptr, name string) uintptr {
-	bs := strings.CString(name)
-	ret, _, _ := SyscallN(dlsymABI0, handle, uintptr(unsafe.Pointer(bs)), 0)
-	runtime.KeepAlive(bs)
-	return ret
+	return fnDlsym(handle, name)
 }
 
 // Dlerror returns a human-readable string describing the most recent error that
@@ -50,8 +53,7 @@ func Dlsym(handle uintptr, name string) uintptr {
 func Dlerror() string {
 	// msg is only valid until the next call to Dlerror
 	// which is why it gets copied into a Go string
-	msg, _, _ := SyscallN(dlerrorABI0)
-	return strings.GoString(msg)
+	return fnDlerror()
 }
 
 // Dlclose decrements the reference count on the dynamic library handle.
@@ -59,8 +61,7 @@ func Dlerror() string {
 // use symbols in it, then the dynamic library is unloaded.
 // Dlclose returns false on success, and true on error.
 func Dlclose(handle uintptr) bool {
-	ret, _, _ := SyscallN(dlcloseABI0, handle)
-	return ret != 0
+	return fnDlclose(handle)
 }
 
 // these functions exist in dlfcn_stubs.s and are calling C functions linked to in dlfcn_GOOS.go
