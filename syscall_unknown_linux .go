@@ -1,23 +1,19 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2022 The Ebitengine Authors
 
-//go:build !cgo && (amd64 || arm64)
-// +build !cgo
-// +build amd64 arm64
+//go:build cgo
+// +build cgo
 
 package purego
 
-import "unsafe"
+import "github.com/ebitengine/purego/internal/unknown"
 
-var syscall9XABI0 uintptr
-
+// this is only here to make the assembly files happy :)
 type syscall9Args struct{ fn, a1, a2, a3, a4, a5, a6, a7, a8, a9, r1, r2, err uintptr }
 
 //go:nosplit
 func syscall_syscall9X(fn, a1, a2, a3, a4, a5, a6, a7, a8, a9 uintptr) (r1, r2, err uintptr) {
-	args := syscall9Args{fn, a1, a2, a3, a4, a5, a6, a7, a8, a9, r1, r2, err}
-	runtime_cgocall(syscall9XABI0, unsafe.Pointer(&args))
-	return args.r1, args.r2, args.err
+	return unknown.Syscall9X(fn, a1, a2, a3, a4, a5, a6, a7, a8, a9)
 }
 
 func NewCallback(_ interface{}) uintptr {
