@@ -2,7 +2,6 @@
 // SPDX-FileCopyrightText: 2022 The Ebitengine Authors
 
 //go:build darwin || windows
-// +build darwin windows
 
 package purego
 
