@@ -2,7 +2,6 @@
 // SPDX-FileCopyrightText: 2022 The Ebitengine Authors
 
 //go:build dummy
-// +build dummy
 
 // This file exists purely to prevent the Go toolchain from stripping
 // away the C source directories and files when `go mod vendor` is used

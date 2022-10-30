@@ -3,7 +3,6 @@
 // license that can be found in the LICENSE file.
 
 //go:build darwin
-// +build darwin
 
 // The runtime package contains an uninitialized definition
 // for runtime·iscgo. Override it to tell the runtime we're here.

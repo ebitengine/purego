@@ -2,7 +2,6 @@
 // SPDX-FileCopyrightText: 2022 The Ebitengine Authors
 
 //go:build darwin
-// +build darwin
 
 // Package fakecgo implements the Cgo runtime (runtime/cgo) entirely in Go.
 // This allows code that calls into C to function properly when CGO_ENABLED=0.
