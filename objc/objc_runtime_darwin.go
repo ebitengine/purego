@@ -6,9 +6,11 @@
 package objc
 
 import (
+	"fmt"
 	"github.com/ebitengine/purego"
 	"math"
 	"reflect"
+	"strings"
 )
 
 //TODO: support try/catch?
@@ -24,6 +26,7 @@ var (
 	sel_registerName          func(name string) SEL
 	class_getSuperclass       func(class Class) Class
 	class_getInstanceVariable func(class Class, name string) Ivar
+	class_getInstanceSize     func(class Class) uintptr
 	class_addMethod           func(class Class, name SEL, imp IMP, types string) bool
 	class_addIvar             func(class Class, name string, size uintptr, alignment uint8, types string) bool
 	class_addProtocol         func(class Class, protocol *Protocol) bool
@@ -47,6 +50,7 @@ func init() {
 	purego.RegisterLibFunc(&class_addMethod, objc, "class_addMethod")
 	purego.RegisterLibFunc(&class_addIvar, objc, "class_addIvar")
 	purego.RegisterLibFunc(&class_addProtocol, objc, "class_addProtocol")
+	purego.RegisterLibFunc(&class_getInstanceSize, objc, "class_getInstanceSize")
 	purego.RegisterLibFunc(&ivar_getOffset, objc, "ivar_getOffset")
 }
 
@@ -102,6 +106,166 @@ func AllocateClassPair(super Class, name string, extraBytes uintptr) Class {
 	return objc_allocateClassPair(super, name, extraBytes)
 }
 
+func RegisterClass(object interface{}) (Class, error) {
+	strct := reflect.TypeOf(object)
+	if strct.NumField() == 0 {
+		return 0, fmt.Errorf("struct doesn't have objc.Class as first field")
+	}
+	isa := strct.Field(0)
+	if isa.Type != reflect.TypeOf(Class(0)) {
+		return 0, fmt.Errorf("struct doesn't have objc.Class as first field")
+	}
+	tag := isa.Tag
+	split := strings.Split(tag.Get("objc"), " : ") // name and superclass
+	if len(split) != 2 {
+		return 0, fmt.Errorf(`isa is missing tag in the form objc:"ClassName : SuperClass"`)
+	}
+	name := split[0]
+	super := GetClass(split[1])
+	class := objc_allocateClassPair(super, name, 0)
+	if class == 0 {
+		return 0, fmt.Errorf("failed to create class with name '%s'", name)
+	}
+	// Add Ivars
+	// Start at 1 because we skip the class object which is first
+	for i := 1; i < strct.NumField(); i++ {
+		f := strct.Field(i)
+		size := f.Type.Size()
+		alignment := uint8(math.Log2(float64(f.Type.Align())))
+		succeed := class_addIvar(class, name, size, alignment, "q")
+		if !succeed {
+			return 0, fmt.Errorf("couldn't add Ivar %s", f.Name)
+		}
+	}
+	objc_registerClassPair(class)
+	if size1, size2 := class_getInstanceSize(class), strct.Size(); size1 != size2 {
+		return 0, fmt.Errorf("objective-c size and struct size don't match %d != %d", size1, size2)
+	}
+	return class, nil
+}
+
+const (
+	encId          = "@"
+	encClass       = "#"
+	encSelector    = ":"
+	encChar        = "c"
+	encUChar       = "C"
+	encShort       = "s"
+	encUShort      = "S"
+	encInt         = "i"
+	encUInt        = "I"
+	encLong        = "l"
+	encULong       = "L"
+	encLongLong    = "q"
+	encULongLong   = "Q"
+	encFloat       = "f"
+	encDouble      = "d"
+	encDFLD        = "b"
+	encBool        = "B"
+	encVoid        = "v"
+	encUndef       = "?"
+	encPtr         = "^"
+	encCharPtr     = "*"
+	encAtom        = "%"
+	encArrayBegin  = "["
+	encArrayEnd    = "]"
+	encUnionBegin  = "("
+	encUnionEnd    = ")"
+	encStructBegin = "{"
+	encStructEnd   = "}"
+	encVector      = "!"
+	encConst       = "r"
+)
+
+func typeInfoForType(typ reflect.Type) string {
+	if typ == reflect.TypeOf(Class(0)) {
+		return encClass
+	} else if typ == reflect.TypeOf(ID(0)) {
+		return encId
+	} else if typ == reflect.TypeOf(SEL(0)) {
+		return encSelector
+	}
+
+	kind := typ.Kind()
+	switch kind {
+	case reflect.Bool:
+		return encBool
+	case reflect.Int:
+		return encInt
+	case reflect.Int8:
+		return encChar
+	case reflect.Int16:
+		return encShort
+	case reflect.Int32:
+		return encInt
+	case reflect.Int64:
+		return encULong
+	case reflect.Uint:
+		return encUInt
+	case reflect.Uint8:
+		return encUChar
+	case reflect.Uint16:
+		return encUShort
+	case reflect.Uint32:
+		return encUInt
+	case reflect.Uint64:
+		return encULong
+	case reflect.Uintptr:
+		return encPtr
+	case reflect.Float32:
+		return encFloat
+	case reflect.Float64:
+		return encDouble
+	case reflect.Ptr:
+		return encPtr
+	}
+
+	panic("typeinfo: unhandled/invalid kind " + fmt.Sprintf("%v", kind) + " " + fmt.Sprintf("%v", typ))
+}
+
+// Returns the function's typeInfo
+func funcTypeInfo(fn interface{}) string {
+	typ := reflect.TypeOf(fn)
+	kind := typ.Kind()
+	if kind != reflect.Func {
+		panic("not a func")
+	}
+
+	typeInfo := ""
+	numOut := typ.NumOut()
+	switch numOut {
+	case 0:
+		typeInfo += encVoid
+	case 1:
+		typeInfo += typeInfoForType(typ.Out(0))
+	default:
+		panic("too many output parameters")
+	}
+
+	if typ.NumIn() == 0 {
+		panic("funcTypeInfo: bad func")
+	}
+
+	typeInfo += typeInfoForType(typ.In(0))
+	typeInfo += encSelector
+
+	for i := 1; i < typ.NumIn(); i++ {
+		typeInfo += typeInfoForType(typ.In(i))
+	}
+	return typeInfo
+}
+
+func (c Class) AddMethod2(selector string, fn interface{}) bool {
+	val := reflect.ValueOf(fn)
+	ty := val.Type()
+	if ty.Kind() != reflect.Func {
+		return true // TODO: ...
+	}
+	info := funcTypeInfo(fn)
+	fmt.Println(info)
+	return class_addMethod(c, RegisterName(selector), NewIMP(fn), info)
+}
+
 // SuperClass returns the superclass of a class.
 // You should usually use NSObject‘s superclass method instead of this function.
 func (c Class) SuperClass() Class {
@@ -133,6 +297,11 @@ func (c Class) AddIvar(name string, ty interface{}, types string) bool {
 // the class already conforms to that protocol).
 func (c Class) AddProtocol(protocol *Protocol) bool {
 	return class_addProtocol(c, protocol)
+}
+
+// InstanceSize returns the size in bytes of instances of the class or 0 if cls is nil
+func (c Class) InstanceSize() uintptr {
+	return class_getInstanceSize(c)
 }
 
 // InstanceVariable returns an Ivar data structure containing information about the instance variable specified by name.
@@ -180,7 +349,11 @@ func NewIMP(fn interface{}) IMP {
 	switch {
 	case ty.NumIn() < 2:
 		fallthrough
-	case ty.In(0).Kind() != reflect.Uintptr:
+	case ty.In(0).Kind() != reflect.Uintptr && // checks if it's objc.ID
+		// or that it's a pointer to a struct
+		(ty.In(0).Kind() != reflect.Pointer || ty.In(0).Elem().Kind() != reflect.Struct ||
+			// and that the structs first field is an objc.Class
+			ty.In(0).Elem().Field(0).Type != reflect.TypeOf(Class(0))):
 		fallthrough
 	case ty.In(1).Kind() != reflect.Uintptr:
 		panic("objc: NewIMP must take a (id, SEL) as its first two arguments")
