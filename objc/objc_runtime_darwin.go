@@ -180,7 +180,11 @@ func NewIMP(fn interface{}) IMP {
 	switch {
 	case ty.NumIn() < 2:
 		fallthrough
-	case ty.In(0).Kind() != reflect.Uintptr:
+	case ty.In(0).Kind() != reflect.Uintptr && // checks if it's objc.Class
+		// checks if it's a pointer to a struct
+		(ty.In(0).Kind() != reflect.Pointer || ty.In(0).Elem().Kind() != reflect.Struct ||
+			// and that the structs structure matches that of objc.Class
+			ty.In(0).Elem().Field(0).Type != reflect.TypeOf(Class(0))):
 		fallthrough
 	case ty.In(1).Kind() != reflect.Uintptr:
 		panic("objc: NewIMP must take a (id, SEL) as its first two arguments")

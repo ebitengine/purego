@@ -5,7 +5,6 @@ package objc_test
 
 import (
 	"fmt"
-	"unsafe"
 
 	"github.com/ebitengine/purego"
 	"github.com/ebitengine/purego/objc"
@@ -24,20 +23,23 @@ func ExampleAllocateClassPair() {
 }
 
 func ExampleClass_AddIvar() {
+	type barObject struct {
+		isa objc.Class
+		bar int
+	}
 	var class = objc.AllocateClassPair(objc.GetClass("NSObject"), "BarObject", 0)
 	class.AddIvar("bar", int(0), "q")
-	var barOffset = class.InstanceVariable("bar").Offset()
-	class.AddMethod(objc.RegisterName("bar"), objc.NewIMP(func(self objc.ID, _cmd objc.SEL) int {
-		return *(*int)(unsafe.Pointer(uintptr(unsafe.Pointer(self)) + barOffset))
+	class.AddMethod(objc.RegisterName("bar"), objc.NewIMP(func(self *barObject, _cmd objc.SEL) int {
+		return self.bar
 	}), "q@:")
-	class.AddMethod(objc.RegisterName("setBar:"), objc.NewIMP(func(self objc.ID, _cmd objc.SEL, bar int) {
-		*(*int)(unsafe.Pointer(uintptr(unsafe.Pointer(self)) + barOffset)) = bar
+	class.AddMethod(objc.RegisterName("setBar:"), objc.NewIMP(func(self *barObject, _cmd objc.SEL, bar int) {
+		self.bar = bar
 	}), "v@:q")
 	class.Register()
 
-	var barObject = objc.ID(class).Send(objc.RegisterName("new"))
-	barObject.Send(objc.RegisterName("setBar:"), 123)
-	var bar = int(barObject.Send(objc.RegisterName("bar")))
+	var object = objc.ID(class).Send(objc.RegisterName("new"))
+	object.Send(objc.RegisterName("setBar:"), 123)
+	var bar = int(object.Send(objc.RegisterName("bar")))
 	fmt.Println(bar)
 	// Output: 123
 }
