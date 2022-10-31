@@ -4,6 +4,8 @@
 package purego
 
 import (
+	"fmt"
+	"math"
 	"reflect"
 	"runtime"
 	"sync"
@@ -68,8 +70,7 @@ func compileCallback(fn interface{}) uintptr {
 	for i := 0; i < ty.NumIn(); i++ {
 		in := ty.In(i)
 		switch in.Kind() {
-		case reflect.Struct, reflect.Float32, reflect.Float64,
-			reflect.Interface, reflect.Func, reflect.Slice,
+		case reflect.Struct, reflect.Interface, reflect.Func, reflect.Slice,
 			reflect.Chan, reflect.Complex64, reflect.Complex128,
 			reflect.String, reflect.Map, reflect.Invalid:
 			panic("purego: unsupported argument type: " + in.Kind().String())
@@ -101,14 +102,30 @@ func callbackWrap(a *callbackArgs) {
 	cbs.lock.Lock()
 	fn := cbs.funcs[a.index]
 	cbs.lock.Unlock()
+	name := fn.Type().Name()
 	fnType := fn.Type()
 	args := make([]reflect.Value, fnType.NumIn())
 	frame := (*[callbackMaxFrame]uintptr)(a.args)
+	var floatsUsed int // tracks number of floats used
 	for i := range args {
 		//TODO: support float32 and float64
-		args[i] = reflect.NewAt(fnType.In(i), unsafe.Pointer(&frame[i])).Elem()
+		in := fnType.In(i)
+		switch in.Kind() {
+		case reflect.Float32, reflect.Float64:
+			if floatsUsed > 8 {
+				panic("purego: more than 8 float arguments not supported")
+			}
+			v := reflect.New(in).Elem()
+			v.SetFloat(math.Float64frombits(uint64(frame[floatsUsed])))
+			args[i] = v
+			floatsUsed++
+		default:
+			args[i] = reflect.NewAt(in, unsafe.Pointer(&frame[i+8])).Elem()
+		}
+
 	}
 	ret := fn.Call(args)
+	fmt.Println(name)
 	if len(ret) > 0 {
 		switch k := ret[0].Kind(); k {
 		case reflect.Uint, reflect.Uint64, reflect.Uint32, reflect.Uint16, reflect.Uint8, reflect.Uintptr:
