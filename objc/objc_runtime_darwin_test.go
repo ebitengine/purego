@@ -5,6 +5,7 @@ package objc_test
 
 import (
 	"fmt"
+
 	"github.com/ebitengine/purego"
 	"github.com/ebitengine/purego/objc"
 )
