@@ -8,9 +8,10 @@ package objc
 import (
 	"errors"
 	"fmt"
-	"github.com/ebitengine/purego"
 	"math"
 	"reflect"
+
+	"github.com/ebitengine/purego"
 )
 
 //TODO: support try/catch?
