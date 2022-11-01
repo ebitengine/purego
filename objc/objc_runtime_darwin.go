@@ -114,7 +114,7 @@ type Selector interface {
 	Selector(string) SEL
 }
 
-var TagFormatError = errors.New(`objc tag is doesn't match "ClassName : SuperClassName <Protocol, ...>""`)
+var TagFormatError = errors.New(`objc tag doesn't match "ClassName : SuperClassName <Protocol, ...>""`)
 
 func RegisterClass(object Selector) (Class, error) {
 	ptr := reflect.TypeOf(object)
@@ -150,7 +150,7 @@ func RegisterClass(object Selector) (Class, error) {
 		skipSpace()
 		// get ClassName
 		for i, r = range tag {
-			if r == ' ' {
+			if r == ' ' || r == ':' {
 				break
 			}
 		}
@@ -177,6 +177,9 @@ func RegisterClass(object Selector) (Class, error) {
 				i++
 				break
 			}
+		}
+		if len(tag) < i {
+			return 0, fmt.Errorf("missing SuperClassName: %w", TagFormatError)
 		}
 		split[1] = tag[:i] // store SuperClassName
 		tag = tag[i:]      // drop SuperClassName
