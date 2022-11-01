@@ -337,8 +337,10 @@ func GetProtocol(name string) *Protocol {
 // IMP is a function pointer that can be called by Objective-C code.
 type IMP uintptr
 
-// NewIMP takes a Go function that takes (ID, SEL) as its first two arguments. It returns an IMP function
-// pointer that can be called by Objective-C code. The function pointer is never deallocated.
+// NewIMP takes a Go function that takes (ID, SEL) as its first two arguments.
+// ID may instead be a pointer to a struct whose first field has type Class.
+// It returns an IMP function pointer that can be called by Objective-C code.
+// The function pointer is never deallocated.
 func NewIMP(fn interface{}) IMP {
 	ty := reflect.TypeOf(fn)
 	if ty.Kind() != reflect.Func {
