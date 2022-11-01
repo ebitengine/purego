@@ -237,8 +237,7 @@ func RegisterClass(object Selector) (Class, error) {
 			}
 		}
 	}
-	super := GetClass(split[1])
-	class := objc_allocateClassPair(super, split[0], 0)
+	class := objc_allocateClassPair(GetClass(split[1]), split[0], 0)
 	if class == 0 {
 		return 0, fmt.Errorf("failed to create class with name '%s'", split[0])
 	}
