@@ -75,7 +75,18 @@ func compileCallback(fn interface{}) uintptr {
 			panic("purego: unsupported argument type: " + in.Kind().String())
 		}
 	}
-	if ty.NumOut() > 1 || ty.NumOut() == 1 && ty.Out(0).Size() != ptrSize {
+output:
+	switch {
+	case ty.NumOut() == 1:
+		out := ty.Out(0)
+		switch out.Kind() {
+		case reflect.Pointer, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+			reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr,
+			reflect.Bool, reflect.UnsafePointer:
+			break output
+		}
+		fallthrough
+	case ty.NumOut() > 1:
 		panic("purego: callbacks can only have one pointer-sized return")
 	}
 	cbs.lock.Lock()
