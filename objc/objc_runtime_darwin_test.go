@@ -73,31 +73,3 @@ func ExampleID_SendSuper() {
 	// Output: In Child
 	// In Super!
 }
-
-type barObject struct {
-	isa objc.Class
-	bar int
-}
-
-func (b *barObject) Bar(_cmd objc.SEL) int {
-	return b.bar
-}
-
-func (b *barObject) SetBar(_cmd objc.SEL, bar int) {
-	b.bar = bar
-}
-
-func ExampleRegisterClass() {
-	class, err := objc.RegisterClass(&barObject{}, "NSObject")
-	if err != nil {
-		panic(err)
-	}
-	class.AddMethod(objc.RegisterName("bar"), objc.NewIMP((*barObject).Bar), "q@:")
-	class.AddMethod(objc.RegisterName("setBar:"), objc.NewIMP((*barObject).SetBar), "v@:q")
-
-	var object = objc.ID(class).Send(objc.RegisterName("new"))
-	object.Send(objc.RegisterName("setBar:"), 123)
-	var bar = int(object.Send(objc.RegisterName("bar")))
-	fmt.Println(bar)
-	// Output: 123
-}
