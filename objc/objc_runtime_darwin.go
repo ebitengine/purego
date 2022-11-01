@@ -8,10 +8,9 @@ package objc
 import (
 	"errors"
 	"fmt"
+	"github.com/ebitengine/purego"
 	"math"
 	"reflect"
-
-	"github.com/ebitengine/purego"
 )
 
 //TODO: support try/catch?
@@ -245,7 +244,7 @@ func RegisterClass(object Selector) (Class, error) {
 	if len(split) > 2 {
 		// Add Protocols
 		for _, n := range split[2:] {
-			succeed := class_addProtocol(class, objc_getProtocol(n))
+			succeed := class.AddProtocol(GetProtocol(n))
 			if !succeed {
 				return 0, fmt.Errorf("couldn't add Protocol %s", n)
 			}
@@ -274,7 +273,7 @@ func RegisterClass(object Selector) (Class, error) {
 		if err != nil {
 			return 0, fmt.Errorf("couldn't add Method %s: %w", met.Name, err)
 		}
-		succeed := class_addMethod(class, sel, imp, funcTypeInfo(fn))
+		succeed := class.AddMethod(sel, imp, funcTypeInfo(fn))
 		if !succeed {
 			return 0, fmt.Errorf("couldn't add Method %s", met.Name)
 		}
@@ -291,7 +290,7 @@ func RegisterClass(object Selector) (Class, error) {
 		}
 	}
 	objc_registerClassPair(class)
-	if size1, size2 := class_getInstanceSize(class), strct.Size(); size1 != size2 {
+	if size1, size2 := class.InstanceSize(), strct.Size(); size1 != size2 {
 		return 0, fmt.Errorf("%w: sizes don't match %d != %d", MismatchError, size1, size2)
 	}
 	return class, nil
