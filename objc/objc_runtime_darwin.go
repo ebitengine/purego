@@ -124,7 +124,8 @@ var MismatchError = errors.New("go struct doesn't match objective-c struct")
 // It will register the structs fields and pointer receiver methods in the Objective-C
 // runtime using the SEL returned from Selector. Any errors that occur trying to add
 // a Method or Ivar is returned as an error. Such errors may occur in parsing or because
-// the size of the struct does not match the size in Objective-C.
+// the size of the struct does not match the size in Objective-C. If no errors occur
+// then the returned Class has been registered successfully.
 //
 // The struct's first field must be of type Class and have a tag that matches the format
 // `objc:"ClassName : SuperClassName <Protocol, ...>`. This tag is equal to how the class
