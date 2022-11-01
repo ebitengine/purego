@@ -106,16 +106,26 @@ func AllocateClassPair(super Class, name string, extraBytes uintptr) Class {
 	return objc_allocateClassPair(super, name, extraBytes)
 }
 
-// Selector is an interface that takes a Go method
+// Selector is an interface that takes a Go method name
 // and returns the selector equivalent name.
-// If it returns an nil SEL then that method
+// If it returns a nil SEL then that method
 // is not added to the class object.
 type Selector interface {
 	Selector(string) SEL
 }
 
+// TagFormatError occurs when the parser fails to parse the objc tag in a Selector object
 var TagFormatError = errors.New(`objc tag doesn't match "ClassName : SuperClassName <Protocol, ...>""`)
 
+// RegisterClass takes a pointer to a struct that implements the Selector interface.
+// It will register the structs fields and pointer receiver methods in the Objective-C
+// runtime using the SEL returned from Selector. Any errors that occur trying to add
+// a Method or Ivar is returned as an error. Such errors may occur in parsing or because
+// the size of the struct does not match the size in Objective-C.
+//
+// The struct's first field must be of type Class and have a tag that matches the format
+// `objc:"ClassName : SuperClassName <Protocol, ...>`. This tag is equal to how the class
+// would be defined in Objective-C.
 func RegisterClass(object Selector) (Class, error) {
 	ptr := reflect.TypeOf(object)
 	strct := ptr.Elem()
@@ -130,7 +140,9 @@ func RegisterClass(object Selector) (Class, error) {
 	if tag == "" {
 		return 0, fmt.Errorf("missing objc tag: %w", TagFormatError)
 	}
-	var split = make([]string, 2) // start with two for ClassName : SuperClassName
+	// split contains the class name and super class name followed by all the Protocols
+	// start with two for ClassName : SuperClassName
+	var split = make([]string, 2)
 	{
 		// This is a simple parser for the objc tag that looks for the format
 		//  	"ClassName : SuperClassName <Protocol, ...>"
