@@ -253,7 +253,8 @@ func RegisterClass(object Selector) (Class, error) {
 	// Add exported methods based on the selectors returned from Selector(string) SEL
 	for i := 0; i < ptr.NumMethod(); i++ {
 		met := ptr.Method(i)
-		// TODO: figure a better way to determine if this is the Selector interface method
+		// we know this method is the interface one since RegisterClass
+		// requires that the struct implement Selector.
 		if met.Name == "Selector" {
 			continue
 		}
