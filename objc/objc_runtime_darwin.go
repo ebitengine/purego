@@ -6,11 +6,11 @@
 package objc
 
 import (
+	"errors"
 	"fmt"
 	"github.com/ebitengine/purego"
 	"math"
 	"reflect"
-	"strings"
 )
 
 //TODO: support try/catch?
@@ -106,8 +106,19 @@ func AllocateClassPair(super Class, name string, extraBytes uintptr) Class {
 	return objc_allocateClassPair(super, name, extraBytes)
 }
 
-func RegisterClass(object interface{}) (Class, error) {
-	strct := reflect.TypeOf(object)
+// Selector is an interface that takes a Go method
+// and returns the selector equivalent name.
+// If it returns an nil SEL then that method
+// is not added to the class object.
+type Selector interface {
+	Selector(string) SEL
+}
+
+var TagFormatError = errors.New(`objc tag is doesn't match "ClassName : SuperClassName <Protocol, ...>""`)
+
+func RegisterClass(object Selector) (Class, error) {
+	ptr := reflect.TypeOf(object)
+	strct := ptr.Elem()
 	if strct.NumField() == 0 {
 		return 0, fmt.Errorf("struct doesn't have objc.Class as first field")
 	}
@@ -115,16 +126,130 @@ func RegisterClass(object interface{}) (Class, error) {
 	if isa.Type != reflect.TypeOf(Class(0)) {
 		return 0, fmt.Errorf("struct doesn't have objc.Class as first field")
 	}
-	tag := isa.Tag
-	split := strings.Split(tag.Get("objc"), " : ") // name and superclass
-	if len(split) != 2 {
-		return 0, fmt.Errorf(`isa is missing tag in the form objc:"ClassName : SuperClass"`)
+	tag := isa.Tag.Get("objc")
+	if tag == "" {
+		return 0, fmt.Errorf("missing objc tag: %w", TagFormatError)
 	}
-	name := split[0]
+	var split = make([]string, 2) // start with two for ClassName : SuperClassName
+	{
+		// This is a simple parser for the objc tag that looks for the format
+		//  	"ClassName : SuperClassName <Protocol, ...>"
+		// It appends to the split variable with the [ClassName, SuperClassName, Protocol, ...]
+
+		var i int  // from tag[0:i] is whatever identifier is next
+		var r rune // r is the current rune
+		skipSpace := func() {
+			for _, c := range tag {
+				if c == ' ' {
+					tag = tag[1:]
+					continue
+				}
+				break
+			}
+		}
+		skipSpace()
+		// get ClassName
+		for i, r = range tag {
+			if r == ' ' {
+				break
+			}
+		}
+		split[0] = tag[0:i] // store ClassName
+		tag = tag[i:]
+
+		skipSpace()
+
+		// check for ':'
+		if len(tag) > 0 && tag[0] != ':' {
+			return 0, fmt.Errorf("missing ':': %w", TagFormatError)
+		}
+		tag = tag[1:] // skip ':'
+		skipSpace()
+
+		// get SuperClassName
+		for i, r = range tag {
+			if r == ' ' {
+				break
+			} else if i+1 == len(tag) {
+				// if this is the last character in the string
+				// make sure to increment i so that tag[:i]
+				// includes the last character
+				i++
+				break
+			}
+		}
+		split[1] = tag[:i] // store SuperClassName
+		tag = tag[i:]      // drop SuperClassName
+		skipSpace()
+		if len(tag) > 0 {
+			if tag[0] != '<' {
+				return 0, fmt.Errorf("expected '<': %w", TagFormatError)
+			}
+			tag = tag[1:] // drop '<'
+			// get Protocols
+		outer:
+			for {
+				skipSpace()
+				for i, r = range tag {
+					switch r {
+					case ' ':
+						split = append(split, tag[:i])
+						tag = tag[i:]
+						continue outer
+					case ',':
+						// If there is actually an identifier - add it.
+						if i > 0 {
+							split = append(split, tag[:i])
+							tag = tag[i:]
+						} else {
+							// Otherwise, drop ','
+							tag = tag[1:]
+						}
+						continue outer
+					case '>':
+						// If there is actually an identifier - add it.
+						if i > 0 {
+							split = append(split, tag[:i])
+							tag = tag[i:]
+						}
+						break outer
+					}
+				}
+				return 0, fmt.Errorf("expected '>': %w", TagFormatError)
+			}
+		}
+	}
 	super := GetClass(split[1])
-	class := objc_allocateClassPair(super, name, 0)
+	class := objc_allocateClassPair(super, split[0], 0)
 	if class == 0 {
-		return 0, fmt.Errorf("failed to create class with name '%s'", name)
+		return 0, fmt.Errorf("failed to create class with name '%s'", split[0])
+	}
+	if len(split) > 2 {
+		// Add Protocols
+		for _, n := range split[2:] {
+			succeed := class_addProtocol(class, objc_getProtocol(n))
+			if !succeed {
+				return 0, fmt.Errorf("couldn't add Protocol %s", n)
+			}
+		}
+	}
+	// Add exported methods based on the selectors returned from Selector(string) SEL
+	for i := 0; i < ptr.NumMethod(); i++ {
+		met := ptr.Method(i)
+		// TODO: figure a better way to determine if this is the Selector interface method
+		if met.Name == "Selector" {
+			continue
+		}
+		sel := object.Selector(met.Name)
+		if sel == 0 {
+			continue
+		}
+		fn := met.Func.Interface()
+		//TODO: catch NewIMP panics and return as error
+		succeed := class_addMethod(class, sel, NewIMP(fn), funcTypeInfo(fn))
+		if !succeed {
+			return 0, fmt.Errorf("couldn't add Method %s", met.Name)
+		}
 	}
 	// Add Ivars
 	// Start at 1 because we skip the class object which is first
@@ -132,7 +257,7 @@ func RegisterClass(object interface{}) (Class, error) {
 		f := strct.Field(i)
 		size := f.Type.Size()
 		alignment := uint8(math.Log2(float64(f.Type.Align())))
-		succeed := class_addIvar(class, name, size, alignment, "q")
+		succeed := class_addIvar(class, f.Name, size, alignment, typeInfoForType(f.Type))
 		if !succeed {
 			return 0, fmt.Errorf("couldn't add Ivar %s", f.Name)
 		}
@@ -358,7 +483,7 @@ func NewIMP(fn interface{}) IMP {
 			ty.In(0).Elem().Field(0).Type != reflect.TypeOf(Class(0))):
 		fallthrough
 	case ty.In(1).Kind() != reflect.Uintptr:
-		panic("objc: NewIMP must take a (id, SEL) as its first two arguments")
+		panic("objc: NewIMP must take a (id, SEL) as its first two arguments" + ty.String())
 	}
 	return IMP(purego.NewCallback(fn))
 }
