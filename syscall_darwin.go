@@ -132,6 +132,10 @@ func callbackWrap(a *callbackArgs) {
 			} else {
 				a.result = 0
 			}
+		case reflect.Pointer:
+			a.result = ret[0].Pointer()
+		case reflect.UnsafePointer:
+			a.result = ret[0].Pointer()
 		default:
 			panic("purego: unsupported kind: " + k.String())
 		}
