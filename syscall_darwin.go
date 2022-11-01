@@ -84,9 +84,9 @@ output:
 			reflect.Bool, reflect.UnsafePointer:
 			break output
 		}
-		fallthrough
+		panic("purego: unsupported return type: " + ty.String())
 	case ty.NumOut() > 1:
-		panic("purego: callbacks can only have one pointer-sized return")
+		panic("purego: callbacks can only have one return")
 	}
 	cbs.lock.Lock()
 	defer cbs.lock.Unlock()
