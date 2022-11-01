@@ -117,6 +117,9 @@ type Selector interface {
 // TagFormatError occurs when the parser fails to parse the objc tag in a Selector object
 var TagFormatError = errors.New(`objc tag doesn't match "ClassName : SuperClassName <Protocol, ...>""`)
 
+// MismatchError occurs when the Go struct definition doesn't match that of Objective-C
+var MismatchError = errors.New("go struct doesn't match objective-c struct")
+
 // RegisterClass takes a pointer to a struct that implements the Selector interface.
 // It will register the structs fields and pointer receiver methods in the Objective-C
 // runtime using the SEL returned from Selector. Any errors that occur trying to add
@@ -129,13 +132,10 @@ var TagFormatError = errors.New(`objc tag doesn't match "ClassName : SuperClassN
 func RegisterClass(object Selector) (Class, error) {
 	ptr := reflect.TypeOf(object)
 	strct := ptr.Elem()
-	if strct.NumField() == 0 {
-		return 0, fmt.Errorf("struct doesn't have objc.Class as first field")
+	if strct.NumField() == 0 || strct.Field(0).Type != reflect.TypeOf(Class(0)) {
+		return 0, fmt.Errorf("%w: need objc.Class as first field", MismatchError)
 	}
 	isa := strct.Field(0)
-	if isa.Type != reflect.TypeOf(Class(0)) {
-		return 0, fmt.Errorf("struct doesn't have objc.Class as first field")
-	}
 	tag := isa.Tag.Get("objc")
 	if tag == "" {
 		return 0, fmt.Errorf("missing objc tag: %w", TagFormatError)
@@ -260,8 +260,18 @@ func RegisterClass(object Selector) (Class, error) {
 			continue
 		}
 		fn := met.Func.Interface()
-		//TODO: catch NewIMP panics and return as error
-		succeed := class_addMethod(class, sel, NewIMP(fn), funcTypeInfo(fn))
+		imp, err := func() (imp IMP, err error) {
+			defer func() {
+				if r := recover(); r != nil {
+					err = fmt.Errorf("failed to create IMP: %s", r)
+				}
+			}()
+			return NewIMP(fn), nil
+		}()
+		if err != nil {
+			return 0, fmt.Errorf("couldn't add Method %s: %w", met.Name, err)
+		}
+		succeed := class_addMethod(class, sel, imp, funcTypeInfo(fn))
 		if !succeed {
 			return 0, fmt.Errorf("couldn't add Method %s", met.Name)
 		}
@@ -279,7 +289,7 @@ func RegisterClass(object Selector) (Class, error) {
 	}
 	objc_registerClassPair(class)
 	if size1, size2 := class_getInstanceSize(class), strct.Size(); size1 != size2 {
-		return 0, fmt.Errorf("objective-c size and struct size don't match %d != %d", size1, size2)
+		return 0, fmt.Errorf("%w: sizes don't match %d != %d", MismatchError, size1, size2)
 	}
 	return class, nil
 }
@@ -498,7 +508,7 @@ func NewIMP(fn interface{}) IMP {
 			ty.In(0).Elem().Field(0).Type != reflect.TypeOf(Class(0))):
 		fallthrough
 	case ty.In(1).Kind() != reflect.Uintptr:
-		panic("objc: NewIMP must take a (id, SEL) as its first two arguments" + ty.String())
+		panic("objc: NewIMP must take a (id, SEL) as its first two arguments got " + ty.String())
 	}
 	return IMP(purego.NewCallback(fn))
 }
