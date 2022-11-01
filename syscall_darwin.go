@@ -78,8 +78,7 @@ func compileCallback(fn interface{}) uintptr {
 output:
 	switch {
 	case ty.NumOut() == 1:
-		out := ty.Out(0)
-		switch out.Kind() {
+		switch ty.Out(0).Kind() {
 		case reflect.Pointer, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
 			reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr,
 			reflect.Bool, reflect.UnsafePointer:
