@@ -408,17 +408,6 @@ func funcTypeInfo(fn interface{}) string {
 	return typeInfo
 }
 
-func (c Class) AddMethod2(selector string, fn interface{}) bool {
-	val := reflect.ValueOf(fn)
-	ty := val.Type()
-	if ty.Kind() != reflect.Func {
-		return true // TODO: ...
-	}
-	info := funcTypeInfo(fn)
-	fmt.Println(info)
-	return class_addMethod(c, RegisterName(selector), NewIMP(fn), info)
-}
-
 // SuperClass returns the superclass of a class.
 // You should usually use NSObject‘s superclass method instead of this function.
 func (c Class) SuperClass() Class {
