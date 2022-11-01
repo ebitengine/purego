@@ -274,7 +274,7 @@ func RegisterClass(object Selector) (Class, error) {
 		if err != nil {
 			return 0, fmt.Errorf("couldn't add Method %s: %w", met.Name, err)
 		}
-		succeed := class.AddMethod(sel, imp, funcTypeInfo(fn))
+		succeed := class.AddMethod(sel, imp, encodeFunc(fn))
 		if !succeed {
 			return 0, fmt.Errorf("couldn't add Method %s", met.Name)
 		}
@@ -285,7 +285,7 @@ func RegisterClass(object Selector) (Class, error) {
 		f := strct.Field(i)
 		size := f.Type.Size()
 		alignment := uint8(math.Log2(float64(f.Type.Align())))
-		succeed := class_addIvar(class, f.Name, size, alignment, typeInfoForType(f.Type))
+		succeed := class_addIvar(class, f.Name, size, alignment, encodeType(f.Type))
 		if !succeed {
 			return 0, fmt.Errorf("couldn't add Ivar %s", f.Name)
 		}
@@ -330,7 +330,9 @@ const (
 	encConst       = "r"
 )
 
-func typeInfoForType(typ reflect.Type) string {
+// encodeType returns a string representing a type as if it was given to @encode(typ)
+// Source: https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/ObjCRuntimeGuide/Articles/ocrtTypeEncodings.html#//apple_ref/doc/uid/TP40008048-CH100
+func encodeType(typ reflect.Type) string {
 	if typ == reflect.TypeOf(Class(0)) {
 		return encClass
 	} else if typ == reflect.TypeOf(ID(0)) {
@@ -370,42 +372,49 @@ func typeInfoForType(typ reflect.Type) string {
 	case reflect.Float64:
 		return encDouble
 	case reflect.Ptr:
-		return encPtr
+		return encPtr + encodeType(typ.Elem())
+	case reflect.String:
+		var encoding = encStructBegin
+		encoding += typ.Name()
+		encoding += "="
+		for i := 0; i < typ.NumField(); i++ {
+			f := typ.Field(i)
+			encoding += encodeType(f.Type)
+		}
+		encoding = encStructEnd
 	}
 
-	panic("typeinfo: unhandled/invalid kind " + fmt.Sprintf("%v", kind) + " " + fmt.Sprintf("%v", typ))
+	panic("objc: unhandled/invalid kind " + fmt.Sprintf("%v", kind) + " " + fmt.Sprintf("%v", typ))
 }
 
-// Returns the function's typeInfo
-func funcTypeInfo(fn interface{}) string {
+// encodeFunc returns a functions type as if it was given to @encode(fn)
+func encodeFunc(fn interface{}) string {
 	typ := reflect.TypeOf(fn)
-	kind := typ.Kind()
-	if kind != reflect.Func {
-		panic("not a func")
+	if typ.Kind() != reflect.Func {
+		panic("objc: not a func")
 	}
 
-	typeInfo := ""
-	numOut := typ.NumOut()
-	switch numOut {
+	encoding := ""
+	switch typ.NumOut() {
 	case 0:
-		typeInfo += encVoid
+		encoding += encVoid
 	case 1:
-		typeInfo += typeInfoForType(typ.Out(0))
+		encoding += encodeType(typ.Out(0))
 	default:
-		panic("too many output parameters")
+		panic("objc: too many output parameters")
 	}
 
 	if typ.NumIn() == 0 {
-		panic("funcTypeInfo: bad func")
+		panic("objc: bad func")
 	}
 
-	typeInfo += typeInfoForType(typ.In(0))
-	typeInfo += encSelector
+	encoding += encodeType(typ.In(0))
+	encoding += encSelector
 
 	for i := 1; i < typ.NumIn(); i++ {
-		typeInfo += typeInfoForType(typ.In(i))
+		encoding += encodeType(typ.In(i))
 	}
-	return typeInfo
+	return encoding
 }
 
 // SuperClass returns the superclass of a class.
