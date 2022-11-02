@@ -309,25 +309,14 @@ const (
 	encUInt        = "I"
 	encLong        = "l"
 	encULong       = "L"
-	encLongLong    = "q"
-	encULongLong   = "Q"
 	encFloat       = "f"
 	encDouble      = "d"
-	encDFLD        = "b"
 	encBool        = "B"
 	encVoid        = "v"
-	encUndef       = "?"
 	encPtr         = "^"
 	encCharPtr     = "*"
-	encAtom        = "%"
-	encArrayBegin  = "["
-	encArrayEnd    = "]"
-	encUnionBegin  = "("
-	encUnionEnd    = ")"
 	encStructBegin = "{"
 	encStructEnd   = "}"
-	encVector      = "!"
-	encConst       = "r"
 )
 
 // encodeType returns a string representing a type as if it was given to @encode(typ)
@@ -373,7 +362,7 @@ func encodeType(typ reflect.Type) string {
 		return encDouble
 	case reflect.Ptr:
 		return encPtr + encodeType(typ.Elem())
-	case reflect.String:
+	case reflect.Struct:
 		var encoding = encStructBegin
 		encoding += typ.Name()
 		encoding += "="
@@ -382,6 +371,8 @@ func encodeType(typ reflect.Type) string {
 			encoding += encodeType(f.Type)
 		}
 		encoding = encStructEnd
+	case reflect.String:
+		return encCharPtr
 	}
 
 	panic("objc: unhandled/invalid kind " + fmt.Sprintf("%v", kind) + " " + fmt.Sprintf("%v", typ))
