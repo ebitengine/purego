@@ -289,6 +289,9 @@ func RegisterClass(object Selector) (Class, error) {
 		if !succeed {
 			return 0, fmt.Errorf("couldn't add Ivar %s", f.Name)
 		}
+		if offset := class.InstanceVariable(f.Name).Offset(); offset != f.Offset {
+			return 0, fmt.Errorf("couldn't add Ivar %s", f.Name)
+		}
 	}
 	objc_registerClassPair(class)
 	if size1, size2 := class.InstanceSize(), strct.Size(); size1 != size2 {
@@ -371,6 +374,7 @@ func encodeType(typ reflect.Type) string {
 			encoding += encodeType(f.Type)
 		}
 		encoding = encStructEnd
+		return encoding
 	case reflect.String:
 		return encCharPtr
 	}
