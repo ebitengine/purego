@@ -379,7 +379,7 @@ func encodeType(typ reflect.Type) string {
 		return encCharPtr
 	}
 
-	panic("objc: unhandled/invalid kind " + fmt.Sprintf("%v", kind) + " " + fmt.Sprintf("%v", typ))
+	panic(fmt.Sprintf("objc: unhandled/invalid kind %v typed %v", kind, typ))
 }
 
 // encodeFunc returns a functions type as if it was given to @encode(fn)
@@ -400,7 +400,7 @@ func encodeFunc(fn interface{}) string {
 	}
 
 	if typ.NumIn() == 0 {
-		panic("objc: bad func")
+		panic("objc: func doesn't take ID and SEL as its first two parameters")
 	}
 
 	encoding += encodeType(typ.In(0))
