@@ -326,11 +326,12 @@ const (
 // encodeType returns a string representing a type as if it was given to @encode(typ)
 // Source: https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/ObjCRuntimeGuide/Articles/ocrtTypeEncodings.html#//apple_ref/doc/uid/TP40008048-CH100
 func encodeType(typ reflect.Type) string {
-	if typ == reflect.TypeOf(Class(0)) {
+	switch typ {
+	case reflect.TypeOf(Class(0)):
 		return encClass
-	} else if typ == reflect.TypeOf(ID(0)) {
+	case reflect.TypeOf(ID(0)):
 		return encId
-	} else if typ == reflect.TypeOf(SEL(0)) {
+	case reflect.TypeOf(SEL(0)):
 		return encSelector
 	}
 
