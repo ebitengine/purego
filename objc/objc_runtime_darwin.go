@@ -103,6 +103,7 @@ func GetClass(name string) Class {
 }
 
 // AllocateClassPair creates a new class and metaclass. Then returns the new class, or Nil if the class could not be created
+//
 // Deprecated: use RegisterClass instead
 func AllocateClassPair(super Class, name string, extraBytes uintptr) Class {
 	return objc_allocateClassPair(super, name, extraBytes)
@@ -431,6 +432,7 @@ func (c Class) AddMethod(name SEL, imp IMP, types string) bool {
 // Adding an instance variable to an existing class is not supported.
 // The class must not be a metaclass. Adding an instance variable to a metaclass is not supported.
 // It takes the instance of the type of the Ivar and a string representing the type.
+//
 // Deprecated: use RegisterClass instead
 func (c Class) AddIvar(name string, ty interface{}, types string) bool {
 	typeOf := reflect.TypeOf(ty)
@@ -458,6 +460,7 @@ func (c Class) InstanceVariable(name string) Ivar {
 
 // Register registers a class that was allocated using AllocateClassPair.
 // It can now be used to make objects by sending it either alloc and init or new.
+//
 // Deprecated: use RegisterClass instead
 func (c Class) Register() {
 	objc_registerClassPair(c)
