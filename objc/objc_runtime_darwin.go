@@ -137,12 +137,12 @@ func RegisterClass(object Selector) (Class, error) {
 	ptr := reflect.TypeOf(object)
 	strct := ptr.Elem()
 	if strct.NumField() == 0 || strct.Field(0).Type != reflect.TypeOf(Class(0)) {
-		return 0, fmt.Errorf("%w: need objc.Class as first field", MismatchError)
+		return 0, fmt.Errorf("objc: need objc.Class as first field: %w", MismatchError)
 	}
 	isa := strct.Field(0)
 	tag := isa.Tag.Get("objc")
 	if tag == "" {
-		return 0, fmt.Errorf("missing objc tag: %w", TagFormatError)
+		return 0, fmt.Errorf("objc: missing objc tag: %w", TagFormatError)
 	}
 	// split contains the class name and super class name followed by all the Protocols
 	// start with two for ClassName : SuperClassName
@@ -177,7 +177,7 @@ func RegisterClass(object Selector) (Class, error) {
 
 		// check for ':'
 		if len(tag) > 0 && tag[0] != ':' {
-			return 0, fmt.Errorf("missing ':': %w", TagFormatError)
+			return 0, fmt.Errorf("objc: missing ':': %w", TagFormatError)
 		}
 		tag = tag[1:] // skip ':'
 		skipSpace()
@@ -195,14 +195,14 @@ func RegisterClass(object Selector) (Class, error) {
 			}
 		}
 		if len(tag) < i {
-			return 0, fmt.Errorf("missing SuperClassName: %w", TagFormatError)
+			return 0, fmt.Errorf("objc: missing SuperClassName: %w", TagFormatError)
 		}
 		split[1] = tag[:i] // store SuperClassName
 		tag = tag[i:]      // drop SuperClassName
 		skipSpace()
 		if len(tag) > 0 {
 			if tag[0] != '<' {
-				return 0, fmt.Errorf("expected '<': %w", TagFormatError)
+				return 0, fmt.Errorf("objc: expected '<': %w", TagFormatError)
 			}
 			tag = tag[1:] // drop '<'
 			// get Protocols
@@ -234,20 +234,20 @@ func RegisterClass(object Selector) (Class, error) {
 						break outer
 					}
 				}
-				return 0, fmt.Errorf("expected '>': %w", TagFormatError)
+				return 0, fmt.Errorf("objc: expected '>': %w", TagFormatError)
 			}
 		}
 	}
 	class := objc_allocateClassPair(GetClass(split[1]), split[0], 0)
 	if class == 0 {
-		return 0, fmt.Errorf("failed to create class with name '%s'", split[0])
+		return 0, fmt.Errorf("objc: failed to create class with name '%s'", split[0])
 	}
 	if len(split) > 2 {
 		// Add Protocols
 		for _, n := range split[2:] {
 			succeed := class.AddProtocol(GetProtocol(n))
 			if !succeed {
-				return 0, fmt.Errorf("couldn't add Protocol %s", n)
+				return 0, fmt.Errorf("objc: couldn't add Protocol %s", n)
 			}
 		}
 	}
@@ -267,17 +267,17 @@ func RegisterClass(object Selector) (Class, error) {
 		imp, err := func() (imp IMP, err error) {
 			defer func() {
 				if r := recover(); r != nil {
-					err = fmt.Errorf("failed to create IMP: %s", r)
+					err = fmt.Errorf("objc: failed to create IMP: %s", r)
 				}
 			}()
 			return NewIMP(fn), nil
 		}()
 		if err != nil {
-			return 0, fmt.Errorf("couldn't add Method %s: %w", met.Name, err)
+			return 0, fmt.Errorf("objc: couldn't add Method %s: %w", met.Name, err)
 		}
 		succeed := class.AddMethod(sel, imp, encodeFunc(fn))
 		if !succeed {
-			return 0, fmt.Errorf("couldn't add Method %s", met.Name)
+			return 0, fmt.Errorf("objc: couldn't add Method %s", met.Name)
 		}
 	}
 	// Add Ivars
@@ -288,15 +288,15 @@ func RegisterClass(object Selector) (Class, error) {
 		alignment := uint8(math.Log2(float64(f.Type.Align())))
 		succeed := class_addIvar(class, f.Name, size, alignment, encodeType(f.Type))
 		if !succeed {
-			return 0, fmt.Errorf("couldn't add Ivar %s", f.Name)
+			return 0, fmt.Errorf("objc: couldn't add Ivar %s", f.Name)
 		}
 		if offset := class.InstanceVariable(f.Name).Offset(); offset != f.Offset {
-			return 0, fmt.Errorf("couldn't add Ivar %s", f.Name)
+			return 0, fmt.Errorf("objc: couldn't add Ivar %s", f.Name)
 		}
 	}
 	objc_registerClassPair(class)
 	if size1, size2 := class.InstanceSize(), strct.Size(); size1 != size2 {
-		return 0, fmt.Errorf("%w: sizes don't match %d != %d", MismatchError, size1, size2)
+		return 0, fmt.Errorf("objc: sizes don't match %d != %d: %w", size1, size2, MismatchError)
 	}
 	return class, nil
 }
@@ -509,7 +509,7 @@ func NewIMP(fn interface{}) IMP {
 			ty.In(0).Elem().Field(0).Type != reflect.TypeOf(Class(0))):
 		fallthrough
 	case ty.In(1).Kind() != reflect.Uintptr:
-		panic("objc: NewIMP must take a (id, SEL) as its first two arguments got " + ty.String())
+		panic("objc: NewIMP must take a (id, SEL) as its first two arguments; got " + ty.String())
 	}
 	return IMP(purego.NewCallback(fn))
 }
