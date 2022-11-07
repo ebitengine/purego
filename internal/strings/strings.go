@@ -4,7 +4,6 @@
 package strings
 
 import (
-	"reflect"
 	"unsafe"
 )
 
@@ -32,19 +31,10 @@ func GoString(c uintptr) string {
 	}
 	var length int
 	for {
-		// use unsafe.Add once we reach 1.17
-		if *(*byte)(unsafe.Pointer(uintptr(ptr) + uintptr(length))) == '\x00' {
+		if *(*byte)(unsafe.Add(ptr, uintptr(length))) == '\x00' {
 			break
 		}
 		length++
 	}
-	// use unsafe.Slice once we reach 1.17
-	s := make([]byte, length)
-	var src []byte
-	h := (*reflect.SliceHeader)(unsafe.Pointer(&src))
-	h.Data = uintptr(ptr)
-	h.Len = length
-	h.Cap = length
-	copy(s, src)
-	return string(s)
+	return string(unsafe.Slice((*byte)(ptr), length))
 }

@@ -6,9 +6,12 @@
 package objc
 
 import (
-	"github.com/ebitengine/purego"
+	"errors"
+	"fmt"
 	"math"
 	"reflect"
+
+	"github.com/ebitengine/purego"
 )
 
 //TODO: support try/catch?
@@ -24,6 +27,7 @@ var (
 	sel_registerName          func(name string) SEL
 	class_getSuperclass       func(class Class) Class
 	class_getInstanceVariable func(class Class, name string) Ivar
+	class_getInstanceSize     func(class Class) uintptr
 	class_addMethod           func(class Class, name SEL, imp IMP, types string) bool
 	class_addIvar             func(class Class, name string, size uintptr, alignment uint8, types string) bool
 	class_addProtocol         func(class Class, protocol *Protocol) bool
@@ -47,6 +51,7 @@ func init() {
 	purego.RegisterLibFunc(&class_addMethod, objc, "class_addMethod")
 	purego.RegisterLibFunc(&class_addIvar, objc, "class_addIvar")
 	purego.RegisterLibFunc(&class_addProtocol, objc, "class_addProtocol")
+	purego.RegisterLibFunc(&class_getInstanceSize, objc, "class_getInstanceSize")
 	purego.RegisterLibFunc(&ivar_getOffset, objc, "ivar_getOffset")
 }
 
@@ -98,8 +103,315 @@ func GetClass(name string) Class {
 }
 
 // AllocateClassPair creates a new class and metaclass. Then returns the new class, or Nil if the class could not be created
+//
+// Deprecated: use RegisterClass instead
 func AllocateClassPair(super Class, name string, extraBytes uintptr) Class {
 	return objc_allocateClassPair(super, name, extraBytes)
+}
+
+// Selector is an interface that takes a Go method name
+// and returns the selector equivalent name.
+// If it returns a nil SEL then that method
+// is not added to the class object.
+type Selector interface {
+	Selector(string) SEL
+}
+
+// TagFormatError occurs when the parser fails to parse the objc tag in a Selector object
+var TagFormatError = errors.New(`objc tag doesn't match "ClassName : SuperClassName <Protocol, ...>""`)
+
+// MismatchError occurs when the Go struct definition doesn't match that of Objective-C
+var MismatchError = errors.New("go struct doesn't match objective-c struct")
+
+// RegisterClass takes a pointer to a struct that implements the Selector interface.
+// It will register the structs fields and pointer receiver methods in the Objective-C
+// runtime using the SEL returned from Selector. Any errors that occur trying to add
+// a Method or Ivar is returned as an error. Such errors may occur in parsing or because
+// the size of the struct does not match the size in Objective-C. If no errors occur
+// then the returned Class has been registered successfully.
+//
+// The struct's first field must be of type Class and have a tag that matches the format
+// `objc:"ClassName : SuperClassName <Protocol, ...>`. This tag is equal to how the class
+// would be defined in Objective-C.
+func RegisterClass(object Selector) (Class, error) {
+	ptr := reflect.TypeOf(object)
+	strct := ptr.Elem()
+	if strct.NumField() == 0 || strct.Field(0).Type != reflect.TypeOf(Class(0)) {
+		return 0, fmt.Errorf("objc: need objc.Class as first field: %w", MismatchError)
+	}
+	isa := strct.Field(0)
+	tag := isa.Tag.Get("objc")
+	if tag == "" {
+		return 0, fmt.Errorf("objc: missing objc tag: %w", TagFormatError)
+	}
+	// split contains the class name and super class name followed by all the Protocols
+	// start with two for ClassName : SuperClassName
+	var split = make([]string, 2)
+	{
+		// This is a simple parser for the objc tag that looks for the format
+		//  	"ClassName : SuperClassName <Protocol, ...>"
+		// It appends to the split variable with the [ClassName, SuperClassName, Protocol, ...]
+
+		var i int  // from tag[0:i] is whatever identifier is next
+		var r rune // r is the current rune
+		skipSpace := func() {
+			for _, c := range tag {
+				if c == ' ' {
+					tag = tag[1:]
+					continue
+				}
+				break
+			}
+		}
+		skipSpace()
+		// get ClassName
+		for i, r = range tag {
+			if r == ' ' || r == ':' {
+				break
+			}
+		}
+		split[0] = tag[0:i] // store ClassName
+		tag = tag[i:]
+
+		skipSpace()
+
+		// check for ':'
+		if len(tag) > 0 && tag[0] != ':' {
+			return 0, fmt.Errorf("objc: missing ':': %w", TagFormatError)
+		}
+		tag = tag[1:] // skip ':'
+		skipSpace()
+
+		// get SuperClassName
+		for i, r = range tag {
+			if r == ' ' {
+				break
+			} else if i+1 == len(tag) {
+				// if this is the last character in the string
+				// make sure to increment i so that tag[:i]
+				// includes the last character
+				i++
+				break
+			}
+		}
+		if len(tag) < i {
+			return 0, fmt.Errorf("objc: missing SuperClassName: %w", TagFormatError)
+		}
+		split[1] = tag[:i] // store SuperClassName
+		tag = tag[i:]      // drop SuperClassName
+		skipSpace()
+		if len(tag) > 0 {
+			if tag[0] != '<' {
+				return 0, fmt.Errorf("objc: expected '<': %w", TagFormatError)
+			}
+			tag = tag[1:] // drop '<'
+			// get Protocols
+		outer:
+			for {
+				skipSpace()
+				for i, r = range tag {
+					switch r {
+					case ' ':
+						split = append(split, tag[:i])
+						tag = tag[i:]
+						continue outer
+					case ',':
+						// If there is actually an identifier - add it.
+						if i > 0 {
+							split = append(split, tag[:i])
+							tag = tag[i:]
+						} else {
+							// Otherwise, drop ','
+							tag = tag[1:]
+						}
+						continue outer
+					case '>':
+						// If there is actually an identifier - add it.
+						if i > 0 {
+							split = append(split, tag[:i])
+							tag = tag[i:]
+						}
+						break outer
+					}
+				}
+				return 0, fmt.Errorf("objc: expected '>': %w", TagFormatError)
+			}
+		}
+	}
+	class := objc_allocateClassPair(GetClass(split[1]), split[0], 0)
+	if class == 0 {
+		return 0, fmt.Errorf("objc: failed to create class with name '%s'", split[0])
+	}
+	if len(split) > 2 {
+		// Add Protocols
+		for _, n := range split[2:] {
+			succeed := class.AddProtocol(GetProtocol(n))
+			if !succeed {
+				return 0, fmt.Errorf("objc: couldn't add Protocol %s", n)
+			}
+		}
+	}
+	// Add exported methods based on the selectors returned from Selector(string) SEL
+	for i := 0; i < ptr.NumMethod(); i++ {
+		met := ptr.Method(i)
+		// we know this method is the interface one since RegisterClass
+		// requires that the struct implement Selector.
+		if met.Name == "Selector" {
+			continue
+		}
+		sel := object.Selector(met.Name)
+		if sel == 0 {
+			continue
+		}
+		fn := met.Func.Interface()
+		imp, err := func() (imp IMP, err error) {
+			defer func() {
+				if r := recover(); r != nil {
+					err = fmt.Errorf("objc: failed to create IMP: %s", r)
+				}
+			}()
+			return NewIMP(fn), nil
+		}()
+		if err != nil {
+			return 0, fmt.Errorf("objc: couldn't add Method %s: %w", met.Name, err)
+		}
+		succeed := class.AddMethod(sel, imp, encodeFunc(fn))
+		if !succeed {
+			return 0, fmt.Errorf("objc: couldn't add Method %s", met.Name)
+		}
+	}
+	// Add Ivars
+	// Start at 1 because we skip the class object which is first
+	for i := 1; i < strct.NumField(); i++ {
+		f := strct.Field(i)
+		size := f.Type.Size()
+		alignment := uint8(math.Log2(float64(f.Type.Align())))
+		succeed := class_addIvar(class, f.Name, size, alignment, encodeType(f.Type))
+		if !succeed {
+			return 0, fmt.Errorf("objc: couldn't add Ivar %s", f.Name)
+		}
+		if offset := class.InstanceVariable(f.Name).Offset(); offset != f.Offset {
+			return 0, fmt.Errorf("objc: couldn't add Ivar %s", f.Name)
+		}
+	}
+	objc_registerClassPair(class)
+	if size1, size2 := class.InstanceSize(), strct.Size(); size1 != size2 {
+		return 0, fmt.Errorf("objc: sizes don't match %d != %d: %w", size1, size2, MismatchError)
+	}
+	return class, nil
+}
+
+const (
+	encId          = "@"
+	encClass       = "#"
+	encSelector    = ":"
+	encChar        = "c"
+	encUChar       = "C"
+	encShort       = "s"
+	encUShort      = "S"
+	encInt         = "i"
+	encUInt        = "I"
+	encLong        = "l"
+	encULong       = "L"
+	encFloat       = "f"
+	encDouble      = "d"
+	encBool        = "B"
+	encVoid        = "v"
+	encPtr         = "^"
+	encCharPtr     = "*"
+	encStructBegin = "{"
+	encStructEnd   = "}"
+)
+
+// encodeType returns a string representing a type as if it was given to @encode(typ)
+// Source: https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/ObjCRuntimeGuide/Articles/ocrtTypeEncodings.html#//apple_ref/doc/uid/TP40008048-CH100
+func encodeType(typ reflect.Type) string {
+	switch typ {
+	case reflect.TypeOf(Class(0)):
+		return encClass
+	case reflect.TypeOf(ID(0)):
+		return encId
+	case reflect.TypeOf(SEL(0)):
+		return encSelector
+	}
+
+	kind := typ.Kind()
+	switch kind {
+	case reflect.Bool:
+		return encBool
+	case reflect.Int:
+		return encLong
+	case reflect.Int8:
+		return encChar
+	case reflect.Int16:
+		return encShort
+	case reflect.Int32:
+		return encInt
+	case reflect.Int64:
+		return encULong
+	case reflect.Uint:
+		return encULong
+	case reflect.Uint8:
+		return encUChar
+	case reflect.Uint16:
+		return encUShort
+	case reflect.Uint32:
+		return encUInt
+	case reflect.Uint64:
+		return encULong
+	case reflect.Uintptr:
+		return encPtr
+	case reflect.Float32:
+		return encFloat
+	case reflect.Float64:
+		return encDouble
+	case reflect.Ptr:
+		return encPtr + encodeType(typ.Elem())
+	case reflect.Struct:
+		var encoding = encStructBegin
+		encoding += typ.Name()
+		encoding += "="
+		for i := 0; i < typ.NumField(); i++ {
+			f := typ.Field(i)
+			encoding += encodeType(f.Type)
+		}
+		encoding = encStructEnd
+		return encoding
+	case reflect.String:
+		return encCharPtr
+	}
+
+	panic(fmt.Sprintf("objc: unhandled/invalid kind %v typed %v", kind, typ))
+}
+
+// encodeFunc returns a functions type as if it was given to @encode(fn)
+func encodeFunc(fn interface{}) string {
+	typ := reflect.TypeOf(fn)
+	if typ.Kind() != reflect.Func {
+		panic("objc: not a func")
+	}
+
+	encoding := ""
+	switch typ.NumOut() {
+	case 0:
+		encoding += encVoid
+	case 1:
+		encoding += encodeType(typ.Out(0))
+	default:
+		panic("objc: too many output parameters")
+	}
+
+	if typ.NumIn() == 0 {
+		panic("objc: func doesn't take ID and SEL as its first two parameters")
+	}
+
+	encoding += encodeType(typ.In(0))
+	encoding += encSelector
+
+	for i := 1; i < typ.NumIn(); i++ {
+		encoding += encodeType(typ.In(i))
+	}
+	return encoding
 }
 
 // SuperClass returns the superclass of a class.
@@ -121,6 +433,8 @@ func (c Class) AddMethod(name SEL, imp IMP, types string) bool {
 // Adding an instance variable to an existing class is not supported.
 // The class must not be a metaclass. Adding an instance variable to a metaclass is not supported.
 // It takes the instance of the type of the Ivar and a string representing the type.
+//
+// Deprecated: use RegisterClass instead
 func (c Class) AddIvar(name string, ty interface{}, types string) bool {
 	typeOf := reflect.TypeOf(ty)
 	size := typeOf.Size()
@@ -135,6 +449,11 @@ func (c Class) AddProtocol(protocol *Protocol) bool {
 	return class_addProtocol(c, protocol)
 }
 
+// InstanceSize returns the size in bytes of instances of the class or 0 if cls is nil
+func (c Class) InstanceSize() uintptr {
+	return class_getInstanceSize(c)
+}
+
 // InstanceVariable returns an Ivar data structure containing information about the instance variable specified by name.
 func (c Class) InstanceVariable(name string) Ivar {
 	return class_getInstanceVariable(c, name)
@@ -142,6 +461,8 @@ func (c Class) InstanceVariable(name string) Ivar {
 
 // Register registers a class that was allocated using AllocateClassPair.
 // It can now be used to make objects by sending it either alloc and init or new.
+//
+// Deprecated: use RegisterClass instead
 func (c Class) Register() {
 	objc_registerClassPair(c)
 }
@@ -168,8 +489,10 @@ func GetProtocol(name string) *Protocol {
 // IMP is a function pointer that can be called by Objective-C code.
 type IMP uintptr
 
-// NewIMP takes a Go function that takes (ID, SEL) as its first two arguments. It returns an IMP function
-// pointer that can be called by Objective-C code. The function pointer is never deallocated.
+// NewIMP takes a Go function that takes (ID, SEL) as its first two arguments.
+// ID may instead be a pointer to a struct whose first field has type Class.
+// It returns an IMP function pointer that can be called by Objective-C code.
+// The function pointer is never deallocated.
 func NewIMP(fn interface{}) IMP {
 	ty := reflect.TypeOf(fn)
 	if ty.Kind() != reflect.Func {
@@ -180,10 +503,14 @@ func NewIMP(fn interface{}) IMP {
 	switch {
 	case ty.NumIn() < 2:
 		fallthrough
-	case ty.In(0).Kind() != reflect.Uintptr:
+	case ty.In(0).Kind() != reflect.Uintptr && // checks if it's objc.ID
+		// or that it's a pointer to a struct
+		(ty.In(0).Kind() != reflect.Pointer || ty.In(0).Elem().Kind() != reflect.Struct ||
+			// and that the structs first field is an objc.Class
+			ty.In(0).Elem().Field(0).Type != reflect.TypeOf(Class(0))):
 		fallthrough
 	case ty.In(1).Kind() != reflect.Uintptr:
-		panic("objc: NewIMP must take a (id, SEL) as its first two arguments")
+		panic("objc: NewIMP must take a (id, SEL) as its first two arguments; got " + ty.String())
 	}
 	return IMP(purego.NewCallback(fn))
 }

@@ -75,8 +75,18 @@ func compileCallback(fn interface{}) uintptr {
 			panic("purego: unsupported argument type: " + in.Kind().String())
 		}
 	}
-	if ty.NumOut() > 1 || ty.NumOut() == 1 && ty.Out(0).Size() != ptrSize {
-		panic("purego: callbacks can only have one pointer-sized return")
+output:
+	switch {
+	case ty.NumOut() == 1:
+		switch ty.Out(0).Kind() {
+		case reflect.Pointer, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+			reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr,
+			reflect.Bool, reflect.UnsafePointer:
+			break output
+		}
+		panic("purego: unsupported return type: " + ty.String())
+	case ty.NumOut() > 1:
+		panic("purego: callbacks can only have one return")
 	}
 	cbs.lock.Lock()
 	defer cbs.lock.Unlock()
@@ -94,20 +104,6 @@ const callbackMaxFrame = 64 * ptrSize
 
 // callbackasmABI0 is implemented in zcallback_GOOS_GOARCH.s
 var callbackasmABI0 uintptr
-
-// callbackWrapPicker gets whatever is on the stack and in the first register.
-// Depending on which version of Go that uses stack or register-based
-// calling it passes the respective argument to the real calbackWrap function.
-// The other argument is therefore invalid and points to undefined memory so don't use it.
-// This function is necessary since we can't use the ABIInternal selector which is only
-// valid in the runtime.
-func callbackWrapPicker(stack, register *callbackArgs) {
-	if stackCallingConvention {
-		callbackWrap(stack)
-	} else {
-		callbackWrap(register)
-	}
-}
 
 // callbackWrap is called by assembly code which determines which Go function to call.
 // This function takes the arguments and passes them to the Go function and returns the result.
@@ -135,6 +131,10 @@ func callbackWrap(a *callbackArgs) {
 			} else {
 				a.result = 0
 			}
+		case reflect.Pointer:
+			a.result = ret[0].Pointer()
+		case reflect.UnsafePointer:
+			a.result = ret[0].Pointer()
 		default:
 			panic("purego: unsupported kind: " + k.String())
 		}

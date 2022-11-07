@@ -2,7 +2,6 @@
 // SPDX-FileCopyrightText: 2022 The Ebitengine Authors
 
 //go:build darwin || linux
-// +build darwin linux
 
 package fakecgo
 
