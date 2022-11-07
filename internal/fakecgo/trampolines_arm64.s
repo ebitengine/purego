@@ -9,7 +9,6 @@
 
 // these trampolines map the gcc ABI to Go ABI and then calls into the Go equivalent functions.
 
-// TODO: put <> to make these private
 TEXT x_cgo_init_trampoline(SB), NOSPLIT, $0-0
 	MOVD R0, 8(RSP)
 	MOVD R1, 16(RSP)

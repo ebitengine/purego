@@ -29,7 +29,6 @@ return value will be in AX
 
 // these trampolines map the gcc ABI to Go ABI and then calls into the Go equivalent functions.
 
-// TODO: put <> to make these private
 TEXT x_cgo_init_trampoline(SB), NOSPLIT, $16
 	MOVQ DI, 0(SP)
 	MOVQ SI, 8(SP)
