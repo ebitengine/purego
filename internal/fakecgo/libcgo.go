@@ -6,16 +6,9 @@
 package fakecgo
 
 type size_t uintptr
-
 type sigset_t [128]byte      // TODO: figure out how big this should be
 type pthread_attr_t [56]byte // TODO: figure out how big this should be
 type pthread_t int
-
-// We could take timespec from syscall - but there it uses int32 and int64 for 32 bit and 64 bit arch, which complicates stuff for us
-type timespec struct {
-	tv_sec  int
-	tv_nsec int
-}
 
 // for pthread_sigmask:
 

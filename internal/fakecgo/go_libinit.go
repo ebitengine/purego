@@ -20,9 +20,12 @@ func x_cgo_notify_runtime_init_done() {
 //
 //go:nosplit
 func _cgo_try_pthread_create(thread *pthread_t, attr *pthread_attr_t, pfn unsafe.Pointer, arg *ThreadStart) int {
-	var tries int
+	var ts syscall.Timespec
+	// tries needs to be the same type as syscall.Timespec.Nsec
+	// but the fields are int32 on 32bit and int64 on 64bit
+	// we assign tries to whatever type syscall.Timespec.Nsec is
+	var tries = ts.Nsec
 	var err int
-	var ts timespec
 
 	for tries = 0; tries < 20; tries++ {
 		err = int(pthread_create(thread, attr, pfn, unsafe.Pointer(arg)))
@@ -33,8 +36,8 @@ func _cgo_try_pthread_create(thread *pthread_t, attr *pthread_attr_t, pfn unsafe
 		if err != int(syscall.EAGAIN) {
 			return err
 		}
-		ts.tv_sec = 0
-		ts.tv_nsec = (tries + 1) * 1000 * 1000 // Milliseconds.
+		ts.Sec = 0
+		ts.Nsec = (tries + 1) * 1000 * 1000 // Milliseconds.
 		nanosleep(&ts, nil)
 	}
 	return int(syscall.EAGAIN)

@@ -5,7 +5,10 @@
 
 package fakecgo
 
-import "unsafe"
+import (
+	"syscall"
+	"unsafe"
+)
 
 // setg_trampoline calls setg with the G provided
 func setg_trampoline(setg uintptr, G uintptr)
@@ -62,7 +65,7 @@ func sigfillset(set *sigset_t) int32 {
 	return int32(call5(sigfillsetABI0, uintptr(unsafe.Pointer(set)), 0, 0, 0, 0))
 }
 
-func nanosleep(ts *timespec, rem *timespec) int32 {
+func nanosleep(ts, rem *syscall.Timespec) int32 {
 	return int32(call5(nanosleepABI0, uintptr(unsafe.Pointer(ts)), uintptr(unsafe.Pointer(rem)), 0, 0, 0))
 }
 
