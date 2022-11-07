@@ -44,10 +44,6 @@ func threadentry(v unsafe.Pointer) unsafe.Pointer {
 	ts := *(*ThreadStart)(v)
 	free(v)
 
-	// TODO: support ios
-	//#if TARGET_OS_IPHONE
-	//	darwin_arm_init_thread_exception_port();
-	//#endif
 	setg_trampoline(setg_func, uintptr(unsafe.Pointer(ts.g)))
 
 	// faking funcs in go is a bit a... involved - but the following works :)
@@ -75,11 +71,4 @@ func x_cgo_init(g *G, setg uintptr) {
 	pthread_attr_getstacksize(&attr, &size)
 	g.stacklo = uintptr(unsafe.Pointer(&size)) - uintptr(size) + 4096
 	pthread_attr_destroy(&attr)
-
-	//TODO: support ios
-	//#if TARGET_OS_IPHONE
-	//	darwin_arm_init_mach_exception_handler();
-	//	darwin_arm_init_thread_exception_port();
-	//	init_working_dir();
-	//#endif
 }
