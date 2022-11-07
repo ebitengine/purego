@@ -2,7 +2,6 @@
 // SPDX-FileCopyrightText: 2022 The Ebitengine Authors
 
 //go:build darwin
-// +build darwin
 
 /*
 trampoline for emulating required C functions for cgo in go (see cgo.go)
