@@ -4,8 +4,6 @@
 package purego
 
 import (
-	"fmt"
-	"math"
 	"reflect"
 	"runtime"
 	"sync"
@@ -56,9 +54,6 @@ type callbackArgs struct {
 	// For arm, the trampoline stores the register arguments just
 	// below the stack arguments, so again we can treat it as one
 	// big stack arguments frame.
-	//
-	// First 8 arguments are floats. This means the first integer
-	// argument will be located at args[8].
 	args unsafe.Pointer
 	// Below are out-args from callbackWrap
 	result uintptr
@@ -118,21 +113,14 @@ func callbackWrap(a *callbackArgs) {
 	fnType := fn.Type()
 	args := make([]reflect.Value, fnType.NumIn())
 	frame := (*[callbackMaxFrame]uintptr)(a.args)
-	fmt.Println(frame[:16])
-	var floats int // counts the floats used
 	for i := range args {
 		if fnType.In(i).Kind() == reflect.Float64 {
-			args[i] = reflect.New(fnType.In(i)).Elem()
-			args[i].SetFloat(math.Float64frombits(uint64(frame[floats])))
-			floats++
-			continue
+			panic("TODO: SUPPORT FLOAT")
 		}
 		//TODO: support float32 and float64
-		// The first integer argument is 8 elements into the frame.
-		args[i] = reflect.NewAt(fnType.In(i), unsafe.Pointer(&frame[i+8])).Elem()
+		args[i] = reflect.NewAt(fnType.In(i), unsafe.Pointer(&frame[i])).Elem()
 	}
 	ret := fn.Call(args)
-	fmt.Println("YES")
 	if len(ret) > 0 {
 		switch k := ret[0].Kind(); k {
 		case reflect.Uint, reflect.Uint64, reflect.Uint32, reflect.Uint16, reflect.Uint8, reflect.Uintptr:

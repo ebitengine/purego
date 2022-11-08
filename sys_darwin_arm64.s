@@ -72,7 +72,7 @@ TEXT callbackWrapInternal<>(SB), NOSPLIT, $0-0
 	B    ·callbackWrap(SB)
 	RET
 
-TEXT callbackasm1(SB), NOSPLIT, $272-0
+TEXT callbackasm1(SB), NOSPLIT, $208-0
 	NO_LOCAL_POINTERS
 
 	// On entry, the trampoline in zcallback_darwin_arm64.s left
@@ -80,25 +80,15 @@ TEXT callbackasm1(SB), NOSPLIT, $272-0
 
 	// Save callback register arguments R0-R7.
 	// We do this at the top of the frame so they're contiguous with stack arguments.
-	// The 15*8 setting up R14 looks like a bug but is not: the 16th word
+	// The 7*8 setting up R14 looks like a bug but is not: the eighth word
 	// is the space the assembler reserved for our caller's frame pointer,
 	// but we are not called from Go so that space is ours to use,
 	// and we must to be contiguous with the stack arguments.
-	MOVD $arg0-(15*8)(SP), R14
-
-	// Save float arguments as the first 8 arguments
-	FMOVD F0, 0(R14)
-	FMOVD F1, 8(R14)
-	FMOVD F2, 16(R14)
-	FMOVD F3, 24(R14)
-	FMOVD F4, 32(R14)
-	FMOVD F5, 40(R14)
-	FMOVD F6, 48(R14)
-	FMOVD F7, 56(R14)
-	STP   (R0, R1), (8*8)(R14)
-	STP   (R2, R3), (10*8)(R14)
-	STP   (R4, R5), (12*8)(R14)
-	STP   (R6, R7), (14*8)(R14)
+	MOVD $arg0-(7*8)(SP), R14
+	STP  (R0, R1), (0*8)(R14)
+	STP  (R2, R3), (2*8)(R14)
+	STP  (R4, R5), (4*8)(R14)
+	STP  (R6, R7), (6*8)(R14)
 
 	// Create a struct callbackArgs on our stack.
 	MOVD $cbargs-(18*8+callbackArgs__size)(SP), R13
