@@ -68,8 +68,7 @@ func compileCallback(fn interface{}) uintptr {
 	for i := 0; i < ty.NumIn(); i++ {
 		in := ty.In(i)
 		switch in.Kind() {
-		case reflect.Struct, reflect.Float32, reflect.Float64,
-			reflect.Interface, reflect.Func, reflect.Slice,
+		case reflect.Struct, reflect.Interface, reflect.Func, reflect.Slice,
 			reflect.Chan, reflect.Complex64, reflect.Complex128,
 			reflect.String, reflect.Map, reflect.Invalid:
 			panic("purego: unsupported argument type: " + in.Kind().String())
@@ -115,6 +114,9 @@ func callbackWrap(a *callbackArgs) {
 	args := make([]reflect.Value, fnType.NumIn())
 	frame := (*[callbackMaxFrame]uintptr)(a.args)
 	for i := range args {
+		if fnType.In(i).Kind() == reflect.Float64 {
+			panic("TODO: SUPPORT FLOAT")
+		}
 		//TODO: support float32 and float64
 		args[i] = reflect.NewAt(fnType.In(i), unsafe.Pointer(&frame[i])).Elem()
 	}
