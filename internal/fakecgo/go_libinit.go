@@ -23,7 +23,7 @@ func _cgo_try_pthread_create(thread *pthread_t, attr *pthread_attr_t, pfn unsafe
 	var ts syscall.Timespec
 	// tries needs to be the same type as syscall.Timespec.Nsec
 	// but the fields are int32 on 32bit and int64 on 64bit.
-	// we assign tries to whatever type syscall.Timespec.Nsec is
+	// We assign tries to whatever type syscall.Timespec.Nsec is.
 	var tries = ts.Nsec
 	var err int
 
