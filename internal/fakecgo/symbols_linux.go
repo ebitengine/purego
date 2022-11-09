@@ -20,8 +20,6 @@ package fakecgo
 //go:cgo_import_dynamic purego_nanosleep nanosleep "libc.so.6"
 //go:cgo_import_dynamic purego_sigfillset sigfillset "libc.so.6"
 //go:cgo_import_dynamic purego_abort abort "libc.so.6"
-//go:cgo_import_dynamic purego_dprintf dprintf "libc.so.6"
-//go:cgo_import_dynamic purego_strerror strerror "libc.so.6"
 
 // on amd64 we don't need the following lines - on 386 we do...
 // anyway - with those lines the output is better (but doesn't matter) - without it on amd64 we get multiple DT_NEEDED with "libc.so.6" etc
