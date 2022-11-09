@@ -5,7 +5,10 @@
 
 package fakecgo
 
-import "unsafe"
+import (
+	"syscall"
+	"unsafe"
+)
 
 // setg_trampoline calls setg with the G provided
 func setg_trampoline(setg uintptr, G uintptr)
@@ -26,7 +29,7 @@ func free(ptr unsafe.Pointer) {
 	call5(freeABI0, uintptr(ptr), 0, 0, 0, 0)
 }
 
-func setenv(name *byte, value *byte, overwrite int32) int32 {
+func setenv(name, value *byte, overwrite int32) int32 {
 	return int32(call5(setenvABI0, uintptr(unsafe.Pointer(name)), uintptr(unsafe.Pointer(value)), uintptr(overwrite), 0, 0))
 }
 
@@ -46,7 +49,7 @@ func pthread_detach(thread pthread_t) int32 {
 	return int32(call5(pthread_detachABI0, uintptr(thread), 0, 0, 0, 0))
 }
 
-func pthread_sigmask(how sighow, ign *sigset_t, oset *sigset_t) int32 {
+func pthread_sigmask(how sighow, ign, oset *sigset_t) int32 {
 	return int32(call5(pthread_sigmaskABI0, uintptr(how), uintptr(unsafe.Pointer(ign)), uintptr(unsafe.Pointer(oset)), 0, 0))
 }
 
@@ -62,7 +65,7 @@ func sigfillset(set *sigset_t) int32 {
 	return int32(call5(sigfillsetABI0, uintptr(unsafe.Pointer(set)), 0, 0, 0, 0))
 }
 
-func nanosleep(ts *timespec, rem *timespec) int32 {
+func nanosleep(ts, rem *syscall.Timespec) int32 {
 	return int32(call5(nanosleepABI0, uintptr(unsafe.Pointer(ts)), uintptr(unsafe.Pointer(rem)), 0, 0, 0))
 }
 
