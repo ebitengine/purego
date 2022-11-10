@@ -136,6 +136,8 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 		case reflect.String:
 			v.SetString(strings.GoString(r1))
 		case reflect.Float32, reflect.Float64:
+			// NOTE: r2 is only the floating return value on 64bit platforms.
+			// On 32bit platforms r2 is the upper part of a 64bit return.
 			v.SetFloat(math.Float64frombits(uint64(r2)))
 		default:
 			panic("purego: unsupported return kind: " + outType.Kind().String())
