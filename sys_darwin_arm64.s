@@ -57,10 +57,10 @@ TEXT syscall9X(SB), NOSPLIT, $0
 
 	BL (R12)
 
-	MOVD 8(RSP), R2              // pop structure pointer
-	ADD  $16, RSP
-	MOVD R0, syscall9Args_r1(R2) // save r1
-	MOVD R1, syscall9Args_r2(R2) // save r2
+	MOVD  8(RSP), R2              // pop structure pointer
+	ADD   $16, RSP
+	MOVD  R0, syscall9Args_r1(R2) // save r1
+	FMOVD F0, syscall9Args_r2(R2) // save r2
 	RET
 
 // runtime·cgocallback expects a call to the ABIInternal function
