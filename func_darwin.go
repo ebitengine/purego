@@ -4,6 +4,7 @@
 package purego
 
 import (
+	"math"
 	"reflect"
 	"runtime"
 	"unsafe"
@@ -110,7 +111,7 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 				panic("purego: unsupported kind: " + v.Kind().String())
 			}
 		}
-		r1, _, _ := SyscallN(cfn, sysargs...) //TODO: handle float32/64 and struct types
+		r1, r2, _ := SyscallN(cfn, sysargs...) //TODO: handle float32/64 and struct types
 		if ty.NumOut() == 0 {
 			return nil
 		}
@@ -134,6 +135,8 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 			RegisterFunc(v.Interface(), r1)
 		case reflect.String:
 			v.SetString(strings.GoString(r1))
+		case reflect.Float32, reflect.Float64:
+			v.SetFloat(math.Float64frombits(uint64(r2)))
 		default:
 			panic("purego: unsupported return kind: " + outType.Kind().String())
 		}

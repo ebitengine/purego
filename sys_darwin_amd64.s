@@ -64,7 +64,7 @@ TEXT syscall9X(SB), NOSPLIT, $0
 
 	MOVQ 24(BP), DI              // get the pointer back
 	MOVQ AX, syscall9Args_r1(DI) // r1
-	MOVQ DX, syscall9Args_r2(DI) // r2
+	MOVQ X0, syscall9Args_r2(DI) // r2
 
 	XORL AX, AX  // no error (it's ignored anyway)
 	ADDQ $32, SP
