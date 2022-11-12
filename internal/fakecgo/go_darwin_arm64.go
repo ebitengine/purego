@@ -73,7 +73,7 @@ func x_cgo_init(g *G, setg uintptr) {
 	//fprintf(stderr, "x_cgo_init = %p\n", &x_cgo_init); // aid debugging in presence of ASLR
 	setg_func = setg
 	size = pthread_get_stacksize_np(pthread_self())
-	g.stacklo = uintptr(unsafe.Pointer(&size)) - uintptr(size) + 4096
+	g.stacklo = uintptr(unsafe.Add(unsafe.Pointer(&size), -size+4096))
 
 	//TODO: support ios
 	//#if TARGET_OS_IPHONE

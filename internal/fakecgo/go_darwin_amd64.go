@@ -64,5 +64,5 @@ func x_cgo_init(g *G, setg uintptr) {
 	setg_func = setg
 
 	size = pthread_get_stacksize_np(pthread_self())
-	g.stacklo = uintptr(unsafe.Add(unsafe.Pointer(&size), -size)) + 4096
+	g.stacklo = uintptr(unsafe.Add(unsafe.Pointer(&size), -size+4096))
 }
