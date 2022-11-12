@@ -37,6 +37,18 @@ func unsetenv(name *byte) int32 {
 	return int32(call5(unsetenvABI0, uintptr(unsafe.Pointer(name)), 0, 0, 0, 0))
 }
 
+func pthread_self() pthread_t {
+	return pthread_t(call5(pthread_selfABI0, 0, 0, 0, 0, 0))
+}
+
+func pthread_get_stacksize_np(thread pthread_t) size_t {
+	return size_t(call5(pthread_get_stacksize_npABI0, uintptr(thread), 0, 0, 0, 0))
+}
+
+func pthread_attr_setstacksize(attr *pthread_attr_t, size size_t) int32 {
+	return int32(call5(pthread_attr_setstacksizeABI0, uintptr(unsafe.Pointer(attr)), 0, 0, 0, 0))
+}
+
 func pthread_attr_init(attr *pthread_attr_t) int32 {
 	return int32(call5(pthread_attr_initABI0, uintptr(unsafe.Pointer(attr)), 0, 0, 0, 0))
 }
@@ -92,6 +104,18 @@ var unsetenvABI0 = uintptr(unsafe.Pointer(&_unsetenv))
 //go:linkname _pthread_attr_init _pthread_attr_init
 var _pthread_attr_init uintptr
 var pthread_attr_initABI0 = uintptr(unsafe.Pointer(&_pthread_attr_init))
+
+//go:linkname _pthread_self _pthread_self
+var _pthread_self uintptr
+var pthread_selfABI0 = uintptr(unsafe.Pointer(&_pthread_self))
+
+//go:linkname _pthread_attr_setstacksiz _pthread_attr_setstacksiz
+var _pthread_attr_setstacksiz uintptr
+var pthread_attr_setstacksizeABI0 = uintptr(unsafe.Pointer(&_pthread_attr_setstacksiz))
+
+//go:linkname _pthread_get_stacksize_np _pthread_get_stacksize_np
+var _pthread_get_stacksize_np uintptr
+var pthread_get_stacksize_npABI0 = uintptr(unsafe.Pointer(&_pthread_get_stacksize_np))
 
 //go:linkname _pthread_create _pthread_create
 var _pthread_create uintptr

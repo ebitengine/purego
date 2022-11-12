@@ -21,6 +21,18 @@ TEXT _unsetenv(SB), NOSPLIT, $0-0
 	JMP purego_unsetenv(SB)
 	RET
 
+TEXT _pthread_self(SB), NOSPLIT, $0-0
+	JMP purego_pthread_self(SB)
+	RET
+
+TEXT _pthread_attr_setstacksiz(SB), NOSPLIT, $0-0
+	JMP purego_pthread_attr_setstacksize(SB)
+	RET
+
+TEXT _pthread_get_stacksize_np(SB), NOSPLIT, $0-0
+	JMP purego_pthread_get_stacksize_np(SB)
+	RET
+
 TEXT _pthread_attr_init(SB), NOSPLIT, $0-0
 	JMP purego_pthread_attr_init(SB)
 	RET
