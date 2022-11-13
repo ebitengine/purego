@@ -71,6 +71,7 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 	if cfn == 0 {
 		panic("purego: cfn is nil")
 	}
+	// TODO: check to make sure there aren't too many arguments
 	v := reflect.MakeFunc(ty, func(args []reflect.Value) (results []reflect.Value) {
 		if len(args) > 0 {
 			if variadic, ok := args[len(args)-1].Interface().([]interface{}); ok {
@@ -93,9 +94,6 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 			runtime.KeepAlive(keepAlive)
 		}()
 		for _, v := range args {
-			if numInts >= maxArgs {
-				panic("purego: too many arguments")
-			}
 			switch v.Kind() {
 			case reflect.String:
 				ptr := strings.CString(v.String())
@@ -127,6 +125,7 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 					floats[numFloats] = v.Float()
 					numFloats++
 				} else {
+					// TODO: these should be on the stack not integer registers
 					sysargs[numInts] = uintptr(math.Float64bits(v.Float()))
 					numInts++
 				}
@@ -134,7 +133,7 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 				panic("purego: unsupported kind: " + v.Kind().String())
 			}
 		}
-		//TODO: support structs
+		// TODO: support structs
 		syscall := syscall9Args{
 			cfn,
 			sysargs[0], sysargs[1], sysargs[2], sysargs[3], sysargs[4], sysargs[5], sysargs[6], sysargs[7], sysargs[8],
