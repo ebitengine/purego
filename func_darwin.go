@@ -68,6 +68,9 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 	if ty.NumOut() > 1 {
 		panic("purego: function can only return zero or one values")
 	}
+	if cfn == 0 {
+		panic("purego: cfn is nil")
+	}
 	v := reflect.MakeFunc(ty, func(args []reflect.Value) (results []reflect.Value) {
 		if len(args) > 0 {
 			if variadic, ok := args[len(args)-1].Interface().([]interface{}); ok {
@@ -81,37 +84,65 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 				args = tmp
 			}
 		}
-		var sysargs = make([]uintptr, len(args))
+		var sysargs [maxArgs]uintptr
+		var floats [8]float64
+		numInts := 0
+		numFloats := 0
 		var keepAlive []interface{}
 		defer func() {
 			runtime.KeepAlive(keepAlive)
 		}()
-		for i, v := range args {
+		for _, v := range args {
+			if numInts >= maxArgs {
+				panic("purego: too many arguments")
+			}
 			switch v.Kind() {
 			case reflect.String:
 				ptr := strings.CString(v.String())
 				keepAlive = append(keepAlive, ptr)
-				sysargs[i] = uintptr(unsafe.Pointer(ptr))
+				sysargs[numInts] = uintptr(unsafe.Pointer(ptr))
+				numInts++
 			case reflect.Uintptr, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-				sysargs[i] = uintptr(v.Uint())
+				sysargs[numInts] = uintptr(v.Uint())
+				numInts++
 			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-				sysargs[i] = uintptr(v.Int())
+				sysargs[numInts] = uintptr(v.Int())
+				numInts++
 			case reflect.Ptr, reflect.UnsafePointer, reflect.Slice:
 				keepAlive = append(keepAlive, v.Pointer())
-				sysargs[i] = v.Pointer()
+				sysargs[numInts] = v.Pointer()
+				numInts++
 			case reflect.Func:
-				sysargs[i] = NewCallback(v.Interface())
+				sysargs[numInts] = NewCallback(v.Interface())
+				numInts++
 			case reflect.Bool:
 				if v.Bool() {
-					sysargs[i] = 1
+					sysargs[numInts] = 1
 				} else {
-					sysargs[i] = 0
+					sysargs[numInts] = 0
+				}
+				numInts++
+			case reflect.Float32, reflect.Float64:
+				if numFloats < len(floats) {
+					floats[numFloats] = v.Float()
+					numFloats++
+				} else {
+					sysargs[numInts] = uintptr(math.Float64bits(v.Float()))
+					numInts++
 				}
 			default:
 				panic("purego: unsupported kind: " + v.Kind().String())
 			}
 		}
-		r1, r2, _ := SyscallN(cfn, sysargs...) //TODO: handle float32/64 and struct types
+		//TODO: support structs
+		syscall := syscall9Args{
+			cfn,
+			sysargs[0], sysargs[1], sysargs[2], sysargs[3], sysargs[4], sysargs[5], sysargs[6], sysargs[7], sysargs[8],
+			floats[0], floats[1], floats[2], floats[3], floats[4], floats[5], floats[6], floats[7],
+			0, 0, 0}
+		runtime_cgocall(syscall9XABI0, unsafe.Pointer(&syscall))
+		r1, r2 := syscall.r1, syscall.r2
+
 		if ty.NumOut() == 0 {
 			return nil
 		}
