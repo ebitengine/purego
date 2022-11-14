@@ -2,8 +2,6 @@
 // SPDX-FileCopyrightText: 2022 The Ebitengine Authors
 
 //go:build !cgo && (amd64 || arm64)
-// +build !cgo
-// +build amd64 arm64
 
 package purego
 

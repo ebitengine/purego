@@ -2,7 +2,6 @@
 // SPDX-FileCopyrightText: 2022 The Ebitengine Authors
 
 //go:build cgo
-// +build cgo
 
 package purego
 
