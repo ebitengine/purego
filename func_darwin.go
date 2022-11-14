@@ -71,7 +71,37 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 	if cfn == 0 {
 		panic("purego: cfn is nil")
 	}
-	// TODO: check to make sure there aren't too many arguments
+	{
+		// this code checks how many registers and stack this function will use
+		// to avoid
+		var ints = 0
+		var floats = 0
+		var stack = 0
+		for i := 0; i < ty.NumIn(); i++ {
+			arg := ty.In(i)
+			switch arg.Kind() {
+			case reflect.String, reflect.Uintptr, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
+				reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Ptr, reflect.UnsafePointer, reflect.Slice,
+				reflect.Func, reflect.Bool:
+				if ints < numOfIntegerRegisters() {
+					ints++
+				} else {
+					stack++
+				}
+			case reflect.Float32, reflect.Float64:
+				if floats < 8 {
+					floats++
+				} else {
+					stack++
+				}
+			default:
+				panic("purego: unsupported kind " + arg.Kind().String())
+			}
+		}
+		if ints+stack > maxArgs || floats+stack > maxArgs {
+			panic("purego: too many arguments")
+		}
+	}
 	v := reflect.MakeFunc(ty, func(args []reflect.Value) (results []reflect.Value) {
 		if len(args) > 0 {
 			if variadic, ok := args[len(args)-1].Interface().([]interface{}); ok {
@@ -175,4 +205,15 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 		return []reflect.Value{v}
 	})
 	fn.Set(v)
+}
+
+func numOfIntegerRegisters() int {
+	switch runtime.GOARCH {
+	case "arm64":
+		return 8
+	case "amd64":
+		return 6
+	default:
+		panic("purego: unknown GOARCH (" + runtime.GOARCH + ")")
+	}
 }
