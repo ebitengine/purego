@@ -116,12 +116,13 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 			}
 		}
 		var sysargs [maxArgs]uintptr
+		var stack = sysargs[numOfIntegerRegisters():]
 		var floats [8]float64
 		numInts := 0
 		numFloats := 0
 		numStack := 0
 		addStack := func(x uintptr) {
-			sysargs[numStack+numOfIntegerRegisters()] = x
+			stack[numStack] = x
 			numStack++
 		}
 		addInt := func(x uintptr) {
