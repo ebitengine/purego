@@ -36,7 +36,5 @@ func GoString(c uintptr) string {
 		}
 		length++
 	}
-	dst := make([]byte, length)
-	copy(dst, unsafe.Slice((*byte)(ptr), length))
-	return string(dst)
+	return string(unsafe.Slice((*byte)(ptr), length))
 }
