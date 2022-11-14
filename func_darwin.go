@@ -73,7 +73,7 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 	}
 	{
 		// this code checks how many registers and stack this function will use
-		// to avoid
+		// to avoid crashing with to many arguments
 		var ints = 0
 		var floats = 0
 		var stack = 0
