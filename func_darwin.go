@@ -119,6 +119,19 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 		var floats [8]float64
 		numInts := 0
 		numFloats := 0
+		numStack := 0
+		addStack := func(x uintptr) {
+			sysargs[numStack+numOfIntegerRegisters()] = x
+			numStack++
+		}
+		addInt := func(x uintptr) {
+			if numInts >= numOfIntegerRegisters() {
+				addStack(x)
+			} else {
+				sysargs[numInts] = x
+				numInts++
+			}
+		}
 		var keepAlive []interface{}
 		defer func() {
 			runtime.KeepAlive(keepAlive)
@@ -128,36 +141,28 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 			case reflect.String:
 				ptr := strings.CString(v.String())
 				keepAlive = append(keepAlive, ptr)
-				sysargs[numInts] = uintptr(unsafe.Pointer(ptr))
-				numInts++
+				addInt(uintptr(unsafe.Pointer(ptr)))
 			case reflect.Uintptr, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-				sysargs[numInts] = uintptr(v.Uint())
-				numInts++
+				addInt(uintptr(v.Uint()))
 			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-				sysargs[numInts] = uintptr(v.Int())
-				numInts++
+				addInt(uintptr(v.Int()))
 			case reflect.Ptr, reflect.UnsafePointer, reflect.Slice:
 				keepAlive = append(keepAlive, v.Pointer())
-				sysargs[numInts] = v.Pointer()
-				numInts++
+				addInt(v.Pointer())
 			case reflect.Func:
-				sysargs[numInts] = NewCallback(v.Interface())
-				numInts++
+				addInt(NewCallback(v.Interface()))
 			case reflect.Bool:
 				if v.Bool() {
-					sysargs[numInts] = 1
+					addInt(1)
 				} else {
-					sysargs[numInts] = 0
+					addInt(0)
 				}
-				numInts++
 			case reflect.Float32, reflect.Float64:
 				if numFloats < len(floats) {
 					floats[numFloats] = v.Float()
 					numFloats++
 				} else {
-					// TODO: these should be on the stack not integer registers
-					sysargs[numInts] = uintptr(math.Float64bits(v.Float()))
-					numInts++
+					addStack(uintptr(math.Float64bits(v.Float())))
 				}
 			default:
 				panic("purego: unsupported kind: " + v.Kind().String())
