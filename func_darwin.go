@@ -74,9 +74,9 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 	{
 		// this code checks how many registers and stack this function will use
 		// to avoid crashing with too many arguments
-		var ints = 0
-		var floats = 0
-		var stack = 0
+		var ints int
+		var floats int
+		var stack int
 		for i := 0; i < ty.NumIn(); i++ {
 			arg := ty.In(i)
 			switch arg.Kind() {
@@ -118,9 +118,9 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 		var sysargs [maxArgs]uintptr
 		var stack = sysargs[numOfIntegerRegisters():]
 		var floats [8]float64
-		numInts := 0
-		numFloats := 0
-		numStack := 0
+		var numInts int
+		var numFloats int
+		var numStack int
 		addStack := func(x uintptr) {
 			stack[numStack] = x
 			numStack++
