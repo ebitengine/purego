@@ -4,6 +4,7 @@
 package purego
 
 import (
+	"math"
 	"reflect"
 	"runtime"
 	"unsafe"
@@ -67,6 +68,40 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 	if ty.NumOut() > 1 {
 		panic("purego: function can only return zero or one values")
 	}
+	if cfn == 0 {
+		panic("purego: cfn is nil")
+	}
+	{
+		// this code checks how many registers and stack this function will use
+		// to avoid crashing with too many arguments
+		var ints int
+		var floats int
+		var stack int
+		for i := 0; i < ty.NumIn(); i++ {
+			arg := ty.In(i)
+			switch arg.Kind() {
+			case reflect.String, reflect.Uintptr, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
+				reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Ptr, reflect.UnsafePointer, reflect.Slice,
+				reflect.Func, reflect.Bool:
+				if ints < numOfIntegerRegisters() {
+					ints++
+				} else {
+					stack++
+				}
+			case reflect.Float32, reflect.Float64:
+				if floats < 8 {
+					floats++
+				} else {
+					stack++
+				}
+			default:
+				panic("purego: unsupported kind " + arg.Kind().String())
+			}
+		}
+		if ints+stack > maxArgs || floats+stack > maxArgs {
+			panic("purego: too many arguments")
+		}
+	}
 	v := reflect.MakeFunc(ty, func(args []reflect.Value) (results []reflect.Value) {
 		if len(args) > 0 {
 			if variadic, ok := args[len(args)-1].Interface().([]interface{}); ok {
@@ -80,37 +115,69 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 				args = tmp
 			}
 		}
-		var sysargs = make([]uintptr, len(args))
+		var sysargs [maxArgs]uintptr
+		var stack = sysargs[numOfIntegerRegisters():]
+		var floats [8]float64
+		var numInts int
+		var numFloats int
+		var numStack int
+		addStack := func(x uintptr) {
+			stack[numStack] = x
+			numStack++
+		}
+		addInt := func(x uintptr) {
+			if numInts >= numOfIntegerRegisters() {
+				addStack(x)
+			} else {
+				sysargs[numInts] = x
+				numInts++
+			}
+		}
 		var keepAlive []interface{}
 		defer func() {
 			runtime.KeepAlive(keepAlive)
 		}()
-		for i, v := range args {
+		for _, v := range args {
 			switch v.Kind() {
 			case reflect.String:
 				ptr := strings.CString(v.String())
 				keepAlive = append(keepAlive, ptr)
-				sysargs[i] = uintptr(unsafe.Pointer(ptr))
+				addInt(uintptr(unsafe.Pointer(ptr)))
 			case reflect.Uintptr, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-				sysargs[i] = uintptr(v.Uint())
+				addInt(uintptr(v.Uint()))
 			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-				sysargs[i] = uintptr(v.Int())
+				addInt(uintptr(v.Int()))
 			case reflect.Ptr, reflect.UnsafePointer, reflect.Slice:
 				keepAlive = append(keepAlive, v.Pointer())
-				sysargs[i] = v.Pointer()
+				addInt(v.Pointer())
 			case reflect.Func:
-				sysargs[i] = NewCallback(v.Interface())
+				addInt(NewCallback(v.Interface()))
 			case reflect.Bool:
 				if v.Bool() {
-					sysargs[i] = 1
+					addInt(1)
 				} else {
-					sysargs[i] = 0
+					addInt(0)
+				}
+			case reflect.Float32, reflect.Float64:
+				if numFloats < len(floats) {
+					floats[numFloats] = v.Float()
+					numFloats++
+				} else {
+					addStack(uintptr(math.Float64bits(v.Float())))
 				}
 			default:
 				panic("purego: unsupported kind: " + v.Kind().String())
 			}
 		}
-		r1, _, _ := SyscallN(cfn, sysargs...) //TODO: handle float32/64 and struct types
+		// TODO: support structs
+		syscall := syscall9Args{
+			cfn,
+			sysargs[0], sysargs[1], sysargs[2], sysargs[3], sysargs[4], sysargs[5], sysargs[6], sysargs[7], sysargs[8],
+			floats[0], floats[1], floats[2], floats[3], floats[4], floats[5], floats[6], floats[7],
+			0, 0, 0}
+		runtime_cgocall(syscall9XABI0, unsafe.Pointer(&syscall))
+		r1, r2 := syscall.r1, syscall.r2
+
 		if ty.NumOut() == 0 {
 			return nil
 		}
@@ -134,10 +201,25 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 			RegisterFunc(v.Interface(), r1)
 		case reflect.String:
 			v.SetString(strings.GoString(r1))
+		case reflect.Float32, reflect.Float64:
+			// NOTE: r2 is only the floating return value on 64bit platforms.
+			// On 32bit platforms r2 is the upper part of a 64bit return.
+			v.SetFloat(math.Float64frombits(uint64(r2)))
 		default:
 			panic("purego: unsupported return kind: " + outType.Kind().String())
 		}
 		return []reflect.Value{v}
 	})
 	fn.Set(v)
+}
+
+func numOfIntegerRegisters() int {
+	switch runtime.GOARCH {
+	case "arm64":
+		return 8
+	case "amd64":
+		return 6
+	default:
+		panic("purego: unknown GOARCH (" + runtime.GOARCH + ")")
+	}
 }
