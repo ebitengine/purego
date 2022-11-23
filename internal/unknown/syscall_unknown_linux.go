@@ -13,12 +13,12 @@ package unknown
 #include <errno.h>
 #include <assert.h>
 
-struct syscall9Args {
+typedef struct syscall9Args {
 	uintptr_t fn;
 	uintptr_t a1, a2, a3, a4, a5, a6, a7, a8, a9;
 	double f1, f2, f3, f4, f5, f6, f7, f8;
 	uintptr_t r1, r2, err;
-};
+} syscall9Args;
 
 uintptr_t syscall9(struct syscall9Args *args) {
 	assert((args->f1+args->f2+args->f3+args->f4+args->f5+args->f6+args->f7+args->f8) == 0);
