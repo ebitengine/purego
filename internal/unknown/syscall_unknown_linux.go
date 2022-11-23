@@ -11,23 +11,35 @@ package unknown
 #include <stdint.h>
 #include <dlfcn.h>
 #include <errno.h>
+#include <assert.h>
 
-uintptr_t syscall9(uintptr_t fn, uintptr_t a1, uintptr_t a2, uintptr_t a3, uintptr_t a4, uintptr_t a5, uintptr_t a6, uintptr_t a7, uintptr_t a8, uintptr_t a9, uintptr_t *errnum) {
+struct syscall9Args {
+	uintptr_t a1, a2, a3, a4, a5, a6, a7, a8, a9;
+	double f1, f2, f3, f4, f5, f6, f7, f8;
+	uintptr_t r1, r2, err;
+};
+
+uintptr_t syscall9(struct syscall9Args *args) {
+	assert((args->f1|args->f2|args->f3|args->f4|args->f5|args->f6|args->f7|args->f8) == 0);
 	uintptr_t (*func_name)(uintptr_t a1, uintptr_t a2, uintptr_t a3, uintptr_t a4, uintptr_t a5, uintptr_t a6, uintptr_t a7, uintptr_t a8, uintptr_t a9);
-	*(void**)(&func_name) = (void*)(fn);
-	uintptr_t r1 =  func_name(a1,a2,a3,a4,a5,a6,a7,a8,a9);
-	*errnum = errno;
+	*(void**)(&func_name) = (void*)(args->fn);
+	uintptr_t r1 =  func_name(args->a1,args->a2,args->a3,args->a4,args->a5,args->a6,args->a7,args->a8,args->a9);
+	args->err = errno;
 	return r1;
 }
 
 */
 import "C"
+import "unsafe"
+
+//go:linkname internal_syscall9XABI0 internal_syscall9XABI0
+var internal_syscall9XABI0 = unsafe.Pointer(C.syscall9)
 
 //go:nosplit
 func Syscall9X(fn, a1, a2, a3, a4, a5, a6, a7, a8, a9 uintptr) (r1, r2, err uintptr) {
-	var errno C.uintptr_t
-	r1 = uintptr(C.syscall9(C.uintptr_t(fn), C.uintptr_t(a1), C.uintptr_t(a2), C.uintptr_t(a3),
+	args := C.syscall9Args{C.uintptr_t(fn), C.uintptr_t(a1), C.uintptr_t(a2), C.uintptr_t(a3),
 		C.uintptr_t(a4), C.uintptr_t(a5), C.uintptr_t(a6),
-		C.uintptr_t(a7), C.uintptr_t(a8), C.uintptr_t(a9), &errno))
-	return r1, 0, uintptr(errno)
+		C.uintptr_t(a7), C.uintptr_t(a8), C.uintptr_t(a9), 0}
+	r1 = uintptr(C.syscall9(&args))
+	return r1, 0, args.err
 }

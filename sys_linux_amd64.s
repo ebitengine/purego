@@ -29,28 +29,27 @@ TEXT syscall9X(SB), NOSPLIT, $0
 	PUSHQ BP
 	MOVQ  SP, BP
 	SUBQ  $32, SP
-	MOVQ  DI, 24(BP)               // save the pointer
-	MOVQ  syscall9Args_fn(DI), R10 // fn
-	MOVQ  syscall9Args_a2(DI), SI  // a2
-	MOVQ  syscall9Args_a3(DI), DX  // a3
-	MOVQ  syscall9Args_a4(DI), CX  // a4
-	MOVQ  syscall9Args_a5(DI), R8  // a5
-	MOVQ  syscall9Args_a6(DI), R9  // a6
-	MOVQ  syscall9Args_a7(DI), R11 // a7
-	MOVQ  syscall9Args_a8(DI), R12 // a8
-	MOVQ  syscall9Args_a9(DI), R13 // a9
-	MOVQ  syscall9Args_a1(DI), DI  // a1
+	MOVQ  DI, 24(BP) // save the pointer
 
-	// these may be float arguments
-	// so we put them also where C expects floats
-	MOVQ DI, X0  // a1
-	MOVQ SI, X1  // a2
-	MOVQ DX, X2  // a3
-	MOVQ CX, X3  // a4
-	MOVQ R8, X4  // a5
-	MOVQ R9, X5  // a6
-	MOVQ R11, X6 // a7
-	MOVQ R12, X7 // a8
+	MOVQ syscall9Args_f1(DI), X0 // f1
+	MOVQ syscall9Args_f2(DI), X1 // f2
+	MOVQ syscall9Args_f3(DI), X2 // f3
+	MOVQ syscall9Args_f4(DI), X3 // f4
+	MOVQ syscall9Args_f5(DI), X4 // f5
+	MOVQ syscall9Args_f6(DI), X5 // f6
+	MOVQ syscall9Args_f7(DI), X6 // f7
+	MOVQ syscall9Args_f8(DI), X7 // f8
+
+	MOVQ syscall9Args_fn(DI), R10 // fn
+	MOVQ syscall9Args_a2(DI), SI  // a2
+	MOVQ syscall9Args_a3(DI), DX  // a3
+	MOVQ syscall9Args_a4(DI), CX  // a4
+	MOVQ syscall9Args_a5(DI), R8  // a5
+	MOVQ syscall9Args_a6(DI), R9  // a6
+	MOVQ syscall9Args_a7(DI), R11 // a7
+	MOVQ syscall9Args_a8(DI), R12 // a8
+	MOVQ syscall9Args_a9(DI), R13 // a9
+	MOVQ syscall9Args_a1(DI), DI  // a1
 
 	// push the remaining paramters onto the stack
 	MOVQ R11, 0(SP)  // push a7

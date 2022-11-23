@@ -7,8 +7,15 @@ package purego
 
 import "github.com/ebitengine/purego/internal/unknown"
 
+//go:linkname syscall9XABI0 internal_syscall9XABI0
+var syscall9XABI0 uintptr
+
 // this is only here to make the assembly files happy :)
-type syscall9Args struct{ fn, a1, a2, a3, a4, a5, a6, a7, a8, a9, r1, r2, err uintptr }
+type syscall9Args struct {
+	fn, a1, a2, a3, a4, a5, a6, a7, a8, a9 uintptr
+	f1, f2, f3, f4, f5, f6, f7, f8         float64
+	r1, r2, err                            uintptr
+}
 
 //go:nosplit
 func syscall_syscall9X(fn, a1, a2, a3, a4, a5, a6, a7, a8, a9 uintptr) (r1, r2, err uintptr) {

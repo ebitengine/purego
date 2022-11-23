@@ -29,6 +29,15 @@ TEXT syscall9X(SB), NOSPLIT, $0
 	SUB  $16, RSP   // push structure pointer
 	MOVD R0, 8(RSP)
 
+	FMOVD syscall9Args_f1(R0), F0 // f1
+	FMOVD syscall9Args_f2(R0), F1 // f2
+	FMOVD syscall9Args_f3(R0), F2 // f3
+	FMOVD syscall9Args_f4(R0), F3 // f4
+	FMOVD syscall9Args_f5(R0), F4 // f5
+	FMOVD syscall9Args_f6(R0), F5 // f6
+	FMOVD syscall9Args_f7(R0), F6 // f7
+	FMOVD syscall9Args_f8(R0), F7 // f8
+
 	MOVD syscall9Args_fn(R0), R12 // fn
 	MOVD syscall9Args_a2(R0), R1  // a2
 	MOVD syscall9Args_a3(R0), R2  // a3
