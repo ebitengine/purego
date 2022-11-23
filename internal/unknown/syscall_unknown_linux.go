@@ -16,12 +16,12 @@ package unknown
 typedef struct syscall9Args {
 	uintptr_t fn;
 	uintptr_t a1, a2, a3, a4, a5, a6, a7, a8, a9;
-	double f1, f2, f3, f4, f5, f6, f7, f8;
+	uintptr_t f1, f2, f3, f4, f5, f6, f7, f8;
 	uintptr_t r1, r2, err;
 } syscall9Args;
 
 uintptr_t syscall9(struct syscall9Args *args) {
-	assert((args->f1+args->f2+args->f3+args->f4+args->f5+args->f6+args->f7+args->f8) == 0);
+	assert((args->f1|args->f2|args->f3|args->f4|args->f5|args->f6|args->f7|args->f8) == 0);
 	uintptr_t (*func_name)(uintptr_t a1, uintptr_t a2, uintptr_t a3, uintptr_t a4, uintptr_t a5, uintptr_t a6, uintptr_t a7, uintptr_t a8, uintptr_t a9);
 	*(void**)(&func_name) = (void*)(args->fn);
 	uintptr_t r1 =  func_name(args->a1,args->a2,args->a3,args->a4,args->a5,args->a6,args->a7,args->a8,args->a9);
