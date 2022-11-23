@@ -40,7 +40,7 @@ var internal_syscall9XABI0 = unsafe.Pointer(C.syscall9)
 func Syscall9X(fn, a1, a2, a3, a4, a5, a6, a7, a8, a9 uintptr) (r1, r2, err uintptr) {
 	args := C.syscall9Args{C.uintptr_t(fn), C.uintptr_t(a1), C.uintptr_t(a2), C.uintptr_t(a3),
 		C.uintptr_t(a4), C.uintptr_t(a5), C.uintptr_t(a6),
-		C.uintptr_t(a7), C.uintptr_t(a8), C.uintptr_t(a9), 0}
+		C.uintptr_t(a7), C.uintptr_t(a8), C.uintptr_t(a9), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 	r1 = uintptr(C.syscall9(&args))
-	return r1, 0, args.err
+	return r1, 0, uintptr(args.err)
 }
