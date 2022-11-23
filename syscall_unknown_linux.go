@@ -5,7 +5,11 @@
 
 package purego
 
-import "github.com/ebitengine/purego/internal/unknown"
+import (
+	_ "unsafe"
+
+	"github.com/ebitengine/purego/internal/unknown"
+)
 
 //go:linkname syscall9XABI0 internal_syscall9XABI0
 var syscall9XABI0 uintptr
