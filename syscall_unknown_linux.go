@@ -5,13 +5,9 @@
 
 package purego
 
-import (
-	_ "unsafe"
+import "github.com/ebitengine/purego/internal/unknown"
 
-	"github.com/ebitengine/purego/internal/unknown"
-)
-
-//go:linkname syscall9XABI0 internal_syscall9XABI0
+// this is linked to a C function from internal/unknown
 var syscall9XABI0 uintptr
 
 // this is only here to make the assembly files happy :)

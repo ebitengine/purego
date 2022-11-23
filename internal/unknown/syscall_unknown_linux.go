@@ -33,7 +33,7 @@ uintptr_t syscall9(struct syscall9Args *args) {
 import "C"
 import "unsafe"
 
-//go:linkname internal_syscall9XABI0 internal_syscall9XABI0
+//go:linkname internal_syscall9XABI0 purego.syscall9XABI0
 var internal_syscall9XABI0 = unsafe.Pointer(C.syscall9)
 
 //go:nosplit
