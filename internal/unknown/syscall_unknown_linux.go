@@ -33,8 +33,19 @@ uintptr_t syscall9(struct syscall9Args *args) {
 import "C"
 import "unsafe"
 
+// assign purego.syscall9XABI0 to the C version of this function.
+//
 //go:linkname internal_syscall9XABI0 purego.syscall9XABI0
 var internal_syscall9XABI0 = unsafe.Pointer(C.syscall9)
+
+// all that is needed is to assign each dl function because then its
+// symbol will then be made available to the linker and linked to inside dlfcn.go
+var (
+	_ = C.dlopen
+	_ = C.dlsym
+	_ = C.dlerror
+	_ = C.dlclose
+)
 
 //go:nosplit
 func Syscall9X(fn, a1, a2, a3, a4, a5, a6, a7, a8, a9 uintptr) (r1, r2, err uintptr) {
