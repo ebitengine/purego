@@ -3,7 +3,8 @@
 
 package cgo
 
-// this file moved to package cgo since Cgo and assembly files can't be in the same package
+// this file was placed inside internal/cgo and not package purego
+// because Cgo and assembly files can't be in the same package.
 
 /*
  #cgo LDFLAGS: -ldl
