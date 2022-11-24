@@ -6,8 +6,8 @@
 package fakecgo
 
 type size_t uintptr
-type sigset_t [128]byte      // TODO: figure out how big this should be
-type pthread_attr_t [56]byte // TODO: figure out how big this should be
+type sigset_t [128]byte
+type pthread_attr_t [64]byte
 type pthread_t int
 
 // for pthread_sigmask:
