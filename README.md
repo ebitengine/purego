@@ -14,3 +14,4 @@ This is a list of the copied files:
 * `internal/fakecgo/callbacks.go` from package `runtime/cgo`
 * `internal/fakecgo/iscgo.go` from package `runtime/cgo`
 * `internal/fakecgo/setenv.go` from package `runtime/cgo`
+* `internal/fakecgo/go_GOOS_GOARCH.go` from package `runtime/cgo`
