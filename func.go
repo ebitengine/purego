@@ -61,6 +61,10 @@ func RegisterLibFunc(fptr interface{}, handle uintptr, name string) {
 // it will be expanded into a call to the C function as if it had the arguments in that slice.
 // This means that using arg ...interface{} is like a cast to the function with the arguments inside arg.
 // This is not the same as C variadic.
+//
+// There are some limitations when using RegisterFunc on Linux. First, there is no support for function arguments.
+// Second, float32 and float64 arguments and return values do not work when CGO_ENABLED=1. Otherwise, Linux
+// has the same feature parity as Darwin.
 func RegisterFunc(fptr interface{}, cfn uintptr) {
 	fn := reflect.ValueOf(fptr).Elem()
 	ty := fn.Type()
