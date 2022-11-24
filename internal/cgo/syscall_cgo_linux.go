@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2022 The Ebitengine Authors
 
-package unknown
+package cgo
 
 // this file moved to package unknown since Cgo and assembly files can't be in the same package
 
