@@ -3,7 +3,7 @@
 
 package cgo
 
-// this file moved to package unknown since Cgo and assembly files can't be in the same package
+// this file moved to package cgo since Cgo and assembly files can't be in the same package
 
 /*
  #cgo LDFLAGS: -ldl
