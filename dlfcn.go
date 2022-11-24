@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2022 The Ebitengine Authors
 
-//go:build darwin
+//go:build darwin || linux
 
 package purego
 
 import (
 	"unsafe"
 )
+
+// Unix Specification for dlfcn.h: https://pubs.opengroup.org/onlinepubs/7908799/xsh/dlfcn.h.html
 
 var (
 	fnDlopen  func(path string, mode int) uintptr
