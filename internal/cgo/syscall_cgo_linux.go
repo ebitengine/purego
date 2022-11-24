@@ -3,7 +3,7 @@
 
 package cgo
 
-// this file was placed inside internal/cgo and not package purego
+// this file is placed inside internal/cgo and not package purego
 // because Cgo and assembly files can't be in the same package.
 
 /*
