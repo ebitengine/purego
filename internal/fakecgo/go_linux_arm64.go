@@ -18,9 +18,8 @@ func _cgo_sys_thread_start(ts *ThreadStart) {
 	sigfillset(&ign)
 	pthread_sigmask(SIG_SETMASK, &ign, &oset)
 
-	size = pthread_get_stacksize_np(pthread_self())
 	pthread_attr_init(&attr)
-	pthread_attr_setstacksize(&attr, size)
+	pthread_attr_getstacksize(&attr, &size)
 	// Leave stacklo=0 and set stackhi=size; mstart will do the rest.
 	ts.g.stackhi = uintptr(size)
 
@@ -58,12 +57,40 @@ func threadentry(v unsafe.Pointer) unsafe.Pointer {
 // here we will store a pointer to the provided setg func
 var setg_func uintptr
 
+// x_cgo_init(G *g, void (*setg)(void*)) (runtime/cgo/gcc_linux_amd64.c)
+// This get's called during startup, adjusts stacklo, and provides a pointer to setg_gcc for us
+// Additionally, if we set _cgo_init to non-null, go won't do it's own TLS setup
+// This function can't be go:systemstack since go is not in a state where the systemcheck would work.
+//
 //go:nosplit
 func x_cgo_init(g *G, setg uintptr) {
 	var size size_t
+	var attr *pthread_attr_t
+
+	/* The memory sanitizer distributed with versions of clang
+	   before 3.8 has a bug: if you call mmap before malloc, mmap
+	   may return an address that is later overwritten by the msan
+	   library.  Avoid this problem by forcing a call to malloc
+	   here, before we ever call malloc.
+
+	   This is only required for the memory sanitizer, so it's
+	   unfortunate that we always run it.  It should be possible
+	   to remove this when we no longer care about versions of
+	   clang before 3.8.  The test for this is
+	   misc/cgo/testsanitizers.
+
+	   GCC works hard to eliminate a seemingly unnecessary call to
+	   malloc, so we actually use the memory we allocate.  */
 
 	setg_func = setg
-
-	size = pthread_get_stacksize_np(pthread_self())
-	g.stacklo = uintptr(unsafe.Add(unsafe.Pointer(&size), -size+4096))
+	attr = (*pthread_attr_t)(malloc(unsafe.Sizeof(*attr)))
+	if attr == nil {
+		println("fakecgo: malloc failed")
+		abort()
+	}
+	pthread_attr_init(attr)
+	pthread_attr_getstacksize(attr, &size)
+	g.stacklo = uintptr(unsafe.Pointer(&size)) - uintptr(size) + 4096
+	pthread_attr_destroy(attr)
+	free(unsafe.Pointer(attr))
 }

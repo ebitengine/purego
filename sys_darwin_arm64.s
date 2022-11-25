@@ -31,6 +31,15 @@ TEXT syscall9X(SB), NOSPLIT, $0
 	SUB  $16, RSP   // push structure pointer
 	MOVD R0, 8(RSP)
 
+	FMOVD syscall9Args_f1(R0), F0 // f1
+	FMOVD syscall9Args_f2(R0), F1 // f2
+	FMOVD syscall9Args_f3(R0), F2 // f3
+	FMOVD syscall9Args_f4(R0), F3 // f4
+	FMOVD syscall9Args_f5(R0), F4 // f5
+	FMOVD syscall9Args_f6(R0), F5 // f6
+	FMOVD syscall9Args_f7(R0), F6 // f7
+	FMOVD syscall9Args_f8(R0), F7 // f8
+
 	MOVD syscall9Args_fn(R0), R12 // fn
 	MOVD syscall9Args_a2(R0), R1  // a2
 	MOVD syscall9Args_a3(R0), R2  // a3
@@ -42,25 +51,14 @@ TEXT syscall9X(SB), NOSPLIT, $0
 	MOVD syscall9Args_a9(R0), R8  // a9
 	MOVD syscall9Args_a1(R0), R0  // a1
 
-	// these may be float arguments
-	// so we put them also where C expects floats
-	FMOVD R0, F0 // a1
-	FMOVD R1, F1 // a2
-	FMOVD R2, F2 // a3
-	FMOVD R3, F3 // a4
-	FMOVD R4, F4 // a5
-	FMOVD R5, F5 // a6
-	FMOVD R6, F6 // a7
-	FMOVD R7, F7 // a8
-
 	MOVD R8, (RSP) // push a9 onto stack
 
 	BL (R12)
 
-	MOVD 8(RSP), R2              // pop structure pointer
-	ADD  $16, RSP
-	MOVD R0, syscall9Args_r1(R2) // save r1
-	MOVD R1, syscall9Args_r2(R2) // save r2
+	MOVD  8(RSP), R2              // pop structure pointer
+	ADD   $16, RSP
+	MOVD  R0, syscall9Args_r1(R2) // save r1
+	FMOVD F0, syscall9Args_r2(R2) // save r2
 	RET
 
 // runtime·cgocallback expects a call to the ABIInternal function
