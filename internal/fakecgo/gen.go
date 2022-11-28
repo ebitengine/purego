@@ -134,6 +134,7 @@ func run() error {
 		return err
 	}
 	f, err := os.Create("symbols.go")
+	defer f.Close()
 	if err != nil {
 		return err
 	}
@@ -145,6 +146,7 @@ func run() error {
 		return err
 	}
 	f, err = os.Create("trampolines_stubs.s")
+	defer f.Close()
 	if err != nil {
 		return err
 	}
