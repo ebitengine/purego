@@ -30,4 +30,4 @@
 package fakecgo
 
 //go:generate go run gen.go
-//go:generate go fmt symbols.go
+//go:generate gofmt -s -w symbols.go symbols.go
