@@ -41,7 +41,13 @@ func {{.Name}}(
 		{{.Name}} {{.Type}},
 	{{- end -}}
 {{- end -}}) {{.Return}} {
-	{{ if .Return }} return {{.Return}}({{ end -}}
+	{{- if .Return -}}
+		{{- if eq .Return "unsafe.Pointer" -}}
+			ret :=
+		{{- else -}}
+			return {{.Return}}(
+		{{- end -}}
+	{{- end -}}
 call5({{.Name}}ABI0,
 {{- range .Args}}
 	{{- if .Name -}}
@@ -54,9 +60,14 @@ call5({{.Name}}ABI0,
 		0,
 	{{- end -}}
 {{- end -}}
-)
+	) {{/* end of call5 */}}
 {{- if .Return -}}
-	)
+	{{- if eq .Return "unsafe.Pointer"}}
+		// this indirection is to avoid go vet complaining about possible misuse of unsafe.Pointer
+		return *(*unsafe.Pointer)(unsafe.Pointer(&ret))
+	{{- else -}}
+		) {{/* end of cast */}}
+	{{- end -}}
 {{- end}}
 }
 

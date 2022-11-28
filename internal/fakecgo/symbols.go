@@ -21,7 +21,9 @@ func memmove(to, from unsafe.Pointer, n uintptr)
 func call5(fn, a1, a2, a3, a4, a5 uintptr) uintptr
 
 func malloc(size uintptr) unsafe.Pointer {
-	return unsafe.Pointer(call5(mallocABI0, uintptr(size), 0, 0, 0, 0))
+	ret := call5(mallocABI0, uintptr(size), 0, 0, 0, 0)
+	// this indirection is to avoid go vet complaining about possible misuse of unsafe.Pointer
+	return *(*unsafe.Pointer)(unsafe.Pointer(&ret))
 }
 
 func free(ptr unsafe.Pointer) {
