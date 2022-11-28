@@ -28,3 +28,6 @@
 // Purego will pick which ever Cgo runtime is available and prefer the one that
 // comes with Go (runtime/cgo).
 package fakecgo
+
+//go:generate go run gen.go
+//go:generate gofmt -s -w symbols.go
