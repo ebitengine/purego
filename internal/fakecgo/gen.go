@@ -126,35 +126,36 @@ var funcs = map[string]any{
 	"hasPrefix": strings.HasPrefix,
 }
 
-func main() {
+func run() error {
 	t, err := template.New("symbol.go").Funcs(funcs).Parse(templateSymbols)
 	if err != nil {
-		log.Fatal(err)
-		return
+		return err
 	}
 	f, err := os.Create("symbols.go")
 	if err != nil {
-		log.Fatal(f)
-		return
+		return err
 	}
 	err = t.Execute(f, symbols)
 	if err != nil {
-		log.Fatal(err)
-		return
+		return err
 	}
 	t, err = template.New("trampolines_stubs.s").Funcs(funcs).Parse(templateTrampolinesStubs)
 	if err != nil {
-		log.Fatal(err)
-		return
+		return err
 	}
 	f, err = os.Create("trampolines_stubs.s")
 	if err != nil {
-		log.Fatal(f)
-		return
+		return err
 	}
 	err = t.Execute(f, symbols)
 	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func main() {
+	if err := run(); err != nil {
 		log.Fatal(err)
-		return
 	}
 }
