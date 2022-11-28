@@ -137,8 +137,7 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	err = t.Execute(f, symbols)
-	if err != nil {
+	if err := t.Execute(f, symbols); err != nil {
 		return err
 	}
 	t, err = template.New("trampolines_stubs.s").Funcs(funcs).Parse(templateTrampolinesStubs)
@@ -149,8 +148,7 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	err = t.Execute(f, symbols)
-	if err != nil {
+	if err := t.Execute(f, symbols); err != nil {
 		return err
 	}
 	return nil
