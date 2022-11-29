@@ -52,7 +52,7 @@ jobs:
           env GOOS=darwin GOARCH=arm64 go build -v ./...      
 
       - name: go mod vendor
-        if: runner.os == 'Linux'
+        if: runner.os != 'Linux'
         run: |
           mkdir /tmp/vendoring
           cd /tmp/vendoring
