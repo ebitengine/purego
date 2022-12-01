@@ -19,6 +19,7 @@ func x_cgo_notify_runtime_init_done() {
 // EAGAIN.
 //
 //go:nosplit
+//go:norace
 func _cgo_try_pthread_create(thread *pthread_t, attr *pthread_attr_t, pfn unsafe.Pointer, arg *ThreadStart) int {
 	var ts syscall.Timespec
 	// tries needs to be the same type as syscall.Timespec.Nsec
