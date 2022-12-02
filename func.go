@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2022 The Ebitengine Authors
 
+//go:build darwin || linux
+
 package purego
 
 import (
@@ -14,6 +16,8 @@ import (
 
 // RegisterLibFunc is a wrapper around RegisterFunc that uses the C function returned from Dlsym(handle, name).
 // It panics if Dlsym fails.
+//
+// Windows does not support this function.
 func RegisterLibFunc(fptr interface{}, handle uintptr, name string) {
 	sym := Dlsym(handle, name)
 	if sym == 0 {
@@ -59,6 +63,12 @@ func RegisterLibFunc(fptr interface{}, handle uintptr, name string) {
 // it will be expanded into a call to the C function as if it had the arguments in that slice.
 // This means that using arg ...interface{} is like a cast to the function with the arguments inside arg.
 // This is not the same as C variadic.
+//
+// There are some limitations when using RegisterFunc on Linux. First, there is no support for function arguments.
+// Second, float32 and float64 arguments and return values do not work when CGO_ENABLED=1. Otherwise, Linux
+// has the same feature parity as Darwin.
+//
+// Windows does not support this function.
 func RegisterFunc(fptr interface{}, cfn uintptr) {
 	fn := reflect.ValueOf(fptr).Elem()
 	ty := fn.Type()

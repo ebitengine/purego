@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2022 The Ebitengine Authors
 
-//go:build darwin
+//go:build darwin || linux
 
 package fakecgo
 
@@ -16,6 +16,7 @@ import "unsafe"
 // This function should be go:systemstack instead of go:nosplit (but that requires runtime)
 //
 //go:nosplit
+//go:norace
 func x_cgo_thread_start(arg *ThreadStart) {
 	var ts *ThreadStart
 	// Make our own copy that can persist after we return.

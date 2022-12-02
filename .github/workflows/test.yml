@@ -29,7 +29,7 @@ jobs:
           go-version: ${{ matrix.go }}
 
       - name: go vet
-        if: ${{ !startsWith(matrix.os, 'windows-') && !startsWith(matrix.os, 'macos-') }}
+        if: runner.os != 'Windows' && runner.os != 'macOS'
         run: |
           go vet -tags=example -v ./...
 
@@ -50,9 +50,13 @@ jobs:
           # Check cross-compiling macOS binaries.
           env GOOS=darwin GOARCH=amd64 go build -v ./...
           env GOOS=darwin GOARCH=arm64 go build -v ./...      
+          
+          # Check cross-compiling Linux binaries.
+          env GOOS=linux GOARCH=amd64 go build -v ./...
+          env GOOS=linux GOARCH=arm64 go build -v ./...  
 
       - name: go mod vendor
-        if: ${{ !startsWith(matrix.os, 'ubuntu-') }}
+        if: runner.os != 'Linux'
         run: |
           mkdir /tmp/vendoring
           cd /tmp/vendoring

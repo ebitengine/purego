@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2022 The Ebitengine Authors
 
-//go:build darwin
+//go:build darwin || linux
 
 #include "textflag.h"
 #include "go_asm.h"
@@ -11,22 +11,30 @@
 TEXT x_cgo_init_trampoline(SB), NOSPLIT, $0-0
 	MOVD R0, 8(RSP)
 	MOVD R1, 16(RSP)
-	CALL ·x_cgo_init(SB)
+	MOVD ·x_cgo_init_call(SB), R26
+	MOVD (R26), R2
+	CALL (R2)
 	RET
 
 TEXT x_cgo_thread_start_trampoline(SB), NOSPLIT, $0-0
 	MOVD R0, 8(RSP)
-	CALL ·x_cgo_thread_start(SB)
+	MOVD ·x_cgo_thread_start_call(SB), R26
+	MOVD (R26), R2
+	CALL (R2)
 	RET
 
 TEXT x_cgo_setenv_trampoline(SB), NOSPLIT, $0-0
 	MOVD R0, 8(RSP)
-	CALL ·x_cgo_setenv(SB)
+	MOVD ·x_cgo_setenv_call(SB), R26
+	MOVD (R26), R2
+	CALL (R2)
 	RET
 
 TEXT x_cgo_unsetenv_trampoline(SB), NOSPLIT, $0-0
 	MOVD R0, 8(RSP)
-	CALL ·x_cgo_unsetenv(SB)
+	MOVD ·x_cgo_unsetenv_call(SB), R26
+	MOVD (R26), R2
+	CALL (R2)
 	RET
 
 TEXT x_cgo_notify_runtime_init_done_trampoline(SB), NOSPLIT, $0-0
@@ -42,8 +50,10 @@ TEXT ·setg_trampoline(SB), NOSPLIT, $0-16
 
 TEXT threadentry_trampoline(SB), NOSPLIT, $0-0
 	MOVD R0, 8(RSP)
-	CALL ·threadentry(SB)
-	MOVD $0, R0           // TODO: get the return value from threadentry
+	MOVD ·threadentry_call(SB), R26
+	MOVD (R26), R2
+	CALL (R2)
+	MOVD $0, R0                     // TODO: get the return value from threadentry
 	RET
 
 TEXT ·call5(SB), NOSPLIT, $0-0

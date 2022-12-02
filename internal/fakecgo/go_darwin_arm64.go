@@ -1,11 +1,13 @@
-// SPDX-License-Identifier: Apache-2.0
-// SPDX-FileCopyrightText: 2022 The Ebitengine Authors
+// Copyright 2011 The Go Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
 
 package fakecgo
 
 import "unsafe"
 
 //go:nosplit
+//go:norace
 func _cgo_sys_thread_start(ts *ThreadStart) {
 	var attr pthread_attr_t
 	var ign, oset sigset_t
@@ -40,6 +42,7 @@ var x_threadentry_trampoline byte
 var threadentry_trampolineABI0 = &x_threadentry_trampoline
 
 //go:nosplit
+//go:norace
 func threadentry(v unsafe.Pointer) unsafe.Pointer {
 	ts := *(*ThreadStart)(v)
 	free(v)
@@ -66,6 +69,7 @@ var setg_func uintptr
 // This function can't be go:systemstack since go is not in a state where the systemcheck would work.
 //
 //go:nosplit
+//go:norace
 func x_cgo_init(g *G, setg uintptr) {
 	var size size_t
 	var attr pthread_attr_t

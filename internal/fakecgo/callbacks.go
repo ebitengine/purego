@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//go:build darwin
+//go:build darwin || linux
 
 package fakecgo
 
@@ -41,3 +41,18 @@ var _cgo_notify_runtime_init_done = &x_cgo_notify_runtime_init_done_trampoline
 
 // TODO: decide if we need x_cgo_set_context_function
 // TODO: decide if we need _cgo_yield
+
+var (
+	// In Go 1.20 the race detector was rewritten to pure Go
+	// on darwin. This means that when CGO_ENABLED=0 is set
+	// fakecgo is built with race detector code. This is not
+	// good since this code is pretending to be C. The
+	// go:norace comments are not enough since the ABI wrappers
+	// still have race code. These variables will circumvent
+	// that issue by calling the function directly.
+	threadentry_call        = threadentry
+	x_cgo_init_call         = x_cgo_init
+	x_cgo_setenv_call       = x_cgo_setenv
+	x_cgo_unsetenv_call     = x_cgo_unsetenv
+	x_cgo_thread_start_call = x_cgo_thread_start
+)
