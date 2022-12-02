@@ -114,7 +114,7 @@ const callbackMaxFrame = 64 * ptrSize
 // callbackasmABI0 is implemented in zcallback_GOOS_GOARCH.s
 var callbackasmABI0 uintptr
 
-// This closure allows the calling of the ABIInternal wrapper
+// callbackWrap_call allows the calling of the ABIInternal wrapper
 // which is required for runtime.cgocallback without the
 // <ABIInternal> tag which is only allowed in the runtime.
 // This closure is used inside sys_darwin_GOARCH.s
