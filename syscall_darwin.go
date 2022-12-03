@@ -113,6 +113,12 @@ const callbackMaxFrame = 64 * ptrSize
 // callbackasmABI0 is implemented in zcallback_GOOS_GOARCH.s
 var callbackasmABI0 uintptr
 
+// callbackWrap_call allows the calling of the ABIInternal wrapper
+// which is required for runtime.cgocallback without the
+// <ABIInternal> tag which is only allowed in the runtime.
+// This closure is used inside sys_darwin_GOARCH.s
+var callbackWrap_call = callbackWrap
+
 // callbackWrap is called by assembly code which determines which Go function to call.
 // This function takes the arguments and passes them to the Go function and returns the result.
 func callbackWrap(a *callbackArgs) {

@@ -61,15 +61,6 @@ TEXT syscall9X(SB), NOSPLIT, $0
 	FMOVD F0, syscall9Args_r2(R2) // save r2
 	RET
 
-// runtime·cgocallback expects a call to the ABIInternal function
-// However, the tag <ABIInternal> is only available in the runtime :(
-// This is a small wrapper function that moves the parameter from R0 to the stack
-// where the Go function can find it. It then branches without link.
-TEXT callbackWrapInternal<>(SB), NOSPLIT, $0-0
-	MOVD R0, 8(RSP)
-	B    ·callbackWrap(SB)
-	RET
-
 TEXT callbackasm1(SB), NOSPLIT, $208-0
 	NO_LOCAL_POINTERS
 
@@ -97,9 +88,12 @@ TEXT callbackasm1(SB), NOSPLIT, $208-0
 	MOVD R0, callbackArgs_result(R13)               // result
 
 	// Move parameters into registers
-	MOVD $callbackWrapInternal<>(SB), R0 // fn unsafe.Pointer
-	MOVD R13, R1                         // frame (&callbackArgs{...})
-	MOVD $0, R3                          // ctxt uintptr
+	// Get the ABIInternal function pointer
+	// without <ABIInternal> by using a closure.
+	MOVD ·callbackWrap_call(SB), R26
+	MOVD (R26), R0                   // fn unsafe.Pointer
+	MOVD R13, R1                     // frame (&callbackArgs{...})
+	MOVD $0, R3                      // ctxt uintptr
 
 	// We still need to save all callee save register as before, and then
 	//  push 3 args for fn (R0, R1, R3), skipping R2.
