@@ -54,15 +54,13 @@ type callbackArgs struct {
 	index uintptr
 	// args points to the argument block.
 	//
-	// For cdecl and stdcall, all arguments are on the stack.
+	// The structure of the arguments goes
+	// float registers followed by the
+	// integer registers followed by the stack.
 	//
-	// For fastcall, the trampoline spills register arguments to
-	// the reserved spill slots below the stack arguments,
-	// resulting in a layout equivalent to stdcall.
-	//
-	// For arm, the trampoline stores the register arguments just
-	// below the stack arguments, so again we can treat it as one
-	// big stack arguments frame.
+	// This variable is treated as a continuous
+	// block of memory containing all of the arguments
+	// for this callback.
 	args unsafe.Pointer
 	// Below are out-args from callbackWrap
 	result uintptr
@@ -128,18 +126,37 @@ func callbackWrap(a *callbackArgs) {
 	fnType := fn.Type()
 	args := make([]reflect.Value, fnType.NumIn())
 	frame := (*[callbackMaxFrame]uintptr)(a.args)
-	var floats int
+	const numOfFloats = 8
+	var floatsN int
+	var intsN int
+	// the stack is located in the frame after the floats and integers
+	var stack = numOfIntegerRegisters() + numOfFloats
 	for i := range args {
-		if fnType.In(i).Kind() == reflect.Float64 {
-			var floatPos = floats
-			if floats > 8 {
-				floatPos = i + 8
+		switch fnType.In(i).Kind() {
+		case reflect.Float32, reflect.Float64:
+			var pos int
+			if floatsN >= numOfFloats {
+				pos = stack
+				stack++
+			} else {
+				pos = floatsN
 			}
-			args[i] = reflect.NewAt(fnType.In(i), unsafe.Pointer(&frame[floatPos])).Elem()
-			floats++
-			continue
+			args[i] = reflect.NewAt(fnType.In(i), unsafe.Pointer(&frame[pos])).Elem()
+			floatsN++
+		default:
+			var pos int
+			if intsN >= numOfIntegerRegisters() {
+				pos = stack
+				stack++
+			} else {
+				// offset the integer position by the number
+				// of floatsN because in the frame it starts with the float
+				// registers followed by the integer and then the stack after that.
+				pos = intsN + numOfFloats
+			}
+			args[i] = reflect.NewAt(fnType.In(i), unsafe.Pointer(&frame[pos])).Elem()
+			intsN++
 		}
-		args[i] = reflect.NewAt(fnType.In(i), unsafe.Pointer(&frame[i+8])).Elem()
 	}
 	ret := fn.Call(args)
 	if len(ret) > 0 {
