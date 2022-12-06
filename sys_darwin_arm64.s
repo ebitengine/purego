@@ -69,15 +69,23 @@ TEXT callbackasm1(SB), NOSPLIT, $208-0
 
 	// Save callback register arguments R0-R7.
 	// We do this at the top of the frame so they're contiguous with stack arguments.
-	// The 7*8 setting up R14 looks like a bug but is not: the eighth word
+	// The 15*8 setting up R14 looks like a bug but is not: the eighth word
 	// is the space the assembler reserved for our caller's frame pointer,
 	// but we are not called from Go so that space is ours to use,
 	// and we must to be contiguous with the stack arguments.
-	MOVD $arg0-(7*8)(SP), R14
-	STP  (R0, R1), (0*8)(R14)
-	STP  (R2, R3), (2*8)(R14)
-	STP  (R4, R5), (4*8)(R14)
-	STP  (R6, R7), (6*8)(R14)
+	MOVD  $arg0-(15*8)(SP), R14
+	FMOVD F0, (0*8)(R14)
+	FMOVD F1, (1*8)(R14)
+	FMOVD F2, (2*8)(R14)
+	FMOVD F3, (3*8)(R14)
+	FMOVD F4, (4*8)(R14)
+	FMOVD F5, (5*8)(R14)
+	FMOVD F6, (6*8)(R14)
+	FMOVD F7, (7*8)(R14)
+	STP   (R0, R1), (8*8)(R14)
+	STP   (R2, R3), (10*8)(R14)
+	STP   (R4, R5), (12*8)(R14)
+	STP   (R6, R7), (14*8)(R14)
 
 	// Create a struct callbackArgs on our stack.
 	MOVD $cbargs-(18*8+callbackArgs__size)(SP), R13

@@ -45,13 +45,17 @@ func ExampleClass_AddIvar() {
 }
 
 func ExampleIMP() {
-	imp := objc.NewIMP(func(self objc.ID, _cmd objc.SEL, a3, a4, a5, a6, a7, a8, a9 int) {
-		fmt.Println("IMP:", self, _cmd, a3, a4, a5, a6, a7, a8, a9)
+	imp := objc.NewIMP(func(self objc.ID, _cmd objc.SEL, a3, a4, a5, a6, a7, a8, a9 int,
+		f1, f2, f3, f4, f5, f6, f7, f8 float64) {
+		fmt.Println("IMP:", self, _cmd, a3, a4, a5, a6, a7, a8, a9, f1, f2, f3, f4, f5, f6, f7, f8)
 	})
+	var fn func(self objc.ID, _cmd objc.SEL, a3, a4, a5, a6, a7, a8, a9 int,
+		f1, f2, f3, f4, f5, f6, f7, f8 float64)
+	purego.RegisterFunc(&fn, uintptr(imp))
+	fn(105, 567, 9, 2, 3, -5, 4, 8, 9,
+		1.23, 2.45, 5.43, 6.12, 7.8, 1.99, 4.32, 12.5)
 
-	purego.SyscallN(uintptr(imp), 105, 567, 9, 2, 3, ^uintptr(4), 4, 8, 9)
-
-	// Output: IMP: 105 567 9 2 3 -5 4 8 9
+	// Output: IMP: 105 567 9 2 3 -5 4 8 9 1.23 2.45 5.43 6.12 7.8 1.99 4.32 12.5
 }
 
 func ExampleID_SendSuper() {

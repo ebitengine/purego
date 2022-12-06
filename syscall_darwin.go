@@ -128,12 +128,18 @@ func callbackWrap(a *callbackArgs) {
 	fnType := fn.Type()
 	args := make([]reflect.Value, fnType.NumIn())
 	frame := (*[callbackMaxFrame]uintptr)(a.args)
+	var floats int
 	for i := range args {
 		if fnType.In(i).Kind() == reflect.Float64 {
-			panic("TODO: SUPPORT FLOAT")
+			var floatPos = floats
+			if floats > 8 {
+				floatPos = i + 8
+			}
+			args[i] = reflect.NewAt(fnType.In(i), unsafe.Pointer(&frame[floatPos])).Elem()
+			floats++
+			continue
 		}
-		//TODO: support float32 and float64
-		args[i] = reflect.NewAt(fnType.In(i), unsafe.Pointer(&frame[i])).Elem()
+		args[i] = reflect.NewAt(fnType.In(i), unsafe.Pointer(&frame[i+8])).Elem()
 	}
 	ret := fn.Call(args)
 	if len(ret) > 0 {
