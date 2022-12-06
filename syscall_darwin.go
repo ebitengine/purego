@@ -108,6 +108,8 @@ const ptrSize = unsafe.Sizeof((*int)(nil))
 
 const callbackMaxFrame = 64 * ptrSize
 
+const numOfFloats = 8
+
 // callbackasmABI0 is implemented in zcallback_GOOS_GOARCH.s
 var callbackasmABI0 uintptr
 
@@ -126,7 +128,6 @@ func callbackWrap(a *callbackArgs) {
 	fnType := fn.Type()
 	args := make([]reflect.Value, fnType.NumIn())
 	frame := (*[callbackMaxFrame]uintptr)(a.args)
-	const numOfFloats = 8
 	var floatsN int
 	var intsN int
 	// the stack is located in the frame after the floats and integers

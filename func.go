@@ -86,30 +86,27 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 		// to avoid crashing with too many arguments
 		var ints int
 		var floats int
-		var stack int
 		for i := 0; i < ty.NumIn(); i++ {
 			arg := ty.In(i)
 			switch arg.Kind() {
 			case reflect.String, reflect.Uintptr, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
 				reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Ptr, reflect.UnsafePointer, reflect.Slice,
 				reflect.Func, reflect.Bool:
-				if ints < numOfIntegerRegisters() {
-					ints++
-				} else {
-					stack++
+				ints++
+				if ints > maxArgs {
+					panic("purego: too many int arguments")
 				}
 			case reflect.Float32, reflect.Float64:
-				if floats < 8 {
-					floats++
-				} else {
-					stack++
+				floats++
+				if floats > maxArgs {
+					panic("purego: too many float arguments")
 				}
 			default:
 				panic("purego: unsupported kind " + arg.Kind().String())
 			}
 		}
-		if ints+stack > maxArgs || floats+stack > maxArgs {
-			panic("purego: too many arguments")
+		if ints-numOfIntegerRegisters()+floats-numOfFloats > maxArgs-numOfIntegerRegisters()+maxArgs-numOfFloats {
+			panic("purego: too many stack arguments")
 		}
 	}
 	v := reflect.MakeFunc(ty, func(args []reflect.Value) (results []reflect.Value) {
@@ -127,7 +124,7 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 		}
 		var sysargs [maxArgs]uintptr
 		var stack = sysargs[numOfIntegerRegisters():]
-		var floats [8]float64
+		var floats [numOfFloats]float64
 		var numInts int
 		var numFloats int
 		var numStack int
