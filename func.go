@@ -220,6 +220,8 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 	fn.Set(v)
 }
 
+const numOfFloats = 8
+
 func numOfIntegerRegisters() int {
 	switch runtime.GOARCH {
 	case "arm64":

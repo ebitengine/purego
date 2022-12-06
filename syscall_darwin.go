@@ -108,8 +108,6 @@ const ptrSize = unsafe.Sizeof((*int)(nil))
 
 const callbackMaxFrame = 64 * ptrSize
 
-const numOfFloats = 8
-
 // callbackasmABI0 is implemented in zcallback_GOOS_GOARCH.s
 var callbackasmABI0 uintptr
 
