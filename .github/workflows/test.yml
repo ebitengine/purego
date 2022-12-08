@@ -31,7 +31,7 @@ jobs:
       - name: go vet
         if: runner.os != 'Windows' && runner.os != 'macOS'
         run: |
-          go vet -tags=example -v ./...
+          go vet -v ./...
 
       - name: go build
         run: |
