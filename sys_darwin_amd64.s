@@ -111,12 +111,12 @@ TEXT callbackasm1(SB), NOSPLIT, $0
 	LEAQ 24(SP), AX                       // take the address of callbackArgs
 
 	// Call cgocallback, which will call callbackWrap(frame).
-	MOVQ $0, 16(SP)                 // context
-	MOVQ AX, 8(SP)                  // frame (address of callbackArgs)
-	MOVQ ·callbackWrap_call(SB), DX // Get the ABIInternal function pointer
-	MOVQ (DX), CX                   // without <ABIInternal> by using a closure.
-	MOVQ CX, 0(SP)                  // PC of function value to call (callbackWrap)
-	CALL runtime·cgocallback(SB)    // runtime.cgocallback(fn, frame, ctxt uintptr)
+	MOVQ ·callbackWrap_call(SB), DI // Get the ABIInternal function pointer
+	MOVQ (DI), DI                   // without <ABIInternal> by using a closure.
+	MOVQ AX, SI                     // frame (address of callbackArgs)
+	MOVQ $0, CX                     // context
+
+	CALL crosscall2(SB) // runtime.cgocallback(fn, frame, ctxt uintptr)
 
 	// Get callback result.
 	MOVQ (24+callbackArgs_result)(SP), AX
