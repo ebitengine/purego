@@ -76,6 +76,6 @@ jobs:
           go test -shuffle=on -v -count=10 ./...
 
       - name: go test race
-        if: ${{ matrix.go == '1.20.0-rc.1' }}
+        if: ${{ !startsWith(matrix.go, '1.18.') && !startsWith(matrix.go, '1.19.') }}
         run: |
           go test -race -shuffle=on -v -count=10 ./...
