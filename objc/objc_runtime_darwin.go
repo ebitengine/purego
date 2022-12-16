@@ -245,8 +245,7 @@ func RegisterClass(object Selector) (Class, error) {
 	if len(split) > 2 {
 		// Add Protocols
 		for _, n := range split[2:] {
-			succeed := class.AddProtocol(GetProtocol(n))
-			if !succeed {
+			if !class.AddProtocol(GetProtocol(n)) {
 				return 0, fmt.Errorf("objc: couldn't add Protocol %s", n)
 			}
 		}
@@ -275,14 +274,11 @@ func RegisterClass(object Selector) (Class, error) {
 		if err != nil {
 			return 0, fmt.Errorf("objc: couldn't add Method %s: %w", met.Name, err)
 		}
-
-		var encoding string
-		encoding, err = encodeFunc(fn)
+		encoding, err := encodeFunc(fn)
 		if err != nil {
 			return 0, fmt.Errorf("objc: couldn't add Method %s: %w", met.Name, err)
 		}
-		succeed := class.AddMethod(sel, imp, encoding)
-		if !succeed {
+		if !class.AddMethod(sel, imp, encoding) {
 			return 0, fmt.Errorf("objc: couldn't add Method %s", met.Name)
 		}
 	}
@@ -296,8 +292,7 @@ func RegisterClass(object Selector) (Class, error) {
 		if err != nil {
 			return 0, fmt.Errorf("objc: couldn't add Ivar %s: %w", f.Name, err)
 		}
-		succeed := class_addIvar(class, f.Name, size, alignment, enc)
-		if !succeed {
+		if !class_addIvar(class, f.Name, size, alignment, enc) {
 			return 0, fmt.Errorf("objc: couldn't add Ivar %s", f.Name)
 		}
 		if offset := class.InstanceVariable(f.Name).Offset(); offset != f.Offset {
