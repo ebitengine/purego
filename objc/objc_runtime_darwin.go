@@ -300,7 +300,14 @@ func RegisterClass(object Selector) (Class, error) {
 		}
 	}
 	objc_registerClassPair(class)
-	if size1, size2 := class.InstanceSize(), strct.Size(); size1 != size2 {
+	// To check that the Go struct has the same size as the Objective-C class
+	// subtract the current class's size from the super class's size. This
+	// is necessary because the super class's fields are embedded in the child
+	// class but are not present in the Go struct. It is fine that the Go struct
+	// does not contain the parent's fields because they are not accessible in Go.
+	// The +8 is because the child and super class both contain the isa field which
+	// the Go struct does have and needs to be counted in this comparison.
+	if size1, size2 := class.InstanceSize()-class.SuperClass().InstanceSize()+8, strct.Size(); size1 != size2 {
 		return 0, fmt.Errorf("objc: sizes don't match %d != %d: %w", size1, size2, MismatchError)
 	}
 	return class, nil
