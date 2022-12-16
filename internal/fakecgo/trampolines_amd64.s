@@ -75,13 +75,14 @@ TEXT threadentry_trampoline(SB), NOSPLIT, $16
 	CALL CX
 	RET
 
-TEXT ·call5(SB), NOSPLIT, $0-0
-	MOVQ fn+0(FP), AX
+TEXT ·call5(SB), NOSPLIT, $0-56
+	MOVQ fn+0(FP), BX
 	MOVQ a1+8(FP), DI
 	MOVQ a2+16(FP), SI
 	MOVQ a3+24(FP), DX
 	MOVQ a4+32(FP), CX
 	MOVQ a5+40(FP), R8
-	CALL AX
+	XORL AX, AX
+	CALL BX
 	MOVQ AX, ret+48(FP)
 	RET

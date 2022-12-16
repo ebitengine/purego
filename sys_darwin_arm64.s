@@ -90,10 +90,10 @@ TEXT callbackasm1(SB), NOSPLIT, $208-0
 	// Move parameters into registers
 	// Get the ABIInternal function pointer
 	// without <ABIInternal> by using a closure.
-	MOVD ·callbackWrap_call(SB), R26
-	MOVD (R26), R0                   // fn unsafe.Pointer
-	MOVD R13, R1                     // frame (&callbackArgs{...})
-	MOVD $0, R3                      // ctxt uintptr
+	MOVD ·callbackWrap_call(SB), R0
+	MOVD (R0), R0                   // fn unsafe.Pointer
+	MOVD R13, R1                    // frame (&callbackArgs{...})
+	MOVD $0, R3                     // ctxt uintptr
 
 	BL crosscall2(SB)
 
