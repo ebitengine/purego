@@ -275,7 +275,13 @@ func RegisterClass(object Selector) (Class, error) {
 		if err != nil {
 			return 0, fmt.Errorf("objc: couldn't add Method %s: %w", met.Name, err)
 		}
-		succeed := class.AddMethod(sel, imp, encodeFunc(fn))
+
+		var encoding string
+		encoding, err = encodeFunc(fn)
+		if err != nil {
+			return 0, fmt.Errorf("objc: couldn't add Method %s: %w", met.Name, err)
+		}
+		succeed := class.AddMethod(sel, imp, encoding)
 		if !succeed {
 			return 0, fmt.Errorf("objc: couldn't add Method %s", met.Name)
 		}
@@ -286,7 +292,11 @@ func RegisterClass(object Selector) (Class, error) {
 		f := strct.Field(i)
 		size := f.Type.Size()
 		alignment := uint8(math.Log2(float64(f.Type.Align())))
-		succeed := class_addIvar(class, f.Name, size, alignment, encodeType(f.Type))
+		enc, err := encodeType(f.Type, false)
+		if err != nil {
+			return 0, fmt.Errorf("objc: couldn't add Ivar %s: %w", f.Name, err)
+		}
+		succeed := class_addIvar(class, f.Name, size, alignment, enc)
 		if !succeed {
 			return 0, fmt.Errorf("objc: couldn't add Ivar %s", f.Name)
 		}
@@ -321,74 +331,85 @@ const (
 	encCharPtr     = "*"
 	encStructBegin = "{"
 	encStructEnd   = "}"
+	encUnsafePtr   = "^v"
 )
 
 // encodeType returns a string representing a type as if it was given to @encode(typ)
 // Source: https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/ObjCRuntimeGuide/Articles/ocrtTypeEncodings.html#//apple_ref/doc/uid/TP40008048-CH100
-func encodeType(typ reflect.Type) string {
+func encodeType(typ reflect.Type, insidePtr bool) (string, error) {
 	switch typ {
 	case reflect.TypeOf(Class(0)):
-		return encClass
+		return encClass, nil
 	case reflect.TypeOf(ID(0)):
-		return encId
+		return encId, nil
 	case reflect.TypeOf(SEL(0)):
-		return encSelector
+		return encSelector, nil
 	}
 
 	kind := typ.Kind()
 	switch kind {
 	case reflect.Bool:
-		return encBool
+		return encBool, nil
 	case reflect.Int:
-		return encLong
+		return encLong, nil
 	case reflect.Int8:
-		return encChar
+		return encChar, nil
 	case reflect.Int16:
-		return encShort
+		return encShort, nil
 	case reflect.Int32:
-		return encInt
+		return encInt, nil
 	case reflect.Int64:
-		return encULong
+		return encULong, nil
 	case reflect.Uint:
-		return encULong
+		return encULong, nil
 	case reflect.Uint8:
-		return encUChar
+		return encUChar, nil
 	case reflect.Uint16:
-		return encUShort
+		return encUShort, nil
 	case reflect.Uint32:
-		return encUInt
+		return encUInt, nil
 	case reflect.Uint64:
-		return encULong
+		return encULong, nil
 	case reflect.Uintptr:
-		return encPtr
+		return encPtr, nil
 	case reflect.Float32:
-		return encFloat
+		return encFloat, nil
 	case reflect.Float64:
-		return encDouble
+		return encDouble, nil
 	case reflect.Ptr:
-		return encPtr + encodeType(typ.Elem())
+		enc, err := encodeType(typ.Elem(), true)
+		return encPtr + enc, err
 	case reflect.Struct:
+		if insidePtr {
+			return encStructBegin + typ.Name() + encStructEnd, nil
+		}
 		var encoding = encStructBegin
 		encoding += typ.Name()
 		encoding += "="
 		for i := 0; i < typ.NumField(); i++ {
 			f := typ.Field(i)
-			encoding += encodeType(f.Type)
+			tmp, err := encodeType(f.Type, false)
+			if err != nil {
+				return "", err
+			}
+			encoding += tmp
 		}
 		encoding = encStructEnd
-		return encoding
+		return encoding, nil
+	case reflect.UnsafePointer:
+		return encUnsafePtr, nil
 	case reflect.String:
-		return encCharPtr
+		return encCharPtr, nil
 	}
 
-	panic(fmt.Sprintf("objc: unhandled/invalid kind %v typed %v", kind, typ))
+	return "", errors.New(fmt.Sprintf("unhandled/invalid kind %v typed %v", kind, typ))
 }
 
 // encodeFunc returns a functions type as if it was given to @encode(fn)
-func encodeFunc(fn interface{}) string {
+func encodeFunc(fn interface{}) (string, error) {
 	typ := reflect.TypeOf(fn)
 	if typ.Kind() != reflect.Func {
-		panic("objc: not a func")
+		return "", errors.New("not a func")
 	}
 
 	encoding := ""
@@ -396,22 +417,29 @@ func encodeFunc(fn interface{}) string {
 	case 0:
 		encoding += encVoid
 	case 1:
-		encoding += encodeType(typ.Out(0))
+		tmp, err := encodeType(typ.Out(0), false)
+		if err != nil {
+			return "", err
+		}
+		encoding += tmp
 	default:
-		panic("objc: too many output parameters")
+		return "", errors.New("too many output parameters")
 	}
 
-	if typ.NumIn() == 0 {
-		panic("objc: func doesn't take ID and SEL as its first two parameters")
+	if typ.NumIn() < 2 {
+		return "", errors.New("func doesn't take ID and SEL as its first two parameters")
 	}
 
-	encoding += encodeType(typ.In(0))
-	encoding += encSelector
+	encoding += encId
 
 	for i := 1; i < typ.NumIn(); i++ {
-		encoding += encodeType(typ.In(i))
+		tmp, err := encodeType(typ.In(i), false)
+		if err != nil {
+			return "", err
+		}
+		encoding += tmp
 	}
-	return encoding
+	return encoding, nil
 }
 
 // SuperClass returns the superclass of a class.
