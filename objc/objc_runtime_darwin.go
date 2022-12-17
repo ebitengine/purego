@@ -286,17 +286,21 @@ func RegisterClass(object Selector) (Class, error) {
 	// Start at 1 because we skip the class object which is first
 	for i := 1; i < strct.NumField(); i++ {
 		f := strct.Field(i)
+		if f.Name == "_" {
+			continue
+		}
 		size := f.Type.Size()
 		alignment := uint8(math.Log2(float64(f.Type.Align())))
 		enc, err := encodeType(f.Type, false)
 		if err != nil {
 			return 0, fmt.Errorf("objc: couldn't add Ivar %s: %w", f.Name, err)
 		}
+		fmt.Println(f.Name, size, alignment, enc)
 		if !class_addIvar(class, f.Name, size, alignment, enc) {
 			return 0, fmt.Errorf("objc: couldn't add Ivar %s", f.Name)
 		}
 		if offset := class.InstanceVariable(f.Name).Offset(); offset != f.Offset {
-			return 0, fmt.Errorf("objc: couldn't add Ivar %s", f.Name)
+			return 0, fmt.Errorf("objc: couldn't add Ivar %s because offset (%d != %d)", f.Name, offset, f.Offset)
 		}
 	}
 	objc_registerClassPair(class)
@@ -307,7 +311,8 @@ func RegisterClass(object Selector) (Class, error) {
 	// does not contain the parent's fields because they are not accessible in Go.
 	// The +8 is because the child and super class both contain the isa field which
 	// the Go struct does have and needs to be counted in this comparison.
-	if size1, size2 := class.InstanceSize()-class.SuperClass().InstanceSize()+8, strct.Size(); size1 != size2 {
+	fmt.Println("Super: ", class.SuperClass().InstanceSize(), class.InstanceSize())
+	if size1, size2 := class.InstanceSize(), strct.Size(); size1 != size2 {
 		return 0, fmt.Errorf("objc: sizes don't match %d != %d: %w", size1, size2, MismatchError)
 	}
 	return class, nil
