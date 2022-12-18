@@ -73,7 +73,6 @@ var setg_func uintptr
 func x_cgo_init(g *G, setg uintptr) {
 	var size size_t
 
-	//fprintf(stderr, "x_cgo_init = %p\n", &x_cgo_init); // aid debugging in presence of ASLR
 	setg_func = setg
 	size = pthread_get_stacksize_np(pthread_self())
 	g.stacklo = uintptr(unsafe.Add(unsafe.Pointer(&size), -size+4096))
