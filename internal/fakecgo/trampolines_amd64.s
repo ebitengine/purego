@@ -64,8 +64,9 @@ TEXT x_cgo_notify_runtime_init_done_trampoline(SB), NOSPLIT, $0
 // func setg_trampoline(setg uintptr, g uintptr)
 TEXT ·setg_trampoline(SB), NOSPLIT, $0-16
 	MOVQ G+8(FP), DI
-	MOVQ setg+0(FP), AX
-	CALL AX
+	MOVQ setg+0(FP), BX
+	XORL AX, AX
+	CALL BX
 	RET
 
 TEXT threadentry_trampoline(SB), NOSPLIT, $16

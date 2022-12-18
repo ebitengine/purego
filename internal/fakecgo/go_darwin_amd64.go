@@ -15,12 +15,12 @@ func _cgo_sys_thread_start(ts *ThreadStart) {
 	var size size_t
 	var err int
 
-	//fprintf(stderr, "runtime/cgo: _cgo_sys_thread_start: fn=%p, g=%p\n", ts->fn, ts->g); // debug
 	sigfillset(&ign)
 	pthread_sigmask(SIG_SETMASK, &ign, &oset)
 
+	size = pthread_get_stacksize_np(pthread_self())
 	pthread_attr_init(&attr)
-	pthread_attr_getstacksize(&attr, &size)
+	pthread_attr_setstacksize(&attr, size)
 	// Leave stacklo=0 and set stackhi=size; mstart will do the rest.
 	ts.g.stackhi = uintptr(size)
 
@@ -63,11 +63,9 @@ var setg_func uintptr
 //go:norace
 func x_cgo_init(g *G, setg uintptr) {
 	var size size_t
-	var attr pthread_attr_t
 
 	setg_func = setg
-	pthread_attr_init(&attr)
-	pthread_attr_getstacksize(&attr, &size)
-	g.stacklo = uintptr(unsafe.Pointer(&size)) - uintptr(size) + 4096
-	pthread_attr_destroy(&attr)
+
+	size = pthread_get_stacksize_np(pthread_self())
+	g.stacklo = uintptr(unsafe.Add(unsafe.Pointer(&size), -size+4096))
 }
