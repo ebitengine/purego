@@ -16,6 +16,7 @@ import "unsafe"
 // This function should be go:systemstack instead of go:nosplit (but that requires runtime)
 //
 //go:nosplit
+//go:norace
 func x_cgo_thread_start(arg *ThreadStart) {
 	var ts *ThreadStart
 	// Make our own copy that can persist after we return.

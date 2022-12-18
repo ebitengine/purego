@@ -61,15 +61,6 @@ TEXT syscall9X(SB), NOSPLIT, $0
 	FMOVD F0, syscall9Args_r2(R2) // save r2
 	RET
 
-// runtime·cgocallback expects a call to the ABIInternal function
-// However, the tag <ABIInternal> is only available in the runtime :(
-// This is a small wrapper function that moves the parameter from R0 to the stack
-// where the Go function can find it. It then branches without link.
-TEXT callbackWrapInternal<>(SB), NOSPLIT, $0-0
-	MOVD R0, 8(RSP)
-	B    ·callbackWrap(SB)
-	RET
-
 TEXT callbackasm1(SB), NOSPLIT, $208-0
 	NO_LOCAL_POINTERS
 
@@ -97,33 +88,14 @@ TEXT callbackasm1(SB), NOSPLIT, $208-0
 	MOVD R0, callbackArgs_result(R13)               // result
 
 	// Move parameters into registers
-	MOVD $callbackWrapInternal<>(SB), R0 // fn unsafe.Pointer
-	MOVD R13, R1                         // frame (&callbackArgs{...})
-	MOVD $0, R3                          // ctxt uintptr
+	// Get the ABIInternal function pointer
+	// without <ABIInternal> by using a closure.
+	MOVD ·callbackWrap_call(SB), R0
+	MOVD (R0), R0                   // fn unsafe.Pointer
+	MOVD R13, R1                    // frame (&callbackArgs{...})
+	MOVD $0, R3                     // ctxt uintptr
 
-	// We still need to save all callee save register as before, and then
-	//  push 3 args for fn (R0, R1, R3), skipping R2.
-	// Also note that at procedure entry in gc world, 8(RSP) will be the
-	// first arg.
-	SUB  $(8*24), RSP
-	STP  (R0, R1), (8*1)(RSP)
-	MOVD R3, (8*3)(RSP)
-
-	// Push C callee-save registers R19-R28.
-	// LR, FP already saved.
-	SAVE_R19_TO_R28(8*4)
-	SAVE_F8_TO_F15(8*14)
-	STP (R29, R30), (8*22)(RSP)
-
-	// Initialize Go ABI environment
-	BL runtime·load_g(SB)
-	BL runtime·cgocallback(SB)
-
-	RESTORE_R19_TO_R28(8*4)
-	RESTORE_F8_TO_F15(8*14)
-	LDP (8*22)(RSP), (R29, R30)
-
-	ADD $(8*24), RSP
+	BL crosscall2(SB)
 
 	// Get callback result.
 	MOVD $cbargs-(18*8+callbackArgs__size)(SP), R13
