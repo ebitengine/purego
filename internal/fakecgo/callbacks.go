@@ -46,10 +46,16 @@ var (
 	// In Go 1.20 the race detector was rewritten to pure Go
 	// on darwin. This means that when CGO_ENABLED=0 is set
 	// fakecgo is built with race detector code. This is not
-	// good since this code is pretending to be C. The
-	// go:norace comments are not enough since the ABI wrappers
-	// still have race code. These variables will circumvent
-	// that issue by calling the function directly.
+	// good since this code is pretending to be C. The go:norace
+	// pragma is not enough, since it only applies to the native
+	// ABIInternal function. The ABIO wrapper (which is necessary,
+	// since all references to text symbols from assembly will use it)
+	// does not inherit the go:norace pragma, so it will still be
+	// instrumented by the race detector.
+	//
+	// To circumvent this issue, using closure calls in the
+	// assembly, which forces the compiler to use the ABIInternal
+	// native implementation (which has go:norace) instead.
 	threadentry_call        = threadentry
 	x_cgo_init_call         = x_cgo_init
 	x_cgo_setenv_call       = x_cgo_setenv
