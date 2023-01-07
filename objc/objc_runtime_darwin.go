@@ -20,7 +20,8 @@ import (
 var (
 	objc_msgSend              uintptr
 	objc_msgSend_fn           func(obj ID, cmd SEL, args ...interface{}) ID
-	objc_msgSendSuper2        func(super *objc_super, cmd SEL, args ...interface{}) ID
+	objc_msgSendSuper2        uintptr
+	objc_msgSendSuper2_fn     func(super *objc_super, cmd SEL, args ...interface{}) ID
 	objc_getClass             func(name string) Class
 	objc_getProtocol          func(name string) *Protocol
 	objc_allocateClassPair    func(super Class, name string, extraBytes uintptr) Class
@@ -38,10 +39,13 @@ var (
 
 func init() {
 	objc := purego.Dlopen("/usr/lib/libobjc.A.dylib", purego.RTLD_GLOBAL)
-
+	if err := purego.Dlerror(); err != "" {
+		panic("objc: " + err)
+	}
 	objc_msgSend = purego.Dlsym(objc, "objc_msgSend")
 	purego.RegisterFunc(&objc_msgSend_fn, objc_msgSend)
-	purego.RegisterLibFunc(&objc_msgSendSuper2, objc, "objc_msgSendSuper2")
+	objc_msgSendSuper2 = purego.Dlsym(objc, "objc_msgSendSuper2")
+	purego.RegisterFunc(&objc_msgSendSuper2_fn, objc_msgSendSuper2)
 	purego.RegisterLibFunc(&object_getClass, objc, "object_getClass")
 	purego.RegisterLibFunc(&objc_getClass, objc, "objc_getClass")
 	purego.RegisterLibFunc(&objc_getProtocol, objc, "objc_getProtocol")
@@ -67,12 +71,12 @@ func (id ID) Class() Class {
 
 // Send is a convenience method for sending messages to objects.
 func (id ID) Send(sel SEL, args ...interface{}) ID {
-	return objc_msgSend(id, sel, args...)
+	return objc_msgSend_fn(id, sel, args...)
 }
 
 // Send is a convenience method for sending messages to objects that can return any type.
 func Send[T any](id ID, sel SEL, args ...any) T {
-	var fn = Send[T]
+	var fn func(id ID, sel SEL, args ...any) T
 	purego.RegisterFunc(&fn, objc_msgSend)
 	return fn(id, sel, args...)
 }
@@ -85,13 +89,24 @@ type objc_super struct {
 	superClass Class
 }
 
-// SendSuper is a convenience method for sending message to object's super
+// SendSuper is a convenience method for sending message to object's super.
 func (id ID) SendSuper(sel SEL, args ...interface{}) ID {
 	var super = &objc_super{
 		receiver:   id,
 		superClass: id.Class(),
 	}
-	return objc_msgSendSuper2(super, sel, args...)
+	return objc_msgSendSuper2_fn(super, sel, args...)
+}
+
+// SendSuper is a convenience method for sending message to object's super that can return any type.
+func SendSuper[T any](id ID, sel SEL, args ...any) T {
+	var super = &objc_super{
+		receiver:   id,
+		superClass: id.Class(),
+	}
+	var fn func(objcSuper *objc_super, sel SEL, args ...any) T
+	purego.RegisterFunc(&fn, objc_msgSendSuper2)
+	return fn(super, sel, args...)
 }
 
 // SEL is an opaque type that represents a method selector

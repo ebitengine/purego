@@ -5,6 +5,7 @@ package objc_test
 
 import (
 	"fmt"
+	"testing"
 
 	"github.com/ebitengine/purego"
 	"github.com/ebitengine/purego/objc"
@@ -72,4 +73,17 @@ func ExampleID_SendSuper() {
 
 	// Output: In Child
 	// In Super!
+}
+
+func TestSend(t *testing.T) {
+	// NSNumber comes from Foundation so make sure we have linked to that framework.
+	_ = purego.Dlopen("Foundation.framework/Foundation", purego.RTLD_GLOBAL)
+	const double = float64(2.34)
+	// Initialize a NSNumber
+	NSNumber := objc.ID(objc.GetClass("NSNumber")).Send(objc.RegisterName("numberWithDouble:"), double)
+	// Then get that number back using the generic Send function.
+	var number = objc.Send[float64](NSNumber, objc.RegisterName("doubleValue"))
+	if double != number {
+		t.Failed()
+	}
 }
