@@ -18,10 +18,10 @@ import (
 //https://stackoverflow.com/questions/7062599/example-of-how-objective-cs-try-catch-implementation-is-executed-at-runtime
 
 var (
-	objc_msgSend              uintptr
-	objc_msgSend_fn           func(obj ID, cmd SEL, args ...interface{}) ID
-	objc_msgSendSuper2        uintptr
-	objc_msgSendSuper2_fn     func(super *objc_super, cmd SEL, args ...interface{}) ID
+	objc_msgSend_fn           uintptr
+	objc_msgSend              func(obj ID, cmd SEL, args ...interface{}) ID
+	objc_msgSendSuper2_fn     uintptr
+	objc_msgSendSuper2        func(super *objc_super, cmd SEL, args ...interface{}) ID
 	objc_getClass             func(name string) Class
 	objc_getProtocol          func(name string) *Protocol
 	objc_allocateClassPair    func(super Class, name string, extraBytes uintptr) Class
@@ -42,10 +42,10 @@ func init() {
 	if err := purego.Dlerror(); err != "" {
 		panic("objc: " + err)
 	}
-	objc_msgSend = purego.Dlsym(objc, "objc_msgSend")
-	purego.RegisterFunc(&objc_msgSend_fn, objc_msgSend)
-	objc_msgSendSuper2 = purego.Dlsym(objc, "objc_msgSendSuper2")
-	purego.RegisterFunc(&objc_msgSendSuper2_fn, objc_msgSendSuper2)
+	objc_msgSend_fn = purego.Dlsym(objc, "objc_msgSend")
+	purego.RegisterFunc(&objc_msgSend, objc_msgSend_fn)
+	objc_msgSendSuper2_fn = purego.Dlsym(objc, "objc_msgSendSuper2")
+	purego.RegisterFunc(&objc_msgSendSuper2, objc_msgSendSuper2_fn)
 	purego.RegisterLibFunc(&object_getClass, objc, "object_getClass")
 	purego.RegisterLibFunc(&objc_getClass, objc, "objc_getClass")
 	purego.RegisterLibFunc(&objc_getProtocol, objc, "objc_getProtocol")
@@ -73,7 +73,7 @@ func (id ID) Class() Class {
 // instead of a string since RegisterName grabs the global Objective-C lock. It is best to cache the result
 // of RegisterName.
 func (id ID) Send(sel SEL, args ...interface{}) ID {
-	return objc_msgSend_fn(id, sel, args...)
+	return objc_msgSend(id, sel, args...)
 }
 
 // Send is a convenience method for sending messages to objects that can return any type.
@@ -81,7 +81,7 @@ func (id ID) Send(sel SEL, args ...interface{}) ID {
 // It is best to cache the result of RegisterName.
 func Send[T any](id ID, sel SEL, args ...any) T {
 	var fn func(id ID, sel SEL, args ...any) T
-	purego.RegisterFunc(&fn, objc_msgSend)
+	purego.RegisterFunc(&fn, objc_msgSend_fn)
 	return fn(id, sel, args...)
 }
 
@@ -101,7 +101,7 @@ func (id ID) SendSuper(sel SEL, args ...interface{}) ID {
 		receiver:   id,
 		superClass: id.Class(),
 	}
-	return objc_msgSendSuper2_fn(super, sel, args...)
+	return objc_msgSendSuper2(super, sel, args...)
 }
 
 // SendSuper is a convenience method for sending message to object's super that can return any type.
@@ -113,7 +113,7 @@ func SendSuper[T any](id ID, sel SEL, args ...any) T {
 		superClass: id.Class(),
 	}
 	var fn func(objcSuper *objc_super, sel SEL, args ...any) T
-	purego.RegisterFunc(&fn, objc_msgSendSuper2)
+	purego.RegisterFunc(&fn, objc_msgSendSuper2_fn)
 	return fn(super, sel, args...)
 }
 
