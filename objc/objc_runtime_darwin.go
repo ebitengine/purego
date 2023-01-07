@@ -63,7 +63,9 @@ func (id ID) Class() Class {
 	return object_getClass(id)
 }
 
-// Send is a convenience method for sending messages to objects.
+// Send is a convenience method for sending messages to objects. This function takes a SEL
+// instead of a string since RegisterName grabs the global Objective-C lock. It is best to cache the result
+// of RegisterName.
 func (id ID) Send(sel SEL, args ...interface{}) ID {
 	return objc_msgSend(id, sel, args...)
 }
@@ -76,7 +78,9 @@ type objc_super struct {
 	superClass Class
 }
 
-// SendSuper is a convenience method for sending message to object's super
+// SendSuper is a convenience method for sending message to object's super. This function takes a SEL
+// instead of a string since RegisterName grabs the global Objective-C lock. It is best to cache the result
+// of RegisterName.
 func (id ID) SendSuper(sel SEL, args ...interface{}) ID {
 	var super = &objc_super{
 		receiver:   id,
@@ -89,7 +93,8 @@ func (id ID) SendSuper(sel SEL, args ...interface{}) ID {
 type SEL uintptr
 
 // RegisterName registers a method with the Objective-C runtime system, maps the method name to a selector,
-// and returns the selector value.
+// and returns the selector value. This function grabs the global Objective-c lock. It is best the cache the
+// result of this function.
 func RegisterName(name string) SEL {
 	return sel_registerName(name)
 }
