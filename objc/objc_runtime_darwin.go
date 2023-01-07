@@ -77,6 +77,8 @@ func (id ID) Send(sel SEL, args ...interface{}) ID {
 }
 
 // Send is a convenience method for sending messages to objects that can return any type.
+// This function takes a SEL instead of a string since RegisterName grabs the global Objective-C lock.
+// It is best to cache the result of RegisterName.
 func Send[T any](id ID, sel SEL, args ...any) T {
 	var fn func(id ID, sel SEL, args ...any) T
 	purego.RegisterFunc(&fn, objc_msgSend)
@@ -103,6 +105,8 @@ func (id ID) SendSuper(sel SEL, args ...interface{}) ID {
 }
 
 // SendSuper is a convenience method for sending message to object's super that can return any type.
+// This function takes a SEL instead of a string since RegisterName grabs the global Objective-C lock.
+// It is best to cache the result of RegisterName.
 func SendSuper[T any](id ID, sel SEL, args ...any) T {
 	var super = &objc_super{
 		receiver:   id,
