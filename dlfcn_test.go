@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023 The Ebitengine Authors
 
+//go:build darwin || linux
+
 package purego_test
 
 import (
