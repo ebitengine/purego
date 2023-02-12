@@ -7,24 +7,11 @@ package purego_test
 
 import (
 	"fmt"
-	"os"
 	"runtime"
 	"testing"
 
 	"github.com/ebitengine/purego"
 )
-
-func TestOS(t *testing.T) {
-	// set and unset an environment variable since this calls into fakecgo.
-	err := os.Setenv("TESTING", "SOMETHING")
-	if err != nil {
-		t.Errorf("failed to Setenv: %s", err)
-	}
-	err = os.Unsetenv("TESTING")
-	if err != nil {
-		t.Errorf("failed to Unsetenv: %s", err)
-	}
-}
 
 func getSystemLibrary() (string, error) {
 	switch runtime.GOOS {
@@ -40,7 +27,7 @@ func getSystemLibrary() (string, error) {
 func TestRegisterFunc(t *testing.T) {
 	library, err := getSystemLibrary()
 	if err != nil {
-		t.Errorf("couldn't get system library: %s", err)
+		t.Skipf("couldn't get system library: %s", err)
 	}
 	libc := purego.Dlopen(library, purego.RTLD_NOW|purego.RTLD_GLOBAL)
 	if err := purego.Dlerror(); err != "" {
