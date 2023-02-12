@@ -27,7 +27,7 @@ func getSystemLibrary() (string, error) {
 func TestRegisterFunc(t *testing.T) {
 	library, err := getSystemLibrary()
 	if err != nil {
-		t.Skipf("couldn't get system library: %s", err)
+		t.Errorf("couldn't get system library: %s", err)
 	}
 	libc := purego.Dlopen(library, purego.RTLD_NOW|purego.RTLD_GLOBAL)
 	if err := purego.Dlerror(); err != "" {
