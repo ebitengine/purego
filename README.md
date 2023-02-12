@@ -37,7 +37,7 @@ func main() {
 }
 ```
 
-Then to run: `CGO_ENABED=0 go run main.go`
+Then to run: `CGO_ENABLED=0 go run main.go`
 
 ### External Code
 
