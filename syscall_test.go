@@ -1,24 +1,23 @@
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-FileCopyrightText: 2022 The Ebitengine Authors
+// SPDX-FileCopyrightText: 2023 The Ebitengine Authors
 
-//go:build darwin || linux || windows
-
-package main
+package purego_test
 
 import (
 	"os"
+	"testing"
 
 	_ "github.com/ebitengine/purego"
 )
 
-func main() {
+func TestOS(t *testing.T) {
 	// set and unset an environment variable since this calls into fakecgo.
 	err := os.Setenv("TESTING", "SOMETHING")
 	if err != nil {
-		panic(err)
+		t.Errorf("failed to Setenv: %s", err)
 	}
 	err = os.Unsetenv("TESTING")
 	if err != nil {
-		panic(err)
+		t.Errorf("failed to Unsetenv: %s", err)
 	}
 }
