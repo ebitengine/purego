@@ -10,7 +10,8 @@ cross-compiling to Windows from any other operating system simply by setting `GO
 born to bring that same vision to the other platforms supported by Ebitengine.
 
 ## Benefits
-- **Simple Cross-Compilation**: No C means you can build for other platforms easily.
+
+- **Simple Cross-Compilation**: No C means you can build for other platforms easily without a C compiler.
 - **Faster Compilation**: Efficiently cache your entirely Go builds.
 - **Smaller Binaries**: Using Cgo generates a C wrapper function for each C function called. Purego doesn't!
 - **Dynamic Linking**: Load symbols at runtime and use it as a plugin system.
