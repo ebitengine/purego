@@ -1,9 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2022 The Ebitengine Authors
 
+//go:build darwin || (!cgo && linux && (amd64 || arm64))
+
 package purego
 
 import (
+	"log"
 	"math"
 	"reflect"
 	"runtime"
@@ -37,6 +40,9 @@ func syscall_syscall9X(fn, a1, a2, a3, a4, a5, a6, a7, a8, a9 uintptr) (r1, r2, 
 // for these callbacks is never released. At least 2000 callbacks can always be created. Although this function
 // provides similar functionality to windows.NewCallback it is distinct.
 func NewCallback(fn interface{}) uintptr {
+	if runtime.GOOS == "linux" {
+		log.Println("NewCallback support on Linux  is a WIP. Use at your own risk!")
+	}
 	return compileCallback(fn)
 }
 
