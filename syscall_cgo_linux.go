@@ -6,11 +6,12 @@
 package purego
 
 import (
+	_ "unsafe" // for go:linkname
+
 	"github.com/ebitengine/purego/internal/cgo"
 )
 
-// this is linked to a C function from internal/cgo
-var syscall9XABI0 uintptr
+var syscall9XABI0 = uintptr(cgo.Syscall9XABI0)
 
 // this is only here to make the assembly files happy :)
 type syscall9Args struct {
