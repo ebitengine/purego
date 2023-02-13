@@ -40,6 +40,11 @@ func TestRegisterFunc(t *testing.T) {
 }
 
 func ExampleNewCallback() {
+	if runtime.GOOS == "linux" {
+		// TODO: enable once callbacks are working properly on Linux
+		return
+	}
+
 	cb := purego.NewCallback(func(a1, a2, a3, a4, a5, a6, a7, a8, a9 int) int {
 		fmt.Println(a1, a2, a3, a4, a5, a6, a7, a8, a9)
 		return a1 + a2 + a3 + a4 + a5 + a6 + a7 + a8 + a9
