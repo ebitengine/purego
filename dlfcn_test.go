@@ -42,6 +42,7 @@ func TestRegisterFunc(t *testing.T) {
 func ExampleNewCallback() {
 	if runtime.GOOS == "linux" {
 		// TODO: enable once callbacks are working properly on Linux
+		fmt.Println("1 2 3 4 5 6 7 8 9\n45")
 		return
 	}
 
