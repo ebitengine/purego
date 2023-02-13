@@ -6,7 +6,6 @@
 package purego
 
 import (
-	"log"
 	"math"
 	"reflect"
 	"runtime"
@@ -41,7 +40,7 @@ func syscall_syscall9X(fn, a1, a2, a3, a4, a5, a6, a7, a8, a9 uintptr) (r1, r2, 
 // provides similar functionality to windows.NewCallback it is distinct.
 func NewCallback(fn interface{}) uintptr {
 	if runtime.GOOS == "linux" {
-		log.Println("NewCallback support on Linux  is a WIP. Use at your own risk!")
+		panic("purego: NewCallback not supported")
 	}
 	return compileCallback(fn)
 }
