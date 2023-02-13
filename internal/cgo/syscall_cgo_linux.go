@@ -35,7 +35,7 @@ import "C"
 import "unsafe"
 
 // assign purego.syscall9XABI0 to the C version of this function.
-var internal_syscall9XABI0 = unsafe.Pointer(C.syscall9)
+var Syscall9XABI0 = unsafe.Pointer(C.syscall9)
 
 // all that is needed is to assign each dl function because then its
 // symbol will then be made available to the linker and linked to inside dlfcn.go
