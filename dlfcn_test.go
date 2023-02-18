@@ -30,8 +30,8 @@ func TestRegisterFunc(t *testing.T) {
 	if err != nil {
 		t.Errorf("couldn't get system library: %s", err)
 	}
-	libc := purego.Dlopen(library, purego.RTLD_NOW|purego.RTLD_GLOBAL)
-	if err := purego.Dlerror(); err != "" {
+	libc, err := purego.Dlopen(library, purego.RTLD_NOW|purego.RTLD_GLOBAL)
+	if err != nil {
 		t.Errorf("failed to dlopen: %s", err)
 	}
 	var puts func(string)
@@ -71,8 +71,8 @@ func Test_qsort(t *testing.T) {
 	if err != nil {
 		t.Errorf("couldn't get system library: %s", err)
 	}
-	libc := purego.Dlopen(library, purego.RTLD_NOW|purego.RTLD_GLOBAL)
-	if err := purego.Dlerror(); err != "" {
+	libc, err := purego.Dlopen(library, purego.RTLD_NOW|purego.RTLD_GLOBAL)
+	if err != nil {
 		t.Errorf("failed to dlopen: %s", err)
 	}
 

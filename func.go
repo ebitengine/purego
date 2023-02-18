@@ -18,12 +18,13 @@ import (
 // It panics if Dlsym fails.
 //
 // Windows does not support this function.
-func RegisterLibFunc(fptr interface{}, handle uintptr, name string) {
-	sym := Dlsym(handle, name)
-	if sym == 0 {
-		panic("purego: couldn't find symbol: " + Dlerror())
+func RegisterLibFunc(fptr interface{}, handle uintptr, name string) error {
+	sym, err := Dlsym(handle, name)
+	if err != nil {
+		return err
 	}
 	RegisterFunc(fptr, sym)
+	return nil
 }
 
 // RegisterFunc takes a pointer to a Go function representing the calling convention of the C function.

@@ -33,22 +33,34 @@ func init() {
 // A second call to Dlopen with the same path will return the same handle, but the internal
 // reference count for the handle will be incremented. Therefore, all
 // Dlopen calls should be balanced with a Dlclose call.
-func Dlopen(path string, mode int) uintptr {
-	return fnDlopen(path, mode)
+func Dlopen(path string, mode int) (uintptr, error) {
+	u := fnDlopen(path, mode)
+	errStr := fnDlerror()
+	if errStr != "" {
+		return 0, Error{errStr}
+	}
+	return u, nil
 }
 
 // Dlsym takes a "handle" of a dynamic library returned by Dlopen and the symbol name.
 // It returns the address where that symbol is loaded into memory. If the symbol is not found,
 // in the specified library or any of the libraries that were automatically loaded by Dlopen
 // when that library was loaded, Dlsym returns zero.
-func Dlsym(handle uintptr, name string) uintptr {
-	return fnDlsym(handle, name)
+func Dlsym(handle uintptr, name string) (uintptr, error) {
+	u := fnDlsym(handle, name)
+	errStr := fnDlerror()
+	if errStr != "" {
+		return 0, Error{errStr}
+	}
+	return u, nil
 }
 
 // Dlerror returns a human-readable string describing the most recent error that
 // occurred from Dlopen, Dlsym or Dlclose since the last call to Dlerror. It
 // returns an empty string if no errors have occurred since initialization or
 // since it was last called.
+//
+// Deprecated: Use error values returned from Dlopen, Dlsym, and Dlclose instead.
 func Dlerror() string {
 	// msg is only valid until the next call to Dlerror
 	// which is why it gets copied into a Go string
@@ -58,9 +70,11 @@ func Dlerror() string {
 // Dlclose decrements the reference count on the dynamic library handle.
 // If the reference count drops to zero and no other loaded libraries
 // use symbols in it, then the dynamic library is unloaded.
-// Dlclose returns false on success, and true on error.
-func Dlclose(handle uintptr) bool {
-	return fnDlclose(handle)
+func Dlclose(handle uintptr) error {
+	if fnDlclose(handle) {
+		return Error{fnDlerror()}
+	}
+	return nil
 }
 
 // these functions exist in dlfcn_stubs.s and are calling C functions linked to in dlfcn_GOOS.go
