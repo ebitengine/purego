@@ -52,56 +52,43 @@ func init() {
 		panic("objc: " + err.Error())
 	}
 	purego.RegisterFunc(&objc_msgSendSuper2, objc_msgSendSuper2_fn)
-	err = purego.RegisterLibFunc(&object_getClass, objc, "object_getClass")
-	if err != nil {
+	if err := purego.RegisterLibFunc(&object_getClass, objc, "object_getClass"); err != nil {
 		panic("objc: " + err.Error())
 	}
-	err = purego.RegisterLibFunc(&objc_getClass, objc, "objc_getClass")
-	if err != nil {
+	if err := purego.RegisterLibFunc(&objc_getClass, objc, "objc_getClass"); err != nil {
 		panic("objc: " + err.Error())
 	}
-	err = purego.RegisterLibFunc(&objc_getProtocol, objc, "objc_getProtocol")
-	if err != nil {
+	if err := purego.RegisterLibFunc(&objc_getProtocol, objc, "objc_getProtocol"); err != nil {
 		panic("objc: " + err.Error())
 	}
-	err = purego.RegisterLibFunc(&objc_allocateClassPair, objc, "objc_allocateClassPair")
-	if err != nil {
+	if err := purego.RegisterLibFunc(&objc_allocateClassPair, objc, "objc_allocateClassPair"); err != nil {
 		panic("objc: " + err.Error())
 	}
-	err = purego.RegisterLibFunc(&objc_registerClassPair, objc, "objc_registerClassPair")
-	if err != nil {
+	if err := purego.RegisterLibFunc(&objc_registerClassPair, objc, "objc_registerClassPair"); err != nil {
 		panic("objc: " + err.Error())
 	}
-	err = purego.RegisterLibFunc(&sel_registerName, objc, "sel_registerName")
-	if err != nil {
+	if err := purego.RegisterLibFunc(&sel_registerName, objc, "sel_registerName"); err != nil {
 		panic("objc: " + err.Error())
 	}
-	err = purego.RegisterLibFunc(&class_getSuperclass, objc, "class_getSuperclass")
-	if err != nil {
+	if err := purego.RegisterLibFunc(&class_getSuperclass, objc, "class_getSuperclass"); err != nil {
 		panic("objc: " + err.Error())
 	}
-	err = purego.RegisterLibFunc(&class_getInstanceVariable, objc, "class_getInstanceVariable")
-	if err != nil {
+	if err := purego.RegisterLibFunc(&class_getInstanceVariable, objc, "class_getInstanceVariable"); err != nil {
 		panic("objc: " + err.Error())
 	}
-	err = purego.RegisterLibFunc(&class_addMethod, objc, "class_addMethod")
-	if err != nil {
+	if err := purego.RegisterLibFunc(&class_addMethod, objc, "class_addMethod"); err != nil {
 		panic("objc: " + err.Error())
 	}
-	err = purego.RegisterLibFunc(&class_addIvar, objc, "class_addIvar")
-	if err != nil {
+	if err := purego.RegisterLibFunc(&class_addIvar, objc, "class_addIvar"); err != nil {
 		panic("objc: " + err.Error())
 	}
-	err = purego.RegisterLibFunc(&class_addProtocol, objc, "class_addProtocol")
-	if err != nil {
+	if err := purego.RegisterLibFunc(&class_addProtocol, objc, "class_addProtocol"); err != nil {
 		panic("objc: " + err.Error())
 	}
-	err = purego.RegisterLibFunc(&class_getInstanceSize, objc, "class_getInstanceSize")
-	if err != nil {
+	if err := purego.RegisterLibFunc(&class_getInstanceSize, objc, "class_getInstanceSize"); err != nil {
 		panic("objc: " + err.Error())
 	}
-	err = purego.RegisterLibFunc(&ivar_getOffset, objc, "ivar_getOffset")
-	if err != nil {
+	if err := purego.RegisterLibFunc(&ivar_getOffset, objc, "ivar_getOffset"); err != nil {
 		panic("objc: " + err.Error())
 	}
 }
