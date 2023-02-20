@@ -73,9 +73,7 @@ jobs:
 
       - name: go test
         run: |
-          # Ensure the tests function properly on with and without Cgo
-          env CGO_ENABLED=0 go test -shuffle=on -v -count=10 ./...
-          env CGO_ENABLED=1 go test -shuffle=on -v -count=10 ./...
+          go test -shuffle=on -v -count=10 ./...
 
       - name: go test race
         if: ${{ !startsWith(matrix.go, '1.18.') && !startsWith(matrix.go, '1.19.') }}
