@@ -46,9 +46,7 @@ func main() {
 		panic(err)
 	}
 	var puts func(string)
-	if err := purego.RegisterLibFunc(&puts, libc, "puts");  err != nil {
-		panic(err)
-	}
+	purego.RegisterLibFunc(&puts, libc, "puts")
 	puts("Calling C from Go without Cgo!")
 }
 ```

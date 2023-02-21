@@ -18,13 +18,12 @@ import (
 // It panics if Dlsym fails.
 //
 // Windows does not support this function.
-func RegisterLibFunc(fptr interface{}, handle uintptr, name string) error {
+func RegisterLibFunc(fptr interface{}, handle uintptr, name string) {
 	sym, err := Dlsym(handle, name)
 	if err != nil {
-		return err
+		panic(err)
 	}
 	RegisterFunc(fptr, sym)
-	return nil
 }
 
 // RegisterFunc takes a pointer to a Go function representing the calling convention of the C function.
