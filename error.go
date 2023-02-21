@@ -3,11 +3,11 @@
 
 package purego
 
-// Error represents an error value returned from purego
-type Error struct {
+// Dlerror represents an error value returned from purego
+type Dlerror struct {
 	s string
 }
 
-func (e Error) Error() string {
+func (e Dlerror) Error() string {
 	return e.s
 }

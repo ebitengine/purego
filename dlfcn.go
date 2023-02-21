@@ -36,7 +36,7 @@ func init() {
 func Dlopen(path string, mode int) (uintptr, error) {
 	u := fnDlopen(path, mode)
 	if errStr := fnDlerror(); errStr != "" {
-		return 0, Error{errStr}
+		return 0, Dlerror{errStr}
 	}
 	return u, nil
 }
@@ -48,21 +48,9 @@ func Dlopen(path string, mode int) (uintptr, error) {
 func Dlsym(handle uintptr, name string) (uintptr, error) {
 	u := fnDlsym(handle, name)
 	if errStr := fnDlerror(); errStr != "" {
-		return 0, Error{errStr}
+		return 0, Dlerror{errStr}
 	}
 	return u, nil
-}
-
-// Dlerror returns a human-readable string describing the most recent error that
-// occurred from Dlopen, Dlsym or Dlclose since the last call to Dlerror. It
-// returns an empty string if no errors have occurred since initialization or
-// since it was last called.
-//
-// Deprecated: Use error values returned from Dlopen, Dlsym, and Dlclose instead.
-func Dlerror() string {
-	// msg is only valid until the next call to Dlerror
-	// which is why it gets copied into a Go string
-	return fnDlerror()
 }
 
 // Dlclose decrements the reference count on the dynamic library handle.
@@ -70,7 +58,7 @@ func Dlerror() string {
 // use symbols in it, then the dynamic library is unloaded.
 func Dlclose(handle uintptr) error {
 	if fnDlclose(handle) {
-		return Error{fnDlerror()}
+		return Dlerror{fnDlerror()}
 	}
 	return nil
 }
