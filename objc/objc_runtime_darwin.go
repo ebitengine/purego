@@ -40,16 +40,16 @@ var (
 func init() {
 	objc, err := purego.Dlopen("/usr/lib/libobjc.A.dylib", purego.RTLD_GLOBAL)
 	if err != nil {
-		panic("objc: " + err.Error())
+		panic(fmt.Errorf("objc: %w", err))
 	}
 	objc_msgSend_fn, err = purego.Dlsym(objc, "objc_msgSend")
 	if err != nil {
-		panic("objc: " + err.Error())
+		panic(fmt.Errorf("objc: %w", err))
 	}
 	purego.RegisterFunc(&objc_msgSend, objc_msgSend_fn)
 	objc_msgSendSuper2_fn, err = purego.Dlsym(objc, "objc_msgSendSuper2")
 	if err != nil {
-		panic("objc: " + err.Error())
+		panic(fmt.Errorf("objc: %w", err))
 	}
 	purego.RegisterFunc(&objc_msgSendSuper2, objc_msgSendSuper2_fn)
 	purego.RegisterLibFunc(&object_getClass, objc, "object_getClass")
