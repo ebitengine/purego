@@ -19,9 +19,9 @@ import (
 //
 // Windows does not support this function.
 func RegisterLibFunc(fptr interface{}, handle uintptr, name string) {
-	sym := Dlsym(handle, name)
-	if sym == 0 {
-		panic("purego: couldn't find symbol: " + Dlerror())
+	sym, err := Dlsym(handle, name)
+	if err != nil {
+		panic(err)
 	}
 	RegisterFunc(fptr, sym)
 }

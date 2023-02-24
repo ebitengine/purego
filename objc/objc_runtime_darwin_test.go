@@ -77,7 +77,10 @@ func ExampleID_SendSuper() {
 
 func TestSend(t *testing.T) {
 	// NSNumber comes from Foundation so make sure we have linked to that framework.
-	_ = purego.Dlopen("Foundation.framework/Foundation", purego.RTLD_GLOBAL)
+	_, err := purego.Dlopen("Foundation.framework/Foundation", purego.RTLD_GLOBAL)
+	if err != nil {
+		t.Fatal(err)
+	}
 	const double = float64(2.34)
 	// Initialize a NSNumber
 	NSNumber := objc.ID(objc.GetClass("NSNumber")).Send(objc.RegisterName("numberWithDouble:"), double)
