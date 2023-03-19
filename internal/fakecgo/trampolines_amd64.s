@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2022 The Ebitengine Authors
 
+//go:build darwin || linux
+
 /*
 trampoline for emulating required C functions for cgo in go (see cgo.go)
 (we convert cdecl calling convention to go and vice-versa)
@@ -81,7 +83,18 @@ TEXT ·call5(SB), NOSPLIT, $0-56
 	MOVQ a3+24(FP), DX
 	MOVQ a4+32(FP), CX
 	MOVQ a5+40(FP), R8
-	XORL AX, AX
+
+	XORL AX, AX // no floats
+
+	PUSHQ BP       // save BP
+	MOVQ  SP, BP   // save SP inside BP bc BP is callee-saved
+	SUBQ  $16, SP  // allocate space for alignment
+	ANDQ  $-16, SP // align on 16 bytes for SSE
+
 	CALL BX
+
+	MOVQ BP, SP // get SP back
+	POPQ BP     // restore BP
+
 	MOVQ AX, ret+48(FP)
 	RET
