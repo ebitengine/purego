@@ -1,13 +1,18 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2022 The Ebitengine Authors
 
+//go:build darwin || linux
+
 /*
 trampoline for emulating required C functions for cgo in go (see cgo.go)
 (we convert cdecl calling convention to go and vice-versa)
+
 Since we're called from go and call into C we can cheat a bit with the calling conventions:
  - in go all the registers are caller saved
  - in C we have a couple of callee saved registers
+
 => we can use BX, R12, R13, R14, R15 instead of the stack
+
 C Calling convention cdecl used here (we only need integer args):
 1. arg: DI
 2. arg: SI
@@ -24,24 +29,32 @@ return value will be in AX
 // these trampolines map the gcc ABI to Go ABI and then calls into the Go equivalent functions.
 
 TEXT x_cgo_init_trampoline(SB), NOSPLIT, $16
-	MOVQ DI, 0(SP)
-	MOVQ SI, 8(SP)
-	CALL ·x_cgo_init(SB)
+	MOVQ DI, AX
+	MOVQ SI, BX
+	MOVQ ·x_cgo_init_call(SB), DX
+	MOVQ (DX), CX
+	CALL CX
 	RET
 
 TEXT x_cgo_thread_start_trampoline(SB), NOSPLIT, $8
-	MOVQ DI, 0(SP)
-	CALL ·x_cgo_thread_start(SB)
+	MOVQ DI, AX
+	MOVQ ·x_cgo_thread_start_call(SB), DX
+	MOVQ (DX), CX
+	CALL CX
 	RET
 
 TEXT x_cgo_setenv_trampoline(SB), NOSPLIT, $8
-	MOVQ DI, 0(SP)
-	CALL ·x_cgo_setenv(SB)
+	MOVQ DI, AX
+	MOVQ ·x_cgo_setenv_call(SB), DX
+	MOVQ (DX), CX
+	CALL CX
 	RET
 
 TEXT x_cgo_unsetenv_trampoline(SB), NOSPLIT, $8
-	MOVQ DI, 0(SP)
-	CALL ·x_cgo_unsetenv(SB)
+	MOVQ DI, AX
+	MOVQ ·x_cgo_unsetenv_call(SB), DX
+	MOVQ (DX), CX
+	CALL CX
 	RET
 
 TEXT x_cgo_notify_runtime_init_done_trampoline(SB), NOSPLIT, $0
@@ -51,14 +64,16 @@ TEXT x_cgo_notify_runtime_init_done_trampoline(SB), NOSPLIT, $0
 // func setg_trampoline(setg uintptr, g uintptr)
 TEXT ·setg_trampoline(SB), NOSPLIT, $0-16
 	MOVQ G+8(FP), DI
-	MOVQ setg+0(FP), AX
-	CALL AX
+	MOVQ setg+0(FP), BX
+	XORL AX, AX
+	CALL BX
 	RET
 
 TEXT threadentry_trampoline(SB), NOSPLIT, $16
-	MOVQ DI, 0(SP)
-	CALL ·threadentry(SB)
-	MOVQ 8(SP), AX
+	MOVQ DI, AX
+	MOVQ ·threadentry_call(SB), DX
+	MOVQ (DX), CX
+	CALL CX
 	RET
 
 TEXT ·call5(SB), NOSPLIT, $0-56
