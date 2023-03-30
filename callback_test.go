@@ -31,7 +31,7 @@ func TestCallGoFromSharedLib(t *testing.T) {
 
 	lib, err := purego.Dlopen(libFileName, purego.RTLD_NOW|purego.RTLD_GLOBAL)
 	if err != nil {
-		t.Fatalf("Dlopen(%q) faled: %v", libFileName, err)
+		t.Fatalf("Dlopen(%q) failed: %v", libFileName, err)
 	}
 
 	var callCallback func(p uintptr, s string) int
