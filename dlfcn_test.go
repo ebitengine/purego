@@ -7,7 +7,11 @@ package purego_test
 
 import (
 	"fmt"
+	"os"
+	"os/exec"
+	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
 	"unsafe"
 
@@ -89,4 +93,33 @@ func Test_qsort(t *testing.T) {
 			t.Errorf("got %d wanted %d at %d", data[i], sorted[i], i)
 		}
 	}
+}
+
+func TestNestedDlopenCall(t *testing.T) {
+	libFileName := filepath.Join(t.TempDir(), "libdlnested.so")
+	t.Logf("Build %v", libFileName)
+
+	out, err := exec.Command("go", "env", "CXX").Output()
+	if err != nil {
+		t.Fatalf("go env error: %v", err)
+	}
+
+	cxx := strings.TrimSpace(string(out))
+	if cxx == "" {
+		t.Fatal("CXX not found")
+	}
+
+	args := []string{"-shared", "-Wall", "-Werror", "-o", libFileName, filepath.Join("libdlnested", "nested.cpp")}
+	cmd := exec.Command(cxx, args...)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("compile lib: %v\n%q\n%s", err, cmd, string(out))
+	}
+	defer os.Remove(libFileName)
+
+	lib, err := purego.Dlopen(libFileName, purego.RTLD_NOW|purego.RTLD_GLOBAL)
+	if err != nil {
+		t.Fatalf("Dlopen(%q) failed: %v", libFileName, err)
+	}
+
+	purego.Dlclose(lib)
 }

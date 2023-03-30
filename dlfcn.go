@@ -35,8 +35,8 @@ func init() {
 // Dlopen calls should be balanced with a Dlclose call.
 func Dlopen(path string, mode int) (uintptr, error) {
 	u := fnDlopen(path, mode)
-	if errStr := fnDlerror(); errStr != "" {
-		return 0, Dlerror{errStr}
+	if u == 0 {
+		return 0, Dlerror{fnDlerror()}
 	}
 	return u, nil
 }
@@ -47,8 +47,8 @@ func Dlopen(path string, mode int) (uintptr, error) {
 // when that library was loaded, Dlsym returns zero.
 func Dlsym(handle uintptr, name string) (uintptr, error) {
 	u := fnDlsym(handle, name)
-	if errStr := fnDlerror(); errStr != "" {
-		return 0, Dlerror{errStr}
+	if u == 0 {
+		return 0, Dlerror{fnDlerror()}
 	}
 	return u, nil
 }
