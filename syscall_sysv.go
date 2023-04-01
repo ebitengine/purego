@@ -124,9 +124,6 @@ var callbackasmABI0 uintptr
 // This closure is used inside sys_darwin_GOARCH.s
 var callbackWrap_call = callbackWrap
 
-// arm64 and amd64 both have 8 float registers
-const numOfFloats = 8
-
 // callbackWrap is called by assembly code which determines which Go function to call.
 // This function takes the arguments and passes them to the Go function and returns the result.
 func callbackWrap(a *callbackArgs) {

@@ -5,7 +5,10 @@
 
 package purego
 
-const maxArgs = 9
+const (
+	maxArgs     = 9
+	numOfFloats = 8 // arm64 and amd64 both have 8 float registers
+)
 
 // SyscallN takes fn, a C function pointer and a list of arguments as uintptr.
 // There is an internal maximum number of arguments that SyscallN can take. It panics
