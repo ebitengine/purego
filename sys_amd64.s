@@ -80,7 +80,7 @@ TEXT callbackasm1(SB), NOSPLIT, $0
 
 	MOVQ 0(SP), R10 // get the return SP so that we can align register args with stack args
 
-	// make space for first six arguments below the frame
+	// make space for first six int and 8 float arguments below the frame
 	ADJSP $14*8, SP
 	MOVSD X0, (1*8)(SP)
 	MOVSD X1, (2*8)(SP)
