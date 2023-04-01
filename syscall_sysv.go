@@ -61,15 +61,13 @@ type callbackArgs struct {
 	index uintptr
 	// args points to the argument block.
 	//
-	// For cdecl and stdcall, all arguments are on the stack.
+	// The structure of the arguments goes
+	// float registers followed by the
+	// integer registers followed by the stack.
 	//
-	// For fastcall, the trampoline spills register arguments to
-	// the reserved spill slots below the stack arguments,
-	// resulting in a layout equivalent to stdcall.
-	//
-	// For arm, the trampoline stores the register arguments just
-	// below the stack arguments, so again we can treat it as one
-	// big stack arguments frame.
+	// This variable is treated as a continuous
+	// block of memory containing all of the arguments
+	// for this callback.
 	args unsafe.Pointer
 	// Below are out-args from callbackWrap
 	result uintptr
@@ -84,8 +82,7 @@ func compileCallback(fn interface{}) uintptr {
 	for i := 0; i < ty.NumIn(); i++ {
 		in := ty.In(i)
 		switch in.Kind() {
-		case reflect.Struct, reflect.Float32, reflect.Float64,
-			reflect.Interface, reflect.Func, reflect.Slice,
+		case reflect.Struct, reflect.Interface, reflect.Func, reflect.Slice,
 			reflect.Chan, reflect.Complex64, reflect.Complex128,
 			reflect.String, reflect.Map, reflect.Invalid:
 			panic("purego: unsupported argument type: " + in.Kind().String())
@@ -127,6 +124,9 @@ var callbackasmABI0 uintptr
 // This closure is used inside sys_darwin_GOARCH.s
 var callbackWrap_call = callbackWrap
 
+// arm64 and amd64 both have 8 float registers
+const numOfFloats = 8
+
 // callbackWrap is called by assembly code which determines which Go function to call.
 // This function takes the arguments and passes them to the Go function and returns the result.
 func callbackWrap(a *callbackArgs) {
@@ -136,9 +136,34 @@ func callbackWrap(a *callbackArgs) {
 	fnType := fn.Type()
 	args := make([]reflect.Value, fnType.NumIn())
 	frame := (*[callbackMaxFrame]uintptr)(a.args)
+	var floatsN int
+	// offset the integer position by the number
+	// of floatsN because in the frame it starts with the float
+	// registers followed by the integer and then the stack after that.
+	var intsN int = numOfFloats
+	// the stack is located in the frame after the floats and integers
+	var stack = numOfIntegerRegisters() + numOfFloats
 	for i := range args {
-		//TODO: support float32 and float64
-		args[i] = reflect.NewAt(fnType.In(i), unsafe.Pointer(&frame[i])).Elem()
+		var pos int
+		switch fnType.In(i).Kind() {
+		case reflect.Float32, reflect.Float64:
+			if floatsN >= numOfFloats {
+				pos = stack
+				stack++
+			} else {
+				pos = floatsN
+			}
+			floatsN++
+		default:
+			if intsN >= numOfIntegerRegisters()+numOfFloats {
+				pos = stack
+				stack++
+			} else {
+				pos = intsN
+			}
+			intsN++
+		}
+		args[i] = reflect.NewAt(fnType.In(i), unsafe.Pointer(&frame[pos])).Elem()
 	}
 	ret := fn.Call(args)
 	if len(ret) > 0 {

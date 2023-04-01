@@ -72,3 +72,30 @@ func buildSharedLib(libFile string, sources ...string) error {
 
 	return nil
 }
+
+func TestNewCallback(t *testing.T) {
+	// This tests the maximum number of arguments a function to NewCallback can take
+	const (
+		expectCbTotal    = -3
+		expectedCbTotalF = float64(36)
+	)
+	var cbTotal int
+	var cbTotalF float64
+	imp := purego.NewCallback(func(a1, a2, a3, a4, a5, a6, a7, a8, a9 int,
+		f1, f2, f3, f4, f5, f6, f7, f8 float64) {
+		cbTotal = a1 + a2 + a3 + a4 + a5 + a6 + a7 + a8 + a9
+		cbTotalF = f1 + f2 + f3 + f4 + f5 + f6 + f7 + f8
+	})
+	var fn func(a1, a2, a3, a4, a5, a6, a7, a8, a9 int,
+		f1, f2, f3, f4, f5, f6, f7, f8 float64)
+	purego.RegisterFunc(&fn, imp)
+	fn(1, 2, -3, 4, -5, 6, -7, 8, -9,
+		1, 2, 3, 4, 5, 6, 7, 8)
+
+	if cbTotal != expectCbTotal {
+		t.Fatalf("cbTotal not correct got %d but wanted %d", cbTotal, expectCbTotal)
+	}
+	if cbTotalF != expectedCbTotalF {
+		t.Fatalf("cbTotal not correct got %f but wanted %f", cbTotalF, expectedCbTotalF)
+	}
+}

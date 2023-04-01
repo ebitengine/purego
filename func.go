@@ -99,7 +99,7 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 					stack++
 				}
 			case reflect.Float32, reflect.Float64:
-				if floats < 8 {
+				if floats < numOfFloats {
 					floats++
 				} else {
 					stack++
@@ -108,7 +108,8 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 				panic("purego: unsupported kind " + arg.Kind().String())
 			}
 		}
-		if ints+stack > maxArgs || floats+stack > maxArgs {
+		sizeOfStack := maxArgs - numOfIntegerRegisters()
+		if stack > sizeOfStack {
 			panic("purego: too many arguments")
 		}
 	}
