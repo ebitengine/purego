@@ -130,11 +130,10 @@ func callbackWrap(a *callbackArgs) {
 	fnType := fn.Type()
 	args := make([]reflect.Value, fnType.NumIn())
 	frame := (*[callbackMaxFrame]uintptr)(a.args)
-	var floatsN int
-	// intsN starts at numOfFloats because floats occur before integers
-	// in the callbackArgs.args field.
-	var intsN int = numOfFloats
-	// the stack is located in the frame after the floats and integers
+	var floatsN int // floatsN represents the number of float arguments processed
+	var intsN int   // intsN represents the number of integer arguments processed
+	// stack points to the index into frame of the current stack element.
+	// The stack begins after the float and integer registers.
 	var stack = numOfIntegerRegisters() + numOfFloats
 	for i := range args {
 		var pos int
@@ -148,11 +147,12 @@ func callbackWrap(a *callbackArgs) {
 			}
 			floatsN++
 		default:
-			if intsN >= numOfIntegerRegisters()+numOfFloats {
+			if intsN >= numOfIntegerRegisters() {
 				pos = stack
 				stack++
 			} else {
-				pos = intsN
+				// the integers begin after the floats in frame
+				pos = intsN + numOfFloats
 			}
 			intsN++
 		}
