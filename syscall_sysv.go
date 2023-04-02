@@ -131,9 +131,8 @@ func callbackWrap(a *callbackArgs) {
 	args := make([]reflect.Value, fnType.NumIn())
 	frame := (*[callbackMaxFrame]uintptr)(a.args)
 	var floatsN int
-	// intsN is offset by the integer position by the number
-	// of floatsN because in the frame it starts with the float
-	// registers followed by the integer and then the stack after that.
+	// intsN starts at numOfFloats because floats occur before integers
+	// in the callbackArgs.args field.
 	var intsN int = numOfFloats
 	// the stack is located in the frame after the floats and integers
 	var stack = numOfIntegerRegisters() + numOfFloats

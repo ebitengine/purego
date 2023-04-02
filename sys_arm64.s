@@ -69,7 +69,7 @@ TEXT callbackasm1(SB), NOSPLIT|NOFRAME, $0
 	// On entry, the trampoline in zcallback_darwin_arm64.s left
 	// the callback index in R12 (which is volatile in the C ABI).
 
-	// Save callback register arguments R0-R7.
+	// Save callback register arguments R0-R7 and F0-F7.
 	// We do this at the top of the frame so they're contiguous with stack arguments.
 	SUB   $(16*8), RSP, R14
 	FMOVD F0, (0*8)(R14)

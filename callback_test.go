@@ -101,7 +101,7 @@ func TestNewCallback(t *testing.T) {
 }
 
 func TestNewCallback32(t *testing.T) {
-	// This tests the maximum number of float32 arguments a function to NewCallback
+	// This tests the maximum number of float32 arguments a function to NewCallback can take
 	const (
 		expectCbTotal    = 6
 		expectedCbTotalF = float32(45)
