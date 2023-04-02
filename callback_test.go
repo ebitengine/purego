@@ -73,7 +73,7 @@ func buildSharedLib(libFile string, sources ...string) error {
 	return nil
 }
 
-func TestNewCallback(t *testing.T) {
+func TestNewCallbackFloat64(t *testing.T) {
 	// This tests the maximum number of arguments a function to NewCallback can take
 	const (
 		expectCbTotal    = -3
@@ -93,14 +93,14 @@ func TestNewCallback(t *testing.T) {
 		1, 2, 3, 4, 5, 6, 7, 8)
 
 	if cbTotal != expectCbTotal {
-		t.Fatalf("cbTotal not correct got %d but wanted %d", cbTotal, expectCbTotal)
+		t.Errorf("cbTotal not correct got %d but wanted %d", cbTotal, expectCbTotal)
 	}
 	if cbTotalF != expectedCbTotalF {
-		t.Fatalf("cbTotalF not correct got %f but wanted %f", cbTotalF, expectedCbTotalF)
+		t.Errorf("cbTotalF not correct got %f but wanted %f", cbTotalF, expectedCbTotalF)
 	}
 }
 
-func TestNewCallback32(t *testing.T) {
+func TestNewCallbackFloat32(t *testing.T) {
 	// This tests the maximum number of float32 arguments a function to NewCallback can take
 	const (
 		expectCbTotal    = 6
@@ -120,9 +120,34 @@ func TestNewCallback32(t *testing.T) {
 		1, 2, 3, 4, 5, 6, 7, 8, 9)
 
 	if cbTotal != expectCbTotal {
-		t.Fatalf("cbTotal not correct got %d but wanted %d", cbTotal, expectCbTotal)
+		t.Errorf("cbTotal not correct got %d but wanted %d", cbTotal, expectCbTotal)
 	}
 	if cbTotalF != expectedCbTotalF {
-		t.Fatalf("cbTotalF not correct got %f but wanted %f", cbTotalF, expectedCbTotalF)
+		t.Errorf("cbTotalF not correct got %f but wanted %f", cbTotalF, expectedCbTotalF)
+	}
+}
+
+func TestNewCallbackFloat32AndFloat64(t *testing.T) {
+	// This tests that calling a function with a mix of float32 and float64 arguments works
+	const (
+		expectedCbTotalF32 = float32(30)
+		expectedCbTotalF64 = float64(15)
+	)
+	var cbTotalF32 float32
+	var cbTotalF64 float64
+	imp := purego.NewCallback(func(f1, f2, f3 float32, f4, f5, f6 float64, f7, f8, f9 float32) {
+		cbTotalF32 = f1 + f2 + f3 + f7 + f8 + f9
+		cbTotalF64 = f4 + f5 + f6
+
+	})
+	var fn func(f1, f2, f3 float32, f4, f5, f6 float64, f7, f8, f9 float32)
+	purego.RegisterFunc(&fn, imp)
+	fn(1, 2, 3, 4, 5, 6, 7, 8, 9)
+
+	if cbTotalF32 != expectedCbTotalF32 {
+		t.Errorf("cbTotalF32 not correct got %f but wanted %f", cbTotalF32, expectedCbTotalF32)
+	}
+	if cbTotalF64 != expectedCbTotalF64 {
+		t.Errorf("cbTotalF64 not correct got %f but wanted %f", cbTotalF64, expectedCbTotalF64)
 	}
 }
