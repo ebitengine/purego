@@ -128,7 +128,7 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 		}
 		var sysargs [maxArgs]uintptr
 		var stack = sysargs[numOfIntegerRegisters():]
-		var floats [8]float64
+		var floats [numOfFloats]uintptr
 		var numInts int
 		var numFloats int
 		var numStack int
@@ -169,9 +169,16 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 				} else {
 					addInt(0)
 				}
-			case reflect.Float32, reflect.Float64:
+			case reflect.Float32:
 				if numFloats < len(floats) {
-					floats[numFloats] = v.Float()
+					floats[numFloats] = uintptr(math.Float32bits(float32(v.Float())))
+					numFloats++
+				} else {
+					addStack(uintptr(math.Float32bits(float32(v.Float()))))
+				}
+			case reflect.Float64:
+				if numFloats < len(floats) {
+					floats[numFloats] = uintptr(math.Float64bits(v.Float()))
 					numFloats++
 				} else {
 					addStack(uintptr(math.Float64bits(v.Float())))

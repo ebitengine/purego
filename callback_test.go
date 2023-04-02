@@ -96,6 +96,33 @@ func TestNewCallback(t *testing.T) {
 		t.Fatalf("cbTotal not correct got %d but wanted %d", cbTotal, expectCbTotal)
 	}
 	if cbTotalF != expectedCbTotalF {
-		t.Fatalf("cbTotal not correct got %f but wanted %f", cbTotalF, expectedCbTotalF)
+		t.Fatalf("cbTotalF not correct got %f but wanted %f", cbTotalF, expectedCbTotalF)
+	}
+}
+
+func TestNewCallback32(t *testing.T) {
+	// This tests the maximum number of float32 arguments a function to NewCallback
+	const (
+		expectCbTotal    = 6
+		expectedCbTotalF = float32(45)
+	)
+	var cbTotal int
+	var cbTotalF float32
+	imp := purego.NewCallback(func(a1, a2, a3, a4, a5, a6, a7, a8 int,
+		f1, f2, f3, f4, f5, f6, f7, f8, f9 float32) {
+		cbTotal = a1 + a2 + a3 + a4 + a5 + a6 + a7 + a8
+		cbTotalF = f1 + f2 + f3 + f4 + f5 + f6 + f7 + f8 + f9
+	})
+	var fn func(a1, a2, a3, a4, a5, a6, a7, a8 int,
+		f1, f2, f3, f4, f5, f6, f7, f8, f9 float32)
+	purego.RegisterFunc(&fn, imp)
+	fn(1, 2, -3, 4, -5, 6, -7, 8,
+		1, 2, 3, 4, 5, 6, 7, 8, 9)
+
+	if cbTotal != expectCbTotal {
+		t.Fatalf("cbTotal not correct got %d but wanted %d", cbTotal, expectCbTotal)
+	}
+	if cbTotalF != expectedCbTotalF {
+		t.Fatalf("cbTotalF not correct got %f but wanted %f", cbTotalF, expectedCbTotalF)
 	}
 }
