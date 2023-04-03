@@ -80,15 +80,23 @@ TEXT callbackasm1(SB), NOSPLIT, $0
 
 	MOVQ 0(SP), R10 // get the return SP so that we can align register args with stack args
 
-	// make space for first six arguments below the frame
-	ADJSP $6*8, SP
-	MOVQ  DI, 8(SP)
-	MOVQ  SI, 16(SP)
-	MOVQ  DX, 24(SP)
-	MOVQ  CX, 32(SP)
-	MOVQ  R8, 40(SP)
-	MOVQ  R9, 48(SP)
-	LEAQ  8(SP), R8  // R8 = address of args vector
+	// make space for first six int and 8 float arguments below the frame
+	ADJSP $14*8, SP
+	MOVSD X0, (1*8)(SP)
+	MOVSD X1, (2*8)(SP)
+	MOVSD X2, (3*8)(SP)
+	MOVSD X3, (4*8)(SP)
+	MOVSD X4, (5*8)(SP)
+	MOVSD X5, (6*8)(SP)
+	MOVSD X6, (7*8)(SP)
+	MOVSD X7, (8*8)(SP)
+	MOVQ  DI, (9*8)(SP)
+	MOVQ  SI, (10*8)(SP)
+	MOVQ  DX, (11*8)(SP)
+	MOVQ  CX, (12*8)(SP)
+	MOVQ  R8, (13*8)(SP)
+	MOVQ  R9, (14*8)(SP)
+	LEAQ  8(SP), R8      // R8 = address of args vector
 
 	MOVQ R10, 0(SP) // push the stack pointer below registers
 
@@ -128,7 +136,7 @@ TEXT callbackasm1(SB), NOSPLIT, $0
 
 	MOVQ 0(SP), R10 // get the SP back
 
-	ADJSP $-6*8, SP // remove arguments
+	ADJSP $-14*8, SP // remove arguments
 
 	MOVQ R10, 0(SP)
 
