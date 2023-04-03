@@ -121,7 +121,7 @@ func buildSharedLib(compilerEnv, libFile string, sources ...string) error {
 
 	compiler := strings.TrimSpace(string(out))
 	if compiler == "" {
-		return errors.New("compiler not found")
+		return fmt.Errorf("compiler %s not found", string(out))
 	}
 
 	args := []string{"-shared", "-Wall", "-Werror", "-o", libFile}
@@ -129,9 +129,8 @@ func buildSharedLib(compilerEnv, libFile string, sources ...string) error {
 	// macOS arm64 can run amd64 tests through Rossetta.
 	// Build the shared library based on the GOARCH and not
 	// the default behavior of the compiler.
-	var archFlag, arch string
 	if runtime.GOOS == "darwin" {
-		archFlag = "-arch"
+		var arch string
 		switch runtime.GOARCH {
 		case "arm64":
 			arch = "arm64"
@@ -140,7 +139,7 @@ func buildSharedLib(compilerEnv, libFile string, sources ...string) error {
 		default:
 			return fmt.Errorf("unknown macOS architecture %s", runtime.GOARCH)
 		}
-		args = append(args, archFlag, arch)
+		args = append(args, "-arch", arch)
 	}
 	cmd := exec.Command(compiler, append(args, sources...)...)
 	if out, err := cmd.CombinedOutput(); err != nil {
