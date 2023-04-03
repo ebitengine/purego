@@ -6,6 +6,7 @@
 package purego_test
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -99,20 +100,8 @@ func TestNestedDlopenCall(t *testing.T) {
 	libFileName := filepath.Join(t.TempDir(), "libdlnested.so")
 	t.Logf("Build %v", libFileName)
 
-	out, err := exec.Command("go", "env", "CXX").Output()
-	if err != nil {
-		t.Fatalf("go env error: %v", err)
-	}
-
-	cxx := strings.TrimSpace(string(out))
-	if cxx == "" {
-		t.Fatal("CXX not found")
-	}
-
-	args := []string{"-shared", "-Wall", "-Werror", "-o", libFileName, filepath.Join("libdlnested", "nested.cpp")}
-	cmd := exec.Command(cxx, args...)
-	if out, err := cmd.CombinedOutput(); err != nil {
-		t.Fatalf("compile lib: %v\n%q\n%s", err, cmd, string(out))
+	if err := buildSharedLib("CXX", libFileName, filepath.Join("libdlnested", "nested.cpp")); err != nil {
+		t.Fatal(err)
 	}
 	defer os.Remove(libFileName)
 
@@ -122,4 +111,42 @@ func TestNestedDlopenCall(t *testing.T) {
 	}
 
 	purego.Dlclose(lib)
+}
+
+func buildSharedLib(compilerEnv, libFile string, sources ...string) error {
+	out, err := exec.Command("go", "env", compilerEnv).Output()
+	if err != nil {
+		return fmt.Errorf("go env error: %w", err)
+	}
+
+	compiler := strings.TrimSpace(string(out))
+	if compiler == "" {
+		return errors.New("compiler not found")
+	}
+
+	// macOS arm64 can run amd64 tests through Rossetta.
+	// Build the shared library based on the GOARCH and not
+	// the default behavior of the compiler.
+	var archFlag, arch string
+	if runtime.GOOS == "darwin" {
+		archFlag = "-arch"
+		switch runtime.GOARCH {
+		case "arm64":
+			arch = "arm64"
+		case "amd64":
+			arch = "x86_64"
+		default:
+			// if GOARCH is unknown then build the shared library
+			// with the compiler's normal target.
+			archFlag = ""
+			arch = ""
+		}
+	}
+	args := append([]string{archFlag, arch, "-shared", "-Wall", "-Werror", "-o", libFile}, sources...)
+	cmd := exec.Command(compiler, args...)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("compile lib: %w\n%q\n%s", err, cmd, string(out))
+	}
+
+	return nil
 }
