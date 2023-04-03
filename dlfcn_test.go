@@ -121,7 +121,7 @@ func buildSharedLib(compilerEnv, libFile string, sources ...string) error {
 
 	compiler := strings.TrimSpace(string(out))
 	if compiler == "" {
-		return fmt.Errorf("compiler %s not found", string(out))
+		return errors.New("compiler not found")
 	}
 
 	args := []string{"-shared", "-Wall", "-Werror", "-o", libFile}
