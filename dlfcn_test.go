@@ -124,6 +124,8 @@ func buildSharedLib(compilerEnv, libFile string, sources ...string) error {
 		return errors.New("compiler not found")
 	}
 
+	args := []string{"-shared", "-Wall", "-Werror", "-o", libFile}
+
 	// macOS arm64 can run amd64 tests through Rossetta.
 	// Build the shared library based on the GOARCH and not
 	// the default behavior of the compiler.
@@ -141,9 +143,9 @@ func buildSharedLib(compilerEnv, libFile string, sources ...string) error {
 			archFlag = ""
 			arch = ""
 		}
+		args = append(args, archFlag, arch)
 	}
-	args := append([]string{archFlag, arch, "-shared", "-Wall", "-Werror", "-o", libFile}, sources...)
-	cmd := exec.Command(compiler, args...)
+	cmd := exec.Command(compiler, append(args, sources...)...)
 	if out, err := cmd.CombinedOutput(); err != nil {
 		return fmt.Errorf("compile lib: %w\n%q\n%s", err, cmd, string(out))
 	}
