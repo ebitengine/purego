@@ -116,7 +116,7 @@ func TestNestedDlopenCall(t *testing.T) {
 func buildSharedLib(compilerEnv, libFile string, sources ...string) error {
 	out, err := exec.Command("go", "env", compilerEnv).Output()
 	if err != nil {
-		return fmt.Errorf("go env error: %w", err)
+		return fmt.Errorf("go env %s error: %w", compilerEnv, err)
 	}
 
 	compiler := strings.TrimSpace(string(out))
@@ -138,10 +138,7 @@ func buildSharedLib(compilerEnv, libFile string, sources ...string) error {
 		case "amd64":
 			arch = "x86_64"
 		default:
-			// if GOARCH is unknown then build the shared library
-			// with the compiler's normal target.
-			archFlag = ""
-			arch = ""
+			return fmt.Errorf("unknown macOS architecture %s", runtime.GOARCH)
 		}
 		args = append(args, archFlag, arch)
 	}
