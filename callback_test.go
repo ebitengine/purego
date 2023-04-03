@@ -6,12 +6,8 @@
 package purego_test
 
 import (
-	"errors"
-	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"strings"
 	"testing"
 	"unsafe"
 
@@ -24,7 +20,7 @@ func TestCallGoFromSharedLib(t *testing.T) {
 	libFileName := filepath.Join(t.TempDir(), "libcbtest.so")
 	t.Logf("Build %v", libFileName)
 
-	if err := buildSharedLib(libFileName, filepath.Join("libcbtest", "callback.c")); err != nil {
+	if err := buildSharedLib("CC", libFileName, filepath.Join("libcbtest", "callback.c")); err != nil {
 		t.Fatal(err)
 	}
 	defer os.Remove(libFileName)
@@ -51,26 +47,6 @@ func TestCallGoFromSharedLib(t *testing.T) {
 			t.Fatalf("%d: callCallback() got %v want %v", i, got, want)
 		}
 	}
-}
-
-func buildSharedLib(libFile string, sources ...string) error {
-	out, err := exec.Command("go", "env", "CC").Output()
-	if err != nil {
-		return fmt.Errorf("go env error: %w", err)
-	}
-
-	cc := strings.TrimSpace(string(out))
-	if cc == "" {
-		return errors.New("CC not found")
-	}
-
-	args := append([]string{"-shared", "-Wall", "-Werror", "-o", libFile}, sources...)
-	cmd := exec.Command(cc, args...)
-	if out, err := cmd.CombinedOutput(); err != nil {
-		return fmt.Errorf("compile lib: %w\n%q\n%s", err, cmd, string(out))
-	}
-
-	return nil
 }
 
 func TestNewCallbackFloat64(t *testing.T) {
