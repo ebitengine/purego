@@ -103,6 +103,9 @@ output:
 	}
 	cbs.lock.Lock()
 	defer cbs.lock.Unlock()
+	if cbs.numFn >= maxCB {
+		panic("purego: the maximum number of callbacks has been reached")
+	}
 	cbs.funcs[cbs.numFn] = val
 	cbs.numFn++
 	return callbackasmAddr(cbs.numFn - 1)
