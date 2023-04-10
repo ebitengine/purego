@@ -22,9 +22,11 @@ type syscall9Args struct {
 
 //go:nosplit
 func syscall_syscall9X(fn, a1, a2, a3, a4, a5, a6, a7, a8, a9 uintptr) (r1, r2, err uintptr) {
-	args := syscall9Args{fn, a1, a2, a3, a4, a5, a6, a7, a8, a9,
+	args := syscall9Args{
+		fn, a1, a2, a3, a4, a5, a6, a7, a8, a9,
 		a1, a2, a3, a4, a5, a6, a7, a8,
-		r1, r2, err}
+		r1, r2, err,
+	}
 	runtime_cgocall(syscall9XABI0, unsafe.Pointer(&args))
 	return args.r1, args.r2, args.err
 }
@@ -73,7 +75,10 @@ type callbackArgs struct {
 func compileCallback(fn interface{}) uintptr {
 	val := reflect.ValueOf(fn)
 	if val.Kind() != reflect.Func {
-		panic("purego: type is not a function")
+		panic("purego: the type must be a function but was not")
+	}
+	if val.IsNil() {
+		panic("purego: function must not be nil")
 	}
 	ty := val.Type()
 	for i := 0; i < ty.NumIn(); i++ {
@@ -134,7 +139,7 @@ func callbackWrap(a *callbackArgs) {
 	var intsN int   // intsN represents the number of integer arguments processed
 	// stack points to the index into frame of the current stack element.
 	// The stack begins after the float and integer registers.
-	var stack = numOfIntegerRegisters() + numOfFloats
+	stack := numOfIntegerRegisters() + numOfFloats
 	for i := range args {
 		var pos int
 		switch fnType.In(i).Kind() {
