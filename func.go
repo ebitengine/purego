@@ -127,7 +127,7 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 			}
 		}
 		var sysargs [maxArgs]uintptr
-		var stack = sysargs[numOfIntegerRegisters():]
+		stack := sysargs[numOfIntegerRegisters():]
 		var floats [numOfFloats]uintptr
 		var numInts int
 		var numFloats int
@@ -147,6 +147,7 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 		var keepAlive []interface{}
 		defer func() {
 			runtime.KeepAlive(keepAlive)
+			runtime.KeepAlive(args)
 		}()
 		for _, v := range args {
 			switch v.Kind() {
@@ -159,7 +160,7 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 				addInt(uintptr(v.Int()))
 			case reflect.Ptr, reflect.UnsafePointer, reflect.Slice:
-				keepAlive = append(keepAlive, v.Pointer())
+				// There is no need to keepAlive this pointer separately because it is kept alive in the args variable
 				addInt(v.Pointer())
 			case reflect.Func:
 				addInt(NewCallback(v.Interface()))
@@ -192,7 +193,8 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 			cfn,
 			sysargs[0], sysargs[1], sysargs[2], sysargs[3], sysargs[4], sysargs[5], sysargs[6], sysargs[7], sysargs[8],
 			floats[0], floats[1], floats[2], floats[3], floats[4], floats[5], floats[6], floats[7],
-			0, 0, 0}
+			0, 0, 0,
+		}
 		runtime_cgocall(syscall9XABI0, unsafe.Pointer(&syscall))
 		r1, r2 := syscall.r1, syscall.r2
 
@@ -212,7 +214,8 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 			// We take the address and then dereference it to trick go vet from creating a possible miss-use of unsafe.Pointer
 			v.SetPointer(*(*unsafe.Pointer)(unsafe.Pointer(&r1)))
 		case reflect.Ptr:
-			v = reflect.NewAt(outType, unsafe.Pointer(&r1)).Elem()
+			// It is safe to have the address of r1 not escape because it is immediately dereferenced with .Elem()
+			v = reflect.NewAt(outType, runtime_noescape(unsafe.Pointer(&r1))).Elem()
 		case reflect.Func:
 			// wrap this C function in a nicely typed Go function
 			v = reflect.New(outType)
