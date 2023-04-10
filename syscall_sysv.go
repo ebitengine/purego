@@ -6,6 +6,7 @@
 package purego
 
 import (
+	"fmt"
 	"reflect"
 	"runtime"
 	"sync"
@@ -75,6 +76,9 @@ func compileCallback(fn interface{}) uintptr {
 	if val.Kind() != reflect.Func {
 		panic("purego: type is not a function")
 	}
+	if val.IsNil() {
+		panic("purego: function is nil")
+	}
 	ty := val.Type()
 	for i := 0; i < ty.NumIn(); i++ {
 		in := ty.In(i)
@@ -100,9 +104,6 @@ output:
 	}
 	cbs.lock.Lock()
 	defer cbs.lock.Unlock()
-	if cbs.numFn >= maxCB {
-		panic("purego: the maximum number of callbacks has been reached")
-	}
 	cbs.funcs[cbs.numFn] = val
 	cbs.numFn++
 	return callbackasmAddr(cbs.numFn - 1)
@@ -124,6 +125,15 @@ var callbackWrap_call = callbackWrap
 // callbackWrap is called by assembly code which determines which Go function to call.
 // This function takes the arguments and passes them to the Go function and returns the result.
 func callbackWrap(a *callbackArgs) {
+	defer func() {
+		if err := recover(); err != nil {
+			fmt.Println(a)
+			for i, cb := range cbs.funcs[:cbs.numFn] {
+				fmt.Println(i, ":", cb)
+			}
+			panic(err)
+		}
+	}()
 	cbs.lock.Lock()
 	fn := cbs.funcs[a.index]
 	cbs.lock.Unlock()
