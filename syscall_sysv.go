@@ -6,7 +6,6 @@
 package purego
 
 import (
-	"fmt"
 	"reflect"
 	"runtime"
 	"sync"
@@ -125,15 +124,6 @@ var callbackWrap_call = callbackWrap
 // callbackWrap is called by assembly code which determines which Go function to call.
 // This function takes the arguments and passes them to the Go function and returns the result.
 func callbackWrap(a *callbackArgs) {
-	defer func() {
-		if err := recover(); err != nil {
-			fmt.Println(a)
-			for i, cb := range cbs.funcs[:cbs.numFn] {
-				fmt.Println(i, ":", cb)
-			}
-			panic(err)
-		}
-	}()
 	cbs.lock.Lock()
 	fn := cbs.funcs[a.index]
 	cbs.lock.Unlock()
