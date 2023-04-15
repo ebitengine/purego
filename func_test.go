@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2023 The Ebitengine Authors
+
 package purego_test
 
 import (
@@ -66,7 +69,7 @@ func ExampleNewCallback() {
 func Test_qsort(t *testing.T) {
 	if runtime.GOOS == "linux" {
 		// TODO: enable once callbacks are working properly on Linux
-		t.SkipNow()
+		t.Skip("callbacks are not supported on Linux")
 	}
 
 	library, err := getSystemLibrary()
