@@ -257,10 +257,11 @@ func numOfIntegerRegisters() int {
 		return 8
 	case "amd64":
 		return 6
-	case "386":
+	// TODO: figure out why 386 tests are not working
+	/*case "386":
 		return 0
 	case "arm":
-		return 4
+		return 4*/
 	default:
 		panic("purego: unknown GOARCH (" + runtime.GOARCH + ")")
 	}
