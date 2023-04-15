@@ -63,6 +63,15 @@ func Dlclose(handle uintptr) error {
 	return nil
 }
 
+//go:linkname openLibrary openLibrary
+func openLibrary(name string) (uintptr, error) {
+	return Dlopen(name, RTLD_NOW|RTLD_GLOBAL)
+}
+
+func loadSymbol(handle uintptr, name string) (uintptr, error) {
+	return Dlsym(handle, name)
+}
+
 // these functions exist in dlfcn_stubs.s and are calling C functions linked to in dlfcn_GOOS.go
 // the indirection is necessary because a function is actually a pointer to the pointer to the code.
 // sadly, I do not know of anyway to remove the assembly stubs entirely because //go:linkname doesn't
