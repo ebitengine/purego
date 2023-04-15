@@ -259,6 +259,8 @@ func numOfIntegerRegisters() int {
 		return 6
 	case "386":
 		return 0
+	case "arm":
+		return 4
 	default:
 		panic("purego: unknown GOARCH (" + runtime.GOARCH + ")")
 	}
