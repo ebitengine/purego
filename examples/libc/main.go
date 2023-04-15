@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2022 The Ebitengine Authors
 
-//go:build darwin || linux
+//go:build darwin || linux || windows
 
 package main
 
@@ -18,13 +18,15 @@ func getSystemLibrary() string {
 		return "/usr/lib/libSystem.B.dylib"
 	case "linux":
 		return "libc.so.6"
+	case "windows":
+		return "ucrtbase.dll"
 	default:
 		panic(fmt.Errorf("GOOS=%s is not supported", runtime.GOOS))
 	}
 }
 
 func main() {
-	libc, err := purego.Dlopen(getSystemLibrary(), purego.RTLD_NOW|purego.RTLD_GLOBAL)
+	libc, err := openLibrary(getSystemLibrary())
 	if err != nil {
 		panic(err)
 	}
