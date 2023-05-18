@@ -18,6 +18,12 @@ import (
 	"github.com/ebitengine/purego"
 )
 
+func TestSimpleDlsym(t *testing.T) {
+	if _, err := purego.Dlsym(purego.RTLD_DEFAULT, "dlsym"); err != nil {
+		t.Errorf("Dlsym with RTLD_DEFAULT failed: %v", err)
+	}
+}
+
 func TestNestedDlopenCall(t *testing.T) {
 	libFileName := filepath.Join(t.TempDir(), "libdlnested.so")
 	t.Logf("Build %v", libFileName)
