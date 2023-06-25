@@ -77,8 +77,7 @@ func ExampleID_SendSuper() {
 
 func TestSend(t *testing.T) {
 	// NSNumber comes from Foundation so make sure we have linked to that framework.
-	_, err := purego.Dlopen("Foundation.framework/Foundation", purego.RTLD_GLOBAL)
-	if err != nil {
+	if _, err := purego.Dlopen("Foundation.framework/Foundation", purego.RTLD_GLOBAL); err != nil {
 		t.Fatal(err)
 	}
 	const double = float64(2.34)
@@ -88,5 +87,17 @@ func TestSend(t *testing.T) {
 	var number = objc.Send[float64](NSNumber, objc.RegisterName("doubleValue"))
 	if double != number {
 		t.Failed()
+	}
+}
+
+func TestNSWindow(t *testing.T) {
+	if cls := objc.GetClass("NSWindow"); cls != 0 {
+		t.Error("NSWindow must be nil before Cocoa.framework is loaded")
+	}
+	if _, err := purego.Dlopen("Cocoa.framework/Cocoa", purego.RTLD_GLOBAL); err != nil {
+		t.Fatal(err)
+	}
+	if cls := objc.GetClass("NSWindow"); cls == 0 {
+		t.Error("NSWindow must not be nil after Cocoa.framework is loaded")
 	}
 }
