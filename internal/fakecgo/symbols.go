@@ -39,6 +39,18 @@ func unsetenv(name *byte) int32 {
 	return int32(call5(unsetenvABI0, uintptr(unsafe.Pointer(name)), 0, 0, 0, 0))
 }
 
+func sigfillset(set *sigset_t) int32 {
+	return int32(call5(sigfillsetABI0, uintptr(unsafe.Pointer(set)), 0, 0, 0, 0))
+}
+
+func nanosleep(ts *syscall.Timespec, rem *syscall.Timespec) int32 {
+	return int32(call5(nanosleepABI0, uintptr(unsafe.Pointer(ts)), uintptr(unsafe.Pointer(rem)), 0, 0, 0))
+}
+
+func abort() {
+	call5(abortABI0, 0, 0, 0, 0, 0)
+}
+
 func pthread_attr_init(attr *pthread_attr_t) int32 {
 	return int32(call5(pthread_attr_initABI0, uintptr(unsafe.Pointer(attr)), 0, 0, 0, 0))
 }
@@ -75,18 +87,6 @@ func pthread_attr_destroy(attr *pthread_attr_t) int32 {
 	return int32(call5(pthread_attr_destroyABI0, uintptr(unsafe.Pointer(attr)), 0, 0, 0, 0))
 }
 
-func sigfillset(set *sigset_t) int32 {
-	return int32(call5(sigfillsetABI0, uintptr(unsafe.Pointer(set)), 0, 0, 0, 0))
-}
-
-func nanosleep(ts *syscall.Timespec, rem *syscall.Timespec) int32 {
-	return int32(call5(nanosleepABI0, uintptr(unsafe.Pointer(ts)), uintptr(unsafe.Pointer(rem)), 0, 0, 0))
-}
-
-func abort() {
-	call5(abortABI0, 0, 0, 0, 0, 0)
-}
-
 //go:linkname _malloc _malloc
 var _malloc uintptr
 var mallocABI0 = uintptr(unsafe.Pointer(&_malloc))
@@ -102,6 +102,18 @@ var setenvABI0 = uintptr(unsafe.Pointer(&_setenv))
 //go:linkname _unsetenv _unsetenv
 var _unsetenv uintptr
 var unsetenvABI0 = uintptr(unsafe.Pointer(&_unsetenv))
+
+//go:linkname _sigfillset _sigfillset
+var _sigfillset uintptr
+var sigfillsetABI0 = uintptr(unsafe.Pointer(&_sigfillset))
+
+//go:linkname _nanosleep _nanosleep
+var _nanosleep uintptr
+var nanosleepABI0 = uintptr(unsafe.Pointer(&_nanosleep))
+
+//go:linkname _abort _abort
+var _abort uintptr
+var abortABI0 = uintptr(unsafe.Pointer(&_abort))
 
 //go:linkname _pthread_attr_init _pthread_attr_init
 var _pthread_attr_init uintptr
@@ -138,15 +150,3 @@ var pthread_attr_setstacksizeABI0 = uintptr(unsafe.Pointer(&_pthread_attr_setsta
 //go:linkname _pthread_attr_destroy _pthread_attr_destroy
 var _pthread_attr_destroy uintptr
 var pthread_attr_destroyABI0 = uintptr(unsafe.Pointer(&_pthread_attr_destroy))
-
-//go:linkname _sigfillset _sigfillset
-var _sigfillset uintptr
-var sigfillsetABI0 = uintptr(unsafe.Pointer(&_sigfillset))
-
-//go:linkname _nanosleep _nanosleep
-var _nanosleep uintptr
-var nanosleepABI0 = uintptr(unsafe.Pointer(&_nanosleep))
-
-//go:linkname _abort _abort
-var _abort uintptr
-var abortABI0 = uintptr(unsafe.Pointer(&_abort))
