@@ -72,15 +72,3 @@ TEXT _pthread_attr_setstacksize(SB), NOSPLIT, $0-0
 TEXT _pthread_attr_destroy(SB), NOSPLIT, $0-0
 	JMP purego_pthread_attr_destroy(SB)
 	RET
-
-TEXT _pthread_mutex_lock(SB), NOSPLIT, $0-0
-	JMP purego_pthread_mutex_lock(SB)
-	RET
-
-TEXT _pthread_mutex_unlock(SB), NOSPLIT, $0-0
-	JMP purego_pthread_mutex_unlock(SB)
-	RET
-
-TEXT _pthread_cond_broadcast(SB), NOSPLIT, $0-0
-	JMP purego_pthread_cond_broadcast(SB)
-	RET
