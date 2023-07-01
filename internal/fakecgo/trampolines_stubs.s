@@ -25,6 +25,18 @@ TEXT _unsetenv(SB), NOSPLIT, $0-0
 	JMP purego_unsetenv(SB)
 	RET
 
+TEXT _sigfillset(SB), NOSPLIT, $0-0
+	JMP purego_sigfillset(SB)
+	RET
+
+TEXT _nanosleep(SB), NOSPLIT, $0-0
+	JMP purego_nanosleep(SB)
+	RET
+
+TEXT _abort(SB), NOSPLIT, $0-0
+	JMP purego_abort(SB)
+	RET
+
 TEXT _pthread_attr_init(SB), NOSPLIT, $0-0
 	JMP purego_pthread_attr_init(SB)
 	RET
@@ -61,14 +73,14 @@ TEXT _pthread_attr_destroy(SB), NOSPLIT, $0-0
 	JMP purego_pthread_attr_destroy(SB)
 	RET
 
-TEXT _sigfillset(SB), NOSPLIT, $0-0
-	JMP purego_sigfillset(SB)
+TEXT _pthread_mutex_lock(SB), NOSPLIT, $0-0
+	JMP purego_pthread_mutex_lock(SB)
 	RET
 
-TEXT _nanosleep(SB), NOSPLIT, $0-0
-	JMP purego_nanosleep(SB)
+TEXT _pthread_mutex_unlock(SB), NOSPLIT, $0-0
+	JMP purego_pthread_mutex_unlock(SB)
 	RET
 
-TEXT _abort(SB), NOSPLIT, $0-0
-	JMP purego_abort(SB)
+TEXT _pthread_cond_broadcast(SB), NOSPLIT, $0-0
+	JMP purego_pthread_cond_broadcast(SB)
 	RET
