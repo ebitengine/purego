@@ -19,6 +19,8 @@ born to bring that same vision to the other platforms supported by Ebitengine.
 
 ## Example
 
+This example only works on macOS and Linux. For a complete example look at [libc](https://github.com/ebitengine/purego/tree/main/examples/libc) which supports Windows.
+
 ```go
 package main
 
