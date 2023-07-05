@@ -5,10 +5,29 @@
 
 package fakecgo
 
-type size_t uintptr
-type sigset_t [128]byte
-type pthread_attr_t [64]byte
-type pthread_t int
+type (
+	size_t          uintptr
+	sigset_t        [128]byte
+	pthread_attr_t  [64]byte
+	pthread_t       int
+	pthread_mutex_t struct {
+		sig    int64
+		opaque [56]byte
+	}
+	pthread_cond_t struct {
+		sig    int64
+		opaque [40]byte
+	}
+
+	pthread_key_t uint64
+)
+
+var (
+	// TODO: do not merge until these are checked against linux
+
+	PTHREAD_COND_INITIALIZER  = pthread_cond_t{sig: 0x3CB0B1BB}
+	PTHREAD_MUTEX_INITIALIZER = pthread_mutex_t{sig: 0x32AAABA7}
+)
 
 // for pthread_sigmask:
 

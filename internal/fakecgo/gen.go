@@ -131,6 +131,10 @@ var (
 		{"pthread_attr_getstacksize", [5]Arg{{"attr", "*pthread_attr_t"}, {"stacksize", "*size_t"}}, "int32"},
 		{"pthread_attr_setstacksize", [5]Arg{{"attr", "*pthread_attr_t"}, {"size", "size_t"}}, "int32"},
 		{"pthread_attr_destroy", [5]Arg{{"attr", "*pthread_attr_t"}}, "int32"},
+		{"pthread_mutex_lock", [5]Arg{{"mutex", "*pthread_mutex_t"}}, "int32"},
+		{"pthread_mutex_unlock", [5]Arg{{"mutex", "*pthread_mutex_t"}}, "int32"},
+		{"pthread_cond_broadcast", [5]Arg{{"cond", "*pthread_cond_t"}}, "int32"},
+		{"pthread_setspecific", [5]Arg{{"key", "pthread_key_t"}, {"value", "unsafe.Pointer"}}, "int32"},
 	}
 )
 

@@ -41,6 +41,10 @@ TEXT x_cgo_notify_runtime_init_done_trampoline(SB), NOSPLIT, $0-0
 	CALL ·x_cgo_notify_runtime_init_done(SB)
 	RET
 
+TEXT x_cgo_bindm_trampoline(SB), NOSPLIT, $0
+	CALL ·x_cgo_bindm(SB)
+	RET
+
 // func setg_trampoline(setg uintptr, g uintptr)
 TEXT ·setg_trampoline(SB), NOSPLIT, $0-16
 	MOVD G+8(FP), R0
