@@ -14,9 +14,8 @@ import (
 	"github.com/ebitengine/purego"
 )
 
-//TODO: support try/catch?
-//https://stackoverflow.com/questions/7062599/example-of-how-objective-cs-try-catch-implementation-is-executed-at-runtime
-
+// TODO: support try/catch?
+// https://stackoverflow.com/questions/7062599/example-of-how-objective-cs-try-catch-implementation-is-executed-at-runtime
 var (
 	objc_msgSend_fn           uintptr
 	objc_msgSend              func(obj ID, cmd SEL, args ...interface{}) ID
@@ -103,7 +102,7 @@ type objc_super struct {
 // instead of a string since RegisterName grabs the global Objective-C lock. It is best to cache the result
 // of RegisterName.
 func (id ID) SendSuper(sel SEL, args ...interface{}) ID {
-	var super = &objc_super{
+	super := &objc_super{
 		receiver:   id,
 		superClass: id.Class(),
 	}
@@ -114,7 +113,7 @@ func (id ID) SendSuper(sel SEL, args ...interface{}) ID {
 // This function takes a SEL instead of a string since RegisterName grabs the global Objective-C lock.
 // It is best to cache the result of RegisterName.
 func SendSuper[T any](id ID, sel SEL, args ...any) T {
-	var super = &objc_super{
+	super := &objc_super{
 		receiver:   id,
 		superClass: id.Class(),
 	}
@@ -148,23 +147,45 @@ func AllocateClassPair(super Class, name string, extraBytes uintptr) Class {
 	return objc_allocateClassPair(super, name, extraBytes)
 }
 
-// Selector is an interface that takes a Go method name
+func (_ Class) isClass() internalField { return internalField{} }
+
+// ClassDef is an interface that takes a Go method name
 // and returns the selector equivalent name.
 // If it returns a nil SEL then that method
 // is not added to the class object.
-type Selector interface {
-	Selector(string) SEL
+type ClassDef interface {
+	isClass() internalField
 }
 
-// TagFormatError occurs when the parser fails to parse the objc tag in a Selector object
+type internalField struct{}
+
+type MethodDef struct {
+	Cmd SEL
+	Fn  IMP
+}
+
+// TagFormatError occurs when the parser fails to parse the objc tag in a ClassDef object
 var TagFormatError = errors.New(`objc tag doesn't match "ClassName : SuperClassName <Protocol, ...>""`)
 
 // MismatchError occurs when the Go struct definition doesn't match that of Objective-C
 var MismatchError = errors.New("go struct doesn't match objective-c struct")
 
-// RegisterClass takes a pointer to a struct that implements the Selector interface.
+type IvarAttrib int
+
+const (
+	ReadWrite IvarAttrib = iota
+	ReadOnly
+)
+
+type IvarDef struct {
+	Name      string
+	Type      reflect.Type
+	Attribute IvarAttrib
+}
+
+// RegisterClass takes a pointer to a struct that implements the ClassDef interface.
 // It will register the structs fields and pointer receiver methods in the Objective-C
-// runtime using the SEL returned from Selector. Any errors that occur trying to add
+// runtime using the SEL returned from ClassDef. Any errors that occur trying to add
 // a Method or Ivar is returned as an error. Such errors may occur in parsing or because
 // the size of the struct does not match the size in Objective-C. If no errors occur
 // then the returned Class has been registered successfully.
@@ -172,179 +193,52 @@ var MismatchError = errors.New("go struct doesn't match objective-c struct")
 // The struct's first field must be of type Class and have a tag that matches the format
 // `objc:"ClassName : SuperClassName <Protocol, ...>`. This tag is equal to how the class
 // would be defined in Objective-C.
-func RegisterClass(object Selector) (Class, error) {
-	ptr := reflect.TypeOf(object)
-	strct := ptr.Elem()
-	if strct.NumField() == 0 || strct.Field(0).Type != reflect.TypeOf(Class(0)) {
-		return 0, fmt.Errorf("objc: need objc.Class as first field: %w", MismatchError)
-	}
-	isa := strct.Field(0)
-	tag := isa.Tag.Get("objc")
-	if tag == "" {
-		return 0, fmt.Errorf("objc: missing objc tag: %w", TagFormatError)
-	}
-	// split contains the class name and super class name followed by all the Protocols
-	// start with two for ClassName : SuperClassName
-	var split = make([]string, 2)
-	{
-		// This is a simple parser for the objc tag that looks for the format
-		//  	"ClassName : SuperClassName <Protocol, ...>"
-		// It appends to the split variable with the [ClassName, SuperClassName, Protocol, ...]
-
-		var i int  // from tag[0:i] is whatever identifier is next
-		var r rune // r is the current rune
-		skipSpace := func() {
-			for _, c := range tag {
-				if c == ' ' {
-					tag = tag[1:]
-					continue
-				}
-				break
-			}
-		}
-		skipSpace()
-		// get ClassName
-		for i, r = range tag {
-			if r == ' ' || r == ':' {
-				break
-			}
-		}
-		split[0] = tag[0:i] // store ClassName
-		tag = tag[i:]
-
-		skipSpace()
-
-		// check for ':'
-		if len(tag) > 0 && tag[0] != ':' {
-			return 0, fmt.Errorf("objc: missing ':': %w", TagFormatError)
-		}
-		tag = tag[1:] // skip ':'
-		skipSpace()
-
-		// get SuperClassName
-		for i, r = range tag {
-			if r == ' ' {
-				break
-			} else if i+1 == len(tag) {
-				// if this is the last character in the string
-				// make sure to increment i so that tag[:i]
-				// includes the last character
-				i++
-				break
-			}
-		}
-		if len(tag) < i {
-			return 0, fmt.Errorf("objc: missing SuperClassName: %w", TagFormatError)
-		}
-		split[1] = tag[:i] // store SuperClassName
-		tag = tag[i:]      // drop SuperClassName
-		skipSpace()
-		if len(tag) > 0 {
-			if tag[0] != '<' {
-				return 0, fmt.Errorf("objc: expected '<': %w", TagFormatError)
-			}
-			tag = tag[1:] // drop '<'
-			// get Protocols
-		outer:
-			for {
-				skipSpace()
-				for i, r = range tag {
-					switch r {
-					case ' ':
-						split = append(split, tag[:i])
-						tag = tag[i:]
-						continue outer
-					case ',':
-						// If there is actually an identifier - add it.
-						if i > 0 {
-							split = append(split, tag[:i])
-							tag = tag[i:]
-						} else {
-							// Otherwise, drop ','
-							tag = tag[1:]
-						}
-						continue outer
-					case '>':
-						// If there is actually an identifier - add it.
-						if i > 0 {
-							split = append(split, tag[:i])
-							tag = tag[i:]
-						}
-						break outer
-					}
-				}
-				return 0, fmt.Errorf("objc: expected '>': %w", TagFormatError)
-			}
-		}
-	}
-	class := objc_allocateClassPair(GetClass(split[1]), split[0], 0)
+func RegisterClass(name string, superClass Class, protocols []*Protocol, ivars []IvarDef, definitions []MethodDef) (Class, error) {
+	class := objc_allocateClassPair(superClass, name, 0)
 	if class == 0 {
-		return 0, fmt.Errorf("objc: failed to create class with name '%s'", split[0])
+		return 0, fmt.Errorf("objc: failed to create class with name '%s'", name)
 	}
-	if len(split) > 2 {
-		// Add Protocols
-		for _, n := range split[2:] {
-			if !class.AddProtocol(GetProtocol(n)) {
-				return 0, fmt.Errorf("objc: couldn't add Protocol %s", n)
-			}
+	// Add Protocols
+	for _, p := range protocols {
+		if !class.AddProtocol(p) {
+			return 0, fmt.Errorf("objc: couldn't add Protocol %s", p.Name())
 		}
 	}
-	// Add exported methods based on the selectors returned from Selector(string) SEL
-	for i := 0; i < ptr.NumMethod(); i++ {
-		met := ptr.Method(i)
-		// we know this method is the interface one since RegisterClass
-		// requires that the struct implement Selector.
-		if met.Name == "Selector" {
-			continue
-		}
-		sel := object.Selector(met.Name)
-		if sel == 0 {
-			continue
-		}
-		fn := met.Func.Interface()
+	// Add exported methods based on the selectors returned from ClassDef(string) SEL
+	for idx, def := range definitions {
 		imp, err := func() (imp IMP, err error) {
 			defer func() {
 				if r := recover(); r != nil {
 					err = fmt.Errorf("objc: failed to create IMP: %s", r)
 				}
 			}()
-			return NewIMP(fn), nil
+			return NewIMP(def.Fn), nil
 		}()
 		if err != nil {
-			return 0, fmt.Errorf("objc: couldn't add Method %s: %w", met.Name, err)
+			return 0, fmt.Errorf("objc: couldn't add Method at index %d: %w", idx, err)
 		}
-		encoding, err := encodeFunc(fn)
+		encoding, err := encodeFunc(def.Fn)
 		if err != nil {
-			return 0, fmt.Errorf("objc: couldn't add Method %s: %w", met.Name, err)
+			return 0, fmt.Errorf("objc: couldn't add Method at index %d: %w", idx, err)
 		}
-		if !class.AddMethod(sel, imp, encoding) {
-			return 0, fmt.Errorf("objc: couldn't add Method %s", met.Name)
+		if !class.AddMethod(def.Cmd, imp, encoding) {
+			return 0, fmt.Errorf("objc: couldn't add Method at index %d", idx)
 		}
 	}
 	// Add Ivars
 	// Start at 1 because we skip the class object which is first
-	for i := 1; i < strct.NumField(); i++ {
-		f := strct.Field(i)
-		if f.Name == "_" {
-			continue
-		}
-		size := f.Type.Size()
-		alignment := uint8(math.Log2(float64(f.Type.Align())))
-		enc, err := encodeType(f.Type, false)
+	for _, ivar := range ivars {
+		size := ivar.Type.Size()
+		alignment := uint8(math.Log2(float64(ivar.Type.Align())))
+		enc, err := encodeType(ivar.Type, false)
 		if err != nil {
-			return 0, fmt.Errorf("objc: couldn't add Ivar %s: %w", f.Name, err)
+			return 0, fmt.Errorf("objc: couldn't add Ivar %s: %w", ivar.Name, err)
 		}
-		if !class_addIvar(class, f.Name, size, alignment, enc) {
-			return 0, fmt.Errorf("objc: couldn't add Ivar %s", f.Name)
-		}
-		if offset := class.InstanceVariable(f.Name).Offset(); offset != f.Offset {
-			return 0, fmt.Errorf("objc: couldn't add Ivar %s because offset (%d != %d)", f.Name, offset, f.Offset)
+		if !class_addIvar(class, ivar.Name, size, alignment, enc) {
+			return 0, fmt.Errorf("objc: couldn't add Ivar %s", ivar.Name)
 		}
 	}
 	objc_registerClassPair(class)
-	if size1, size2 := class.InstanceSize(), strct.Size(); size1 != size2 {
-		return 0, fmt.Errorf("objc: sizes don't match %d != %d: %w", size1, size2, MismatchError)
-	}
 	return class, nil
 }
 
@@ -420,7 +314,7 @@ func encodeType(typ reflect.Type, insidePtr bool) (string, error) {
 		if insidePtr {
 			return encStructBegin + typ.Name() + encStructEnd, nil
 		}
-		var encoding = encStructBegin
+		encoding := encStructBegin
 		encoding += typ.Name()
 		encoding += "="
 		for i := 0; i < typ.NumField(); i++ {
@@ -544,7 +438,7 @@ func (i Ivar) Offset() uintptr {
 }
 
 // Protocol is a type that declares methods that can be implemented by any class.
-type Protocol uintptr
+type Protocol struct{}
 
 // GetProtocol returns the protocol for the given name or nil if there is no protocol by that name.
 func GetProtocol(name string) *Protocol {
@@ -555,8 +449,8 @@ func GetProtocol(name string) *Protocol {
 type IMP uintptr
 
 // NewIMP takes a Go function that takes (ID, SEL) as its first two arguments.
-// ID may instead be a pointer to a struct whose first field has type Class.
 // It returns an IMP function pointer that can be called by Objective-C code.
+// The function panics if an error occurs.
 // The function pointer is never deallocated.
 func NewIMP(fn interface{}) IMP {
 	ty := reflect.TypeOf(fn)
@@ -568,13 +462,9 @@ func NewIMP(fn interface{}) IMP {
 	switch {
 	case ty.NumIn() < 2:
 		fallthrough
-	case ty.In(0).Kind() != reflect.Uintptr && // checks if it's objc.ID
-		// or that it's a pointer to a struct
-		(ty.In(0).Kind() != reflect.Pointer || ty.In(0).Elem().Kind() != reflect.Struct ||
-			// and that the structs first field is an objc.Class
-			ty.In(0).Elem().Field(0).Type != reflect.TypeOf(Class(0))):
+	case ty.In(0) != reflect.TypeOf(Class(0)):
 		fallthrough
-	case ty.In(1).Kind() != reflect.Uintptr:
+	case ty.In(1) != reflect.TypeOf(SEL(0)):
 		panic("objc: NewIMP must take a (id, SEL) as its first two arguments; got " + ty.String())
 	}
 	return IMP(purego.NewCallback(fn))
