@@ -73,7 +73,7 @@ TEXT syscall9X(SB), NOSPLIT, $0
 	POPQ BP
 	RET
 
-TEXT callbackasm1(SB), NOSPLIT, $0
+TEXT callbackasm1(SB), NOSPLIT|NOFRAME, $0
 	// remove return address from stack, we are not returning to callbackasm, but to its caller.
 	MOVQ 0(SP), AX
 	ADDQ $8, SP
