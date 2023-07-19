@@ -29,7 +29,7 @@
 // C calling convention (use libcCall).
 GLOBL ·syscall9XABI0(SB), NOPTR|RODATA, $8
 DATA ·syscall9XABI0(SB)/8, $syscall9X(SB)
-TEXT syscall9X(SB), NOSPLIT, $0
+TEXT syscall9X(SB), NOSPLIT|NOFRAME, $0
 	PUSHQ BP
 	MOVQ  SP, BP
 	SUBQ  $32, SP
