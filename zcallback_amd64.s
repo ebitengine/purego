@@ -11,9 +11,7 @@
 // which Go callback function is executed later on.
 #include "textflag.h"
 
-GLOBL ·callbackasmABI0(SB), NOPTR|RODATA, $8
-DATA ·callbackasmABI0(SB)/8, $callbackasm(SB)
-TEXT callbackasm(SB), 7, $0
+TEXT callbackasm(SB), NOSPLIT|NOFRAME, $0
 	CALL callbackasm1(SB)
 	CALL callbackasm1(SB)
 	CALL callbackasm1(SB)

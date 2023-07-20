@@ -21,3 +21,7 @@ package fakecgo
 //go:cgo_import_dynamic purego_pthread_attr_getstacksize pthread_attr_getstacksize "/usr/lib/libSystem.B.dylib"
 //go:cgo_import_dynamic purego_pthread_attr_setstacksize pthread_attr_setstacksize "/usr/lib/libSystem.B.dylib"
 //go:cgo_import_dynamic purego_pthread_attr_destroy pthread_attr_destroy "/usr/lib/libSystem.B.dylib"
+//go:cgo_import_dynamic purego_pthread_mutex_lock pthread_mutex_lock "/usr/lib/libSystem.B.dylib"
+//go:cgo_import_dynamic purego_pthread_mutex_unlock pthread_mutex_unlock "/usr/lib/libSystem.B.dylib"
+//go:cgo_import_dynamic purego_pthread_cond_broadcast pthread_cond_broadcast "/usr/lib/libSystem.B.dylib"
+//go:cgo_import_dynamic purego_pthread_setspecific pthread_setspecific "/usr/lib/libSystem.B.dylib"

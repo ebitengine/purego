@@ -29,7 +29,7 @@
 // C calling convention (use libcCall).
 GLOBL ·syscall9XABI0(SB), NOPTR|RODATA, $8
 DATA ·syscall9XABI0(SB)/8, $syscall9X(SB)
-TEXT syscall9X(SB), NOSPLIT, $0
+TEXT syscall9X(SB), NOSPLIT|NOFRAME, $0
 	PUSHQ BP
 	MOVQ  SP, BP
 	SUBQ  $32, SP
@@ -73,7 +73,7 @@ TEXT syscall9X(SB), NOSPLIT, $0
 	POPQ BP
 	RET
 
-TEXT callbackasm1(SB), NOSPLIT, $0
+TEXT callbackasm1(SB), NOSPLIT|NOFRAME, $0
 	// remove return address from stack, we are not returning to callbackasm, but to its caller.
 	MOVQ 0(SP), AX
 	ADDQ $8, SP
