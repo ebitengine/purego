@@ -61,8 +61,9 @@ Purego uses code that originates from the Go runtime. These files are under the 
 License that can be found [in the Go Source](https://github.com/golang/go/blob/master/LICENSE).
 This is a list of the copied files:
 
+* `abi_*.h` from package `runtime/cgo`
 * `zcallback_darwin_*.s` from package `runtime`
-* `internal/abi/abi_*.h` from package `runtime/cgo`
+* `internal/fakecgo/abi_*.h` from package `runtime/cgo`
 * `internal/fakecgo/asm_GOARCH.s` from package `runtime/cgo`
 * `internal/fakecgo/callbacks.go` from package `runtime/cgo`
 * `internal/fakecgo/go_GOOS_GOARCH.go` from package `runtime/cgo`
