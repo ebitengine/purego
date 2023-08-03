@@ -82,3 +82,24 @@ jobs:
         if: ${{ !startsWith(matrix.go, '1.18.') && !startsWith(matrix.go, '1.19.') }}
         run: |
           go test -race -shuffle=on -v -count=10 ./...
+  bazel:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    name: Bazel build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v3
+      - uses: bazelbuild/setup-bazelisk@v2
+      - name: Mount bazel cache
+        uses: actions/cache@v3
+        with:
+            path: "~/.cache/bazel"
+            key: bazel-${{ matrix.os }}
+      - name: Build
+        run: |
+          bazel run //:gazelle  # Build bazel files across the repo
+          bazel build //:purego # Actually build them

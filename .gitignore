@@ -1,1 +1,6 @@
 *~
+bazel-bin
+bazel-out
+bazel-purego
+bazel-testlogs
+*.bazel
