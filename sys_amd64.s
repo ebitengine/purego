@@ -4,7 +4,7 @@
 //go:build darwin || (!cgo && linux)
 
 #include "textflag.h"
-#include "internal/abi/abi_amd64.h"
+#include "abi_amd64.h"
 #include "go_asm.h"
 #include "funcdata.h"
 
