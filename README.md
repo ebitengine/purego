@@ -68,4 +68,6 @@ This is a list of the copied files:
 * `internal/fakecgo/callbacks.go` from package `runtime/cgo`
 * `internal/fakecgo/go_GOOS_GOARCH.go` from package `runtime/cgo`
 * `internal/fakecgo/iscgo.go` from package `runtime/cgo`
-* `internal/fakecgo/setenv.go` from package `runtime/cgo`
+* `internal/fakecgo/setenv.go` from package `runtime/cgo
+
+The files `abi_*.h` and `internal/fakecgo/abi_*.h` are the same because Bazel does not support cross-package use of `#include` so we need each one once per package. (cf. [issue](https://github.com/bazelbuild/rules_go/issues/3636))
