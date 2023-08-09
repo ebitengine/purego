@@ -35,7 +35,7 @@ func main() {
 		[]*objc.Protocol{
 			objc.GetProtocol("NSDelegateWindow"),
 		},
-		[]objc.IvarDef{
+		[]objc.FieldDef{
 			{
 				Name:      "bar",
 				Type:      reflect.TypeOf(int(0)),
@@ -43,7 +43,7 @@ func main() {
 			},
 		},
 		[]objc.MethodDef{
-			{sel_init, objc.NewIMP(BarInit)},
+			{sel_init, BarInit},
 		},
 	)
 	if err != nil {

@@ -10,6 +10,8 @@ import (
 	"fmt"
 	"math"
 	"reflect"
+	"strings"
+	"unsafe"
 
 	"github.com/ebitengine/purego"
 )
@@ -34,6 +36,9 @@ var (
 	class_addProtocol         func(class Class, protocol *Protocol) bool
 	ivar_getOffset            func(ivar Ivar) uintptr
 	object_getClass           func(obj ID) Class
+	object_getIvar            func(obj ID, ivar Ivar) ID
+	object_setIvar            func(obj ID, ivar Ivar, value ID)
+	protocol_getName          func(protocol *Protocol) string
 )
 
 func init() {
@@ -64,6 +69,9 @@ func init() {
 	purego.RegisterLibFunc(&class_addProtocol, objc, "class_addProtocol")
 	purego.RegisterLibFunc(&class_getInstanceSize, objc, "class_getInstanceSize")
 	purego.RegisterLibFunc(&ivar_getOffset, objc, "ivar_getOffset")
+	purego.RegisterLibFunc(&protocol_getName, objc, "protocol_getName")
+	purego.RegisterLibFunc(&object_getIvar, objc, "object_getIvar")
+	purego.RegisterLibFunc(&object_setIvar, objc, "object_setIvar")
 }
 
 // ID is an opaque pointer to some Objective-C object
@@ -79,6 +87,16 @@ func (id ID) Class() Class {
 // of RegisterName.
 func (id ID) Send(sel SEL, args ...interface{}) ID {
 	return objc_msgSend(id, sel, args...)
+}
+
+// GetIvar reads the value of an instance variable in an object.
+func (id ID) GetIvar(ivar Ivar) ID {
+	return object_getIvar(id, ivar)
+}
+
+// SetIvar sets the value of an instance variable in an object.
+func (id ID) SetIvar(ivar Ivar, value ID) {
+	object_setIvar(id, ivar, value)
 }
 
 // Send is a convenience method for sending messages to objects that can return any type.
@@ -147,37 +165,34 @@ func AllocateClassPair(super Class, name string, extraBytes uintptr) Class {
 	return objc_allocateClassPair(super, name, extraBytes)
 }
 
-func (_ Class) isClass() internalField { return internalField{} }
-
-// ClassDef is an interface that takes a Go method name
-// and returns the selector equivalent name.
-// If it returns a nil SEL then that method
-// is not added to the class object.
-type ClassDef interface {
-	isClass() internalField
-}
-
-type internalField struct{}
-
+// MethodDef represents the Go function and the selector that ObjC uses to access that function.
 type MethodDef struct {
 	Cmd SEL
-	Fn  IMP
+	Fn  any
 }
 
-// TagFormatError occurs when the parser fails to parse the objc tag in a ClassDef object
-var TagFormatError = errors.New(`objc tag doesn't match "ClassName : SuperClassName <Protocol, ...>""`)
-
-// MismatchError occurs when the Go struct definition doesn't match that of Objective-C
-var MismatchError = errors.New("go struct doesn't match objective-c struct")
-
+// IvarAttrib is the attribute that an ivar has. It affects if and which methods are automatically
+// generated when creating a class with RegisterClass. See [Apple Docs] for an understanding of these attributes.
+// The fields are still accessible using objc.GetIvar and objc.SetIvar regardless of the value of IvarAttrib.
+//
+// Take for example this Objective-C code:
+//
+//	@property (readwrite) float value;
+//
+// In Go, creates functions with these signatures:
+//
+//	func value() float32
+//	func setValue(float32)
+//
+// [Apple Docs]: https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/ObjectiveC/Chapters/ocProperties.html
 type IvarAttrib int
 
 const (
-	ReadWrite IvarAttrib = iota
-	ReadOnly
+	ReadOnly IvarAttrib = 1 << iota
+	ReadWrite
 )
 
-type IvarDef struct {
+type FieldDef struct {
 	Name      string
 	Type      reflect.Type
 	Attribute IvarAttrib
@@ -193,7 +208,7 @@ type IvarDef struct {
 // The struct's first field must be of type Class and have a tag that matches the format
 // `objc:"ClassName : SuperClassName <Protocol, ...>`. This tag is equal to how the class
 // would be defined in Objective-C.
-func RegisterClass(name string, superClass Class, protocols []*Protocol, ivars []IvarDef, definitions []MethodDef) (Class, error) {
+func RegisterClass(name string, superClass Class, protocols []*Protocol, ivars []FieldDef, methods []MethodDef) (Class, error) {
 	class := objc_allocateClassPair(superClass, name, 0)
 	if class == 0 {
 		return 0, fmt.Errorf("objc: failed to create class with name '%s'", name)
@@ -201,11 +216,11 @@ func RegisterClass(name string, superClass Class, protocols []*Protocol, ivars [
 	// Add Protocols
 	for _, p := range protocols {
 		if !class.AddProtocol(p) {
-			return 0, fmt.Errorf("objc: couldn't add Protocol %s", p.Name())
+			return 0, fmt.Errorf("objc: couldn't add Protocol %s", protocol_getName(p))
 		}
 	}
 	// Add exported methods based on the selectors returned from ClassDef(string) SEL
-	for idx, def := range definitions {
+	for idx, def := range methods {
 		imp, err := func() (imp IMP, err error) {
 			defer func() {
 				if r := recover(); r != nil {
@@ -236,6 +251,66 @@ func RegisterClass(name string, superClass Class, protocols []*Protocol, ivars [
 		}
 		if !class_addIvar(class, ivar.Name, size, alignment, enc) {
 			return 0, fmt.Errorf("objc: couldn't add Ivar %s", ivar.Name)
+		}
+		switch ivar.Attribute {
+		case ReadWrite:
+			ty := reflect.FuncOf(
+				[]reflect.Type{
+					reflect.TypeOf(ID(0)), reflect.TypeOf(SEL(0)), ivar.Type,
+				},
+				nil, false,
+			)
+			var encoding string
+			if encoding, err = encodeFunc(reflect.New(ty).Elem().Interface()); err != nil {
+				return 0, fmt.Errorf("objc: failed to create read method for '%s': %w", ivar.Name, err)
+			}
+			instanceVariable := class.InstanceVariable(ivar.Name)
+			val := reflect.MakeFunc(ty, func(args []reflect.Value) (results []reflect.Value) {
+				// on entry the first and second arguments are ID and SEL followed by the value
+				if len(args) != 3 {
+					panic(fmt.Errorf("objc: incorrect number of arguments"))
+				}
+				// Grab the pointer from using the Ivar and dereference it
+				var value ID
+				switch args[2].Kind() {
+				case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+					value = ID(args[2].Int())
+				case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+					value = ID(args[2].Uint())
+				case reflect.Float32, reflect.Float64:
+					value = ID(math.Float64bits(args[2].Float()))
+				default:
+					panic(fmt.Errorf("objc: unsupported kind %s", args[2].Kind()))
+				}
+				object_setIvar(args[0].Interface().(ID), instanceVariable, value)
+				return nil
+			}).Interface()
+			class.AddMethod(RegisterName("set"+strings.Title(ivar.Name)+":\x00"), NewIMP(val), encoding)
+			fallthrough // also implement the read method
+		case ReadOnly:
+			ty := reflect.FuncOf(
+				[]reflect.Type{
+					reflect.TypeOf(ID(0)), reflect.TypeOf(SEL(0)),
+				},
+				[]reflect.Type{ivar.Type}, false,
+			)
+			var encoding string
+			if encoding, err = encodeFunc(reflect.New(ty).Elem().Interface()); err != nil {
+				return 0, fmt.Errorf("objc: failed to create read method for '%s': %w", ivar.Name, err)
+			}
+			instanceVariable := class.InstanceVariable(ivar.Name)
+			val := reflect.MakeFunc(ty, func(args []reflect.Value) (results []reflect.Value) {
+				// on entry the first and second arguments are ID and SEL
+				if len(args) != 2 {
+					panic(fmt.Errorf("objc: incorrect number of arguments"))
+				}
+				// Grab the pointer from using the Ivar and dereference it
+				variable := object_getIvar(args[0].Interface().(ID), instanceVariable)
+				return []reflect.Value{reflect.NewAt(ivar.Type, unsafe.Pointer(&variable)).Elem()}
+			}).Interface()
+			class.AddMethod(RegisterName(ivar.Name), NewIMP(val), encoding)
+		default:
+			return 0, fmt.Errorf("objc: unknown Ivar Attribute (%d)", ivar.Attribute)
 		}
 	}
 	objc_registerClassPair(class)
@@ -462,7 +537,7 @@ func NewIMP(fn interface{}) IMP {
 	switch {
 	case ty.NumIn() < 2:
 		fallthrough
-	case ty.In(0) != reflect.TypeOf(Class(0)):
+	case ty.In(0) != reflect.TypeOf(ID(0)):
 		fallthrough
 	case ty.In(1) != reflect.TypeOf(SEL(0)):
 		panic("objc: NewIMP must take a (id, SEL) as its first two arguments; got " + ty.String())
