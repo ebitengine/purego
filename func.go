@@ -35,7 +35,7 @@ func RegisterLibFunc(fptr interface{}, handle uintptr, name string) {
 // matches the C function. This also holds true for struct types where the padding
 // needs to be ensured to match that of C; RegisterFunc does not verify this.
 //
-// # Type Conversions (Go => C)
+// # Type Conversions (Go <=> C)
 //
 //	string <=> char*
 //	bool <=> _Bool
@@ -70,18 +70,37 @@ func RegisterLibFunc(fptr interface{}, handle uintptr, name string) {
 //
 // In general it is not possible for purego to guarantee the lifetimes of objects returned or received from
 // calling functions using RegisterFunc. For arguments to a C function is it important that the C function doesn't
-// hold onto a reference to Go memory. This is the same as the [Cgo rules]: https://pkg.go.dev/cmd/cgo#hdr-Go_references_to_C
+// hold onto a reference to Go memory. This is the same as the [Cgo rules].
 //
 // However, there are some special cases. When passing a string as an argument if the string does not end in a null
-// terminated byte (\x00) then the string will be copied into Go memory maintained by purego. The memory is only valid for
+// terminated byte (\x00) then the string will be copied into memory maintained by purego. The memory is only valid for
 // that specific call. Therefore, if the C code keeps a reference to that string it may become invalid at some
 // undefined time. However, if the string does already contain a null-terminated byte then no copy is done.
 // It is then the responsibility of the caller to ensure the string stays alive as long as it's needed in C memory.
-// This can be done using runtime.KeepAlive. When a C function returns a null-terminated pointer to char a Go string
-// can be used. Purego will allocate a new string in Go memory and copy the data over. This string will
-// be garbage collected whenever Go decides it's no longer referenced. If the pointer to char is not null-terminated or
-// must continue to point to C memory (because it's a buffer for example) then use a pointer to byte and then convert
-// that to a slice using unsafe.Slice.
+// This can be done using runtime.KeepAlive or allocating the string in C memory using malloc. When a C function
+// returns a null-terminated pointer to char a Go string can be used. Purego will allocate a new string in Go memory
+// and copy the data over. This string will be garbage collected whenever Go decides it's no longer referenced.
+// If the pointer to char is not null-terminated or must continue to point to C memory (because it's a buffer for
+// example) then use a pointer to byte and then convert that to a slice using unsafe.Slice. Doing this means that
+// it becomes the responsibility of the caller to choose when the pointer should be freed.
+//
+// # Example
+//
+// All functions below call this C function:
+//
+//	char *foo(char *str);
+//
+//	// Let purego convert types
+//	var foo func(s string) string
+//	goString := foo("copied")
+//	// Go will garbage collect this string
+//
+//	// Manually, handle allocations
+//	var foo2 func(b string) *byte
+//	mustFree := foo2("not copied\x00")
+//	defer free(MustFree)
+//
+// [Cgo rules]: https://pkg.go.dev/cmd/cgo#hdr-Go_references_to_C
 func RegisterFunc(fptr interface{}, cfn uintptr) {
 	fn := reflect.ValueOf(fptr).Elem()
 	ty := fn.Type()
