@@ -1,7 +1,6 @@
 package main
 
 import (
-	"reflect"
 	"unsafe"
 )
 
@@ -22,10 +21,10 @@ func main() {
 	output := Process(&outputLen)
 
 	// manually construct a string struct and set data ptr and length
-	s := *(*string)(unsafe.Pointer(&reflect.StringHeader{Data: uintptr(output), Len: outputLen}))
+	s := unsafe.String((*byte)(output), unsafe.IntegerType(outputLen))
 	println(s)
 
 	// to byte slice
-	bs := *(*[]byte)(unsafe.Pointer(&reflect.SliceHeader{Data: uintptr(output), Len: outputLen, Cap: outputLen}))
+	bs := unsafe.Slice((*byte)(output), outputLen)
 	println(bs)
 }
