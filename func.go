@@ -80,9 +80,10 @@ func RegisterLibFunc(fptr interface{}, handle uintptr, name string) {
 // This can be done using runtime.KeepAlive or allocating the string in C memory using malloc. When a C function
 // returns a null-terminated pointer to char a Go string can be used. Purego will allocate a new string in Go memory
 // and copy the data over. This string will be garbage collected whenever Go decides it's no longer referenced.
-// If the pointer to char is not null-terminated or must continue to point to C memory (because it's a buffer for
-// example) then use a pointer to byte and then convert that to a slice using unsafe.Slice. Doing this means that
-// it becomes the responsibility of the caller to choose when the pointer should be freed.
+// This C created string will not be freed by purego. If the pointer to char is not null-terminated or must continue
+// to point to C memory (because it's a buffer for example) then use a pointer to byte and then convert that to a slice
+// using unsafe.Slice. Doing this means that it becomes the responsibility of the caller to choose when the pointer
+// should be freed.
 //
 // # Example
 //
@@ -98,7 +99,7 @@ func RegisterLibFunc(fptr interface{}, handle uintptr, name string) {
 //	// Manually, handle allocations
 //	var foo2 func(b string) *byte
 //	mustFree := foo2("not copied\x00")
-//	defer free(MustFree)
+//	defer free(mustFree)
 //
 // [Cgo rules]: https://pkg.go.dev/cmd/cgo#hdr-Go_references_to_C
 func RegisterFunc(fptr interface{}, cfn uintptr) {
