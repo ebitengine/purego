@@ -3,6 +3,7 @@
 
 package purego
 
+// Constants as defined in https://github.com/freebsd/freebsd-src/blob/main/include/dlfcn.h
 const (
 	RTLD_DEFAULT = ^uintptr(0) - 2 // Pseudo-handle for dlsym so search for any loaded symbol
 	RTLD_LAZY    = 0x00001         // Relocations are performed at an implementation-dependent time.
