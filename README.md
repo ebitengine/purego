@@ -19,7 +19,7 @@ born to bring that same vision to the other platforms supported by Ebitengine.
 
 ## Example
 
-This example only works on macOS and Linux. For a complete example look at [libc](https://github.com/ebitengine/purego/tree/main/examples/libc) which supports Windows.
+This example only works on macOS and Linux. For a complete example look at [libc](https://github.com/ebitengine/purego/tree/main/examples/libc) which supports Windows and FreeBSD.
 
 ```go
 package main
@@ -68,6 +68,7 @@ This is a list of the copied files:
 * `internal/fakecgo/callbacks.go` from package `runtime/cgo`
 * `internal/fakecgo/go_GOOS_GOARCH.go` from package `runtime/cgo`
 * `internal/fakecgo/iscgo.go` from package `runtime/cgo`
-* `internal/fakecgo/setenv.go` from package `runtime/cgo
+* `internal/fakecgo/setenv.go` from package `runtime/cgo`
+* `internal/fakecgo/freebsd.go` from package `runtime/cgo`
 
 The files `abi_*.h` and `internal/fakecgo/abi_*.h` are the same because Bazel does not support cross-package use of `#include` so we need each one once per package. (cf. [issue](https://github.com/bazelbuild/rules_go/issues/3636))
