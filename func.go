@@ -82,8 +82,8 @@ func RegisterLibFunc(fptr interface{}, handle uintptr, name string) {
 // and copy the data over. This string will be garbage collected whenever Go decides it's no longer referenced.
 // This C created string will not be freed by purego. If the pointer to char is not null-terminated or must continue
 // to point to C memory (because it's a buffer for example) then use a pointer to byte and then convert that to a slice
-// using unsafe.Slice. Doing this means that it becomes the responsibility of the caller to choose when the pointer
-// should be freed.
+// using unsafe.Slice. Doing this means that it becomes the responsibility of the caller to care about the lifetime
+// of the pointer
 //
 // # Example
 //
