@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023 The Ebitengine Authors
 
-//go:build darwin || linux
+//go:build darwin || freebsd || linux
 
 package purego_test
 
@@ -52,7 +52,12 @@ func buildSharedLib(compilerEnv, libFile string, sources ...string) error {
 		return errors.New("compiler not found")
 	}
 
-	args := []string{"-shared", "-Wall", "-Werror", "-o", libFile}
+	var args []string
+	if runtime.GOOS == "freebsd" {
+		args = []string{"-shared", "-Wall", "-Werror", "-fPIC", "-o", libFile}
+	} else {
+		args = []string{"-shared", "-Wall", "-Werror", "-o", libFile}
+	}
 
 	// macOS arm64 can run amd64 tests through Rossetta.
 	// Build the shared library based on the GOARCH and not

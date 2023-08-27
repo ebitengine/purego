@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2022 The Ebitengine Authors
 
-//go:build darwin || (!cgo && linux) || windows
+//go:build darwin || freebsd || (!cgo && linux) || windows
 
 #include "textflag.h"
 #include "go_asm.h"
 #include "funcdata.h"
-#include "internal/abi/abi_arm64.h"
 
 // syscall9X calls a function in libc on behalf of the syscall package.
 // syscall9X takes a pointer to a struct like:

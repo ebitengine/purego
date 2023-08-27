@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2022 The Ebitengine Authors
 
-//go:build darwin || (!cgo && linux)
+//go:build darwin || freebsd || (!cgo && linux)
 
 #include "textflag.h"
-#include "internal/abi/abi_amd64.h"
+#include "abi_amd64.h"
 #include "go_asm.h"
 #include "funcdata.h"
 
@@ -29,7 +29,7 @@
 // C calling convention (use libcCall).
 GLOBL ·syscall9XABI0(SB), NOPTR|RODATA, $8
 DATA ·syscall9XABI0(SB)/8, $syscall9X(SB)
-TEXT syscall9X(SB), NOSPLIT, $0
+TEXT syscall9X(SB), NOSPLIT|NOFRAME, $0
 	PUSHQ BP
 	MOVQ  SP, BP
 	SUBQ  $32, SP
@@ -73,7 +73,7 @@ TEXT syscall9X(SB), NOSPLIT, $0
 	POPQ BP
 	RET
 
-TEXT callbackasm1(SB), NOSPLIT, $0
+TEXT callbackasm1(SB), NOSPLIT|NOFRAME, $0
 	// remove return address from stack, we are not returning to callbackasm, but to its caller.
 	MOVQ 0(SP), AX
 	ADDQ $8, SP

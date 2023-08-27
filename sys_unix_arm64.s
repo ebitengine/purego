@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023 The Ebitengine Authors
 
-//go:build darwin || (!cgo && linux)
+//go:build darwin || freebsd || (!cgo && linux)
 
 #include "textflag.h"
 #include "go_asm.h"
 #include "funcdata.h"
-#include "internal/abi/abi_arm64.h"
+#include "abi_arm64.h"
 
 TEXT callbackasm1(SB), NOSPLIT|NOFRAME, $0
 	NO_LOCAL_POINTERS

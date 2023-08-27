@@ -1,14 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2022 The Ebitengine Authors
 
-//go:build darwin || linux
+//go:build darwin || freebsd || linux
 
 package fakecgo
 
-type size_t uintptr
-type sigset_t [128]byte
-type pthread_attr_t [64]byte
-type pthread_t int
+type (
+	size_t         uintptr
+	sigset_t       [128]byte
+	pthread_attr_t [64]byte
+	pthread_t      int
+	pthread_key_t  uint64
+)
 
 // for pthread_sigmask:
 

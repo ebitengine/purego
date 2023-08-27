@@ -21,3 +21,7 @@ package fakecgo
 //go:cgo_import_dynamic purego_pthread_attr_getstacksize pthread_attr_getstacksize "libpthread.so.0"
 //go:cgo_import_dynamic purego_pthread_attr_setstacksize pthread_attr_setstacksize "libpthread.so.0"
 //go:cgo_import_dynamic purego_pthread_attr_destroy pthread_attr_destroy "libpthread.so.0"
+//go:cgo_import_dynamic purego_pthread_mutex_lock pthread_mutex_lock "libpthread.so.0"
+//go:cgo_import_dynamic purego_pthread_mutex_unlock pthread_mutex_unlock "libpthread.so.0"
+//go:cgo_import_dynamic purego_pthread_cond_broadcast pthread_cond_broadcast "libpthread.so.0"
+//go:cgo_import_dynamic purego_pthread_setspecific pthread_setspecific "libpthread.so.0"

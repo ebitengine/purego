@@ -23,6 +23,8 @@ func getSystemLibrary() (string, error) {
 		return "/usr/lib/libSystem.B.dylib", nil
 	case "linux":
 		return "libc.so.6", nil
+	case "freebsd":
+		return "libc.so.7", nil
 	case "windows":
 		return "ucrtbase.dll", nil
 	default:

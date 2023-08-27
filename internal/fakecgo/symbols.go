@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2022 The Ebitengine Authors
 
-//go:build darwin || linux
+//go:build darwin || freebsd || linux
 
 package fakecgo
 
@@ -87,6 +87,22 @@ func pthread_attr_destroy(attr *pthread_attr_t) int32 {
 	return int32(call5(pthread_attr_destroyABI0, uintptr(unsafe.Pointer(attr)), 0, 0, 0, 0))
 }
 
+func pthread_mutex_lock(mutex *pthread_mutex_t) int32 {
+	return int32(call5(pthread_mutex_lockABI0, uintptr(unsafe.Pointer(mutex)), 0, 0, 0, 0))
+}
+
+func pthread_mutex_unlock(mutex *pthread_mutex_t) int32 {
+	return int32(call5(pthread_mutex_unlockABI0, uintptr(unsafe.Pointer(mutex)), 0, 0, 0, 0))
+}
+
+func pthread_cond_broadcast(cond *pthread_cond_t) int32 {
+	return int32(call5(pthread_cond_broadcastABI0, uintptr(unsafe.Pointer(cond)), 0, 0, 0, 0))
+}
+
+func pthread_setspecific(key pthread_key_t, value unsafe.Pointer) int32 {
+	return int32(call5(pthread_setspecificABI0, uintptr(key), uintptr(value), 0, 0, 0))
+}
+
 //go:linkname _malloc _malloc
 var _malloc uintptr
 var mallocABI0 = uintptr(unsafe.Pointer(&_malloc))
@@ -150,3 +166,19 @@ var pthread_attr_setstacksizeABI0 = uintptr(unsafe.Pointer(&_pthread_attr_setsta
 //go:linkname _pthread_attr_destroy _pthread_attr_destroy
 var _pthread_attr_destroy uintptr
 var pthread_attr_destroyABI0 = uintptr(unsafe.Pointer(&_pthread_attr_destroy))
+
+//go:linkname _pthread_mutex_lock _pthread_mutex_lock
+var _pthread_mutex_lock uintptr
+var pthread_mutex_lockABI0 = uintptr(unsafe.Pointer(&_pthread_mutex_lock))
+
+//go:linkname _pthread_mutex_unlock _pthread_mutex_unlock
+var _pthread_mutex_unlock uintptr
+var pthread_mutex_unlockABI0 = uintptr(unsafe.Pointer(&_pthread_mutex_unlock))
+
+//go:linkname _pthread_cond_broadcast _pthread_cond_broadcast
+var _pthread_cond_broadcast uintptr
+var pthread_cond_broadcastABI0 = uintptr(unsafe.Pointer(&_pthread_cond_broadcast))
+
+//go:linkname _pthread_setspecific _pthread_setspecific
+var _pthread_setspecific uintptr
+var pthread_setspecificABI0 = uintptr(unsafe.Pointer(&_pthread_setspecific))

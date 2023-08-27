@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2022 The Ebitengine Authors
 
-//go:build darwin || (!cgo && linux && (amd64 || arm64))
+//go:build darwin || freebsd || (!cgo && linux && (amd64 || arm64))
 
 package purego
 
@@ -117,8 +117,11 @@ const ptrSize = unsafe.Sizeof((*int)(nil))
 
 const callbackMaxFrame = 64 * ptrSize
 
-// callbackasmABI0 is implemented in zcallback_GOOS_GOARCH.s
-var callbackasmABI0 uintptr
+// callbackasm is implemented in zcallback_GOOS_GOARCH.s
+//
+//go:linkname __callbackasm callbackasm
+var __callbackasm byte
+var callbackasmABI0 = uintptr(unsafe.Pointer(&__callbackasm))
 
 // callbackWrap_call allows the calling of the ABIInternal wrapper
 // which is required for runtime.cgocallback without the

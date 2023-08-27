@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2022 The Ebitengine Authors
 
-//go:build darwin || linux
+//go:build darwin || freebsd || linux
 
 #include "textflag.h"
 #include "go_asm.h"
@@ -39,6 +39,10 @@ TEXT x_cgo_unsetenv_trampoline(SB), NOSPLIT, $0-0
 
 TEXT x_cgo_notify_runtime_init_done_trampoline(SB), NOSPLIT, $0-0
 	CALL ·x_cgo_notify_runtime_init_done(SB)
+	RET
+
+TEXT x_cgo_bindm_trampoline(SB), NOSPLIT, $0
+	CALL ·x_cgo_bindm(SB)
 	RET
 
 // func setg_trampoline(setg uintptr, g uintptr)

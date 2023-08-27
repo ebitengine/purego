@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2022 The Ebitengine Authors
 
-//go:build darwin || linux
+//go:build darwin || linux || freebsd
 
 /*
 trampoline for emulating required C functions for cgo in go (see cgo.go)
@@ -59,6 +59,10 @@ TEXT x_cgo_unsetenv_trampoline(SB), NOSPLIT, $8
 
 TEXT x_cgo_notify_runtime_init_done_trampoline(SB), NOSPLIT, $0
 	CALL ·x_cgo_notify_runtime_init_done(SB)
+	RET
+
+TEXT x_cgo_bindm_trampoline(SB), NOSPLIT, $0
+	CALL ·x_cgo_bindm(SB)
 	RET
 
 // func setg_trampoline(setg uintptr, g uintptr)
