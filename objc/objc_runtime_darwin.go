@@ -198,16 +198,9 @@ type FieldDef struct {
 	Attribute IvarAttrib
 }
 
-// RegisterClass takes a pointer to a struct that implements the ClassDef interface.
-// It will register the structs fields and pointer receiver methods in the Objective-C
-// runtime using the SEL returned from ClassDef. Any errors that occur trying to add
-// a Method or Ivar is returned as an error. Such errors may occur in parsing or because
-// the size of the struct does not match the size in Objective-C. If no errors occur
-// then the returned Class has been registered successfully.
-//
-// The struct's first field must be of type Class and have a tag that matches the format
-// `objc:"ClassName : SuperClassName <Protocol, ...>`. This tag is equal to how the class
-// would be defined in Objective-C.
+// The RegisterClass function takes the name of the class to create, the superclass, a list of protocols this class
+// implements, a list of fields this class has and a list of methods. It returns the created class or an error
+// describing what went wrong.
 func RegisterClass(name string, superClass Class, protocols []*Protocol, ivars []FieldDef, methods []MethodDef) (Class, error) {
 	class := objc_allocateClassPair(superClass, name, 0)
 	if class == 0 {
