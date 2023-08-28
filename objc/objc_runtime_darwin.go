@@ -274,6 +274,12 @@ func RegisterClass(name string, superClass Class, protocols []*Protocol, ivars [
 					value = ID(args[2].Uint())
 				case reflect.Float32, reflect.Float64:
 					value = ID(math.Float64bits(args[2].Float()))
+				case reflect.Bool:
+					if args[2].Bool() {
+						value = 1
+					}
+				case reflect.Pointer, reflect.UnsafePointer:
+					value = ID(args[2].Pointer())
 				default:
 					panic(fmt.Errorf("objc: unsupported kind %s", args[2].Kind()))
 				}
