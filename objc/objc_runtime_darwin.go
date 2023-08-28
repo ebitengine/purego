@@ -39,6 +39,7 @@ var (
 	object_getIvar            func(obj ID, ivar Ivar) ID
 	object_setIvar            func(obj ID, ivar Ivar, value ID)
 	protocol_getName          func(protocol *Protocol) string
+	protocol_isEqual          func(p *Protocol, p2 *Protocol) bool
 )
 
 func init() {
@@ -70,6 +71,7 @@ func init() {
 	purego.RegisterLibFunc(&class_getInstanceSize, objc, "class_getInstanceSize")
 	purego.RegisterLibFunc(&ivar_getOffset, objc, "ivar_getOffset")
 	purego.RegisterLibFunc(&protocol_getName, objc, "protocol_getName")
+	purego.RegisterLibFunc(&protocol_isEqual, objc, "protocol_isEqual")
 	purego.RegisterLibFunc(&object_getIvar, objc, "object_getIvar")
 	purego.RegisterLibFunc(&object_setIvar, objc, "object_setIvar")
 }
@@ -506,11 +508,15 @@ func (i Ivar) Offset() uintptr {
 }
 
 // Protocol is a type that declares methods that can be implemented by any class.
-type Protocol struct{}
+type Protocol [0]func()
 
 // GetProtocol returns the protocol for the given name or nil if there is no protocol by that name.
 func GetProtocol(name string) *Protocol {
 	return objc_getProtocol(name)
+}
+
+func (p *Protocol) Equals(p2 *Protocol) bool {
+	return protocol_isEqual(p, p2)
 }
 
 // IMP is a function pointer that can be called by Objective-C code.

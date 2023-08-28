@@ -50,7 +50,7 @@ func ExampleRegisterClass() {
 			},
 		},
 		[]objc.MethodDef{
-			{sel_init, BarInit},
+			{Cmd: sel_init, Fn: BarInit},
 		},
 	)
 	if err != nil {

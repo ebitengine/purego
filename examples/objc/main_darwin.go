@@ -22,13 +22,13 @@ func BarInit(id objc.ID, _cmd objc.SEL) objc.ID {
 }
 
 func main() {
-	/*
-		This struct is equivalent to the following Objective-C definition.
-
-		@interface BarObject : NSObject <NSDelegateWindow>
-		@property (readwrite) bar int
-		@end
-	*/
+	//
+	// This struct is equivalent to the following Objective-C definition.
+	//
+	// @interface BarObject : NSObject <NSDelegateWindow>
+	// @property (readwrite) bar int
+	// @end
+	//
 	class, err := objc.RegisterClass(
 		"BarObject",
 		objc.GetClass("NSObject"),
@@ -43,7 +43,7 @@ func main() {
 			},
 		},
 		[]objc.MethodDef{
-			{sel_init, BarInit},
+			{Cmd: sel_init, Fn: BarInit},
 		},
 	)
 	if err != nil {
