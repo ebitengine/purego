@@ -31,8 +31,8 @@ func ExampleRegisterClass() {
 		sel_setBar = objc.RegisterName("setBar:")
 		sel_bar    = objc.RegisterName("bar")
 
-		BarInit = func(id objc.ID, _cmd objc.SEL) objc.ID {
-			return id.SendSuper(_cmd)
+		BarInit = func(id objc.ID, cmd objc.SEL) objc.ID {
+			return id.SendSuper(cmd)
 		}
 	)
 
@@ -50,7 +50,10 @@ func ExampleRegisterClass() {
 			},
 		},
 		[]objc.MethodDef{
-			{Cmd: sel_init, Fn: BarInit},
+			{
+				Cmd: sel_init,
+				Fn:  BarInit,
+			},
 		},
 	)
 	if err != nil {

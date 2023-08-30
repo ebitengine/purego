@@ -17,8 +17,8 @@ var (
 	sel_bar    = objc.RegisterName("bar")
 )
 
-func BarInit(id objc.ID, _cmd objc.SEL) objc.ID {
-	return id.SendSuper(_cmd)
+func BarInit(id objc.ID, cmd objc.SEL) objc.ID {
+	return id.SendSuper(cmd)
 }
 
 func main() {
@@ -43,7 +43,10 @@ func main() {
 			},
 		},
 		[]objc.MethodDef{
-			{Cmd: sel_init, Fn: BarInit},
+			{
+				Cmd: sel_init,
+				Fn:  BarInit,
+			},
 		},
 	)
 	if err != nil {

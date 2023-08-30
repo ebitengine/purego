@@ -11,6 +11,7 @@ import (
 	"math"
 	"reflect"
 	"strings"
+	"unicode"
 	"unsafe"
 
 	"github.com/ebitengine/purego"
@@ -194,6 +195,10 @@ const (
 	ReadWrite
 )
 
+// FieldDef is a definition of a field to add to an Objective-C class.
+// The name of the field is what will be used to access it through the Ivar.
+// The type is the Go equivalent type of the Ivar.
+// Attribute determines if a getter and or setter method is generated for this field.
 type FieldDef struct {
 	Name      string
 	Type      reflect.Type
@@ -286,7 +291,12 @@ func RegisterClass(name string, superClass Class, protocols []*Protocol, ivars [
 				object_setIvar(args[0].Interface().(ID), instanceVariable, value)
 				return nil
 			}).Interface()
-			class.AddMethod(RegisterName("set"+strings.Title(ivar.Name)+":\x00"), NewIMP(val), encoding)
+			// this code only works for ascii but that shouldn't be a problem
+			if ivar.Type.Kind() == reflect.Bool && strings.HasPrefix(ivar.Name, "is") {
+				ivar.Name = ivar.Name[2:]
+			}
+			selector := "set" + string(unicode.ToUpper(rune(ivar.Name[0]))) + ivar.Name[1:] + ":\x00"
+			class.AddMethod(RegisterName(selector), NewIMP(val), encoding)
 			fallthrough // also implement the read method
 		case ReadOnly:
 			ty := reflect.FuncOf(
@@ -309,6 +319,10 @@ func RegisterClass(name string, superClass Class, protocols []*Protocol, ivars [
 				variable := object_getIvar(args[0].Interface().(ID), instanceVariable)
 				return []reflect.Value{reflect.NewAt(ivar.Type, unsafe.Pointer(&variable)).Elem()}
 			}).Interface()
+			if ivar.Type.Kind() == reflect.Bool && !strings.HasPrefix(ivar.Name, "is") {
+				// this code only works for ascii but that shouldn't be a problem
+				ivar.Name = "is" + string(unicode.ToUpper(rune(ivar.Name[0]))) + ivar.Name[1:]
+			}
 			class.AddMethod(RegisterName(ivar.Name), NewIMP(val), encoding)
 		default:
 			return 0, fmt.Errorf("objc: unknown Ivar Attribute (%d)", ivar.Attribute)
