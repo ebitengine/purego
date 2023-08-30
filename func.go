@@ -69,7 +69,7 @@ func RegisterLibFunc(fptr interface{}, handle uintptr, name string) {
 // # Memory
 //
 // In general it is not possible for purego to guarantee the lifetimes of objects returned or received from
-// calling functions using RegisterFunc. For arguments to a C function is it important that the C function doesn't
+// calling functions using RegisterFunc. For arguments to a C function it is important that the C function doesn't
 // hold onto a reference to Go memory. This is the same as the [Cgo rules].
 //
 // However, there are some special cases. When passing a string as an argument if the string does not end in a null
