@@ -196,7 +196,9 @@ const (
 )
 
 // FieldDef is a definition of a field to add to an Objective-C class.
-// The name of the field is what will be used to access it through the Ivar.
+// The name of the field is what will be used to access it through the Ivar. If the type is bool
+// the name cannot start with `is` since a getter will be generated with the name `isBoolName`.
+// The name also cannot contain any spaces.
 // The type is the Go equivalent type of the Ivar.
 // Attribute determines if a getter and or setter method is generated for this field.
 type FieldDef struct {
@@ -243,6 +245,9 @@ func RegisterClass(name string, superClass Class, protocols []*Protocol, ivars [
 	// Add Ivars
 	// Start at 1 because we skip the class object which is first
 	for _, ivar := range ivars {
+		if strings.Contains(ivar.Name, " ") {
+			return 0, fmt.Errorf("objc: Ivar cannot have space: '%s'", ivar.Name)
+		}
 		size := ivar.Type.Size()
 		alignment := uint8(math.Log2(float64(ivar.Type.Align())))
 		enc, err := encodeType(ivar.Type, false)
@@ -292,9 +297,6 @@ func RegisterClass(name string, superClass Class, protocols []*Protocol, ivars [
 				return nil
 			}).Interface()
 			// this code only works for ascii but that shouldn't be a problem
-			if ivar.Type.Kind() == reflect.Bool && strings.HasPrefix(ivar.Name, "is") {
-				ivar.Name = ivar.Name[2:]
-			}
 			selector := "set" + string(unicode.ToUpper(rune(ivar.Name[0]))) + ivar.Name[1:] + ":\x00"
 			class.AddMethod(RegisterName(selector), NewIMP(val), encoding)
 			fallthrough // also implement the read method
@@ -319,7 +321,7 @@ func RegisterClass(name string, superClass Class, protocols []*Protocol, ivars [
 				variable := object_getIvar(args[0].Interface().(ID), instanceVariable)
 				return []reflect.Value{reflect.NewAt(ivar.Type, unsafe.Pointer(&variable)).Elem()}
 			}).Interface()
-			if ivar.Type.Kind() == reflect.Bool && !strings.HasPrefix(ivar.Name, "is") {
+			if ivar.Type.Kind() == reflect.Bool {
 				// this code only works for ascii but that shouldn't be a problem
 				ivar.Name = "is" + string(unicode.ToUpper(rune(ivar.Name[0]))) + ivar.Name[1:]
 			}
