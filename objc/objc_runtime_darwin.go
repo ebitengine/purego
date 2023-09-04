@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"math"
 	"reflect"
-	"strings"
+	"regexp"
 	"unicode"
 	"unsafe"
 
@@ -207,7 +207,10 @@ type FieldDef struct {
 	Attribute IvarAttrib
 }
 
-// The RegisterClass function takes the name of the class to create, the superclass, a list of protocols this class
+// ivarRegex checks to make sure the Ivar is correctly formatted
+var ivarRegex = regexp.MustCompile("[a-z][a-zA-Z0-9]*")
+
+// RegisterClass takes the name of the class to create, the superclass, a list of protocols this class
 // implements, a list of fields this class has and a list of methods. It returns the created class or an error
 // describing what went wrong.
 func RegisterClass(name string, superClass Class, protocols []*Protocol, ivars []FieldDef, methods []MethodDef) (Class, error) {
@@ -243,9 +246,8 @@ func RegisterClass(name string, superClass Class, protocols []*Protocol, ivars [
 		}
 	}
 	// Add Ivars
-	// Start at 1 because we skip the class object which is first
 	for _, ivar := range ivars {
-		if strings.Contains(ivar.Name, " ") {
+		if !ivarRegex.MatchString(ivar.Name) {
 			return 0, fmt.Errorf("objc: Ivar cannot have space: '%s'", ivar.Name)
 		}
 		size := ivar.Type.Size()
@@ -537,6 +539,7 @@ func GetProtocol(name string) *Protocol {
 	return objc_getProtocol(name)
 }
 
+// Equals return true if the two protocols are the same.
 func (p *Protocol) Equals(p2 *Protocol) bool {
 	return protocol_isEqual(p, p2)
 }
