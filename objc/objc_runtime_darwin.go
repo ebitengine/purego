@@ -248,7 +248,7 @@ func RegisterClass(name string, superClass Class, protocols []*Protocol, ivars [
 	// Add Ivars
 	for _, ivar := range ivars {
 		if !ivarRegex.MatchString(ivar.Name) {
-			return 0, fmt.Errorf("objc: Ivar cannot have space: '%s'", ivar.Name)
+			return 0, fmt.Errorf("objc: Ivar must start with a lowercase letter and only contain ASCII letters and numbers: '%s'", ivar.Name)
 		}
 		size := ivar.Type.Size()
 		alignment := uint8(math.Log2(float64(ivar.Type.Align())))
