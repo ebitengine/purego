@@ -22,7 +22,6 @@ func BarInit(id objc.ID, cmd objc.SEL) objc.ID {
 }
 
 func main() {
-	//
 	// This struct is equivalent to the following Objective-C definition.
 	//
 	// @interface BarObject : NSObject <NSDelegateWindow>
