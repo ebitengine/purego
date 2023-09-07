@@ -182,10 +182,10 @@ type MethodDef struct {
 //
 //	@property (readwrite) float value;
 //
-// In Go, creates functions with these signatures:
+// In Go, the functions can be accessed as followed:
 //
-//	func value() float32
-//	func setValue(float32)
+//	var value = purego.Send[float32](id, purego.RegisterName("value"))
+//	id.Send(purego.RegisterName("setValue:"), 3.46)
 //
 // [Apple Docs]: https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/ObjectiveC/Chapters/ocProperties.html
 type IvarAttrib int
