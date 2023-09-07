@@ -5,7 +5,7 @@ package main
 
 import (
 	"fmt"
-	"unsafe"
+	"reflect"
 
 	"github.com/ebitengine/purego/objc"
 )
@@ -17,45 +17,44 @@ var (
 	sel_bar    = objc.RegisterName("bar")
 )
 
-type barObject struct {
-	isa objc.Class `objc:"BarObject : NSObject <NSDelegateWindow>"`
-	bar int
-}
-
-func (b *barObject) Init(_cmd objc.SEL) objc.ID {
-	return objc.ID(unsafe.Pointer(b)).SendSuper(_cmd)
-}
-
-func (b *barObject) Bar(_cmd objc.SEL) int {
-	return b.bar
-}
-
-func (b *barObject) SetBar(_cmd objc.SEL, bar int) {
-	b.bar = bar
-}
-
-func (_ *barObject) Selector(metName string) objc.SEL {
-	switch metName {
-	case "Init":
-		return sel_init
-	case "SetBar":
-		return sel_setBar
-	case "Bar":
-		return sel_bar
-	default:
-		return 0
-	}
+func BarInit(id objc.ID, cmd objc.SEL) objc.ID {
+	return id.SendSuper(cmd)
 }
 
 func main() {
-	class, err := objc.RegisterClass(&barObject{})
+	// This struct is equivalent to the following Objective-C definition.
+	//
+	// @interface BarObject : NSObject <NSDelegateWindow>
+	// @property (readwrite) bar int
+	// @end
+	//
+	class, err := objc.RegisterClass(
+		"BarObject",
+		objc.GetClass("NSObject"),
+		[]*objc.Protocol{
+			objc.GetProtocol("NSDelegateWindow"),
+		},
+		[]objc.FieldDef{
+			{
+				Name:      "bar",
+				Type:      reflect.TypeOf(int(0)),
+				Attribute: objc.ReadWrite,
+			},
+		},
+		[]objc.MethodDef{
+			{
+				Cmd: sel_init,
+				Fn:  BarInit,
+			},
+		},
+	)
 	if err != nil {
 		panic(err)
 	}
 
-	var object = objc.ID(class).Send(sel_new)
+	object := objc.ID(class).Send(sel_new)
 	object.Send(sel_setBar, 123)
-	var bar = int(object.Send(sel_bar))
+	bar := int(object.Send(sel_bar))
 	fmt.Println(bar)
 	// Output: 123
 }
