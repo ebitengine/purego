@@ -282,7 +282,7 @@ func RegisterClass(name string, superClass Class, protocols []*Protocol, ivars [
 				switch args[2].Kind() {
 				case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 					value = ID(args[2].Int())
-				case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+				case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
 					value = ID(args[2].Uint())
 				case reflect.Float32, reflect.Float64:
 					value = ID(math.Float64bits(args[2].Float()))
