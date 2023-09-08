@@ -210,7 +210,7 @@ type FieldDef struct {
 }
 
 // ivarRegex checks to make sure the Ivar is correctly formatted
-var ivarRegex = regexp.MustCompile("[a-z][a-zA-Z0-9]*")
+var ivarRegex = regexp.MustCompile("[a-z_][a-zA-Z0-9_]*")
 
 // RegisterClass takes the name of the class to create, the superclass, a list of protocols this class
 // implements, a list of fields this class has and a list of methods. It returns the created class or an error
