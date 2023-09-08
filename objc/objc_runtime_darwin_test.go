@@ -48,6 +48,11 @@ func ExampleRegisterClass() {
 				Type:      reflect.TypeOf(int(0)),
 				Attribute: objc.ReadWrite,
 			},
+			{
+				Name:      "foo",
+				Type:      reflect.TypeOf(false),
+				Attribute: objc.ReadWrite,
+			},
 		},
 		[]objc.MethodDef{
 			{

@@ -36,6 +36,7 @@ var (
 	class_addIvar             func(class Class, name string, size uintptr, alignment uint8, types string) bool
 	class_addProtocol         func(class Class, protocol *Protocol) bool
 	ivar_getOffset            func(ivar Ivar) uintptr
+	ivar_getName              func(ivar Ivar) string
 	object_getClass           func(obj ID) Class
 	object_getIvar            func(obj ID, ivar Ivar) ID
 	object_setIvar            func(obj ID, ivar Ivar, value ID)
@@ -71,6 +72,7 @@ func init() {
 	purego.RegisterLibFunc(&class_addProtocol, objc, "class_addProtocol")
 	purego.RegisterLibFunc(&class_getInstanceSize, objc, "class_getInstanceSize")
 	purego.RegisterLibFunc(&ivar_getOffset, objc, "ivar_getOffset")
+	purego.RegisterLibFunc(&ivar_getName, objc, "ivar_getName")
 	purego.RegisterLibFunc(&protocol_getName, objc, "protocol_getName")
 	purego.RegisterLibFunc(&protocol_isEqual, objc, "protocol_isEqual")
 	purego.RegisterLibFunc(&object_getIvar, objc, "object_getIvar")
@@ -246,7 +248,8 @@ func RegisterClass(name string, superClass Class, protocols []*Protocol, ivars [
 		}
 	}
 	// Add Ivars
-	for _, ivar := range ivars {
+	for _, instVar := range ivars {
+		ivar := instVar
 		if !ivarRegex.MatchString(ivar.Name) {
 			return 0, fmt.Errorf("objc: Ivar must start with a lowercase letter and only contain ASCII letters and numbers: '%s'", ivar.Name)
 		}
@@ -259,6 +262,7 @@ func RegisterClass(name string, superClass Class, protocols []*Protocol, ivars [
 		if !class_addIvar(class, ivar.Name, size, alignment, enc) {
 			return 0, fmt.Errorf("objc: couldn't add Ivar %s", ivar.Name)
 		}
+		offset := class.InstanceVariable(ivar.Name).Offset()
 		switch ivar.Attribute {
 		case ReadWrite:
 			ty := reflect.FuncOf(
@@ -271,31 +275,23 @@ func RegisterClass(name string, superClass Class, protocols []*Protocol, ivars [
 			if encoding, err = encodeFunc(reflect.New(ty).Elem().Interface()); err != nil {
 				return 0, fmt.Errorf("objc: failed to create read method for '%s': %w", ivar.Name, err)
 			}
-			instanceVariable := class.InstanceVariable(ivar.Name)
 			val := reflect.MakeFunc(ty, func(args []reflect.Value) (results []reflect.Value) {
 				// on entry the first and second arguments are ID and SEL followed by the value
 				if len(args) != 3 {
 					panic(fmt.Errorf("objc: incorrect number of arguments"))
 				}
-				// Grab the pointer from using the Ivar and dereference it
-				var value ID
-				switch args[2].Kind() {
-				case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-					value = ID(args[2].Int())
-				case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
-					value = ID(args[2].Uint())
-				case reflect.Float32, reflect.Float64:
-					value = ID(math.Float64bits(args[2].Float()))
-				case reflect.Bool:
-					if args[2].Bool() {
-						value = 1
-					}
-				case reflect.Pointer, reflect.UnsafePointer:
-					value = ID(args[2].Pointer())
-				default:
-					panic(fmt.Errorf("objc: unsupported kind %s", args[2].Kind()))
-				}
-				object_setIvar(args[0].Interface().(ID), instanceVariable, value)
+				// The following reflect code does the equivalent of this:
+				//
+				//	((*struct {
+				//		Isa Class
+				//		Padding [offset]byte
+				//		Value int
+				//	})(unsafe.Pointer(args[0].Interface().(ID)))).v = 123
+				//
+				// However, since the type of the variable is unknown reflection is used to actually assign the value
+				id := args[0].Interface().(ID)
+				ptr := *(*unsafe.Pointer)(unsafe.Pointer(&id)) // circumvent go vet
+				reflect.NewAt(ivar.Type, unsafe.Add(ptr, offset)).Elem().Set(args[2])
 				return nil
 			}).Interface()
 			// this code only works for ascii but that shouldn't be a problem
@@ -313,15 +309,15 @@ func RegisterClass(name string, superClass Class, protocols []*Protocol, ivars [
 			if encoding, err = encodeFunc(reflect.New(ty).Elem().Interface()); err != nil {
 				return 0, fmt.Errorf("objc: failed to create read method for '%s': %w", ivar.Name, err)
 			}
-			instanceVariable := class.InstanceVariable(ivar.Name)
 			val := reflect.MakeFunc(ty, func(args []reflect.Value) (results []reflect.Value) {
 				// on entry the first and second arguments are ID and SEL
 				if len(args) != 2 {
 					panic(fmt.Errorf("objc: incorrect number of arguments"))
 				}
-				// Grab the pointer from using the Ivar and dereference it
-				variable := object_getIvar(args[0].Interface().(ID), instanceVariable)
-				return []reflect.Value{reflect.NewAt(ivar.Type, unsafe.Pointer(&variable)).Elem()}
+				id := args[0].Interface().(ID)
+				ptr := *(*unsafe.Pointer)(unsafe.Pointer(&id)) // circumvent go vet
+				// the variable is located at an offset from the id
+				return []reflect.Value{reflect.NewAt(ivar.Type, unsafe.Add(ptr, offset)).Elem()}
 			}).Interface()
 			if ivar.Type.Kind() == reflect.Bool {
 				// this code only works for ascii but that shouldn't be a problem
@@ -529,6 +525,10 @@ type Ivar uintptr
 // of using this offset to access the instance variable data directly.
 func (i Ivar) Offset() uintptr {
 	return ivar_getOffset(i)
+}
+
+func (i Ivar) Name() string {
+	return ivar_getName(i)
 }
 
 // Protocol is a type that declares methods that can be implemented by any class.
