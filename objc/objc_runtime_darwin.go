@@ -283,7 +283,6 @@ func RegisterClass(name string, superClass Class, protocols []*Protocol, ivars [
 				// The following reflect code does the equivalent of this:
 				//
 				//	((*struct {
-				//		Isa Class
 				//		Padding [offset]byte
 				//		Value int
 				//	})(unsafe.Pointer(args[0].Interface().(ID)))).v = 123
