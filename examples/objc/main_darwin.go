@@ -27,7 +27,6 @@ func main() {
 	// @interface BarObject : NSObject <NSDelegateWindow>
 	// @property (readwrite) bar int
 	// @end
-	//
 	class, err := objc.RegisterClass(
 		"BarObject",
 		objc.GetClass("NSObject"),

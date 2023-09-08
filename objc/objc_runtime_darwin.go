@@ -278,7 +278,7 @@ func RegisterClass(name string, superClass Class, protocols []*Protocol, ivars [
 			val := reflect.MakeFunc(ty, func(args []reflect.Value) (results []reflect.Value) {
 				// on entry the first and second arguments are ID and SEL followed by the value
 				if len(args) != 3 {
-					panic(fmt.Errorf("objc: incorrect number of arguments"))
+					panic(fmt.Sprintf("objc: incorrect number of args. expected 3 got %d", len(args)))
 				}
 				// The following reflect code does the equivalent of this:
 				//
@@ -312,7 +312,7 @@ func RegisterClass(name string, superClass Class, protocols []*Protocol, ivars [
 			val := reflect.MakeFunc(ty, func(args []reflect.Value) (results []reflect.Value) {
 				// on entry the first and second arguments are ID and SEL
 				if len(args) != 2 {
-					panic(fmt.Errorf("objc: incorrect number of arguments"))
+					panic(fmt.Sprintf("objc: incorrect number of args. expected 2 got %d", len(args)))
 				}
 				id := args[0].Interface().(ID)
 				ptr := *(*unsafe.Pointer)(unsafe.Pointer(&id)) // circumvent go vet
