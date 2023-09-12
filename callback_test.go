@@ -127,3 +127,17 @@ func TestNewCallbackFloat32AndFloat64(t *testing.T) {
 		t.Errorf("cbTotalF64 not correct got %f but wanted %f", cbTotalF64, expectedCbTotalF64)
 	}
 }
+
+func TestNewCallbackStringArg(t *testing.T) {
+	var got string
+	cb := purego.NewCallback(func (a string) {
+		got = a
+	})
+	var fn func(a string)
+	purego.RegisterFunc(&fn, cb)
+	passedv := "test"
+	fn(passedv)
+	if got != passedv {
+		t.Errorf("got string: %v is not equal to: %v", got, passedv)
+	}
+}
