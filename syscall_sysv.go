@@ -24,8 +24,6 @@ type syscall9Args struct {
 // of uintptr. Only a limited number of callbacks may be created in a single Go process, and any memory allocated
 // for these callbacks is never released. At least 2000 callbacks can always be created. Although this function
 // provides similar functionality to windows.NewCallback it is distinct.
-//
-// NOTE: Linux is currently not supported and will panic if called.
 func NewCallback(fn interface{}) uintptr {
 	return compileCallback(fn)
 }
