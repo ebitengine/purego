@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2022 The Ebitengine Authors
 
-//go:build darwin || freebsd || (!cgo && linux && (amd64 || arm64))
+//go:build darwin || freebsd || (linux && (amd64 || arm64))
 
 package purego
 
@@ -12,23 +12,10 @@ import (
 	"unsafe"
 )
 
-var syscall9XABI0 uintptr
-
 type syscall9Args struct {
 	fn, a1, a2, a3, a4, a5, a6, a7, a8, a9 uintptr
 	f1, f2, f3, f4, f5, f6, f7, f8         uintptr
 	r1, r2, err                            uintptr
-}
-
-//go:nosplit
-func syscall_syscall9X(fn, a1, a2, a3, a4, a5, a6, a7, a8, a9 uintptr) (r1, r2, err uintptr) {
-	args := syscall9Args{
-		fn, a1, a2, a3, a4, a5, a6, a7, a8, a9,
-		a1, a2, a3, a4, a5, a6, a7, a8,
-		r1, r2, err,
-	}
-	runtime_cgocall(syscall9XABI0, unsafe.Pointer(&args))
-	return args.r1, args.r2, args.err
 }
 
 // NewCallback converts a Go function to a function pointer conforming to the C calling convention.
@@ -40,9 +27,6 @@ func syscall_syscall9X(fn, a1, a2, a3, a4, a5, a6, a7, a8, a9 uintptr) (r1, r2, 
 //
 // NOTE: Linux is currently not supported and will panic if called.
 func NewCallback(fn interface{}) uintptr {
-	if runtime.GOOS == "linux" {
-		panic("purego: NewCallback not supported")
-	}
 	return compileCallback(fn)
 }
 
