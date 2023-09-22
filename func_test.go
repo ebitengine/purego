@@ -47,12 +47,6 @@ func TestRegisterFunc(t *testing.T) {
 }
 
 func ExampleNewCallback() {
-	if runtime.GOOS == "linux" {
-		// TODO: enable once callbacks are working properly on Linux
-		fmt.Println("1 2 3 4 5 6 7 8 9\n45")
-		return
-	}
-
 	cb := purego.NewCallback(func(a1, a2, a3, a4, a5, a6, a7, a8, a9 int) int {
 		fmt.Println(a1, a2, a3, a4, a5, a6, a7, a8, a9)
 		return a1 + a2 + a3 + a4 + a5 + a6 + a7 + a8 + a9
@@ -69,11 +63,6 @@ func ExampleNewCallback() {
 }
 
 func Test_qsort(t *testing.T) {
-	if runtime.GOOS == "linux" {
-		// TODO: enable once callbacks are working properly on Linux
-		t.Skip("callbacks are not supported on Linux")
-	}
-
 	library, err := getSystemLibrary()
 	if err != nil {
 		t.Errorf("couldn't get system library: %s", err)
