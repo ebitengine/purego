@@ -17,31 +17,37 @@ TEXT callbackasm1(SB), NOSPLIT|NOFRAME, $0
 	// Save callback register arguments R0-R7 and F0-F7.
 	// We do this at the top of the frame so they're contiguous with stack arguments.
 	SUB   $(16*8), RSP, R14
-	FMOVD F0, (0*8)(R14)
-	FMOVD F1, (1*8)(R14)
-	FMOVD F2, (2*8)(R14)
-	FMOVD F3, (3*8)(R14)
-	FMOVD F4, (4*8)(R14)
-	FMOVD F5, (5*8)(R14)
-	FMOVD F6, (6*8)(R14)
-	FMOVD F7, (7*8)(R14)
+	FSTPD (F0, F1), (0*8)(R14)
+	FSTPD (F2, F3), (2*8)(R14)
+	FSTPD (F4, F5), (4*8)(R14)
+	FSTPD (F6, F7), (6*8)(R14)
 	STP   (R0, R1), (8*8)(R14)
 	STP   (R2, R3), (10*8)(R14)
 	STP   (R4, R5), (12*8)(R14)
 	STP   (R6, R7), (14*8)(R14)
 
 	// Adjust SP by frame size.
-	// crosscall2 clobbers FP in the frame record so only save/restore SP.
-	SUB  $(28*8), RSP
-	MOVD R30, (RSP)
+	SUB $(26*8), RSP
+
+	// It is important to save R27 because the go assembler
+	// uses it for move instructions for a variable.
+	// This line:
+	// MOVD ·callbackWrap_call(SB), R0
+	// Creates the instructions:
+	// ADRP 14335(PC), R27
+	// MOVD 388(27), R0
+	// R27 is a callee saved register so we are responsible
+	// for ensuring its value doesn't change. So save it and
+	// restore it at the end of this function.
+	// R30 is the link register. crosscall2 doesn't save it
+	// so it's saved here.
+	STP (R27, R30), 0(RSP)
 
 	// Create a struct callbackArgs on our stack.
-	ADD  $(callbackArgs__size + 3*8), RSP, R13
-	MOVD R12, callbackArgs_index(R13)          // callback index
-	MOVD R14, R0
-	MOVD R0, callbackArgs_args(R13)            // address of args vector
-	MOVD $0, R0
-	MOVD R0, callbackArgs_result(R13)          // result
+	MOVD $(callbackArgs__size)(RSP), R13
+	MOVD R12, callbackArgs_index(R13)    // callback index
+	MOVD R14, callbackArgs_args(R13)     // address of args vector
+	MOVD ZR, callbackArgs_result(R13)    // result
 
 	// Move parameters into registers
 	// Get the ABIInternal function pointer
@@ -54,11 +60,11 @@ TEXT callbackasm1(SB), NOSPLIT|NOFRAME, $0
 	BL crosscall2(SB)
 
 	// Get callback result.
-	ADD  $(callbackArgs__size + 3*8), RSP, R13
+	MOVD $(callbackArgs__size)(RSP), R13
 	MOVD callbackArgs_result(R13), R0
 
-	// Restore SP
-	MOVD (RSP), R30
-	ADD  $(28*8), RSP
+	// Restore LR and R27
+	LDP 0(RSP), (R27, R30)
+	ADD $(26*8), RSP
 
 	RET
