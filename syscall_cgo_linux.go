@@ -26,5 +26,5 @@ func syscall_syscall9X(fn, a1, a2, a3, a4, a5, a6, a7, a8, a9 uintptr) (r1, r2, 
 }
 
 func NewCallback(_ interface{}) uintptr {
-	panic("purego: NewCallback on Linux is only supported on arm64/amd64")
+	panic("purego: NewCallback on Linux is only supported on amd64/arm64")
 }
