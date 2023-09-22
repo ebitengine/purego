@@ -62,9 +62,6 @@ func RegisterLibFunc(fptr interface{}, handle uintptr, name string) {
 // This means that using arg ...interface{} is like a cast to the function with the arguments inside arg.
 // This is not the same as C variadic.
 //
-// There is one limitation when using RegisterFunc on Linux: There is no support for float32 and float64 arguments/return values with CGO_ENABLED=1.
-// Linux otherwise has the same feature parity as Darwin.
-//
 // # Memory
 //
 // In general it is not possible for purego to guarantee the lifetimes of objects returned or received from
