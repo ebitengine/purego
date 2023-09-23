@@ -3,6 +3,10 @@
 
 A library for calling C functions from Go without Cgo.
 
+> This is beta software so expect bugs and potentially API breaking changes
+> but each release will be tagged to avoid breaking people's code.
+> Bug reports are encouraged.
+
 ## Motivation
 
 The [Ebitengine](https://github.com/hajimehoshi/ebiten) game engine was ported to use only Go on Windows. This enabled
@@ -16,6 +20,13 @@ born to bring that same vision to the other platforms supported by Ebitengine.
 - **Smaller Binaries**: Using Cgo generates a C wrapper function for each C function called. Purego doesn't!
 - **Dynamic Linking**: Load symbols at runtime and use it as a plugin system.
 - **Foreign Function Interface**: Call into other languages that are compiled into shared objects.
+
+## Supported Platforms
+
+- **Darwin**: amd64, arm64
+- **FreeBSD**: amd64, arm64
+- **Linux**: amd64, arm64
+- **Windows**: amd64, arm64
 
 ## Example
 
@@ -55,6 +66,11 @@ func main() {
 
 Then to run: `CGO_ENABLED=0 go run main.go`
 
+## Questions
+
+If you have questions about how to incorporate purego in your project or want to discuss
+how it works join the [Discord](https://discord.com/channels/842049801528016967/1123106378731487345)!
+
 ### External Code
 
 Purego uses code that originates from the Go runtime. These files are under the BSD-3
@@ -71,4 +87,5 @@ This is a list of the copied files:
 * `internal/fakecgo/setenv.go` from package `runtime/cgo`
 * `internal/fakecgo/freebsd.go` from package `runtime/cgo`
 
-The files `abi_*.h` and `internal/fakecgo/abi_*.h` are the same because Bazel does not support cross-package use of `#include` so we need each one once per package. (cf. [issue](https://github.com/bazelbuild/rules_go/issues/3636))
+The files `abi_*.h` and `internal/fakecgo/abi_*.h` are the same because Bazel does not support cross-package use of
+`#include` so we need each one once per package. (cf. [issue](https://github.com/bazelbuild/rules_go/issues/3636))
