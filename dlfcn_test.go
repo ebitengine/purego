@@ -25,7 +25,7 @@ func TestSimpleDlsym(t *testing.T) {
 }
 
 func TestNestedDlopenCall(t *testing.T) {
-	libFileName := "libdlnested.so"
+	libFileName := "./libdlnested.so"
 	t.Logf("Build %v", libFileName)
 
 	if err := buildSharedLib("CXX", libFileName, filepath.Join("libdlnested", "nested.cpp")); err != nil {
