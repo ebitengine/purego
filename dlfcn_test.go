@@ -46,6 +46,8 @@ func buildSharedLib(compilerEnv, libFile string, sources ...string) error {
 	if err != nil {
 		return fmt.Errorf("go env %s error: %w", compilerEnv, err)
 	}
+	// test
+	fmt.Fprintf(os.Stderr, "CC: %s", string(out))
 
 	compiler := strings.TrimSpace(string(out))
 	if compiler == "" {
