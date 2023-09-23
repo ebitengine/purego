@@ -1,6 +1,10 @@
 name: Test
 
-on: [push, pull_request]
+on:
+  pull_request:
+  push:
+    branches:
+      - main
 
 jobs:
   test:
@@ -82,7 +86,11 @@ jobs:
           env CGO_ENABLED=0 go test -shuffle=on -v -count=10 ./...
           env CGO_ENABLED=1 go test -shuffle=on -v -count=10 ./...
 
-      # TODO: add Windows 386 tests
+      - name: go test (Windows 386)
+        if: runner.os == 'Windows'
+        run: |
+          env GOARCH=386 CGO_ENABLED=0 go test -shuffle=on -v -count=10 ./...
+          env GOARCH=386 CGO_ENABLED=1 go test -shuffle=on -v -count=10 ./...
 
       - name: go test race
         if: ${{ !startsWith(matrix.go, '1.18.') && !startsWith(matrix.go, '1.19.') }}
