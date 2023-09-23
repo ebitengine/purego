@@ -95,10 +95,14 @@ jobs:
       - name: go test (Linux arm64)
         if: runner.os == 'Linux'
         run: |
+          go env -w CC=aarch64-linux-gnu-gcc
+          go env -w CXX=aarch64-linux-gnu-g++
           env GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go test -c -o=purego-test-nocgo -shuffle=on -v -count=10 -v .
           env QEMU_LD_PREFIX=/usr/aarch64-linux-gnu qemu-aarch64 ./purego-test-nocgo
           env GOOS=linux GOARCH=arm64 CGO_ENABLED=1 go test -c -o=purego-test-cgo -shuffle=on -v -count=10 -v .
           env QEMU_LD_PREFIX=/usr/aarch64-linux-gnu qemu-aarch64 ./purego-test-cgo
+          go env -u CC
+          go env -u CXX
 
       # TODO: add Windows 386 tests
 
