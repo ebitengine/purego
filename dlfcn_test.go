@@ -25,7 +25,7 @@ func TestSimpleDlsym(t *testing.T) {
 }
 
 func TestNestedDlopenCall(t *testing.T) {
-	libFileName := "./libdlnested.so"
+	libFileName := filepath.Join(t.TempDir(), "libdlnested.so")
 	t.Logf("Build %v", libFileName)
 
 	if err := buildSharedLib("CXX", libFileName, filepath.Join("libdlnested", "nested.cpp")); err != nil {
@@ -46,6 +46,8 @@ func buildSharedLib(compilerEnv, libFile string, sources ...string) error {
 	if err != nil {
 		return fmt.Errorf("go env %s error: %w", compilerEnv, err)
 	}
+	// test
+	fmt.Fprintf(os.Stderr, "CC: %s", string(out))
 
 	compiler := strings.TrimSpace(string(out))
 	if compiler == "" {
