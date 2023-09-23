@@ -14,7 +14,7 @@ import (
 	"github.com/ebitengine/purego"
 )
 
-// TestCallGoFromSharedLib is a test that checks for stack corruption on darwin/arm64
+// TestCallGoFromSharedLib is a test that checks for stack corruption on arm64
 // when C calls Go code from a non-Go thread in a dynamically loaded share library.
 func TestCallGoFromSharedLib(t *testing.T) {
 	libFileName := filepath.Join(t.TempDir(), "libcbtest.so")
