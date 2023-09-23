@@ -23,10 +23,12 @@ born to bring that same vision to the other platforms supported by Ebitengine.
 
 ## Supported Platforms
 
-- **Darwin**: amd64, arm64
 - **FreeBSD**: amd64, arm64
 - **Linux**: amd64, arm64
-- **Windows**: amd64, arm64
+- **macOS**: amd64, arm64
+- **Windows**: 386*, amd64, arm*, arm64
+
+`*` These architectures only support SyscallN and NewCallback
 
 ## Example
 
