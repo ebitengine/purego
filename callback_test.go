@@ -58,7 +58,8 @@ func TestNewCallbackFloat64(t *testing.T) {
 	var cbTotal int
 	var cbTotalF float64
 	imp := purego.NewCallback(func(a1, a2, a3, a4, a5, a6, a7, a8, a9 int,
-		f1, f2, f3, f4, f5, f6, f7, f8 float64) {
+		f1, f2, f3, f4, f5, f6, f7, f8 float64,
+	) {
 		cbTotal = a1 + a2 + a3 + a4 + a5 + a6 + a7 + a8 + a9
 		cbTotalF = f1 + f2 + f3 + f4 + f5 + f6 + f7 + f8
 	})
@@ -76,6 +77,24 @@ func TestNewCallbackFloat64(t *testing.T) {
 	}
 }
 
+func TestNewCallbackFloat64AndIntMix(t *testing.T) {
+	// This tests interleaving float and integer arguments to NewCallback
+	const (
+		expectCbTotal = 43.74
+	)
+	var cbTotal float64
+	imp := purego.NewCallback(func(a1, a2 float64, a3, a4, a5 int, a6, a7, a8 float64, a9 int) {
+		cbTotal = a1 + a2 + float64(a3) + float64(a4) + float64(a5) + a6 + a7 + a8 + float64(a9)
+	})
+	var fn func(a1, a2 float64, a3, a4, a5 int, a6, a7, a8 float64, a9 int)
+	purego.RegisterFunc(&fn, imp)
+	fn(1.5, 3.7, 5, 9, 2, 8.9, 3.4, 4.24, 6)
+
+	if cbTotal != expectCbTotal {
+		t.Errorf("cbTotal not correct got %f but wanted %f", cbTotal, expectCbTotal)
+	}
+}
+
 func TestNewCallbackFloat32(t *testing.T) {
 	// This tests the maximum number of float32 arguments a function to NewCallback can take
 	const (
@@ -85,7 +104,8 @@ func TestNewCallbackFloat32(t *testing.T) {
 	var cbTotal int
 	var cbTotalF float32
 	imp := purego.NewCallback(func(a1, a2, a3, a4, a5, a6, a7, a8 int,
-		f1, f2, f3, f4, f5, f6, f7, f8, f9 float32) {
+		f1, f2, f3, f4, f5, f6, f7, f8, f9 float32,
+	) {
 		cbTotal = a1 + a2 + a3 + a4 + a5 + a6 + a7 + a8
 		cbTotalF = f1 + f2 + f3 + f4 + f5 + f6 + f7 + f8 + f9
 	})
@@ -114,7 +134,6 @@ func TestNewCallbackFloat32AndFloat64(t *testing.T) {
 	imp := purego.NewCallback(func(f1, f2, f3 float32, f4, f5, f6 float64, f7, f8, f9 float32) {
 		cbTotalF32 = f1 + f2 + f3 + f7 + f8 + f9
 		cbTotalF64 = f4 + f5 + f6
-
 	})
 	var fn func(f1, f2, f3 float32, f4, f5, f6 float64, f7, f8, f9 float32)
 	purego.RegisterFunc(&fn, imp)
