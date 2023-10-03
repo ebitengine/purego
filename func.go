@@ -245,7 +245,7 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 			runtime_cgocall(syscall9XABI0, unsafe.Pointer(&syscall))
 			r1, r2 = syscall.r1, syscall.r2
 		} else {
-			// This is a fallback for amd64, 386, and arm. Note this may not support floats
+			// This is a fallback for Windows amd64, 386, and arm. Note this may not support floats
 			r1, r2, _ = syscall_syscall9X(cfn, sysargs[0], sysargs[1], sysargs[2], sysargs[3], sysargs[4], sysargs[5], sysargs[6], sysargs[7], sysargs[8])
 		}
 		if ty.NumOut() == 0 {
