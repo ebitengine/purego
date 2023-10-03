@@ -80,7 +80,7 @@ func TestNewCallbackFloat64(t *testing.T) {
 func TestNewCallbackFloat64AndIntMix(t *testing.T) {
 	// This tests interleaving float and integer arguments to NewCallback
 	const (
-		expectCbTotal = 43.74
+		expectCbTotal = 54.75
 	)
 	var cbTotal float64
 	imp := purego.NewCallback(func(a1, a2 float64, a3, a4, a5 int, a6, a7, a8 float64, a9 int) {
@@ -88,7 +88,7 @@ func TestNewCallbackFloat64AndIntMix(t *testing.T) {
 	})
 	var fn func(a1, a2 float64, a3, a4, a5 int, a6, a7, a8 float64, a9 int)
 	purego.RegisterFunc(&fn, imp)
-	fn(1.5, 3.7, 5, 9, 2, 8.9, 3.4, 4.24, 6)
+	fn(1.25, 3.25, 4, 5, 6, 7.5, 8.25, 9.5, 10)
 
 	if cbTotal != expectCbTotal {
 		t.Errorf("cbTotal not correct got %f but wanted %f", cbTotal, expectCbTotal)
