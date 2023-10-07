@@ -24,6 +24,14 @@ func RegisterLibFunc(fptr interface{}, handle uintptr, name string) {
 	RegisterFunc(fptr, sym)
 }
 
+func RegisterLibFunc2(fptr interface{}, handle uintptr, name string) {
+	sym, err := loadSymbol(handle, name)
+	if err != nil {
+		panic(err)
+	}
+	RegisterFunc2(fptr, sym)
+}
+
 // RegisterFunc takes a pointer to a Go function representing the calling convention of the C function.
 // fptr will be set to a function that when called will call the C function given by cfn with the
 // parameters passed in the correct registers and stack.
@@ -280,6 +288,254 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 			panic("purego: unsupported return kind: " + outType.Kind().String())
 		}
 		return []reflect.Value{v}
+	})
+	fn.Set(v)
+}
+
+func RegisterFunc2(fptr interface{}, cfn uintptr) {
+	fn := reflect.ValueOf(fptr).Elem()
+	ty := fn.Type()
+	if ty.Kind() != reflect.Func {
+		panic("purego: fptr must be a function pointer")
+	}
+	if ty.NumOut() > 1 {
+		panic("purego: function can only return zero or one values")
+	}
+	if cfn == 0 {
+		panic("purego: cfn is nil")
+	}
+	{
+		// this code checks how many registers and stack this function will use
+		// to avoid crashing with too many arguments
+		var ints int
+		var floats int
+		var stack int
+		for i := 0; i < ty.NumIn(); i++ {
+			arg := ty.In(i)
+			switch arg.Kind() {
+			case reflect.String, reflect.Uintptr, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
+				reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Ptr, reflect.UnsafePointer, reflect.Slice,
+				reflect.Func, reflect.Bool:
+				if ints < numOfIntegerRegisters() {
+					ints++
+				} else {
+					stack++
+				}
+			case reflect.Float32, reflect.Float64:
+				if floats < numOfFloats {
+					floats++
+				} else {
+					stack++
+				}
+			default:
+				panic("purego: unsupported kind " + arg.Kind().String())
+			}
+		}
+		sizeOfStack := maxArgs - numOfIntegerRegisters()
+		if stack > sizeOfStack {
+			panic("purego: too many arguments")
+		}
+	}
+
+	var sysargs [maxArgs]uintptr
+	stack := sysargs[numOfIntegerRegisters():]
+	var floats [numOfFloats]uintptr
+	var numInts int
+	var numFloats int
+	var numStack int
+	var addStack, addInt, addFloat func(x uintptr)
+	if runtime.GOARCH == "arm64" || runtime.GOOS != "windows" {
+		// Windows arm64 uses the same calling convention as macOS and Linux
+		addStack = func(x uintptr) {
+			stack[numStack] = x
+			numStack++
+		}
+		addInt = func(x uintptr) {
+			if numInts >= numOfIntegerRegisters() {
+				addStack(x)
+			} else {
+				sysargs[numInts] = x
+				numInts++
+			}
+		}
+		addFloat = func(x uintptr) {
+			if numFloats < len(floats) {
+				floats[numFloats] = x
+				numFloats++
+			} else {
+				addStack(x)
+			}
+		}
+	} else {
+		// On Windows amd64 the arguments are passed in the numbered registered.
+		// So the first int is in the first integer register and the first float
+		// is in the second floating register if there is already a first int.
+		// This is in contrast to how macOS and Linux pass arguments which
+		// tries to use as many registers as possible in the calling convention.
+		addStack = func(x uintptr) {
+			sysargs[numStack] = x
+			numStack++
+		}
+		addInt = addStack
+		addFloat = addStack
+	}
+
+	var keepAlive []interface{}
+	// Parameters
+	addFuncs := make([]func(v reflect.Value), ty.NumIn())
+	for i := 0; i < ty.NumIn(); i++ {
+		arg := ty.In(i)
+		switch arg.Kind() {
+		case reflect.String:
+			addFuncs[i] = func(v reflect.Value) {
+				ptr := strings.CString(v.String())
+				keepAlive = append(keepAlive, ptr)
+				addInt(uintptr(unsafe.Pointer(ptr)))
+			}
+		case reflect.Uintptr, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+			addFuncs[i] = func(v reflect.Value) {
+				addInt(uintptr(v.Uint()))
+			}
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			addFuncs[i] = func(v reflect.Value) {
+				addInt(uintptr(v.Int()))
+			}
+		case reflect.Ptr, reflect.UnsafePointer, reflect.Slice:
+			// There is no need to keepAlive this pointer separately because it is kept alive in the args variable
+			addFuncs[i] = func(v reflect.Value) {
+				addInt(v.Pointer())
+			}
+		case reflect.Func:
+			addFuncs[i] = func(v reflect.Value) {
+				addInt(NewCallback(v.Interface()))
+			}
+		case reflect.Bool:
+			addFuncs[i] = func(v reflect.Value) {
+				if v.Bool() {
+					addInt(1)
+				} else {
+					addInt(0)
+				}
+			}
+		case reflect.Float32:
+			addFuncs[i] = func(v reflect.Value) {
+				addFloat(uintptr(math.Float32bits(float32(v.Float()))))
+			}
+		case reflect.Float64:
+			addFuncs[i] = func(v reflect.Value) {
+				addFloat(uintptr(math.Float64bits(v.Float())))
+			}
+		default:
+			panic("purego: unsupported kind: " + arg.Kind().String())
+		}
+	}
+	// Return value
+	var outFunc func(r1, r2 uintptr) []reflect.Value = func(_, _ uintptr) []reflect.Value {
+		return nil
+	}
+	if ty.NumOut() > 0 {
+		outType := ty.Out(0)
+		switch outType.Kind() {
+		case reflect.Uintptr, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+			outFunc = func(r1, r2 uintptr) []reflect.Value {
+				v := reflect.New(outType).Elem()
+				v.SetUint(uint64(r1))
+				return []reflect.Value{v}
+			}
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			outFunc = func(r1, r2 uintptr) []reflect.Value {
+				v := reflect.New(outType).Elem()
+				v.SetInt(int64(r1))
+				return []reflect.Value{v}
+			}
+		case reflect.Bool:
+			outFunc = func(r1, r2 uintptr) []reflect.Value {
+				v := reflect.New(outType).Elem()
+				v.SetBool(r1 != 0)
+				return []reflect.Value{v}
+			}
+		case reflect.UnsafePointer:
+			outFunc = func(r1, r2 uintptr) []reflect.Value {
+				v := reflect.New(outType).Elem()
+				// We take the address and then dereference it to trick go vet from creating a possible miss-use of unsafe.Pointer
+				v.SetPointer(*(*unsafe.Pointer)(unsafe.Pointer(&r1)))
+				return []reflect.Value{v}
+			}
+		case reflect.Ptr:
+			outFunc = func(r1, r2 uintptr) []reflect.Value {
+				// It is safe to have the address of r1 not escape because it is immediately dereferenced with .Elem()
+				v := reflect.NewAt(outType, runtime_noescape(unsafe.Pointer(&r1))).Elem()
+				return []reflect.Value{v}
+			}
+		case reflect.Func:
+			outFunc = func(r1, r2 uintptr) []reflect.Value {
+				// wrap this C function in a nicely typed Go function
+				v := reflect.New(outType)
+				RegisterFunc(v.Interface(), r1)
+				return []reflect.Value{v}
+			}
+		case reflect.String:
+			outFunc = func(r1, r2 uintptr) []reflect.Value {
+				v := reflect.New(outType)
+				v.SetString(strings.GoString(r1))
+				return []reflect.Value{v}
+			}
+		case reflect.Float32, reflect.Float64:
+			outFunc = func(r1, r2 uintptr) []reflect.Value {
+				v := reflect.New(outType)
+				// NOTE: r2 is only the floating return value on 64bit platforms.
+				// On 32bit platforms r2 is the upper part of a 64bit return.
+				v.SetFloat(math.Float64frombits(uint64(r2)))
+				return []reflect.Value{v}
+			}
+		default:
+			panic("purego: unsupported return kind: " + outType.Kind().String())
+		}
+	}
+
+	v := reflect.MakeFunc(ty, func(args []reflect.Value) (results []reflect.Value) {
+		if len(args) > 0 {
+			if variadic, ok := args[len(args)-1].Interface().([]interface{}); ok {
+				// subtract one from args bc the last argument in args is []interface{}
+				// which we are currently expanding
+				tmp := make([]reflect.Value, len(args)-1+len(variadic))
+				n := copy(tmp, args[:len(args)-1])
+				for i, v := range variadic {
+					tmp[n+i] = reflect.ValueOf(v)
+				}
+				args = tmp
+			}
+		}
+		// Reset stack (Registers? wording)
+		numInts = 0
+		numFloats = 0
+		numStack = 0
+		//keepAlive = nil
+		defer func() {
+			runtime.KeepAlive(keepAlive)
+			runtime.KeepAlive(args)
+		}()
+		for i, v := range args {
+			addFuncs[i](v)
+		}
+		// TODO: support structs
+		var r1, r2 uintptr
+		if runtime.GOARCH == "arm64" || runtime.GOOS != "windows" {
+			// Use the normal arm64 calling convention even on Windows
+			syscall := syscall9Args{
+				cfn,
+				sysargs[0], sysargs[1], sysargs[2], sysargs[3], sysargs[4], sysargs[5], sysargs[6], sysargs[7], sysargs[8],
+				floats[0], floats[1], floats[2], floats[3], floats[4], floats[5], floats[6], floats[7],
+				0, 0, 0,
+			}
+			runtime_cgocall(syscall9XABI0, unsafe.Pointer(&syscall))
+			r1, r2 = syscall.r1, syscall.r2
+		} else {
+			// This is a fallback for Windows amd64, 386, and arm. Note this may not support floats
+			r1, r2, _ = syscall_syscall9X(cfn, sysargs[0], sysargs[1], sysargs[2], sysargs[3], sysargs[4], sysargs[5], sysargs[6], sysargs[7], sysargs[8])
+		}
+
+		return outFunc(r1, r2)
 	})
 	fn.Set(v)
 }
