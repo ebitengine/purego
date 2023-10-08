@@ -597,9 +597,9 @@ func argsCheck(ty reflect.Type, cfn uintptr) {
 }
 
 // Convenience to avoid code repetition in all instances of RegisterFuncI_O
-func runtime_call(reg syscallStack, cfn uintptr) (uintptr, uintptr) {
+func runtime_call(ss syscallStack, cfn uintptr) (uintptr, uintptr) {
 	var r1, r2 uintptr
-	sysargs, floats := reg.SysArgs(), reg.Floats()
+	sysargs, floats := ss.SysArgs(), ss.Floats()
 	if runtime.GOARCH == "arm64" || runtime.GOOS != "windows" {
 		// Use the normal arm64 calling convention even on Windows
 		syscall := syscall9Args{
@@ -858,19 +858,19 @@ func RegisterFunc9_1[I0, I1, I2, I3, I4, I5, I6, I7, I8, O any](fptr *func(I0, I
 	// Create new function
 	*fptr = func(i0 I0, i1 I1, i2 I2, i3 I3, i4 I4, i5 I5, i6 I6, i7 I7, i8 I8) O {
 		// Create new syscall stack
-		reg := newSyscallStack()
+		ss := newSyscallStack()
 		// Add inputs in registers
-		func0(reg, i0)
-		func1(reg, i1)
-		func2(reg, i2)
-		func3(reg, i3)
-		func4(reg, i4)
-		func5(reg, i5)
-		func6(reg, i6)
-		func7(reg, i7)
-		func8(reg, i8)
+		func0(ss, i0)
+		func1(ss, i1)
+		func2(ss, i2)
+		func3(ss, i3)
+		func4(ss, i4)
+		func5(ss, i5)
+		func6(ss, i6)
+		func7(ss, i7)
+		func8(ss, i8)
 		// Function call
-		r1, r2 := runtime_call(reg, cfn)
+		r1, r2 := runtime_call(ss, cfn)
 
 		return returnFunc(r1, r2)
 	}
