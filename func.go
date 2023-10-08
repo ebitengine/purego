@@ -292,7 +292,32 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 	fn.Set(v)
 }
 
+func numOfIntegerRegisters() int {
+	switch runtime.GOARCH {
+	case "arm64":
+		return 8
+	case "amd64":
+		return 6
+		// TODO: figure out why 386 tests are not working
+		/*case "386":
+			return 0
+		case "arm":
+			return 4*/
+	default:
+		panic("purego: unknown GOARCH (" + runtime.GOARCH + ")")
+	}
+}
+
 // WIP: Less reflection below
+
+type syscallStack interface {
+	SysArgs() []uintptr
+	Floats() []uintptr
+
+	addStack(x uintptr)
+	addInt(x uintptr)
+	addFloat(x uintptr)
+}
 
 type syscallStackArm64NoWin [1 + maxArgs + numOfFloats]uintptr
 
@@ -376,15 +401,6 @@ func (ss *syscallStackAmd64OrWin) SysArgs() []uintptr {
 
 func (ss *syscallStackAmd64OrWin) Floats() []uintptr {
 	return ss[1+maxArgs:]
-}
-
-type syscallStack interface {
-	SysArgs() []uintptr
-	Floats() []uintptr
-
-	addStack(x uintptr)
-	addInt(x uintptr)
-	addFloat(x uintptr)
 }
 
 func newSyscallStack() syscallStack {
@@ -562,13 +578,15 @@ func getReturnFunc[T any]() func(r1, r2 uintptr) T {
 	return nil
 }
 
-func argsCheck(ty reflect.Type, cfn uintptr) {
+func argsCheck(fptr any, cfn uintptr) {
 	if cfn == 0 {
 		panic("purego: cfn is nil")
 	}
 	// this code checks how many registers and stack this function will use
 	// to avoid crashing with too many arguments
 	var ints, floats, stack int
+
+	ty := reflect.ValueOf(fptr).Elem().Type()
 	for i := 0; i < ty.NumIn(); i++ {
 		arg := ty.In(i)
 		switch arg.Kind() {
@@ -621,9 +639,8 @@ func runtime_call(ss syscallStack, cfn uintptr) (uintptr, uintptr) {
 // No return value
 
 func RegisterFunc1_0[I0 any](fptr *func(I0), cfn uintptr) {
-	ty := reflect.ValueOf(fptr).Elem().Type()
 	// Prevent too many registers and check func address is okay
-	argsCheck(ty, cfn)
+	argsCheck(fptr, cfn)
 	func0 := getAddFunc[I0]()
 	// Create new function
 	*fptr = func(i0 I0) {
@@ -637,9 +654,8 @@ func RegisterFunc1_0[I0 any](fptr *func(I0), cfn uintptr) {
 }
 
 func RegisterFunc2_0[I0, I1 any](fptr *func(I0, I1), cfn uintptr) {
-	ty := reflect.ValueOf(fptr).Elem().Type()
 	// Prevent too many registers and check func address is okay
-	argsCheck(ty, cfn)
+	argsCheck(fptr, cfn)
 	func0 := getAddFunc[I0]()
 	func1 := getAddFunc[I1]()
 	// Create new function
@@ -655,9 +671,8 @@ func RegisterFunc2_0[I0, I1 any](fptr *func(I0, I1), cfn uintptr) {
 }
 
 func RegisterFunc3_0[I0, I1, I2 any](fptr *func(I0, I1, I2), cfn uintptr) {
-	ty := reflect.ValueOf(fptr).Elem().Type()
 	// Prevent too many registers and check func address is okay
-	argsCheck(ty, cfn)
+	argsCheck(fptr, cfn)
 	func0 := getAddFunc[I0]()
 	func1 := getAddFunc[I1]()
 	func2 := getAddFunc[I2]()
@@ -675,9 +690,8 @@ func RegisterFunc3_0[I0, I1, I2 any](fptr *func(I0, I1, I2), cfn uintptr) {
 }
 
 func RegisterFunc4_0[I0, I1, I2, I3 any](fptr *func(I0, I1, I2, I3), cfn uintptr) {
-	ty := reflect.ValueOf(fptr).Elem().Type()
 	// Prevent too many registers and check func address is okay
-	argsCheck(ty, cfn)
+	argsCheck(fptr, cfn)
 	func0 := getAddFunc[I0]()
 	func1 := getAddFunc[I1]()
 	func2 := getAddFunc[I2]()
@@ -697,9 +711,8 @@ func RegisterFunc4_0[I0, I1, I2, I3 any](fptr *func(I0, I1, I2, I3), cfn uintptr
 }
 
 func RegisterFunc5_0[I0, I1, I2, I3, I4 any](fptr *func(I0, I1, I2, I3, I4), cfn uintptr) {
-	ty := reflect.ValueOf(fptr).Elem().Type()
 	// Prevent too many registers and check func address is okay
-	argsCheck(ty, cfn)
+	argsCheck(fptr, cfn)
 	func0 := getAddFunc[I0]()
 	func1 := getAddFunc[I1]()
 	func2 := getAddFunc[I2]()
@@ -725,9 +738,8 @@ func RegisterFunc5_0[I0, I1, I2, I3, I4 any](fptr *func(I0, I1, I2, I3, I4), cfn
 // 1 return value
 
 func RegisterFunc1_1[I0, O any](fptr *func(I0) O, cfn uintptr) {
-	ty := reflect.ValueOf(fptr).Elem().Type()
 	// Prevent too many registers and check func address is okay
-	argsCheck(ty, cfn)
+	argsCheck(fptr, cfn)
 	returnFunc := getReturnFunc[O]()
 	func0 := getAddFunc[I0]()
 	// Create new function
@@ -744,9 +756,8 @@ func RegisterFunc1_1[I0, O any](fptr *func(I0) O, cfn uintptr) {
 }
 
 func RegisterFunc2_1[I0, I1, O any](fptr *func(I0, I1) O, cfn uintptr) {
-	ty := reflect.ValueOf(fptr).Elem().Type()
 	// Prevent too many registers and check func address is okay
-	argsCheck(ty, cfn)
+	argsCheck(fptr, cfn)
 	returnFunc := getReturnFunc[O]()
 	func0 := getAddFunc[I0]()
 	func1 := getAddFunc[I1]()
@@ -765,9 +776,8 @@ func RegisterFunc2_1[I0, I1, O any](fptr *func(I0, I1) O, cfn uintptr) {
 }
 
 func RegisterFunc3_1[I0, I1, I2, O any](fptr *func(I0, I1, I2) O, cfn uintptr) {
-	ty := reflect.ValueOf(fptr).Elem().Type()
 	// Prevent too many registers and check func address is okay
-	argsCheck(ty, cfn)
+	argsCheck(fptr, cfn)
 	returnFunc := getReturnFunc[O]()
 	func0 := getAddFunc[I0]()
 	func1 := getAddFunc[I1]()
@@ -788,9 +798,8 @@ func RegisterFunc3_1[I0, I1, I2, O any](fptr *func(I0, I1, I2) O, cfn uintptr) {
 }
 
 func RegisterFunc4_1[I0, I1, I2, I3, O any](fptr *func(I0, I1, I2, I3) O, cfn uintptr) {
-	ty := reflect.ValueOf(fptr).Elem().Type()
 	// Prevent too many registers and check func address is okay
-	argsCheck(ty, cfn)
+	argsCheck(fptr, cfn)
 	returnFunc := getReturnFunc[O]()
 	func0 := getAddFunc[I0]()
 	func1 := getAddFunc[I1]()
@@ -813,9 +822,8 @@ func RegisterFunc4_1[I0, I1, I2, I3, O any](fptr *func(I0, I1, I2, I3) O, cfn ui
 }
 
 func RegisterFunc5_1[I0, I1, I2, I3, I4, O any](fptr *func(I0, I1, I2, I3, I4) O, cfn uintptr) {
-	ty := reflect.ValueOf(fptr).Elem().Type()
 	// Prevent too many registers and check func address is okay
-	argsCheck(ty, cfn)
+	argsCheck(fptr, cfn)
 	returnFunc := getReturnFunc[O]()
 	func0 := getAddFunc[I0]()
 	func1 := getAddFunc[I1]()
@@ -842,9 +850,8 @@ func RegisterFunc5_1[I0, I1, I2, I3, I4, O any](fptr *func(I0, I1, I2, I3, I4) O
 // TODO: missing 6-8
 
 func RegisterFunc9_1[I0, I1, I2, I3, I4, I5, I6, I7, I8, O any](fptr *func(I0, I1, I2, I3, I4, I5, I6, I7, I8) O, cfn uintptr) {
-	ty := reflect.ValueOf(fptr).Elem().Type()
 	// Prevent too many registers and check func address is okay
-	argsCheck(ty, cfn)
+	argsCheck(fptr, cfn)
 	returnFunc := getReturnFunc[O]()
 	func0 := getAddFunc[I0]()
 	func1 := getAddFunc[I1]()
@@ -873,21 +880,5 @@ func RegisterFunc9_1[I0, I1, I2, I3, I4, I5, I6, I7, I8, O any](fptr *func(I0, I
 		r1, r2 := runtime_call(ss, cfn)
 
 		return returnFunc(r1, r2)
-	}
-}
-
-func numOfIntegerRegisters() int {
-	switch runtime.GOARCH {
-	case "arm64":
-		return 8
-	case "amd64":
-		return 6
-		// TODO: figure out why 386 tests are not working
-		/*case "386":
-			return 0
-		case "arm":
-			return 4*/
-	default:
-		panic("purego: unknown GOARCH (" + runtime.GOARCH + ")")
 	}
 }

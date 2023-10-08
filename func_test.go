@@ -183,7 +183,7 @@ func Benchmark_qsort(b *testing.B) {
 		}
 	})
 	// New
-	b.Run("RegisterFunc1_0(new)", func(b *testing.B) {
+	b.Run("RegisterFunc4_0(new)", func(b *testing.B) {
 		// 648578, 1806 ns/op, 296 B/op, 4 allocs/op
 		library, err := getSystemLibrary()
 		if err != nil {
