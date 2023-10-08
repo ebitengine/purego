@@ -206,11 +206,11 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 			addFloat = addStack
 		}
 
-		//var keepAlive []interface{}
-		/*defer func() {
+		var keepAlive []interface{}
+		defer func() {
 			runtime.KeepAlive(keepAlive)
 			runtime.KeepAlive(args)
-		}()*/
+		}()
 		for _, v := range args {
 			switch v.Kind() {
 			case reflect.String:
