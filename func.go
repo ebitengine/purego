@@ -596,12 +596,6 @@ func argsCheck(ty reflect.Type, cfn uintptr) {
 	}
 }
 
-// Note: Can be removed, just to benchmark direct syscalls to compare, should not be exposed
-func Syscall9(cfn uintptr, sysargs [maxArgs]uintptr) (uintptr, uintptr) {
-	r1, r2, _ := syscall_syscall9X(cfn, sysargs[0], sysargs[1], sysargs[2], sysargs[3], sysargs[4], sysargs[5], sysargs[6], sysargs[7], sysargs[8])
-	return r1, r2
-}
-
 // Convenience to avoid code repetition in all instances of RegisterFuncI_O
 func runtime_call(reg syscallStack, cfn uintptr) (uintptr, uintptr) {
 	var r1, r2 uintptr
@@ -737,7 +731,7 @@ func RegisterFunc1_1[I0, O any](fptr *func(I0) O, cfn uintptr) {
 	returnFunc := getReturnFunc[O]()
 	func0 := getAddFunc[I0]()
 	// Create new function
-	*fptr = func(i0 I0) (out O) {
+	*fptr = func(i0 I0) O {
 		// Create new syscall stack
 		ss := newSyscallStack()
 		// Add inputs in registers
@@ -757,7 +751,7 @@ func RegisterFunc2_1[I0, I1, O any](fptr *func(I0, I1) O, cfn uintptr) {
 	func0 := getAddFunc[I0]()
 	func1 := getAddFunc[I1]()
 	// Create new function
-	*fptr = func(i0 I0, i1 I1) (out O) {
+	*fptr = func(i0 I0, i1 I1) O {
 		// Create new syscall stack
 		ss := newSyscallStack()
 		// Add inputs in registers
@@ -779,7 +773,7 @@ func RegisterFunc3_1[I0, I1, I2, O any](fptr *func(I0, I1, I2) O, cfn uintptr) {
 	func1 := getAddFunc[I1]()
 	func2 := getAddFunc[I2]()
 	// Create new function
-	*fptr = func(i0 I0, i1 I1, i2 I2) (out O) {
+	*fptr = func(i0 I0, i1 I1, i2 I2) O {
 		// Create new syscall stack
 		ss := newSyscallStack()
 		// Add inputs in registers
@@ -803,7 +797,7 @@ func RegisterFunc4_1[I0, I1, I2, I3, O any](fptr *func(I0, I1, I2, I3) O, cfn ui
 	func2 := getAddFunc[I2]()
 	func3 := getAddFunc[I3]()
 	// Create new function
-	*fptr = func(i0 I0, i1 I1, i2 I2, i3 I3) (out O) {
+	*fptr = func(i0 I0, i1 I1, i2 I2, i3 I3) O {
 		// Create new syscall stack
 		ss := newSyscallStack()
 		// Add inputs in registers
@@ -829,7 +823,7 @@ func RegisterFunc5_1[I0, I1, I2, I3, I4, O any](fptr *func(I0, I1, I2, I3, I4) O
 	func3 := getAddFunc[I3]()
 	func4 := getAddFunc[I4]()
 	// Create new function
-	*fptr = func(i0 I0, i1 I1, i2 I2, i3 I3, i4 I4) (out O) {
+	*fptr = func(i0 I0, i1 I1, i2 I2, i3 I3, i4 I4) O {
 		// Create new syscall stack
 		ss := newSyscallStack()
 		// Add inputs in registers
@@ -862,7 +856,7 @@ func RegisterFunc9_1[I0, I1, I2, I3, I4, I5, I6, I7, I8, O any](fptr *func(I0, I
 	func7 := getAddFunc[I7]()
 	func8 := getAddFunc[I8]()
 	// Create new function
-	*fptr = func(i0 I0, i1 I1, i2 I2, i3 I3, i4 I4, i5 I5, i6 I6, i7 I7, i8 I8) (out O) {
+	*fptr = func(i0 I0, i1 I1, i2 I2, i3 I3, i4 I4, i5 I5, i6 I6, i7 I7, i8 I8) O {
 		// Create new syscall stack
 		reg := newSyscallStack()
 		// Add inputs in registers

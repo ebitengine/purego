@@ -307,8 +307,8 @@ func Benchmark_strlen(b *testing.B) {
 		}
 	})
 	// Direct
-	b.Run("Syscall9", func(b *testing.B) {
-		// 11762629 - 100.5 ns/op - 32 B/op - 1 allocs/op
+	b.Run("SyscallN", func(b *testing.B) {
+		// 8449221, 142.2 ns/op, 112 B/op, 2 allocs/op
 		library, err := getSystemLibrary()
 		if err != nil {
 			b.Errorf("couldn't get system library: %s", err)
@@ -324,7 +324,7 @@ func Benchmark_strlen(b *testing.B) {
 			sysargs := [9]uintptr{
 				uintptr(unsafe.Pointer(ptr)),
 			}
-			_, _ = purego.Syscall9(symbol, sysargs)
+			_, _, _ = purego.SyscallN(symbol, sysargs[:]...)
 		}
 	})
 }
