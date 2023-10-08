@@ -320,7 +320,7 @@ func (ss *syscallStackArm64NoWin) addInt(x uintptr) {
 		ss.addStack(x)
 	} else {
 		ss[1+n] = x
-		ss[0] = ss[0] - n | ((n + 1) << 4)
+		ss[0] = (ss[0] - (n << 4)) | ((n + 1) << 4)
 	}
 }
 
@@ -328,7 +328,7 @@ func (ss *syscallStackArm64NoWin) addFloat(x uintptr) {
 	n := ss.numFloats()
 	if int(n) < numOfFloats {
 		ss[1+maxArgs+n] = x
-		ss[0] = ss[0] - n | ((n + 1) << 8)
+		ss[0] = (ss[0] - (n << 8)) | ((n + 1) << 8)
 	} else {
 		ss.addStack(x)
 	}
