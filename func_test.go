@@ -5,6 +5,7 @@ package purego_test
 
 import (
 	"fmt"
+	"math"
 	"runtime"
 	"testing"
 	"unsafe"
@@ -243,26 +244,28 @@ func Test_puts(t *testing.T) {
 
 // strlen
 
-func Test2_strlen(t *testing.T) {
-	library, err := getSystemLibrary()
-	if err != nil {
-		t.Errorf("couldn't get system library: %s", err)
-	}
-	libc, err := openLibrary(library)
-	if err != nil {
-		t.Errorf("failed to dlopen: %s", err)
-	}
-	var strlen func(string) int
-	symbol := purego.Symbol(libc, "strlen")
-	purego.RegisterFunc1_1(&strlen, symbol)
-	count := strlen("abcdefghijklmnopqrstuvwxyz")
-	if count != 26 {
-		t.Errorf("strlen(0): expected 26 but got %d", count)
-	}
-	count = strlen("abcdefghijklmnopqrstuvwxyz")
-	if count != 26 {
-		t.Errorf("strlen(1): expected 26 but got %d", count)
-	}
+func Test_strlen(t *testing.T) {
+	t.Run("RegisterFunc(original)", func(t *testing.T) {
+		library, err := getSystemLibrary()
+		if err != nil {
+			t.Errorf("couldn't get system library: %s", err)
+		}
+		libc, err := openLibrary(library)
+		if err != nil {
+			t.Errorf("failed to dlopen: %s", err)
+		}
+		var strlen func(string) int
+		symbol := purego.Symbol(libc, "strlen")
+		purego.RegisterFunc1_1(&strlen, symbol)
+		count := strlen("abcdefghijklmnopqrstuvwxyz")
+		if count != 26 {
+			t.Errorf("strlen(0): expected 26 but got %d", count)
+		}
+		count = strlen("abcdefghijklmnopqrstuvwxyz")
+		if count != 26 {
+			t.Errorf("strlen(1): expected 26 but got %d", count)
+		}
+	})
 }
 
 func Benchmark_strlen(b *testing.B) {
@@ -322,6 +325,103 @@ func Benchmark_strlen(b *testing.B) {
 				uintptr(unsafe.Pointer(ptr)),
 			}
 			_, _ = purego.Syscall9(symbol, sysargs)
+		}
+	})
+}
+
+// cos
+
+func Test_cos(t *testing.T) {
+	// Original
+	t.Run("RegisterFunc(original)", func(t *testing.T) {
+		library, err := getSystemLibrary()
+		if err != nil {
+			t.Errorf("couldn't get system library: %s", err)
+		}
+		libc, err := openLibrary(library)
+		if err != nil {
+			t.Errorf("failed to dlopen: %s", err)
+		}
+		var cos func(float64) float64
+		purego.RegisterLibFunc(&cos, libc, "cos")
+		// 0.05428962282295477
+		const v = 1.51648
+		expected := math.Cos(v)
+		actual := cos(v)
+		if expected != actual {
+			t.Errorf("cos(%.8f): expected %.8f but got %.8f", v, expected, actual)
+		}
+	})
+	// New
+	t.Run("RegisterFunc1_1(new)", func(t *testing.T) {
+		library, err := getSystemLibrary()
+		if err != nil {
+			t.Errorf("couldn't get system library: %s", err)
+		}
+		libc, err := openLibrary(library)
+		if err != nil {
+			t.Errorf("failed to dlopen: %s", err)
+		}
+		var cos func(float64) float64
+		symbol := purego.Symbol(libc, "cos")
+		purego.RegisterFunc1_1(&cos, symbol)
+		// 0.05428962282295477
+		const v = 1.51648
+		expected := math.Cos(v)
+		actual := cos(v)
+		if expected != actual {
+			t.Errorf("cos(%.8f): expected %.8f but got %.8f", v, expected, actual)
+		}
+	})
+}
+
+func Benchmark_cos(b *testing.B) {
+	// Original
+	b.Run("RegisterFunc(original)", func(b *testing.B) {
+		// 3337392, 362.0 ns/op, 64 B/op, 4 allocs/op
+		library, err := getSystemLibrary()
+		if err != nil {
+			b.Errorf("couldn't get system library: %s", err)
+		}
+		libc, err := openLibrary(library)
+		if err != nil {
+			b.Errorf("failed to dlopen: %s", err)
+		}
+		var cos func(float64) float64
+		purego.RegisterLibFunc(&cos, libc, "cos")
+		// 0.05428962282295477
+		const v = 1.51648
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			_ = cos(v)
+		}
+	})
+	// New
+	b.Run("RegisterFunc1_1(new)", func(b *testing.B) {
+		// 9300645, 129.0 ns/op, 144 B/op, 1 allocs/op
+		library, err := getSystemLibrary()
+		if err != nil {
+			b.Errorf("couldn't get system library: %s", err)
+		}
+		libc, err := openLibrary(library)
+		if err != nil {
+			b.Errorf("failed to dlopen: %s", err)
+		}
+		var cos func(float64) float64
+		symbol := purego.Symbol(libc, "cos")
+		purego.RegisterFunc1_1(&cos, symbol)
+		// 0.05428962282295477
+		const v = 1.51648
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			_ = cos(v)
+		}
+	})
+	// Go
+	b.Run("Go", func(b *testing.B) {
+		const v = 1.51648
+		for i := 0; i < b.N; i++ {
+			_ = math.Cos(v)
 		}
 	})
 }
