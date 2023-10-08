@@ -215,7 +215,7 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 			switch v.Kind() {
 			case reflect.String:
 				ptr := strings.CString(v.String())
-				//keepAlive = append(keepAlive, ptr)
+				keepAlive = append(keepAlive, ptr)
 				addInt(uintptr(unsafe.Pointer(ptr)))
 			case reflect.Uintptr, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 				addInt(uintptr(v.Uint()))
