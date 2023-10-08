@@ -634,11 +634,11 @@ func RegisterFunc1_0[I0 any](fptr *func(I0), cfn uintptr) {
 	// Create new function
 	*fptr = func(i0 I0) {
 		// Create new syscall stack
-		reg := newSyscallStack()
+		ss := newSyscallStack()
 		// Add inputs in registers
-		func0(reg, i0)
+		func0(ss, i0)
 		// Function call
-		runtime_call(reg, cfn)
+		runtime_call(ss, cfn)
 	}
 }
 
@@ -651,12 +651,12 @@ func RegisterFunc2_0[I0, I1 any](fptr *func(I0, I1), cfn uintptr) {
 	// Create new function
 	*fptr = func(i0 I0, i1 I1) {
 		// Create new syscall stack
-		reg := newSyscallStack()
+		ss := newSyscallStack()
 		// Add inputs in registers
-		func0(reg, i0)
-		func1(reg, i1)
+		func0(ss, i0)
+		func1(ss, i1)
 		// Function call
-		runtime_call(reg, cfn)
+		runtime_call(ss, cfn)
 	}
 }
 
@@ -670,13 +670,13 @@ func RegisterFunc3_0[I0, I1, I2 any](fptr *func(I0, I1, I2), cfn uintptr) {
 	// Create new function
 	*fptr = func(i0 I0, i1 I1, i2 I2) {
 		// Create new syscall stack
-		reg := newSyscallStack()
+		ss := newSyscallStack()
 		// Add inputs in registers
-		func0(reg, i0)
-		func1(reg, i1)
-		func2(reg, i2)
+		func0(ss, i0)
+		func1(ss, i1)
+		func2(ss, i2)
 		// Function call
-		runtime_call(reg, cfn)
+		runtime_call(ss, cfn)
 	}
 }
 
@@ -691,14 +691,14 @@ func RegisterFunc4_0[I0, I1, I2, I3 any](fptr *func(I0, I1, I2, I3), cfn uintptr
 	// Create new function
 	*fptr = func(i0 I0, i1 I1, i2 I2, i3 I3) {
 		// Create new syscall stack
-		reg := newSyscallStack()
+		ss := newSyscallStack()
 		// Add inputs in registers
-		func0(reg, i0)
-		func1(reg, i1)
-		func2(reg, i2)
-		func3(reg, i3)
+		func0(ss, i0)
+		func1(ss, i1)
+		func2(ss, i2)
+		func3(ss, i3)
 		// Function call
-		runtime_call(reg, cfn)
+		runtime_call(ss, cfn)
 	}
 }
 
@@ -714,15 +714,15 @@ func RegisterFunc5_0[I0, I1, I2, I3, I4 any](fptr *func(I0, I1, I2, I3, I4), cfn
 	// Create new function
 	*fptr = func(i0 I0, i1 I1, i2 I2, i3 I3, i4 I4) {
 		// Create new syscall stack
-		reg := newSyscallStack()
+		ss := newSyscallStack()
 		// Add inputs in registers
-		func0(reg, i0)
-		func1(reg, i1)
-		func2(reg, i2)
-		func3(reg, i3)
-		func4(reg, i4)
+		func0(ss, i0)
+		func1(ss, i1)
+		func2(ss, i2)
+		func3(ss, i3)
+		func4(ss, i4)
 		// Function call
-		runtime_call(reg, cfn)
+		runtime_call(ss, cfn)
 	}
 }
 
@@ -739,11 +739,11 @@ func RegisterFunc1_1[I0, O any](fptr *func(I0) O, cfn uintptr) {
 	// Create new function
 	*fptr = func(i0 I0) (out O) {
 		// Create new syscall stack
-		reg := newSyscallStack()
+		ss := newSyscallStack()
 		// Add inputs in registers
-		func0(reg, i0)
+		func0(ss, i0)
 		// Function call
-		r1, r2 := runtime_call(reg, cfn)
+		r1, r2 := runtime_call(ss, cfn)
 
 		return returnFunc(r1, r2)
 	}
@@ -759,12 +759,12 @@ func RegisterFunc2_1[I0, I1, O any](fptr *func(I0, I1) O, cfn uintptr) {
 	// Create new function
 	*fptr = func(i0 I0, i1 I1) (out O) {
 		// Create new syscall stack
-		reg := newSyscallStack()
+		ss := newSyscallStack()
 		// Add inputs in registers
-		func0(reg, i0)
-		func1(reg, i1)
+		func0(ss, i0)
+		func1(ss, i1)
 		// Function call
-		r1, r2 := runtime_call(reg, cfn)
+		r1, r2 := runtime_call(ss, cfn)
 
 		return returnFunc(r1, r2)
 	}
@@ -781,13 +781,13 @@ func RegisterFunc3_1[I0, I1, I2, O any](fptr *func(I0, I1, I2) O, cfn uintptr) {
 	// Create new function
 	*fptr = func(i0 I0, i1 I1, i2 I2) (out O) {
 		// Create new syscall stack
-		reg := newSyscallStack()
+		ss := newSyscallStack()
 		// Add inputs in registers
-		func0(reg, i0)
-		func1(reg, i1)
-		func2(reg, i2)
+		func0(ss, i0)
+		func1(ss, i1)
+		func2(ss, i2)
 		// Function call
-		r1, r2 := runtime_call(reg, cfn)
+		r1, r2 := runtime_call(ss, cfn)
 
 		return returnFunc(r1, r2)
 	}
@@ -805,14 +805,14 @@ func RegisterFunc4_1[I0, I1, I2, I3, O any](fptr *func(I0, I1, I2, I3) O, cfn ui
 	// Create new function
 	*fptr = func(i0 I0, i1 I1, i2 I2, i3 I3) (out O) {
 		// Create new syscall stack
-		reg := newSyscallStack()
+		ss := newSyscallStack()
 		// Add inputs in registers
-		func0(reg, i0)
-		func1(reg, i1)
-		func2(reg, i2)
-		func3(reg, i3)
+		func0(ss, i0)
+		func1(ss, i1)
+		func2(ss, i2)
+		func3(ss, i3)
 		// Function call
-		r1, r2 := runtime_call(reg, cfn)
+		r1, r2 := runtime_call(ss, cfn)
 
 		return returnFunc(r1, r2)
 	}
@@ -831,15 +831,15 @@ func RegisterFunc5_1[I0, I1, I2, I3, I4, O any](fptr *func(I0, I1, I2, I3, I4) O
 	// Create new function
 	*fptr = func(i0 I0, i1 I1, i2 I2, i3 I3, i4 I4) (out O) {
 		// Create new syscall stack
-		reg := newSyscallStack()
+		ss := newSyscallStack()
 		// Add inputs in registers
-		func0(reg, i0)
-		func1(reg, i1)
-		func2(reg, i2)
-		func3(reg, i3)
-		func4(reg, i4)
+		func0(ss, i0)
+		func1(ss, i1)
+		func2(ss, i2)
+		func3(ss, i3)
+		func4(ss, i4)
 		// Function call
-		r1, r2 := runtime_call(reg, cfn)
+		r1, r2 := runtime_call(ss, cfn)
 
 		return returnFunc(r1, r2)
 	}
