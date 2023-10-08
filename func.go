@@ -24,12 +24,12 @@ func RegisterLibFunc(fptr interface{}, handle uintptr, name string) {
 	RegisterFunc(fptr, sym)
 }
 
-func RegisterLibFunc2(fptr interface{}, handle uintptr, name string) {
+func Symbol(handle uintptr, name string) uintptr {
 	sym, err := loadSymbol(handle, name)
 	if err != nil {
 		panic(err)
 	}
-	RegisterFunc2(fptr, sym)
+	return sym
 }
 
 // RegisterFunc takes a pointer to a Go function representing the calling convention of the C function.
@@ -206,16 +206,16 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 			addFloat = addStack
 		}
 
-		var keepAlive []interface{}
-		defer func() {
+		//var keepAlive []interface{}
+		/*defer func() {
 			runtime.KeepAlive(keepAlive)
 			runtime.KeepAlive(args)
-		}()
+		}()*/
 		for _, v := range args {
 			switch v.Kind() {
 			case reflect.String:
 				ptr := strings.CString(v.String())
-				keepAlive = append(keepAlive, ptr)
+				//keepAlive = append(keepAlive, ptr)
 				addInt(uintptr(unsafe.Pointer(ptr)))
 			case reflect.Uintptr, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 				addInt(uintptr(v.Uint()))
@@ -292,252 +292,594 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 	fn.Set(v)
 }
 
-func RegisterFunc2(fptr interface{}, cfn uintptr) {
-	fn := reflect.ValueOf(fptr).Elem()
-	ty := fn.Type()
-	if ty.Kind() != reflect.Func {
-		panic("purego: fptr must be a function pointer")
+// WIP: Less reflection below
+
+type syscallStackArm64NoWin [1 + maxArgs + numOfFloats]uintptr
+
+func (ss *syscallStackArm64NoWin) numStack() uintptr {
+	return ss[0] & 0b1111
+}
+
+func (ss *syscallStackArm64NoWin) numInts() uintptr {
+	return (ss[0] >> 4) & 0b1111
+}
+
+func (ss *syscallStackArm64NoWin) numFloats() uintptr {
+	return (ss[0] >> 8) & 0b1111
+}
+
+func (ss *syscallStackArm64NoWin) addStack(x uintptr) {
+	n := ss.numStack()
+	ss[1+n] = x
+	ss[0] = (ss[0] - n) | (n + 1)
+}
+
+func (ss *syscallStackArm64NoWin) addInt(x uintptr) {
+	n := ss.numInts()
+	if int(n) >= numOfIntegerRegisters() {
+		ss.addStack(x)
+	} else {
+		ss[1+n] = x
+		ss[0] = ss[0] - n | ((n + 1) << 4)
 	}
-	if ty.NumOut() > 1 {
-		panic("purego: function can only return zero or one values")
+}
+
+func (ss *syscallStackArm64NoWin) addFloat(x uintptr) {
+	n := ss.numFloats()
+	if int(n) < numOfFloats {
+		ss[1+maxArgs+n] = x
+		ss[0] = ss[0] - n | ((n + 1) << 8)
+	} else {
+		ss.addStack(x)
 	}
+}
+
+func (ss *syscallStackArm64NoWin) SysArgs() []uintptr {
+	return ss[1:]
+}
+
+func (ss *syscallStackArm64NoWin) Floats() []uintptr {
+	return ss[1+maxArgs:]
+}
+
+type syscallStackAmd64OrWin syscallStackArm64NoWin
+
+func (ss *syscallStackAmd64OrWin) numStack() uintptr {
+	return ss[0] & 0b1111
+}
+
+func (ss *syscallStackAmd64OrWin) numInts() uintptr {
+	return (ss[0] >> 4) & 0b1111
+}
+
+func (ss *syscallStackAmd64OrWin) numFloats() uintptr {
+	return (ss[0] >> 8) & 0b1111
+}
+
+func (ss *syscallStackAmd64OrWin) addStack(x uintptr) {
+	n := ss.numStack()
+	ss[1+n] = x
+	ss[0] = (ss[0] - n) | (n + 1)
+}
+
+func (ss *syscallStackAmd64OrWin) addInt(x uintptr) {
+	ss.addStack(x)
+}
+
+func (ss *syscallStackAmd64OrWin) addFloat(x uintptr) {
+	ss.addStack(x)
+}
+
+func (ss *syscallStackAmd64OrWin) SysArgs() []uintptr {
+	return ss[1:]
+}
+
+func (ss *syscallStackAmd64OrWin) Floats() []uintptr {
+	return ss[1+maxArgs:]
+}
+
+type syscallStack interface {
+	SysArgs() []uintptr
+	Floats() []uintptr
+
+	addStack(x uintptr)
+	addInt(x uintptr)
+	addFloat(x uintptr)
+}
+
+func newSyscallStack() syscallStack {
+	if runtime.GOARCH == "arm64" || runtime.GOOS != "windows" {
+		return &syscallStackArm64NoWin{}
+	}
+	return &syscallStackAmd64OrWin{}
+}
+
+func uintToPtr[T ~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr](v T) uintptr {
+	return uintptr(uint64(v))
+}
+
+func intToPtr[T ~int | ~int8 | ~int16 | ~int32 | ~int64](v T) uintptr {
+	return uintptr(int64(v))
+}
+
+func getAddFunc[T any]() func(syscallStack, T) {
+	// TODO: support structs
+	var v T
+	switch any(v).(type) {
+	case int:
+		return func(r syscallStack, x T) {
+			r.addInt(intToPtr(any(x).(int)))
+		}
+	case int8:
+		return func(r syscallStack, x T) {
+			r.addInt(intToPtr(any(x).(int8)))
+		}
+	case int16:
+		return func(r syscallStack, x T) {
+			r.addInt(intToPtr(any(x).(int16)))
+		}
+	case int32:
+		return func(r syscallStack, x T) {
+			r.addInt(intToPtr(any(x).(int32)))
+		}
+	case int64:
+		return func(r syscallStack, x T) {
+			r.addInt(intToPtr(any(x).(int64)))
+		}
+	case uint:
+		return func(r syscallStack, x T) {
+			r.addInt(uintToPtr(any(x).(uint)))
+		}
+	case uint8:
+		return func(r syscallStack, x T) {
+			r.addInt(uintToPtr(any(x).(uint8)))
+		}
+	case uint16:
+		return func(r syscallStack, x T) {
+			r.addInt(uintToPtr(any(x).(uint16)))
+		}
+	case uint32:
+		return func(r syscallStack, x T) {
+			r.addInt(uintToPtr(any(x).(uint32)))
+		}
+	case uint64:
+		return func(r syscallStack, x T) {
+			r.addInt(uintToPtr(any(x).(uint64)))
+		}
+	case uintptr:
+		return func(r syscallStack, x T) {
+			r.addInt(uintToPtr(any(x).(uintptr)))
+		}
+	case float32:
+		return func(r syscallStack, x T) {
+			r.addFloat(uintptr(math.Float32bits(any(x).(float32))))
+		}
+	case float64:
+		return func(r syscallStack, x T) {
+			r.addFloat(uintptr(math.Float64bits(any(x).(float64))))
+		}
+	case bool:
+		return func(r syscallStack, x T) {
+			if any(x).(bool) {
+				r.addInt(1)
+			} else {
+				r.addInt(0)
+			}
+		}
+	case string:
+		return func(r syscallStack, x T) {
+			ptr := strings.CString(any(x).(string))
+			r.addInt(uintptr(unsafe.Pointer(ptr)))
+		}
+
+	default:
+		return func(r syscallStack, x T) {
+			rv := reflect.ValueOf(x)
+			switch rv.Kind() {
+			case reflect.Ptr, reflect.UnsafePointer, reflect.Slice:
+				// There is no need to keepAlive this pointer separately because it is kept alive in the args variable
+				r.addInt(rv.Pointer())
+			case reflect.Func:
+				r.addInt(NewCallback(rv.Interface()))
+			default:
+				panic("purego: unsupported kind: " + rv.Kind().String())
+			}
+		}
+	}
+}
+
+func retInts[T int | int8 | int16 | int32 | int64 | uint | uint8 | uint16 | uint32 | uint64 | uintptr, V any](r1, r2 uintptr) V {
+	return any(T(r1)).(V)
+}
+
+func retBool[V any](r1, r2 uintptr) V {
+	return any(r1 != 0).(V)
+}
+
+func getReturnFunc[T any]() func(r1, r2 uintptr) T {
+	var v T
+	switch any(v).(type) {
+	case int:
+		return retInts[int, T]
+	case int8:
+		return retInts[int8, T]
+	case int16:
+		return retInts[int16, T]
+	case int32:
+		return retInts[int32, T]
+	case int64:
+		return retInts[int64, T]
+	case uint:
+		return retInts[uint, T]
+	case uint8:
+		return retInts[uint8, T]
+	case uint16:
+		return retInts[uint16, T]
+	case uint32:
+		return retInts[uint32, T]
+	case uint64:
+		return retInts[uint64, T]
+	case uintptr:
+		return retInts[uintptr, T]
+	case float32:
+		return func(r1, r2 uintptr) T {
+			return any(math.Float32frombits(uint32(r2))).(T)
+		}
+	case float64:
+		return func(r1, r2 uintptr) T {
+			return any(math.Float64frombits(uint64(r2))).(T)
+		}
+	case bool:
+		return retBool[T]
+	case string:
+		return func(r1, r2 uintptr) T {
+			return any(strings.GoString(r1)).(T)
+		}
+	case unsafe.Pointer:
+		// We take the address and then dereference it to trick go vet from creating a possible miss-use of unsafe.Pointer
+		return func(r1, r2 uintptr) T {
+			return any(*(*unsafe.Pointer)(unsafe.Pointer(&r1))).(T)
+		}
+	// Note: funcs and ptrs handled via reflect
+	default:
+		// TODO: below
+		/*u := reflect.ValueOf(v)
+		switch v.Elem().Type().Kind() {
+		case reflect.Ptr:
+			// It is safe to have the address of r1 not escape because it is immediately dereferenced with .Elem()
+			v.Set(reflect.NewAt(v.Type(), runtime_noescape(unsafe.Pointer(&r1))).Elem())
+		case reflect.Func:
+			// wrap this C function in a nicely typed Go function
+			fv := reflect.New(v.Type())
+			// Note: cannot use a generic one unfortunately
+			RegisterFunc(fv.Interface(), r1)
+			v.Set(fv)
+		default:
+			panic("purego: unsupported return kind: " + v.Type().Kind().String())
+		}*/
+	}
+
+	return nil
+}
+
+func argsCheck(ty reflect.Type, cfn uintptr) {
 	if cfn == 0 {
 		panic("purego: cfn is nil")
 	}
-	{
-		// this code checks how many registers and stack this function will use
-		// to avoid crashing with too many arguments
-		var ints int
-		var floats int
-		var stack int
-		for i := 0; i < ty.NumIn(); i++ {
-			arg := ty.In(i)
-			switch arg.Kind() {
-			case reflect.String, reflect.Uintptr, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
-				reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Ptr, reflect.UnsafePointer, reflect.Slice,
-				reflect.Func, reflect.Bool:
-				if ints < numOfIntegerRegisters() {
-					ints++
-				} else {
-					stack++
-				}
-			case reflect.Float32, reflect.Float64:
-				if floats < numOfFloats {
-					floats++
-				} else {
-					stack++
-				}
-			default:
-				panic("purego: unsupported kind " + arg.Kind().String())
-			}
-		}
-		sizeOfStack := maxArgs - numOfIntegerRegisters()
-		if stack > sizeOfStack {
-			panic("purego: too many arguments")
-		}
-	}
-
-	var sysargs [maxArgs]uintptr
-	stack := sysargs[numOfIntegerRegisters():]
-	var floats [numOfFloats]uintptr
-	var numInts int
-	var numFloats int
-	var numStack int
-	var addStack, addInt, addFloat func(x uintptr)
-	if runtime.GOARCH == "arm64" || runtime.GOOS != "windows" {
-		// Windows arm64 uses the same calling convention as macOS and Linux
-		addStack = func(x uintptr) {
-			stack[numStack] = x
-			numStack++
-		}
-		addInt = func(x uintptr) {
-			if numInts >= numOfIntegerRegisters() {
-				addStack(x)
-			} else {
-				sysargs[numInts] = x
-				numInts++
-			}
-		}
-		addFloat = func(x uintptr) {
-			if numFloats < len(floats) {
-				floats[numFloats] = x
-				numFloats++
-			} else {
-				addStack(x)
-			}
-		}
-	} else {
-		// On Windows amd64 the arguments are passed in the numbered registered.
-		// So the first int is in the first integer register and the first float
-		// is in the second floating register if there is already a first int.
-		// This is in contrast to how macOS and Linux pass arguments which
-		// tries to use as many registers as possible in the calling convention.
-		addStack = func(x uintptr) {
-			sysargs[numStack] = x
-			numStack++
-		}
-		addInt = addStack
-		addFloat = addStack
-	}
-
-	var keepAlive []interface{}
-	// Parameters
-	addFuncs := make([]func(v reflect.Value), ty.NumIn())
+	// this code checks how many registers and stack this function will use
+	// to avoid crashing with too many arguments
+	var ints, floats, stack int
 	for i := 0; i < ty.NumIn(); i++ {
 		arg := ty.In(i)
 		switch arg.Kind() {
-		case reflect.String:
-			addFuncs[i] = func(v reflect.Value) {
-				ptr := strings.CString(v.String())
-				keepAlive = append(keepAlive, ptr)
-				addInt(uintptr(unsafe.Pointer(ptr)))
-			}
-		case reflect.Uintptr, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-			addFuncs[i] = func(v reflect.Value) {
-				addInt(uintptr(v.Uint()))
-			}
-		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-			addFuncs[i] = func(v reflect.Value) {
-				addInt(uintptr(v.Int()))
-			}
-		case reflect.Ptr, reflect.UnsafePointer, reflect.Slice:
-			// There is no need to keepAlive this pointer separately because it is kept alive in the args variable
-			addFuncs[i] = func(v reflect.Value) {
-				addInt(v.Pointer())
-			}
-		case reflect.Func:
-			addFuncs[i] = func(v reflect.Value) {
-				addInt(NewCallback(v.Interface()))
-			}
-		case reflect.Bool:
-			addFuncs[i] = func(v reflect.Value) {
-				if v.Bool() {
-					addInt(1)
-				} else {
-					addInt(0)
-				}
-			}
-		case reflect.Float32:
-			addFuncs[i] = func(v reflect.Value) {
-				addFloat(uintptr(math.Float32bits(float32(v.Float()))))
-			}
-		case reflect.Float64:
-			addFuncs[i] = func(v reflect.Value) {
-				addFloat(uintptr(math.Float64bits(v.Float())))
-			}
-		default:
-			panic("purego: unsupported kind: " + arg.Kind().String())
-		}
-	}
-	// Return value
-	var outFunc func(r1, r2 uintptr) []reflect.Value = func(_, _ uintptr) []reflect.Value {
-		return nil
-	}
-	if ty.NumOut() > 0 {
-		outType := ty.Out(0)
-		switch outType.Kind() {
-		case reflect.Uintptr, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-			outFunc = func(r1, r2 uintptr) []reflect.Value {
-				v := reflect.New(outType).Elem()
-				v.SetUint(uint64(r1))
-				return []reflect.Value{v}
-			}
-		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-			outFunc = func(r1, r2 uintptr) []reflect.Value {
-				v := reflect.New(outType).Elem()
-				v.SetInt(int64(r1))
-				return []reflect.Value{v}
-			}
-		case reflect.Bool:
-			outFunc = func(r1, r2 uintptr) []reflect.Value {
-				v := reflect.New(outType).Elem()
-				v.SetBool(r1 != 0)
-				return []reflect.Value{v}
-			}
-		case reflect.UnsafePointer:
-			outFunc = func(r1, r2 uintptr) []reflect.Value {
-				v := reflect.New(outType).Elem()
-				// We take the address and then dereference it to trick go vet from creating a possible miss-use of unsafe.Pointer
-				v.SetPointer(*(*unsafe.Pointer)(unsafe.Pointer(&r1)))
-				return []reflect.Value{v}
-			}
-		case reflect.Ptr:
-			outFunc = func(r1, r2 uintptr) []reflect.Value {
-				// It is safe to have the address of r1 not escape because it is immediately dereferenced with .Elem()
-				v := reflect.NewAt(outType, runtime_noescape(unsafe.Pointer(&r1))).Elem()
-				return []reflect.Value{v}
-			}
-		case reflect.Func:
-			outFunc = func(r1, r2 uintptr) []reflect.Value {
-				// wrap this C function in a nicely typed Go function
-				v := reflect.New(outType)
-				RegisterFunc(v.Interface(), r1)
-				return []reflect.Value{v}
-			}
-		case reflect.String:
-			outFunc = func(r1, r2 uintptr) []reflect.Value {
-				v := reflect.New(outType)
-				v.SetString(strings.GoString(r1))
-				return []reflect.Value{v}
+		case reflect.String, reflect.Uintptr, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
+			reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Ptr, reflect.UnsafePointer, reflect.Slice,
+			reflect.Func, reflect.Bool:
+			if ints < numOfIntegerRegisters() {
+				ints++
+			} else {
+				stack++
 			}
 		case reflect.Float32, reflect.Float64:
-			outFunc = func(r1, r2 uintptr) []reflect.Value {
-				v := reflect.New(outType)
-				// NOTE: r2 is only the floating return value on 64bit platforms.
-				// On 32bit platforms r2 is the upper part of a 64bit return.
-				v.SetFloat(math.Float64frombits(uint64(r2)))
-				return []reflect.Value{v}
+			if floats < numOfFloats {
+				floats++
+			} else {
+				stack++
 			}
 		default:
-			panic("purego: unsupported return kind: " + outType.Kind().String())
+			panic("purego: unsupported kind " + arg.Kind().String())
 		}
 	}
+	sizeOfStack := maxArgs - numOfIntegerRegisters()
+	if stack > sizeOfStack {
+		panic("purego: too many arguments")
+	}
+}
 
-	v := reflect.MakeFunc(ty, func(args []reflect.Value) (results []reflect.Value) {
-		if len(args) > 0 {
-			if variadic, ok := args[len(args)-1].Interface().([]interface{}); ok {
-				// subtract one from args bc the last argument in args is []interface{}
-				// which we are currently expanding
-				tmp := make([]reflect.Value, len(args)-1+len(variadic))
-				n := copy(tmp, args[:len(args)-1])
-				for i, v := range variadic {
-					tmp[n+i] = reflect.ValueOf(v)
-				}
-				args = tmp
-			}
-		}
-		// Reset stack (Registers? wording)
-		numInts = 0
-		numFloats = 0
-		numStack = 0
-		//keepAlive = nil
-		defer func() {
-			runtime.KeepAlive(keepAlive)
-			runtime.KeepAlive(args)
-		}()
-		for i, v := range args {
-			addFuncs[i](v)
-		}
-		// TODO: support structs
-		var r1, r2 uintptr
-		if runtime.GOARCH == "arm64" || runtime.GOOS != "windows" {
-			// Use the normal arm64 calling convention even on Windows
-			syscall := syscall9Args{
-				cfn,
-				sysargs[0], sysargs[1], sysargs[2], sysargs[3], sysargs[4], sysargs[5], sysargs[6], sysargs[7], sysargs[8],
-				floats[0], floats[1], floats[2], floats[3], floats[4], floats[5], floats[6], floats[7],
-				0, 0, 0,
-			}
-			runtime_cgocall(syscall9XABI0, unsafe.Pointer(&syscall))
-			r1, r2 = syscall.r1, syscall.r2
-		} else {
-			// This is a fallback for Windows amd64, 386, and arm. Note this may not support floats
-			r1, r2, _ = syscall_syscall9X(cfn, sysargs[0], sysargs[1], sysargs[2], sysargs[3], sysargs[4], sysargs[5], sysargs[6], sysargs[7], sysargs[8])
-		}
+// Note: Can be removed, just to benchmark direct syscalls to compare, should not be exposed
+func Syscall9(cfn uintptr, sysargs [maxArgs]uintptr) (uintptr, uintptr) {
+	r1, r2, _ := syscall_syscall9X(cfn, sysargs[0], sysargs[1], sysargs[2], sysargs[3], sysargs[4], sysargs[5], sysargs[6], sysargs[7], sysargs[8])
+	return r1, r2
+}
 
-		return outFunc(r1, r2)
-	})
-	fn.Set(v)
+// Convenience to avoid code repetition in all instances of RegisterFuncI_O
+func runtime_call(reg syscallStack, cfn uintptr) (uintptr, uintptr) {
+	var r1, r2 uintptr
+	sysargs, floats := reg.SysArgs(), reg.Floats()
+	if runtime.GOARCH == "arm64" || runtime.GOOS != "windows" {
+		// Use the normal arm64 calling convention even on Windows
+		syscall := syscall9Args{
+			cfn,
+			sysargs[0], sysargs[1], sysargs[2], sysargs[3], sysargs[4], sysargs[5], sysargs[6], sysargs[7], sysargs[8],
+			floats[0], floats[1], floats[2], floats[3], floats[4], floats[5], floats[6], floats[7],
+			0, 0, 0,
+		}
+		runtime_cgocall(syscall9XABI0, unsafe.Pointer(&syscall))
+		r1, r2 = syscall.r1, syscall.r2
+	} else {
+		// This is a fallback for Windows amd64, 386, and arm. Note this may not support floats
+		r1, r2, _ = syscall_syscall9X(cfn, sysargs[0], sysargs[1], sysargs[2], sysargs[3], sysargs[4], sysargs[5], sysargs[6], sysargs[7], sysargs[8])
+	}
+
+	return r1, r2
+}
+
+// No return value
+
+func RegisterFunc1_0[I0 any](fptr *func(I0), cfn uintptr) {
+	ty := reflect.ValueOf(fptr).Elem().Type()
+	// Prevent too many registers and check func address is okay
+	argsCheck(ty, cfn)
+	func0 := getAddFunc[I0]()
+	// Create new function
+	*fptr = func(i0 I0) {
+		// Create new syscall stack
+		reg := newSyscallStack()
+		// Add inputs in registers
+		func0(reg, i0)
+		// Function call
+		runtime_call(reg, cfn)
+	}
+}
+
+func RegisterFunc2_0[I0, I1 any](fptr *func(I0, I1), cfn uintptr) {
+	ty := reflect.ValueOf(fptr).Elem().Type()
+	// Prevent too many registers and check func address is okay
+	argsCheck(ty, cfn)
+	func0 := getAddFunc[I0]()
+	func1 := getAddFunc[I1]()
+	// Create new function
+	*fptr = func(i0 I0, i1 I1) {
+		// Create new syscall stack
+		reg := newSyscallStack()
+		// Add inputs in registers
+		func0(reg, i0)
+		func1(reg, i1)
+		// Function call
+		runtime_call(reg, cfn)
+	}
+}
+
+func RegisterFunc3_0[I0, I1, I2 any](fptr *func(I0, I1, I2), cfn uintptr) {
+	ty := reflect.ValueOf(fptr).Elem().Type()
+	// Prevent too many registers and check func address is okay
+	argsCheck(ty, cfn)
+	func0 := getAddFunc[I0]()
+	func1 := getAddFunc[I1]()
+	func2 := getAddFunc[I2]()
+	// Create new function
+	*fptr = func(i0 I0, i1 I1, i2 I2) {
+		// Create new syscall stack
+		reg := newSyscallStack()
+		// Add inputs in registers
+		func0(reg, i0)
+		func1(reg, i1)
+		func2(reg, i2)
+		// Function call
+		runtime_call(reg, cfn)
+	}
+}
+
+func RegisterFunc4_0[I0, I1, I2, I3 any](fptr *func(I0, I1, I2, I3), cfn uintptr) {
+	ty := reflect.ValueOf(fptr).Elem().Type()
+	// Prevent too many registers and check func address is okay
+	argsCheck(ty, cfn)
+	func0 := getAddFunc[I0]()
+	func1 := getAddFunc[I1]()
+	func2 := getAddFunc[I2]()
+	func3 := getAddFunc[I3]()
+	// Create new function
+	*fptr = func(i0 I0, i1 I1, i2 I2, i3 I3) {
+		// Create new syscall stack
+		reg := newSyscallStack()
+		// Add inputs in registers
+		func0(reg, i0)
+		func1(reg, i1)
+		func2(reg, i2)
+		func3(reg, i3)
+		// Function call
+		runtime_call(reg, cfn)
+	}
+}
+
+func RegisterFunc5_0[I0, I1, I2, I3, I4 any](fptr *func(I0, I1, I2, I3, I4), cfn uintptr) {
+	ty := reflect.ValueOf(fptr).Elem().Type()
+	// Prevent too many registers and check func address is okay
+	argsCheck(ty, cfn)
+	func0 := getAddFunc[I0]()
+	func1 := getAddFunc[I1]()
+	func2 := getAddFunc[I2]()
+	func3 := getAddFunc[I3]()
+	func4 := getAddFunc[I4]()
+	// Create new function
+	*fptr = func(i0 I0, i1 I1, i2 I2, i3 I3, i4 I4) {
+		// Create new syscall stack
+		reg := newSyscallStack()
+		// Add inputs in registers
+		func0(reg, i0)
+		func1(reg, i1)
+		func2(reg, i2)
+		func3(reg, i3)
+		func4(reg, i4)
+		// Function call
+		runtime_call(reg, cfn)
+	}
+}
+
+// .. so on
+
+// 1 return value
+
+func RegisterFunc1_1[I0, O any](fptr *func(I0) O, cfn uintptr) {
+	ty := reflect.ValueOf(fptr).Elem().Type()
+	// Prevent too many registers and check func address is okay
+	argsCheck(ty, cfn)
+	returnFunc := getReturnFunc[O]()
+	func0 := getAddFunc[I0]()
+	// Create new function
+	*fptr = func(i0 I0) (out O) {
+		// Create new syscall stack
+		reg := newSyscallStack()
+		// Add inputs in registers
+		func0(reg, i0)
+		// Function call
+		r1, r2 := runtime_call(reg, cfn)
+
+		return returnFunc(r1, r2)
+	}
+}
+
+func RegisterFunc2_1[I0, I1, O any](fptr *func(I0, I1) O, cfn uintptr) {
+	ty := reflect.ValueOf(fptr).Elem().Type()
+	// Prevent too many registers and check func address is okay
+	argsCheck(ty, cfn)
+	returnFunc := getReturnFunc[O]()
+	func0 := getAddFunc[I0]()
+	func1 := getAddFunc[I1]()
+	// Create new function
+	*fptr = func(i0 I0, i1 I1) (out O) {
+		// Create new syscall stack
+		reg := newSyscallStack()
+		// Add inputs in registers
+		func0(reg, i0)
+		func1(reg, i1)
+		// Function call
+		r1, r2 := runtime_call(reg, cfn)
+
+		return returnFunc(r1, r2)
+	}
+}
+
+func RegisterFunc3_1[I0, I1, I2, O any](fptr *func(I0, I1, I2) O, cfn uintptr) {
+	ty := reflect.ValueOf(fptr).Elem().Type()
+	// Prevent too many registers and check func address is okay
+	argsCheck(ty, cfn)
+	returnFunc := getReturnFunc[O]()
+	func0 := getAddFunc[I0]()
+	func1 := getAddFunc[I1]()
+	func2 := getAddFunc[I2]()
+	// Create new function
+	*fptr = func(i0 I0, i1 I1, i2 I2) (out O) {
+		// Create new syscall stack
+		reg := newSyscallStack()
+		// Add inputs in registers
+		func0(reg, i0)
+		func1(reg, i1)
+		func2(reg, i2)
+		// Function call
+		r1, r2 := runtime_call(reg, cfn)
+
+		return returnFunc(r1, r2)
+	}
+}
+
+func RegisterFunc4_1[I0, I1, I2, I3, O any](fptr *func(I0, I1, I2, I3) O, cfn uintptr) {
+	ty := reflect.ValueOf(fptr).Elem().Type()
+	// Prevent too many registers and check func address is okay
+	argsCheck(ty, cfn)
+	returnFunc := getReturnFunc[O]()
+	func0 := getAddFunc[I0]()
+	func1 := getAddFunc[I1]()
+	func2 := getAddFunc[I2]()
+	func3 := getAddFunc[I3]()
+	// Create new function
+	*fptr = func(i0 I0, i1 I1, i2 I2, i3 I3) (out O) {
+		// Create new syscall stack
+		reg := newSyscallStack()
+		// Add inputs in registers
+		func0(reg, i0)
+		func1(reg, i1)
+		func2(reg, i2)
+		func3(reg, i3)
+		// Function call
+		r1, r2 := runtime_call(reg, cfn)
+
+		return returnFunc(r1, r2)
+	}
+}
+
+func RegisterFunc5_1[I0, I1, I2, I3, I4, O any](fptr *func(I0, I1, I2, I3, I4) O, cfn uintptr) {
+	ty := reflect.ValueOf(fptr).Elem().Type()
+	// Prevent too many registers and check func address is okay
+	argsCheck(ty, cfn)
+	returnFunc := getReturnFunc[O]()
+	func0 := getAddFunc[I0]()
+	func1 := getAddFunc[I1]()
+	func2 := getAddFunc[I2]()
+	func3 := getAddFunc[I3]()
+	func4 := getAddFunc[I4]()
+	// Create new function
+	*fptr = func(i0 I0, i1 I1, i2 I2, i3 I3, i4 I4) (out O) {
+		// Create new syscall stack
+		reg := newSyscallStack()
+		// Add inputs in registers
+		func0(reg, i0)
+		func1(reg, i1)
+		func2(reg, i2)
+		func3(reg, i3)
+		func4(reg, i4)
+		// Function call
+		r1, r2 := runtime_call(reg, cfn)
+
+		return returnFunc(r1, r2)
+	}
+}
+
+// TODO: missing 6-8
+
+func RegisterFunc9_1[I0, I1, I2, I3, I4, I5, I6, I7, I8, O any](fptr *func(I0, I1, I2, I3, I4, I5, I6, I7, I8) O, cfn uintptr) {
+	ty := reflect.ValueOf(fptr).Elem().Type()
+	// Prevent too many registers and check func address is okay
+	argsCheck(ty, cfn)
+	returnFunc := getReturnFunc[O]()
+	func0 := getAddFunc[I0]()
+	func1 := getAddFunc[I1]()
+	func2 := getAddFunc[I2]()
+	func3 := getAddFunc[I3]()
+	func4 := getAddFunc[I4]()
+	func5 := getAddFunc[I5]()
+	func6 := getAddFunc[I6]()
+	func7 := getAddFunc[I7]()
+	func8 := getAddFunc[I8]()
+	// Create new function
+	*fptr = func(i0 I0, i1 I1, i2 I2, i3 I3, i4 I4, i5 I5, i6 I6, i7 I7, i8 I8) (out O) {
+		// Create new syscall stack
+		reg := newSyscallStack()
+		// Add inputs in registers
+		func0(reg, i0)
+		func1(reg, i1)
+		func2(reg, i2)
+		func3(reg, i3)
+		func4(reg, i4)
+		func5(reg, i5)
+		func6(reg, i6)
+		func7(reg, i7)
+		func8(reg, i8)
+		// Function call
+		r1, r2 := runtime_call(reg, cfn)
+
+		return returnFunc(r1, r2)
+	}
 }
 
 func numOfIntegerRegisters() int {
@@ -546,11 +888,11 @@ func numOfIntegerRegisters() int {
 		return 8
 	case "amd64":
 		return 6
-	// TODO: figure out why 386 tests are not working
-	/*case "386":
-		return 0
-	case "arm":
-		return 4*/
+		// TODO: figure out why 386 tests are not working
+		/*case "386":
+			return 0
+		case "arm":
+			return 4*/
 	default:
 		panic("purego: unknown GOARCH (" + runtime.GOARCH + ")")
 	}

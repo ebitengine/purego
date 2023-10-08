@@ -10,6 +10,7 @@ import (
 	"unsafe"
 
 	"github.com/ebitengine/purego"
+	"github.com/ebitengine/purego/internal/strings"
 )
 
 // This is an internal OS-dependent function for getting the handle to a library
@@ -32,119 +33,215 @@ func getSystemLibrary() (string, error) {
 	}
 }
 
-func TestRegisterFunc(t *testing.T) {
-	library, err := getSystemLibrary()
-	if err != nil {
-		t.Errorf("couldn't get system library: %s", err)
-	}
-	libc, err := openLibrary(library)
-	if err != nil {
-		t.Errorf("failed to dlopen: %s", err)
-	}
-	var puts func(string)
-	purego.RegisterLibFunc(&puts, libc, "puts")
-	puts("Calling C from from Go without Cgo!")
-}
+// NewCallBack
 
-func ExampleNewCallback() {
-	cb := purego.NewCallback(func(a1, a2, a3, a4, a5, a6, a7, a8, a9 int) int {
-		fmt.Println(a1, a2, a3, a4, a5, a6, a7, a8, a9)
-		return a1 + a2 + a3 + a4 + a5 + a6 + a7 + a8 + a9
+func Test_NewCallBack(t *testing.T) {
+	// Original
+	t.Run("RegisterFunc(original)", func(t *testing.T) {
+		cb := purego.NewCallback(func(a1, a2, a3, a4, a5, a6, a7, a8, a9 int) int {
+			fmt.Println(a1, a2, a3, a4, a5, a6, a7, a8, a9)
+			return a1 + a2 + a3 + a4 + a5 + a6 + a7 + a8 + a9
+		})
+
+		var fn func(a1, a2, a3, a4, a5, a6, a7, a8, a9 int) int
+		purego.RegisterFunc(&fn, cb)
+
+		ret := fn(1, 2, 3, 4, 5, 6, 7, 8, 9)
+		fmt.Println(ret)
+
+		// Output: 1 2 3 4 5 6 7 8 9
+		// 45
 	})
+	// New
+	t.Run("RegisterFunc9_1", func(t *testing.T) {
+		cb := purego.NewCallback(func(a1, a2, a3, a4, a5, a6, a7, a8, a9 int) int {
+			fmt.Println(a1, a2, a3, a4, a5, a6, a7, a8, a9)
+			return a1 + a2 + a3 + a4 + a5 + a6 + a7 + a8 + a9
+		})
 
-	var fn func(a1, a2, a3, a4, a5, a6, a7, a8, a9 int) int
-	purego.RegisterFunc(&fn, cb)
+		var fn func(a1, a2, a3, a4, a5, a6, a7, a8, a9 int) int
+		purego.RegisterFunc9_1(&fn, cb)
 
-	ret := fn(1, 2, 3, 4, 5, 6, 7, 8, 9)
-	fmt.Println(ret)
+		ret := fn(1, 2, 3, 4, 5, 6, 7, 8, 9)
+		fmt.Println(ret)
 
-	// Output: 1 2 3 4 5 6 7 8 9
-	// 45
+		// Output: 1 2 3 4 5 6 7 8 9
+		// 45
+	})
 }
+
+func Benchmark_NewCallBack(b *testing.B) {
+	// Original
+	b.Run("RegisterFunc(original)", func(b *testing.B) {
+		// 1000000, 1111 ns/op, 328 B/op, 12 allocs/op
+		cb := purego.NewCallback(func(a1, a2, a3, a4, a5, a6, a7, a8, a9 int) int {
+			return a1 + a2 + a3 + a4 + a5 + a6 + a7 + a8 + a9
+		})
+
+		var fn func(a1, a2, a3, a4, a5, a6, a7, a8, a9 int) int
+		purego.RegisterFunc(&fn, cb)
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			_ = fn(1, 2, 3, 4, 5, 6, 7, 8, 9)
+		}
+	})
+	// New
+	b.Run("RegisterFunc9_1(new)", func(b *testing.B) {
+		// 3153188, 383.6 ns/op, 144 B/op, 1 allocs/op
+		cb := purego.NewCallback(func(a1, a2, a3, a4, a5, a6, a7, a8, a9 int) int {
+			return a1 + a2 + a3 + a4 + a5 + a6 + a7 + a8 + a9
+		})
+
+		var fn func(a1, a2, a3, a4, a5, a6, a7, a8, a9 int) int
+		purego.RegisterFunc9_1(&fn, cb)
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			_ = fn(1, 2, 3, 4, 5, 6, 7, 8, 9)
+		}
+	})
+}
+
+// qsort
 
 func Test_qsort(t *testing.T) {
-	library, err := getSystemLibrary()
-	if err != nil {
-		t.Errorf("couldn't get system library: %s", err)
-	}
-	libc, err := openLibrary(library)
-	if err != nil {
-		t.Errorf("failed to dlopen: %s", err)
-	}
-
-	data := []int{88, 56, 100, 2, 25}
-	sorted := []int{2, 25, 56, 88, 100}
-	compare := func(a, b *int) int {
-		return *a - *b
-	}
-	var qsort func(data []int, nitms uintptr, size uintptr, compar func(a, b *int) int)
-	purego.RegisterLibFunc(&qsort, libc, "qsort")
-	qsort(data, uintptr(len(data)), unsafe.Sizeof(int(0)), compare)
-	for i := range data {
-		if data[i] != sorted[i] {
-			t.Errorf("got %d wanted %d at %d", data[i], sorted[i], i)
+	// Original
+	t.Run("RegisterFunc(original)", func(t *testing.T) {
+		library, err := getSystemLibrary()
+		if err != nil {
+			t.Errorf("couldn't get system library: %s", err)
 		}
-	}
-}
+		libc, err := openLibrary(library)
+		if err != nil {
+			t.Errorf("failed to dlopen: %s", err)
+		}
 
-// BenchmarkRegisterFuncQsort-16    	  558045	      2064 ns/op	     264 B/op	       6 allocs/op
-func BenchmarkRegisterFuncQsort(b *testing.B) {
-	library, err := getSystemLibrary()
-	if err != nil {
-		b.Errorf("couldn't get system library: %s", err)
-	}
-	libc, err := openLibrary(library)
-	if err != nil {
-		b.Errorf("failed to dlopen: %s", err)
-	}
-
-	data := []int{88, 56, 100, 2, 25}
-	compare := func(a, b *int) int {
-		return *a - *b
-	}
-	var qsort func(data []int, nitms uintptr, size uintptr, compar func(a, b *int) int)
-	purego.RegisterLibFunc(&qsort, libc, "qsort")
-	b.ResetTimer()
-	for n := 0; n < b.N; n++ {
+		data := []int{88, 56, 100, 2, 25}
+		sorted := []int{2, 25, 56, 88, 100}
+		compare := func(a, b *int) int {
+			return *a - *b
+		}
+		var qsort func(data []int, nitms uintptr, size uintptr, compar func(a, b *int) int)
+		purego.RegisterLibFunc(&qsort, libc, "qsort")
 		qsort(data, uintptr(len(data)), unsafe.Sizeof(int(0)), compare)
-	}
+		for i := range data {
+			if data[i] != sorted[i] {
+				t.Errorf("got %d wanted %d at %d", data[i], sorted[i], i)
+			}
+		}
+	})
+	// New
+	t.Run("RegisterFunc4_0(new)", func(t *testing.T) {
+		library, err := getSystemLibrary()
+		if err != nil {
+			t.Errorf("couldn't get system library: %s", err)
+		}
+		libc, err := openLibrary(library)
+		if err != nil {
+			t.Errorf("failed to dlopen: %s", err)
+		}
+
+		data := []int{88, 56, 100, 2, 25}
+		sorted := []int{2, 25, 56, 88, 100}
+		compare := func(a, b *int) int {
+			return *a - *b
+		}
+		var qsort func(data []int, nitms uintptr, size uintptr, compar func(a, b *int) int)
+		symbol := purego.Symbol(libc, "qsort")
+		purego.RegisterFunc4_0(&qsort, symbol)
+		qsort(data, uintptr(len(data)), unsafe.Sizeof(int(0)), compare)
+		for i := range data {
+			if data[i] != sorted[i] {
+				t.Errorf("got %d wanted %d at %d", data[i], sorted[i], i)
+			}
+		}
+	})
 }
 
-// BenchmarkRegisterFuncStrlen-16    	 2411634	       490.4 ns/op	     120 B/op	       6 allocs/op
-func BenchmarkRegisterFuncStrlen(b *testing.B) {
-	library, err := getSystemLibrary()
-	if err != nil {
-		b.Errorf("couldn't get system library: %s", err)
-	}
-	libc, err := openLibrary(library)
-	if err != nil {
-		b.Errorf("failed to dlopen: %s", err)
-	}
-	var strlen func(string) int
-	purego.RegisterLibFunc(&strlen, libc, "strlen")
-	b.ResetTimer()
-	for n := 0; n < b.N; n++ {
-		strlen("abcdefghijklmnopqrstuvwxyz")
-	}
+func Benchmark_qsort(b *testing.B) {
+	// Original
+	b.Run("RegisterFunc(original)", func(b *testing.B) {
+		// 558027, 2067 ns/op, 264 B/op, 6 allocs/op
+		library, err := getSystemLibrary()
+		if err != nil {
+			b.Errorf("couldn't get system library: %s", err)
+		}
+		libc, err := openLibrary(library)
+		if err != nil {
+			b.Errorf("failed to dlopen: %s", err)
+		}
+
+		data := []int{88, 56, 100, 2, 25}
+		compare := func(a, b *int) int {
+			return *a - *b
+		}
+		var qsort func(data []int, nitms uintptr, size uintptr, compar func(a, b *int) int)
+		purego.RegisterLibFunc(&qsort, libc, "qsort")
+		b.ResetTimer()
+		for n := 0; n < b.N; n++ {
+			qsort(data, uintptr(len(data)), unsafe.Sizeof(int(0)), compare)
+		}
+	})
+	// New
+	b.Run("RegisterFunc1_0(new)", func(b *testing.B) {
+		// 648578, 1806 ns/op, 296 B/op, 4 allocs/op
+		library, err := getSystemLibrary()
+		if err != nil {
+			b.Errorf("couldn't get system library: %s", err)
+		}
+		libc, err := openLibrary(library)
+		if err != nil {
+			b.Errorf("failed to dlopen: %s", err)
+		}
+
+		data := []int{88, 56, 100, 2, 25}
+		compare := func(a, b *int) int {
+			return *a - *b
+		}
+		var qsort func(data []int, nitms uintptr, size uintptr, compar func(a, b *int) int)
+		symbol := purego.Symbol(libc, "qsort")
+		purego.RegisterFunc4_0(&qsort, symbol)
+		b.ResetTimer()
+		for n := 0; n < b.N; n++ {
+			qsort(data, uintptr(len(data)), unsafe.Sizeof(int(0)), compare)
+		}
+	})
 }
 
-// v2
+// puts
 
-func Test2RegisterFuncPuts(t *testing.T) {
-	library, err := getSystemLibrary()
-	if err != nil {
-		t.Errorf("couldn't get system library: %s", err)
-	}
-	libc, err := openLibrary(library)
-	if err != nil {
-		t.Errorf("failed to dlopen: %s", err)
-	}
-	var puts func(string)
-	purego.RegisterLibFunc2(&puts, libc, "puts")
-	puts("Calling C from from Go without Cgo! 2")
-	puts("Calling C from from Go without Cgo! 3")
-	puts("Calling C from from Go without Cgo! 4")
+func Test_puts(t *testing.T) {
+	// Original
+	t.Run("RegisterFunc(original)", func(t *testing.T) {
+		library, err := getSystemLibrary()
+		if err != nil {
+			t.Errorf("couldn't get system library: %s", err)
+		}
+		libc, err := openLibrary(library)
+		if err != nil {
+			t.Errorf("failed to dlopen: %s", err)
+		}
+		var puts func(string)
+		purego.RegisterLibFunc(&puts, libc, "puts")
+		puts("Calling C from from Go without Cgo! (original)")
+	})
+	// New
+	t.Run("RegisterFunc1_0(new)", func(t *testing.T) {
+		library, err := getSystemLibrary()
+		if err != nil {
+			t.Errorf("couldn't get system library: %s", err)
+		}
+		libc, err := openLibrary(library)
+		if err != nil {
+			t.Errorf("failed to dlopen: %s", err)
+		}
+		var puts func(string)
+		symbol := purego.Symbol(libc, "puts")
+		purego.RegisterFunc1_0(&puts, symbol)
+		puts("Calling C from from Go without Cgo! (new)")
+	})
 }
+
+// strlen
 
 func Test2_strlen(t *testing.T) {
 	library, err := getSystemLibrary()
@@ -156,7 +253,8 @@ func Test2_strlen(t *testing.T) {
 		t.Errorf("failed to dlopen: %s", err)
 	}
 	var strlen func(string) int
-	purego.RegisterLibFunc2(&strlen, libc, "strlen")
+	symbol := purego.Symbol(libc, "strlen")
+	purego.RegisterFunc1_1(&strlen, symbol)
 	count := strlen("abcdefghijklmnopqrstuvwxyz")
 	if count != 26 {
 		t.Errorf("strlen(0): expected 26 but got %d", count)
@@ -167,71 +265,63 @@ func Test2_strlen(t *testing.T) {
 	}
 }
 
-func Test2_qsort(t *testing.T) {
-	library, err := getSystemLibrary()
-	if err != nil {
-		t.Errorf("couldn't get system library: %s", err)
-	}
-	libc, err := openLibrary(library)
-	if err != nil {
-		t.Errorf("failed to dlopen: %s", err)
-	}
-
-	data := []int{88, 56, 100, 2, 25}
-	sorted := []int{2, 25, 56, 88, 100}
-	compare := func(a, b *int) int {
-		return *a - *b
-	}
-	var qsort func(data []int, nitms uintptr, size uintptr, compar func(a, b *int) int)
-	purego.RegisterLibFunc2(&qsort, libc, "qsort")
-	qsort(data, uintptr(len(data)), unsafe.Sizeof(int(0)), compare)
-	qsort(data, uintptr(len(data)), unsafe.Sizeof(int(0)), compare)
-	qsort(data, uintptr(len(data)), unsafe.Sizeof(int(0)), compare)
-	qsort(data, uintptr(len(data)), unsafe.Sizeof(int(0)), compare)
-	for i := range data {
-		if data[i] != sorted[i] {
-			t.Errorf("got %d wanted %d at %d", data[i], sorted[i], i)
+func Benchmark_strlen(b *testing.B) {
+	// Current
+	b.Run("RegisterFunc(original)", func(b *testing.B) {
+		// 2411634 - 490.4 ns/op - 120 B/op - 6 allocs/op
+		library, err := getSystemLibrary()
+		if err != nil {
+			b.Errorf("couldn't get system library: %s", err)
 		}
-	}
-}
-
-// Benchmark2RegisterFuncQsort-16    	  558032	      2057 ns/op	     264 B/op	       6 allocs/op
-func Benchmark2RegisterFuncQsort(b *testing.B) {
-	library, err := getSystemLibrary()
-	if err != nil {
-		b.Errorf("couldn't get system library: %s", err)
-	}
-	libc, err := openLibrary(library)
-	if err != nil {
-		b.Errorf("failed to dlopen: %s", err)
-	}
-
-	data := []int{88, 56, 100, 2, 25}
-	compare := func(a, b *int) int {
-		return *a - *b
-	}
-	var qsort func(data []int, nitms uintptr, size uintptr, compar func(a, b *int) int)
-	purego.RegisterLibFunc2(&qsort, libc, "qsort")
-	b.ResetTimer()
-	for n := 0; n < b.N; n++ {
-		qsort(data, uintptr(len(data)), unsafe.Sizeof(int(0)), compare)
-	}
-}
-
-// Benchmark2RegisterFuncStrlen-16    	 2502175	       461.1 ns/op	     190 B/op	       5 allocs/op
-func Benchmark2RegisterFuncStrlen(b *testing.B) {
-	library, err := getSystemLibrary()
-	if err != nil {
-		b.Errorf("couldn't get system library: %s", err)
-	}
-	libc, err := openLibrary(library)
-	if err != nil {
-		b.Errorf("failed to dlopen: %s", err)
-	}
-	var strlen func(string) int
-	purego.RegisterLibFunc2(&strlen, libc, "strlen")
-	b.ResetTimer()
-	for n := 0; n < b.N; n++ {
-		strlen("abcdefghijklmnopqrstuvwxyz")
-	}
+		libc, err := openLibrary(library)
+		if err != nil {
+			b.Errorf("failed to dlopen: %s", err)
+		}
+		var strlen func(string) int
+		purego.RegisterLibFunc(&strlen, libc, "strlen")
+		b.ResetTimer()
+		for n := 0; n < b.N; n++ {
+			strlen("abcdefghijklmnopqrstuvwxyz")
+		}
+	})
+	// New
+	b.Run("RegisterFunc1_1(new)", func(b *testing.B) {
+		// 7690965 - 157.0 ns/op - 176 B/op - 2 allocs/op
+		library, err := getSystemLibrary()
+		if err != nil {
+			b.Errorf("couldn't get system library: %s", err)
+		}
+		libc, err := openLibrary(library)
+		if err != nil {
+			b.Errorf("failed to dlopen: %s", err)
+		}
+		var strlen func(string) int
+		symbol := purego.Symbol(libc, "strlen")
+		purego.RegisterFunc1_1(&strlen, symbol)
+		b.ResetTimer()
+		for n := 0; n < b.N; n++ {
+			strlen("abcdefghijklmnopqrstuvwxyz")
+		}
+	})
+	// Direct
+	b.Run("Syscall9", func(b *testing.B) {
+		// 11762629 - 100.5 ns/op - 32 B/op - 1 allocs/op
+		library, err := getSystemLibrary()
+		if err != nil {
+			b.Errorf("couldn't get system library: %s", err)
+		}
+		libc, err := openLibrary(library)
+		if err != nil {
+			b.Errorf("failed to dlopen: %s", err)
+		}
+		symbol := purego.Symbol(libc, "strlen")
+		b.ResetTimer()
+		for n := 0; n < b.N; n++ {
+			ptr := strings.CString("abcdefghijklmnopqrstuvwxyz")
+			sysargs := [9]uintptr{
+				uintptr(unsafe.Pointer(ptr)),
+			}
+			_, _ = purego.Syscall9(symbol, sysargs)
+		}
+	})
 }
