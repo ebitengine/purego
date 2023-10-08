@@ -245,7 +245,7 @@ func Test_puts(t *testing.T) {
 // strlen
 
 func Test_strlen(t *testing.T) {
-	t.Run("RegisterFunc(original)", func(t *testing.T) {
+	t.Run("RegisterFunc1_1(new)", func(t *testing.T) {
 		library, err := getSystemLibrary()
 		if err != nil {
 			t.Errorf("couldn't get system library: %s", err)
