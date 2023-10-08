@@ -425,3 +425,89 @@ func Benchmark_cos(b *testing.B) {
 		}
 	})
 }
+
+// isupper
+
+func Test_isupper(t *testing.T) {
+	// Original
+	t.Run("RegisterFunc(original)", func(t *testing.T) {
+		library, err := getSystemLibrary()
+		if err != nil {
+			t.Errorf("couldn't get system library: %s", err)
+		}
+		libc, err := openLibrary(library)
+		if err != nil {
+			t.Errorf("failed to dlopen: %s", err)
+		}
+		var isupper func(c rune) bool
+		purego.RegisterLibFunc(&isupper, libc, "isupper")
+		actual := isupper('A')
+		if !actual {
+			t.Errorf("isupper('%c'): expected true but got false", 'A')
+		}
+		actual = isupper('a')
+		if actual {
+			t.Errorf("isupper('%c'): expected false but got true", 'a')
+		}
+	})
+	// New
+	t.Run("RegisterFunc1_1(new)", func(t *testing.T) {
+		library, err := getSystemLibrary()
+		if err != nil {
+			t.Errorf("couldn't get system library: %s", err)
+		}
+		libc, err := openLibrary(library)
+		if err != nil {
+			t.Errorf("failed to dlopen: %s", err)
+		}
+		var isupper func(c rune) bool
+		symbol := purego.Symbol(libc, "isupper")
+		purego.RegisterFunc(&isupper, symbol)
+		actual := isupper('A')
+		if !actual {
+			t.Errorf("isupper('%c'): expected true but got false", 'A')
+		}
+		actual = isupper('a')
+		if actual {
+			t.Errorf("isupper('%c'): expected false but got true", 'a')
+		}
+	})
+}
+
+func Benchmark_isupper(b *testing.B) {
+	// Original
+	b.Run("RegisterFunc(original)", func(b *testing.B) {
+		// 3037436, 395.6 ns/op, 56 B/op, 4 allocs/op
+		library, err := getSystemLibrary()
+		if err != nil {
+			b.Errorf("couldn't get system library: %s", err)
+		}
+		libc, err := openLibrary(library)
+		if err != nil {
+			b.Errorf("failed to dlopen: %s", err)
+		}
+		var isupper func(c rune) bool
+		purego.RegisterLibFunc(&isupper, libc, "isupper")
+		for i := 0; i < b.N; i++ {
+			_ = isupper('A')
+		}
+	})
+	// New
+	b.Run("RegisterFunc1_1(new)", func(b *testing.B) {
+		// 10082194, 121.2 ns/op, 144 B/op, 1 allocs/op
+		library, err := getSystemLibrary()
+		if err != nil {
+			b.Errorf("couldn't get system library: %s", err)
+		}
+		libc, err := openLibrary(library)
+		if err != nil {
+			b.Errorf("failed to dlopen: %s", err)
+		}
+		var isupper func(c rune) bool
+		symbol := purego.Symbol(libc, "isupper")
+		purego.RegisterFunc1_1(&isupper, symbol)
+		for i := 0; i < b.N; i++ {
+			_ = isupper('A')
+		}
+	})
+}
