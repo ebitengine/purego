@@ -20,6 +20,9 @@ born to bring that same vision to the other platforms supported by Ebitengine.
 - **Smaller Binaries**: Using Cgo generates a C wrapper function for each C function called. Purego doesn't!
 - **Dynamic Linking**: Load symbols at runtime and use it as a plugin system.
 - **Foreign Function Interface**: Call into other languages that are compiled into shared objects.
+- **Cgo Fallback**: Works even with CGO_ENABLED=1 so incremental porting is possible. 
+This also means unsupported GOARCHs (freebsd/riscv64, linux/mips, etc.) will still work
+except for float arguments and return values.
 
 ## Supported Platforms
 
