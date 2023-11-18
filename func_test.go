@@ -5,7 +5,6 @@ package purego_test
 
 import (
 	"fmt"
-	"math"
 	"runtime"
 	"testing"
 	"unsafe"
@@ -98,27 +97,27 @@ func TestRegisterFunc_Floats(t *testing.T) {
 		t.Errorf("failed to dlopen: %s", err)
 	}
 	{
-		var sinf func(arg float32) float32
-		purego.RegisterLibFunc(&sinf, libc, "sinf")
+		var strtof func(arg string) float32
+		purego.RegisterLibFunc(&strtof, libc, "strtof")
 		const (
-			arg float32 = 2
+			arg = "2"
 		)
-		got := sinf(arg)
-		expected := float32(math.Sin(float64(arg)))
+		got := strtof(arg)
+		expected := float32(2)
 		if got != expected {
-			t.Errorf("sinf failed. got %f but wanted %f", got, expected)
+			t.Errorf("strtof failed. got %f but wanted %f", got, expected)
 		}
 	}
 	{
-		var sin func(arg float64) float64
-		purego.RegisterLibFunc(&sin, libc, "sin")
+		var strtod func(arg string, ptr **byte) float64
+		purego.RegisterLibFunc(&strtod, libc, "strtod")
 		const (
-			arg float64 = 1
+			arg = "1"
 		)
-		got := sin(arg)
-		expected := math.Sin(arg)
+		got := strtod(arg, nil)
+		expected := float64(1)
 		if got != expected {
-			t.Errorf("sin failed. got %f but wanted %f", got, expected)
+			t.Errorf("strtod failed. got %f but wanted %f", got, expected)
 		}
 	}
 }
