@@ -317,15 +317,42 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 							var val int64
 							size := first.Type().Size()
 							for i := 0; i < numFields; i++ {
-								a := v.Field(i).Int() & mask
+								a := v.Field(i).Int() & mask // mask necessary to clear sign extending
 								val |= a << (i * int(size*8))
 							}
 							// field arguments are placed with the first one in the least significant bits
 							addInt(uintptr(val))
+						case reflect.Array:
+							arraySize := first.Len()
+							arrayFirstType := first.Index(0).Type()
+							switch arrayFirstType.Kind() {
+							case reflect.Uint8, reflect.Uint16, reflect.Uint32:
+								var val uintptr
+								size := arrayFirstType.Size()
+								for i := 0; i < arraySize; i++ {
+									a := uintptr(first.Index(i).Uint())
+									val |= a << (i * int(size*8))
+								}
+								// field arguments are placed with the first one in the least significant bits
+								addInt(val)
+							case reflect.Int8, reflect.Int16, reflect.Int32:
+								size := arrayFirstType.Size()
+								mask := int64(0xFF)
+								for i := 1; i < int(size); i++ {
+									mask = (mask << 8) + 0xFF
+								}
+								var val int64
+								for i := 0; i < arraySize; i++ {
+									a := first.Index(i).Int() & mask // mask necessary to clear sign extending
+									val |= a << (i * int(size*8))
+								}
+								// field arguments are placed with the first one in the least significant bits
+								addInt(uintptr(val))
+							}
+						default:
+							panic("purego: unsupported kind " + first.Kind().String())
 						}
 					} else {
-						// Struct is too big to be placed in registers.
-						// Copy to heap and place the pointer in register
 						size := v.Type().Size()
 						if size <= 16 {
 							numFields := v.NumField()
@@ -344,7 +371,10 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 									panic("purego: unsupported kind " + f.Kind().String())
 								}
 							}
+							break
 						}
+						// Struct is too big to be placed in registers.
+						// Copy to heap and place the pointer in register
 						ptrStruct := reflect.New(v.Type())
 						ptrStruct.Elem().Set(v)
 						ptr := ptrStruct.Elem().Addr().UnsafePointer()
@@ -465,7 +495,7 @@ func isHVA(t reflect.Type) bool {
 		return true
 	case reflect.Array:
 		switch first.Type.Elem().Kind() {
-		case reflect.Uint8, reflect.Uint16, reflect.Uint32:
+		case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Int8, reflect.Int16, reflect.Int32:
 			return true
 		default:
 			return false

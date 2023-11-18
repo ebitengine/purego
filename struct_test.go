@@ -65,6 +65,13 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 		if ret := AfterRegisters(0xD0000000, 0xE000000, 0xA00000, 0xD0000, 0xB000, 0xE00, 0xE0, 0xF, GreaterThan16Bytes{x: &x, y: &y, z: &z}); ret != expectedUnsigned {
 			t.Fatalf("AfterRegisters returned %#x wanted %#x", ret, expectedUnsigned)
 		}
+
+		var BeforeRegisters func(bytes GreaterThan16Bytes, a, b int64) uint64
+		z -= 0xFF
+		purego.RegisterLibFunc(&BeforeRegisters, lib, "BeforeRegisters")
+		if ret := BeforeRegisters(GreaterThan16Bytes{&x, &y, &z}, 0x0F, 0xF0); ret != expectedUnsigned {
+			t.Fatalf("BeforeRegisters returned %#x wanted %#x", ret, expectedUnsigned)
+		}
 	}
 	{
 		type IntLessThan16Bytes struct {
@@ -176,16 +183,26 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 			t.Fatalf("LongFn returned %#x wanted %#x", ret, expectedLong)
 		}
 	}
-	//{
-	//	type Array4Chars struct {
-	//		a [4]uint8
-	//	}
-	//	var Array4CharsFn func(chars Array4Chars) uint32
-	//	purego.RegisterLibFunc(&Array4CharsFn, lib, "Long")
-	//	if ret := Array4CharsFn(Array4Chars{a: [...]uint8{0xDE, 0xAD, 0xBE, 0xEF}}); ret != expectedUnsigned {
-	//		t.Fatalf("LongFn returned %#x wanted %#x", ret, expectedLong)
-	//	}
-	//}
+	{
+		type Array4UnsignedChars struct {
+			a [4]uint8
+		}
+		var Array4UnsignedCharsFn func(chars Array4UnsignedChars) uint32
+		purego.RegisterLibFunc(&Array4UnsignedCharsFn, lib, "Array4UnsignedChars")
+		if ret := Array4UnsignedCharsFn(Array4UnsignedChars{a: [...]uint8{0xDE, 0xAD, 0xBE, 0xEF}}); ret != expectedUnsigned {
+			t.Fatalf("Array4UnsignedCharsFn returned %#x wanted %#x", ret, expectedUnsigned)
+		}
+	}
+	{
+		type Array4Chars struct {
+			a [4]int8
+		}
+		var Array4CharsFn func(chars Array4Chars) int32
+		purego.RegisterLibFunc(&Array4CharsFn, lib, "Array4Chars")
+		if ret := Array4CharsFn(Array4Chars{a: [...]int8{100, -127, 4, -100}}); ret != expectedSigned {
+			t.Fatalf("Array4UnsignedCharsFn returned %#x wanted %#x", ret, expectedSigned)
+		}
+	}
 	{
 		type Char8Bytes struct {
 			a, b, c, d, e, f, g, h int8
