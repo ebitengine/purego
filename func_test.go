@@ -35,11 +35,11 @@ func getSystemLibrary() (string, error) {
 func TestRegisterFunc(t *testing.T) {
 	library, err := getSystemLibrary()
 	if err != nil {
-		t.Errorf("couldn't get system library: %s", err)
+		t.Fatalf("couldn't get system library: %s", err)
 	}
 	libc, err := openLibrary(library)
 	if err != nil {
-		t.Errorf("failed to dlopen: %s", err)
+		t.Fatalf("failed to dlopen: %s", err)
 	}
 	var puts func(string)
 	purego.RegisterLibFunc(&puts, libc, "puts")
@@ -76,11 +76,11 @@ func Test_qsort(t *testing.T) {
 
 	library, err := getSystemLibrary()
 	if err != nil {
-		t.Errorf("couldn't get system library: %s", err)
+		t.Fatalf("couldn't get system library: %s", err)
 	}
 	libc, err := openLibrary(library)
 	if err != nil {
-		t.Errorf("failed to dlopen: %s", err)
+		t.Fatalf("failed to dlopen: %s", err)
 	}
 
 	data := []int{88, 56, 100, 2, 25}
@@ -94,6 +94,46 @@ func Test_qsort(t *testing.T) {
 	for i := range data {
 		if data[i] != sorted[i] {
 			t.Errorf("got %d wanted %d at %d", data[i], sorted[i], i)
+		}
+	}
+}
+
+func TestRegisterFunc_Floats(t *testing.T) {
+	if runtime.GOOS == "linux" {
+		// TODO: enable once callbacks are working properly on Linux
+		t.Skip("callbacks are not supported on Linux")
+	}
+
+	library, err := getSystemLibrary()
+	if err != nil {
+		t.Fatalf("couldn't get system library: %s", err)
+	}
+	libc, err := openLibrary(library)
+	if err != nil {
+		t.Fatalf("failed to dlopen: %s", err)
+	}
+	{
+		var strtof func(arg string) float32
+		purego.RegisterLibFunc(&strtof, libc, "strtof")
+		const (
+			arg = "2"
+		)
+		got := strtof(arg)
+		expected := float32(2)
+		if got != expected {
+			t.Errorf("strtof failed. got %f but wanted %f", got, expected)
+		}
+	}
+	{
+		var strtod func(arg string, ptr **byte) float64
+		purego.RegisterLibFunc(&strtod, libc, "strtod")
+		const (
+			arg = "1"
+		)
+		got := strtod(arg, nil)
+		expected := float64(1)
+		if got != expected {
+			t.Errorf("strtod failed. got %f but wanted %f", got, expected)
 		}
 	}
 }
