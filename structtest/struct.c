@@ -80,6 +80,14 @@ double RectangleWithRegs(double a, double b, double c, double d, double e, struc
     return a + b + c + d + e + rect.x + rect.y + rect.w + rect.h;
 }
 
+struct FloatArray {
+    double a[2];
+};
+
+double FloatArray(struct FloatArray f) {
+    return f.a[0] + f.a[1];
+}
+
 struct UnsignedChar4Bytes {
     unsigned char a, b, c, d;
 };
@@ -120,11 +128,11 @@ unsigned int Array4Chars(struct Array4Chars a) {
     return (((int)a.a[0])<<24) | (((int)a.a[1])<<16) | (((int)a.a[2])<<8) | (((int)a.a[3])<<0);
 }
 
-struct Char4Bytes {
+struct Char8Bytes {
     signed char a, b, c, d, e, f, g, h;
 };
 
-int Char4Bytes(struct Char4Bytes b) {
+int Char8Bytes(struct Char8Bytes b) {
     return (int)b.a + (int)b.b + (int)b.c + (int)b.d + (int)b.e + (int)b.f + (int)b.g + (int)b.h;
 }
 

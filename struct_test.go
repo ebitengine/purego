@@ -127,6 +127,16 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 		}
 	}
 	{
+		type FloatArray struct {
+			a [2]float64
+		}
+		var FloatArrayFn func(rect FloatArray) float64
+		purego.RegisterLibFunc(&FloatArrayFn, lib, "FloatArray")
+		if ret := FloatArrayFn(FloatArray{a: [2]float64{3, 7}}); ret != expectedDouble {
+			t.Fatalf("FloatArray returned %f wanted %f", ret, expectedFloat)
+		}
+	}
+	{
 		type UnsignedChar4Bytes struct {
 			a, b, c, d byte
 		}
