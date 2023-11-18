@@ -5,6 +5,7 @@ package purego_test
 
 import (
 	"fmt"
+	"math"
 	"runtime"
 	"testing"
 	"unsafe"
@@ -83,6 +84,41 @@ func Test_qsort(t *testing.T) {
 	for i := range data {
 		if data[i] != sorted[i] {
 			t.Errorf("got %d wanted %d at %d", data[i], sorted[i], i)
+		}
+	}
+}
+
+func TestRegisterFunc_Floats(t *testing.T) {
+	library, err := getSystemLibrary()
+	if err != nil {
+		t.Errorf("couldn't get system library: %s", err)
+	}
+	libc, err := openLibrary(library)
+	if err != nil {
+		t.Errorf("failed to dlopen: %s", err)
+	}
+	{
+		var sinf func(arg float32) float32
+		purego.RegisterLibFunc(&sinf, libc, "sinf")
+		const (
+			arg float32 = 2
+		)
+		got := sinf(arg)
+		expected := float32(math.Sin(float64(arg)))
+		if got != expected {
+			t.Errorf("sinf failed. got %f but wanted %f", got, expected)
+		}
+	}
+	{
+		var sin func(arg float64) float64
+		purego.RegisterLibFunc(&sin, libc, "sin")
+		const (
+			arg float64 = 1
+		)
+		got := sin(arg)
+		expected := math.Sin(arg)
+		if got != expected {
+			t.Errorf("sin failed. got %f but wanted %f", got, expected)
 		}
 	}
 }
