@@ -262,73 +262,91 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 			case reflect.Float64:
 				addFloat(uintptr(math.Float64bits(v.Float())))
 			case reflect.Struct:
-				isHFAorHVA := isHFAorHVA(v.Type())
-				if isHFAorHVA {
-					numFields := v.NumField()
-					if numFloats+numFields <= 8 {
-						first := v.Field(0)
-						// short vectors
-						switch first.Kind() {
-						case reflect.Uint8, reflect.Uint16, reflect.Uint32:
-							var val uintptr
-							size := first.Type().Size()
-							for i := 0; i < numFields; i++ {
-								a := uintptr(v.Field(i).Uint())
-								val |= a << (i * int(size*8))
-							}
-							// field arguments are placed with the first one in the least significant bits
-							addInt(val)
-						case reflect.Float32, reflect.Float64:
-							// An HFAs
-							for k := 0; k < numFields; k++ {
-								f := v.Field(k)
-								switch f.Type().Kind() {
-								case reflect.Float32:
-									addFloat(uintptr(math.Float32bits(float32(f.Float()))))
-								case reflect.Float64:
-									addFloat(uintptr(math.Float64bits(float64(f.Float()))))
-								default:
-									panic("purego: unsupported kind " + f.Kind().String())
+				if runtime.GOARCH == "arm64" {
+					isHFAorHVA := isHFAorHVA(v.Type())
+					if isHFAorHVA {
+						numFields := v.NumField()
+						if numFloats+numFields <= 8 {
+							first := v.Field(0)
+							// short vectors
+							switch first.Kind() {
+							case reflect.Uint8, reflect.Uint16, reflect.Uint32:
+								var val uintptr
+								size := first.Type().Size()
+								for i := 0; i < numFields; i++ {
+									a := uintptr(v.Field(i).Uint())
+									val |= a << (i * int(size*8))
 								}
+								// field arguments are placed with the first one in the least significant bits
+								addInt(val)
+							case reflect.Int8, reflect.Int16, reflect.Int32:
+								mask := int64(0xFF)
+								for i := 1; i < int(first.Type().Size()); i++ {
+									mask = (mask << 8) + 0xFF
+								}
+								var val int64
+								size := first.Type().Size()
+								for i := 0; i < numFields; i++ {
+									a := v.Field(i).Int() & mask
+									val |= a << (i * int(size*8))
+								}
+								// field arguments are placed with the first one in the least significant bits
+								addInt(uintptr(val))
+							case reflect.Float32, reflect.Float64:
+								// An HFAs
+								for k := 0; k < numFields; k++ {
+									f := v.Field(k)
+									switch f.Type().Kind() {
+									case reflect.Float32:
+										addFloat(uintptr(math.Float32bits(float32(f.Float()))))
+									case reflect.Float64:
+										addFloat(uintptr(math.Float64bits(float64(f.Float()))))
+									default:
+										panic("purego: unsupported kind " + f.Kind().String())
+									}
+								}
+							default:
+								panic("purego: unsupported kind " + first.Kind().String())
 							}
-						default:
-							panic("purego: unsupported kind " + first.Kind().String())
+						} else {
+							// Struct is too big to be placed in registers.
+							// Copy to heap and place the pointer in register
+							ptrStruct := reflect.New(v.Type())
+							ptrStruct.Elem().Set(v)
+							ptr := ptrStruct.Elem().Addr().UnsafePointer()
+							keepAlive = append(keepAlive, ptr)
+							addInt(uintptr(ptr))
 						}
-					} else {
-						// Struct is too big to be placed in registers.
-						// Copy to heap and place the pointer in register
+					}
+					size := v.Type().Size()
+					if size > 16 {
 						ptrStruct := reflect.New(v.Type())
 						ptrStruct.Elem().Set(v)
 						ptr := ptrStruct.Elem().Addr().UnsafePointer()
 						keepAlive = append(keepAlive, ptr)
 						addInt(uintptr(ptr))
-					}
-				}
-				size := v.Type().Size()
-				if size > 16 {
-					ptrStruct := reflect.New(v.Type())
-					ptrStruct.Elem().Set(v)
-					ptr := ptrStruct.Elem().Addr().UnsafePointer()
-					keepAlive = append(keepAlive, ptr)
-					addInt(uintptr(ptr))
-				} else {
-					numFields := v.NumField()
-					for k := 0; k < numFields; k++ {
-						f := v.Field(k)
-						switch f.Type().Kind() {
-						case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-							addInt(uintptr(f.Uint()))
-						case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-							addInt(uintptr(f.Int()))
-						case reflect.Float32:
-							addFloat(uintptr(math.Float32bits(float32(f.Float()))))
-						case reflect.Float64:
-							addFloat(uintptr(math.Float64bits(float64(f.Float()))))
-						default:
-							panic("purego: unsupported kind " + f.Kind().String())
+					} else {
+						numFields := v.NumField()
+						for k := 0; k < numFields; k++ {
+							f := v.Field(k)
+							switch f.Type().Kind() {
+							case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+								addInt(uintptr(f.Uint()))
+							case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+								addInt(uintptr(f.Int()))
+							case reflect.Float32:
+								addFloat(uintptr(math.Float32bits(float32(f.Float()))))
+							case reflect.Float64:
+								addFloat(uintptr(math.Float64bits(float64(f.Float()))))
+							default:
+								panic("purego: unsupported kind " + f.Kind().String())
+							}
 						}
 					}
+					break
+				} else if runtime.GOARCH == "amd64" {
 				}
+				fallthrough
 			default:
 				panic("purego: unsupported kind: " + v.Kind().String())
 			}
@@ -390,8 +408,11 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 }
 
 func isHFAorHVA(t reflect.Type) bool {
-	size := t.Size()
-	if size == 0 {
+	structSize := t.Size()
+	// round up struct size to nearest 8 see section B.5
+	structSize += 7
+	structSize &^= 7
+	if structSize == 0 {
 		return false
 	}
 	first := t.Field(0)
@@ -404,8 +425,8 @@ func isHFAorHVA(t reflect.Type) bool {
 			}
 		}
 		return true
-	case reflect.Uint8, reflect.Uint16, reflect.Uint32:
-		if size > 16 {
+	case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Int8, reflect.Int16, reflect.Int32:
+		if structSize != 8 && structSize != 16 {
 			return false
 		}
 		firstKind := first.Type.Kind()
@@ -416,7 +437,7 @@ func isHFAorHVA(t reflect.Type) bool {
 		}
 		return true
 	case reflect.Array:
-		if size > 16 {
+		if structSize != 8 && structSize != 16 {
 			return false
 		}
 		switch first.Type.Elem().Kind() {

@@ -28,18 +28,20 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 	}
 
 	const (
-		expected               = 0xdeadbeef
-		expectedLong   uint64  = 0xdeadbeefcafebabe
-		expectedFloat  float32 = 10
-		expectedDouble float64 = 10
+		expectedUnsigned         = 0xdeadbeef
+		expectedSigned           = -123
+		expectedOdd              = 12 + 23 + 46
+		expectedLong     uint64  = 0xdeadbeefcafebabe
+		expectedFloat    float32 = 10
+		expectedDouble   float64 = 10
 	)
 
 	{
 		type Empty struct{}
 		var NoStruct func(Empty) int64
 		purego.RegisterLibFunc(&NoStruct, lib, "NoStruct")
-		if ret := NoStruct(Empty{}); ret != expected {
-			t.Fatalf("NoStruct returned %#x wanted %#x", ret, expected)
+		if ret := NoStruct(Empty{}); ret != expectedUnsigned {
+			t.Fatalf("NoStruct returned %#x wanted %#x", ret, expectedUnsigned)
 		}
 	}
 	{
@@ -49,8 +51,8 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 		var x, y, z int64 = 0xEF, 0xBE00, 0xDEAD0000
 		var GreaterThan16BytesFn func(GreaterThan16Bytes) int64
 		purego.RegisterLibFunc(&GreaterThan16BytesFn, lib, "GreaterThan16Bytes")
-		if ret := GreaterThan16BytesFn(GreaterThan16Bytes{x: &x, y: &y, z: &z}); ret != expected {
-			t.Fatalf("GreaterThan16Bytes returned %#x wanted %#x", ret, expected)
+		if ret := GreaterThan16BytesFn(GreaterThan16Bytes{x: &x, y: &y, z: &z}); ret != expectedUnsigned {
+			t.Fatalf("GreaterThan16Bytes returned %#x wanted %#x", ret, expectedUnsigned)
 		}
 	}
 	{
@@ -60,8 +62,8 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 		var x, y, z int64 = 0xEF, 0xBE00, 0xDEAD0000
 		var AfterRegisters func(a, b, c, d, e, f, g, h int, bytes GreaterThan16Bytes) int64
 		purego.RegisterLibFunc(&AfterRegisters, lib, "AfterRegisters")
-		if ret := AfterRegisters(0xD0000000, 0xE000000, 0xA00000, 0xD0000, 0xB000, 0xE00, 0xE0, 0xF, GreaterThan16Bytes{x: &x, y: &y, z: &z}); ret != expected {
-			t.Fatalf("AfterRegisters returned %#x wanted %#x", ret, expected)
+		if ret := AfterRegisters(0xD0000000, 0xE000000, 0xA00000, 0xD0000, 0xB000, 0xE00, 0xE0, 0xF, GreaterThan16Bytes{x: &x, y: &y, z: &z}); ret != expectedUnsigned {
+			t.Fatalf("AfterRegisters returned %#x wanted %#x", ret, expectedUnsigned)
 		}
 	}
 	{
@@ -70,8 +72,8 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 		}
 		var IntLessThan16BytesFn func(bytes IntLessThan16Bytes) int64
 		purego.RegisterLibFunc(&IntLessThan16BytesFn, lib, "IntLessThan16Bytes")
-		if ret := IntLessThan16BytesFn(IntLessThan16Bytes{0xDEAD0000, 0xBEEF}); ret != expected {
-			t.Fatalf("IntLessThan16BytesFn returned %#x wanted %#x", ret, expected)
+		if ret := IntLessThan16BytesFn(IntLessThan16Bytes{0xDEAD0000, 0xBEEF}); ret != expectedUnsigned {
+			t.Fatalf("IntLessThan16BytesFn returned %#x wanted %#x", ret, expectedUnsigned)
 		}
 	}
 	{
@@ -125,13 +127,13 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 		}
 	}
 	{
-		type Char4Bytes struct {
+		type UnsignedChar4Bytes struct {
 			a, b, c, d byte
 		}
-		var Char4BytesFn func(Char4Bytes) uint32
-		purego.RegisterLibFunc(&Char4BytesFn, lib, "Char4Bytes")
-		if ret := Char4BytesFn(Char4Bytes{a: 0xDE, b: 0xAD, c: 0xBE, d: 0xEF}); ret != expected {
-			t.Fatalf("Char4Bytes returned %#x wanted %#x", ret, expected)
+		var UnsignedChar4BytesFn func(UnsignedChar4Bytes) uint32
+		purego.RegisterLibFunc(&UnsignedChar4BytesFn, lib, "UnsignedChar4Bytes")
+		if ret := UnsignedChar4BytesFn(UnsignedChar4Bytes{a: 0xDE, b: 0xAD, c: 0xBE, d: 0xEF}); ret != expectedUnsigned {
+			t.Fatalf("Char8Bytes returned %#x wanted %#x", ret, expectedUnsigned)
 		}
 	}
 	{
@@ -170,8 +172,28 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 	//	}
 	//	var Array4CharsFn func(chars Array4Chars) uint32
 	//	purego.RegisterLibFunc(&Array4CharsFn, lib, "Long")
-	//	if ret := Array4CharsFn(Array4Chars{a: [...]uint8{0xDE, 0xAD, 0xBE, 0xEF}}); ret != expected {
+	//	if ret := Array4CharsFn(Array4Chars{a: [...]uint8{0xDE, 0xAD, 0xBE, 0xEF}}); ret != expectedUnsigned {
 	//		t.Fatalf("LongFn returned %#x wanted %#x", ret, expectedLong)
 	//	}
 	//}
+	{
+		type Char8Bytes struct {
+			a, b, c, d, e, f, g, h int8
+		}
+		var Char8BytesFn func(Char8Bytes) int32
+		purego.RegisterLibFunc(&Char8BytesFn, lib, "Char8Bytes")
+		if ret := Char8BytesFn(Char8Bytes{a: -128, b: 127, c: 3, d: -88, e: -3, f: 34, g: -48, h: -20}); ret != expectedSigned {
+			t.Fatalf("Char8Bytes returned %d wanted %d", ret, expectedSigned)
+		}
+	}
+	{
+		type Odd struct {
+			a, b, c byte
+		}
+		var OddFn func(Odd) int32
+		purego.RegisterLibFunc(&OddFn, lib, "Odd")
+		if ret := OddFn(Odd{a: 12, b: 23, c: 46}); ret != expectedOdd {
+			t.Fatalf("OddFn returned %d wanted %d", ret, expectedOdd)
+		}
+	}
 }
