@@ -35,11 +35,11 @@ func getSystemLibrary() (string, error) {
 func TestRegisterFunc(t *testing.T) {
 	library, err := getSystemLibrary()
 	if err != nil {
-		t.Errorf("couldn't get system library: %s", err)
+		t.Fatalf("couldn't get system library: %s", err)
 	}
 	libc, err := openLibrary(library)
 	if err != nil {
-		t.Errorf("failed to dlopen: %s", err)
+		t.Fatalf("failed to dlopen: %s", err)
 	}
 	var puts func(string)
 	purego.RegisterLibFunc(&puts, libc, "puts")
@@ -65,11 +65,11 @@ func ExampleNewCallback() {
 func Test_qsort(t *testing.T) {
 	library, err := getSystemLibrary()
 	if err != nil {
-		t.Errorf("couldn't get system library: %s", err)
+		t.Fatalf("couldn't get system library: %s", err)
 	}
 	libc, err := openLibrary(library)
 	if err != nil {
-		t.Errorf("failed to dlopen: %s", err)
+		t.Fatalf("failed to dlopen: %s", err)
 	}
 
 	data := []int{88, 56, 100, 2, 25}
@@ -90,11 +90,11 @@ func Test_qsort(t *testing.T) {
 func TestRegisterFunc_Floats(t *testing.T) {
 	library, err := getSystemLibrary()
 	if err != nil {
-		t.Errorf("couldn't get system library: %s", err)
+		t.Fatalf("couldn't get system library: %s", err)
 	}
 	libc, err := openLibrary(library)
 	if err != nil {
-		t.Errorf("failed to dlopen: %s", err)
+		t.Fatalf("failed to dlopen: %s", err)
 	}
 	{
 		var strtof func(arg string) float32
