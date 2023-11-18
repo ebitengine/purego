@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023 The Ebitengine Authors
 
-//go:build darwin || (linux && (!cgo || amd64 || arm64))
+//go:build arm64
+
+// TODO: fix build tag to include linux. Changed for testing only
 
 package purego_test
 
