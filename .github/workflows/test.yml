@@ -112,7 +112,7 @@ jobs:
       matrix:
         go: ['1.18.10', '1.19.12', '1.20.7', '1.21.0']
     name: Test with Go ${{ matrix.go }} on FreeBSD
-    runs-on: macos-12
+    runs-on: ubuntu-22.04
     defaults:
       run:
         shell: bash
