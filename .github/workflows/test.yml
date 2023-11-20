@@ -21,10 +21,10 @@ jobs:
           git config --global core.eol lf
 
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Setup Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v4
         with:
           go-version: ${{ matrix.go }}
 
@@ -112,14 +112,14 @@ jobs:
       matrix:
         go: ['1.18.10', '1.19.12', '1.20.7', '1.21.0']
     name: Test with Go ${{ matrix.go }} on FreeBSD
-    runs-on: macos-12
+    runs-on: ubuntu-22.04
     defaults:
       run:
         shell: bash
     steps:
       - uses: actions/checkout@v3
       - name: Run in freebsd
-        uses: vmactions/freebsd-vm@v0
+        uses: vmactions/freebsd-vm@v1
         with:
           usesh: true
           prepare: |
@@ -127,7 +127,7 @@ jobs:
             rm -fr /usr/local/go && tar -C /usr/local -xf go${{matrix.go}}.freebsd-amd64.tar.gz
             ln -s /usr/local/go/bin/go /usr/local/bin
           run: |
-            # FreeBSD tests run within a virtualbox VM on macOS.
+            # FreeBSD tests run within QEMU on Ubuntu.
             # vmactions/freebsd-vm only supports a single "step" where it
             # brings down the VM at the end of the step, so all
             # the commands to run need to be put into this single block.
