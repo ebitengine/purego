@@ -6,7 +6,6 @@
 package purego
 
 import (
-	"fmt"
 	"math"
 	"reflect"
 	"runtime"
@@ -192,7 +191,6 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 		}
 		var sysargs [maxArgs]uintptr
 		stack := sysargs[numOfIntegerRegisters():]
-		fmt.Println(len(stack))
 		var floats [numOfFloats]uintptr
 		var numInts int
 		var numFloats int
