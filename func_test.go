@@ -47,19 +47,19 @@ func TestRegisterFunc(t *testing.T) {
 }
 
 func ExampleNewCallback() {
-	cb := purego.NewCallback(func(a1, a2, a3, a4, a5, a6, a7, a8, a9 int) int {
-		fmt.Println(a1, a2, a3, a4, a5, a6, a7, a8, a9)
-		return a1 + a2 + a3 + a4 + a5 + a6 + a7 + a8 + a9
+	cb := purego.NewCallback(func(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12 int) int {
+		fmt.Println(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12)
+		return a1 + a2 + a3 + a4 + a5 + a6 + a7 + a8 + a9 + a10 + a11 + a12
 	})
 
-	var fn func(a1, a2, a3, a4, a5, a6, a7, a8, a9 int) int
+	var fn func(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12 int) int
 	purego.RegisterFunc(&fn, cb)
 
-	ret := fn(1, 2, 3, 4, 5, 6, 7, 8, 9)
+	ret := fn(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)
 	fmt.Println(ret)
 
-	// Output: 1 2 3 4 5 6 7 8 9
-	// 45
+	// Output: 1 2 3 4 5 6 7 8 9 10 11 12
+	// 78
 }
 
 func Test_qsort(t *testing.T) {

@@ -10,16 +10,16 @@ import (
 	"golang.org/x/sys/windows"
 )
 
-var syscall9XABI0 uintptr
+var syscall12XABI0 uintptr
 
-type syscall9Args struct {
-	fn, a1, a2, a3, a4, a5, a6, a7, a8, a9 uintptr
-	f1, f2, f3, f4, f5, f6, f7, f8         uintptr
-	r1, r2, err                            uintptr
+type syscall12Args struct {
+	fn, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12 uintptr
+	f1, f2, f3, f4, f5, f6, f7, f8                        uintptr
+	r1, r2, err                                           uintptr
 }
 
-func syscall_syscall9X(fn, a1, a2, a3, a4, a5, a6, a7, a8, a9 uintptr) (r1, r2, err uintptr) {
-	r1, r2, errno := syscall.Syscall9(fn, 9, a1, a2, a3, a4, a5, a6, a7, a8, a9)
+func syscall_syscall12X(fn, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12 uintptr) (r1, r2, err uintptr) {
+	r1, r2, errno := syscall.Syscall12(fn, 12, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12)
 	return r1, r2, uintptr(errno)
 }
 
