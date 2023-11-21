@@ -12,22 +12,22 @@ import (
 	"unsafe"
 )
 
-var syscall12XABI0 uintptr
+var syscall15XABI0 uintptr
 
-type syscall12Args struct {
-	fn, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12 uintptr
-	f1, f2, f3, f4, f5, f6, f7, f8                        uintptr
-	r1, r2, err                                           uintptr
+type syscall15Args struct {
+	fn, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15 uintptr
+	f1, f2, f3, f4, f5, f6, f7, f8                                       uintptr
+	r1, r2, err                                                          uintptr
 }
 
 //go:nosplit
-func syscall_syscall12X(fn, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12 uintptr) (r1, r2, err uintptr) {
-	args := syscall12Args{
-		fn, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12,
+func syscall_syscall15X(fn, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15 uintptr) (r1, r2, err uintptr) {
+	args := syscall15Args{
+		fn, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15,
 		a1, a2, a3, a4, a5, a6, a7, a8,
 		r1, r2, err,
 	}
-	runtime_cgocall(syscall12XABI0, unsafe.Pointer(&args))
+	runtime_cgocall(syscall15XABI0, unsafe.Pointer(&args))
 	return args.r1, args.r2, args.err
 }
 
