@@ -259,7 +259,7 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 			v.SetInt(int64(r1))
 		case reflect.Bool:
-			v.SetBool(*(*bool)(unsafe.Pointer(&r1)))
+			v.SetBool(byte(r1) != 0)
 		case reflect.UnsafePointer:
 			// We take the address and then dereference it to trick go vet from creating a possible miss-use of unsafe.Pointer
 			v.SetPointer(*(*unsafe.Pointer)(unsafe.Pointer(&r1)))
