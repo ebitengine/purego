@@ -6,6 +6,7 @@
 package purego
 
 import (
+	"fmt"
 	"math"
 	"reflect"
 	"runtime"
@@ -134,9 +135,10 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 					stack++
 				}
 			case reflect.Struct:
-				if runtime.GOARCH != "arm64" {
-					panic("purego: struct only allowed on arm64")
+				if runtime.GOOS != "darwin" {
+					panic("purego: struct arguments are only supported on macOS")
 				}
+				// TODO: implement
 				//size := arg.Size()
 				//if size > 16 {
 				//	if ints < numOfIntegerRegisters() {
@@ -190,6 +192,7 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 		}
 		var sysargs [maxArgs]uintptr
 		stack := sysargs[numOfIntegerRegisters():]
+		fmt.Println(len(stack))
 		var floats [numOfFloats]uintptr
 		var numInts int
 		var numFloats int
@@ -383,6 +386,14 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 					}
 					break // the struct was allocated so don't panic
 				} else if runtime.GOARCH == "amd64" {
+					if v.Type().Size() == 0 {
+						break
+					} else if v.Type().Size() > 0 {
+						for i := 0; i < v.Type().NumField(); i++ {
+							addStack(v.Field(i).Pointer())
+						}
+						break
+					}
 				}
 				fallthrough
 			default:

@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023 The Ebitengine Authors
 
-//go:build arm64
-
-// TODO: fix build tag to include linux. Changed for testing only
+//go:build darwin && arm64
 
 package purego_test
 
@@ -67,7 +65,6 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 		if ret := AfterRegisters(0xD0000000, 0xE000000, 0xA00000, 0xD0000, 0xB000, 0xE00, 0xE0, 0xF, GreaterThan16Bytes{x: &x, y: &y, z: &z}); ret != expectedUnsigned {
 			t.Fatalf("AfterRegisters returned %#x wanted %#x", ret, expectedUnsigned)
 		}
-
 		var BeforeRegisters func(bytes GreaterThan16Bytes, a, b int64) uint64
 		z -= 0xFF
 		purego.RegisterLibFunc(&BeforeRegisters, lib, "BeforeRegisters")
