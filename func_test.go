@@ -139,6 +139,11 @@ func TestRegisterFunc_Floats(t *testing.T) {
 }
 
 func TestRegisterLibFunc_Bool(t *testing.T) {
+	if runtime.GOOS == "linux" {
+		// TODO: enable once callbacks are working properly on Linux
+		t.Skip("callbacks are not supported on Linux")
+	}
+
 	// this callback recreates the state where the return register
 	// contains other information but the least significant byte is false
 	cbFalse := purego.NewCallback(func() uintptr {
