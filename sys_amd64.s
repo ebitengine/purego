@@ -8,8 +8,8 @@
 #include "go_asm.h"
 #include "funcdata.h"
 
-#define STACK_SIZE 96
-#define PTR_ADDRESS (STACK_SIZE - 16)
+#define STACK_SIZE 80
+#define PTR_ADDRESS (STACK_SIZE - 8)
 
 // syscall15X calls a function in libc on behalf of the syscall package.
 // syscall15X takes a pointer to a struct like:
