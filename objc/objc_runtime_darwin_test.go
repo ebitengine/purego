@@ -12,6 +12,18 @@ import (
 	"github.com/ebitengine/purego/objc"
 )
 
+func ExampleAllocateClassPair() {
+	class := objc.AllocateClassPair(objc.GetClass("NSObject"), "FooObject", 0)
+	class.AddMethod(objc.RegisterName("run"), objc.NewIMP(func(self objc.ID, _cmd objc.SEL) {
+		fmt.Println("Hello World!")
+	}), "v@:")
+	class.Register()
+
+	fooObject := objc.ID(class).Send(objc.RegisterName("new"))
+	fooObject.Send(objc.RegisterName("run"))
+	// Output: Hello World!
+}
+
 func ExampleRegisterClass() {
 	var (
 		sel_new    = objc.RegisterName("new")
