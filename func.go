@@ -402,17 +402,21 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 		var r1, r2 uintptr
 		if runtime.GOARCH == "arm64" || runtime.GOOS != "windows" {
 			// Use the normal arm64 calling convention even on Windows
-			syscall := syscall9Args{
+			syscall := syscall15Args{
 				cfn,
-				sysargs[0], sysargs[1], sysargs[2], sysargs[3], sysargs[4], sysargs[5], sysargs[6], sysargs[7], sysargs[8],
+				sysargs[0], sysargs[1], sysargs[2], sysargs[3], sysargs[4], sysargs[5],
+				sysargs[6], sysargs[7], sysargs[8], sysargs[9], sysargs[10], sysargs[11],
+				sysargs[12], sysargs[13], sysargs[14],
 				floats[0], floats[1], floats[2], floats[3], floats[4], floats[5], floats[6], floats[7],
 				0, 0, 0,
 			}
-			runtime_cgocall(syscall9XABI0, unsafe.Pointer(&syscall))
+			runtime_cgocall(syscall15XABI0, unsafe.Pointer(&syscall))
 			r1, r2 = syscall.r1, syscall.r2
 		} else {
 			// This is a fallback for Windows amd64, 386, and arm. Note this may not support floats
-			r1, r2, _ = syscall_syscall9X(cfn, sysargs[0], sysargs[1], sysargs[2], sysargs[3], sysargs[4], sysargs[5], sysargs[6], sysargs[7], sysargs[8])
+			r1, r2, _ = syscall_syscall15X(cfn, sysargs[0], sysargs[1], sysargs[2], sysargs[3], sysargs[4],
+				sysargs[5], sysargs[6], sysargs[7], sysargs[8], sysargs[9], sysargs[10], sysargs[11],
+				sysargs[12], sysargs[13], sysargs[14])
 		}
 		if ty.NumOut() == 0 {
 			return nil
