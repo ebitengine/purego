@@ -6,7 +6,7 @@
 package purego
 
 const (
-	maxArgs     = 9
+	maxArgs     = 15
 	numOfFloats = 8 // arm64 and amd64 both have 8 float registers
 )
 
@@ -36,5 +36,5 @@ func SyscallN(fn uintptr, args ...uintptr) (r1, r2, err uintptr) {
 	// add padding so there is no out-of-bounds slicing
 	var tmp [maxArgs]uintptr
 	copy(tmp[:], args)
-	return syscall_syscall9X(fn, tmp[0], tmp[1], tmp[2], tmp[3], tmp[4], tmp[5], tmp[6], tmp[7], tmp[8])
+	return syscall_syscall15X(fn, tmp[0], tmp[1], tmp[2], tmp[3], tmp[4], tmp[5], tmp[6], tmp[7], tmp[8], tmp[9], tmp[10], tmp[11], tmp[12], tmp[13], tmp[14])
 }
