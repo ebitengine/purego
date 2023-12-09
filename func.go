@@ -6,6 +6,7 @@
 package purego
 
 import (
+	"fmt"
 	"math"
 	"reflect"
 	"runtime"
@@ -264,7 +265,12 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 				addFloat(uintptr(math.Float64bits(v.Float())))
 			case reflect.Struct:
 				if runtime.GOARCH == "arm64" {
-					if isHFA(v.Type()) && numFloats+v.NumField() <= 8 {
+					if isHFA(v.Type()) {
+						// if this doesn't fit entirely in registers then
+						// each element goes onto the stack
+						if numFloats+v.NumField() > 8 {
+							numFloats = numOfFloats
+						}
 						numFields := v.NumField()
 						first := v.Field(0)
 						switch first.Kind() {
@@ -384,11 +390,137 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 					}
 					break // the struct was allocated so don't panic
 				} else if runtime.GOARCH == "amd64" {
+					// https://www.uclibc.org/docs/psABI-x86_64.pdf
 					if v.Type().Size() == 0 {
 						break
 					} else if v.Type().Size() > 0 {
-						for i := 0; i < v.Type().NumField(); i++ {
-							addStack(v.Field(i).Pointer())
+						var (
+							placedOnStack  = v.Type().Size() > 8*8 // if greater than 8 8 bytes place on stack
+							savedNumFloats = numFloats
+							savedNumInts   = numInts
+							savedNumStack  = numStack
+						)
+						numFields := v.Type().NumField()
+					loop:
+						for i := 0; i < numFields; i++ {
+							f := v.Field(i)
+							switch f.Kind() {
+							case reflect.Pointer:
+								placedOnStack = true
+								break loop
+							case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+								addInt(uintptr(f.Int()))
+							case reflect.Uint8:
+								val := f.Uint()
+								var k int
+								for k = i; k < numFields; k++ {
+									elm := v.Field(k)
+									// val = ((val << 8 * 1) & ^uint64(0xFF)) | elm.Uint()
+									val = (val & ^(uint64(0xFF) << ((k - i) * 8))) | elm.Uint()<<((k-i)*8)
+								}
+								// Reverse the bytes
+								// 0xdeadbeef becomes 0xefbeadde
+								/*switch k - i {
+								case 1:
+									// do nothing
+								case 2:
+									val = uint64(bits.ReverseBytes16(uint16(val)))
+								case 4:
+									val = uint64(bits.ReverseBytes32(uint32(val)))
+								case 8:
+									val = uint64(bits.ReverseBytes64(uint64(val)))
+								default:
+									panic("purego: can't reverse bits")
+								}*/
+								i = k - 1
+								addInt(uintptr(val))
+							case reflect.Uint16:
+								val := f.Uint()
+								var k int
+								for k = i; k < numFields; k++ {
+									elm := v.Field(k)
+									val = ((val << (8 * 2)) & ^uint64(0xFFFF)) | elm.Uint()
+									// val = (val & ^(uint64(0xFF) << ((k - i) * 8))) | elm.Uint()<<((k-i)*8)
+								}
+								fmt.Printf("%#x\n", val)
+								// Reverse the uint16s
+								// 0xdeadbeefcafebabe becomes 0xbabecafebeefdead
+								switch k - i {
+								case 1:
+									// do nothing
+								case 2:
+									val = uint64(uint16(val>>0))<<16 | uint64(uint16(val>>16))<<0
+								case 4:
+									val = uint64(uint16(val>>0))<<48 | uint64(uint16(val>>16))<<32 | uint64(uint16(val>>32))<<16 | uint64(uint16(val>>48))
+								default:
+									panic("purego: can't reverse bits")
+								}
+								i = k - 1
+								fmt.Printf("%#x\n", val)
+								addInt(uintptr(val))
+							case reflect.Uint, reflect.Uint32, reflect.Uint64:
+								addInt(uintptr(f.Uint()))
+							case reflect.Float32:
+								if i+1 < numFields {
+									if v.Field(i+1).Kind() != reflect.Float32 {
+										// TODO: is this correct?
+										placedOnStack = true
+										break loop
+									} else {
+										addFloat(uintptr(math.Float32bits(float32(v.Field(i+1).Float())))<<32 | uintptr(math.Float32bits(float32(f.Float()))))
+										i++
+									}
+								} else {
+									addFloat(uintptr(math.Float32bits(float32(f.Float()))))
+								}
+							case reflect.Float64:
+								if v.Type().Size() > 8 {
+									placedOnStack = true
+									break loop
+								}
+								addFloat(uintptr(math.Float64bits(f.Float())))
+							case reflect.Array:
+								arraySize := f.Len()
+								arrayFirstType := f.Index(0).Type()
+								switch arrayFirstType.Kind() {
+								case reflect.Float64:
+									for k := 0; k < arraySize; k++ {
+										elm := f.Index(k)
+										addFloat(uintptr(math.Float64bits(float64(elm.Float()))))
+									}
+								case reflect.Float32:
+									for k := 0; k < arraySize; k++ {
+										elm := f.Index(k)
+										addFloat(uintptr(math.Float32bits(float32(elm.Float()))))
+									}
+								default:
+									panic("purego: unsupported kind " + f.Kind().String())
+								}
+							default:
+								panic("purego: unsupported kind " + f.Kind().String())
+							}
+						}
+						if placedOnStack {
+							numFloats = savedNumFloats
+							numInts = savedNumInts
+							numStack = savedNumStack
+							for i := 0; i < v.Type().NumField(); i++ {
+								f := v.Field(i)
+								switch f.Kind() {
+								case reflect.Pointer:
+									addStack(f.Pointer())
+								case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+									addStack(uintptr(f.Int()))
+								case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+									addStack(uintptr(f.Uint()))
+								case reflect.Float32:
+									addStack(uintptr(math.Float32bits(float32(f.Float()))))
+								case reflect.Float64:
+									addStack(uintptr(math.Float64bits(f.Float())))
+								default:
+									panic("purego: unsupported kind " + f.Kind().String())
+								}
+							}
 						}
 						break
 					}

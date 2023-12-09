@@ -80,6 +80,10 @@ double Rectangle(struct Rect rect) {
     return rect.x + rect.y + rect.w + rect.h;
 }
 
+double RectangleSubtract(struct Rect rect) {
+    return (rect.x + rect.y) - (rect.w + rect.h);
+}
+
 double RectangleWithRegs(double a, double b, double c, double d, double e, struct Rect rect) {
     return a + b + c + d + e + rect.x + rect.y + rect.w + rect.h;
 }
