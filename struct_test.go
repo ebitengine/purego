@@ -218,13 +218,53 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 		}
 	}
 	{
+		type Array3UnsignedChar struct {
+			a [3]uint8
+		}
+		var Array3UnsignedChars func(chars Array3UnsignedChar) uint32
+		purego.RegisterLibFunc(&Array3UnsignedChars, lib, "Array3UnsignedChars")
+		if ret := Array3UnsignedChars(Array3UnsignedChar{a: [...]uint8{0xDE, 0xAD, 0xBE}}); ret != expectedUnsigned {
+			t.Fatalf("Array4UnsignedCharsFn returned %#x wanted %#x", ret, expectedUnsigned)
+		}
+	}
+	{
+		type Array2UnsignedShort struct {
+			a [2]uint16
+		}
+		var Array2UnsignedShorts func(chars Array2UnsignedShort) uint32
+		purego.RegisterLibFunc(&Array2UnsignedShorts, lib, "Array2UnsignedShorts")
+		if ret := Array2UnsignedShorts(Array2UnsignedShort{a: [...]uint16{0xDEAD, 0xBEEF}}); ret != expectedUnsigned {
+			t.Fatalf("Array4UnsignedCharsFn returned %#x wanted %#x", ret, expectedUnsigned)
+		}
+	}
+	{
 		type Array4Chars struct {
 			a [4]int8
 		}
 		var Array4CharsFn func(chars Array4Chars) int32
 		purego.RegisterLibFunc(&Array4CharsFn, lib, "Array4Chars")
 		if ret := Array4CharsFn(Array4Chars{a: [...]int8{100, -127, 4, -100}}); ret != expectedSigned {
-			t.Fatalf("Array4UnsignedCharsFn returned %#x wanted %#x", ret, expectedSigned)
+			t.Fatalf("Array4CharsFn returned %#x wanted %#x", ret, expectedSigned)
+		}
+	}
+	{
+		type Array2Short struct {
+			a [2]int16
+		}
+		var Array2Shorts func(chars Array2Short) int32
+		purego.RegisterLibFunc(&Array2Shorts, lib, "Array2Shorts")
+		if ret := Array2Shorts(Array2Short{a: [...]int16{-333, 210}}); ret != expectedSigned {
+			t.Fatalf("Array4Shorts returned %#x wanted %#x", ret, expectedSigned)
+		}
+	}
+	{
+		type Array3Short struct {
+			a [3]int16
+		}
+		var Array3Shorts func(chars Array3Short) int32
+		purego.RegisterLibFunc(&Array3Shorts, lib, "Array3Shorts")
+		if ret := Array3Shorts(Array3Short{a: [...]int16{-333, 100, 110}}); ret != expectedSigned {
+			t.Fatalf("Array4Shorts returned %#x wanted %#x", ret, expectedSigned)
 		}
 	}
 }

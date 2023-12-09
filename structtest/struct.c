@@ -153,10 +153,42 @@ unsigned int Array4UnsignedChars(struct Array4UnsignedChars a) {
     return (((int)a.a[0])<<24) | (((int)a.a[1])<<16) | (((int)a.a[2])<<8) | (((int)a.a[3])<<0);
 }
 
+struct Array3UnsignedChar {
+    unsigned char a[3];
+};
+
+unsigned int Array3UnsignedChars(struct Array3UnsignedChar a) {
+    return (((int)a.a[0])<<24) | (((int)a.a[1])<<16) | (((int)a.a[2])<<8) | 0xef;
+}
+
+struct Array2UnsignedShort {
+    unsigned short a[2];
+};
+
+unsigned int Array2UnsignedShorts(struct Array2UnsignedShort a) {
+    return (((int)a.a[0])<<16) | (((int)a.a[1])<<0);
+}
+
 struct Array4Chars {
     char a[4];
 };
 
 int Array4Chars(struct Array4Chars a) {
     return (int)a.a[0] + (int)a.a[1] + (int)a.a[2] + (int)a.a[3];
+}
+
+struct Array2Short {
+    short a[2];
+};
+
+int Array2Shorts(struct Array2Short a) {
+    return (int)a.a[0] + (int)a.a[1];
+}
+
+struct Array3Short {
+    short a[3];
+};
+
+int Array3Shorts(struct Array3Short a) {
+    return (int)a.a[0] + (int)a.a[1] + (int)a.a[2];
 }

@@ -52,7 +52,7 @@ func RegisterLibFunc(fptr interface{}, handle uintptr, name string) {
 //	int64 <=> int64_t
 //	float32 <=> float (WIP)
 //	float64 <=> double (WIP)
-//	struct <=> struct (WIP)
+//	struct <=> struct (WIP - macOS only)
 //	func <=> C function
 //	unsafe.Pointer, *T <=> void*
 //	[]T => void*
@@ -134,39 +134,10 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 					stack++
 				}
 			case reflect.Struct:
-				if runtime.GOOS != "darwin" {
-					panic("purego: struct arguments are only supported on macOS")
+				if runtime.GOOS != "darwin" || (runtime.GOARCH != "amd64" && runtime.GOARCH != "arm64") {
+					panic("purego: struct arguments are only supported on macOS amd64 & arm64")
 				}
 				// TODO: implement
-				//size := arg.Size()
-				//if size > 16 {
-				//	if ints < numOfIntegerRegisters() {
-				//		ints++
-				//	} else {
-				//		stack++
-				//	}
-				//} else if size > 0 {
-				//	numFields := arg.NumField()
-				//	for j := 0; j < numFields; j++ {
-				//		f := arg.Field(j)
-				//		switch f.Type.Kind() {
-				//		case reflect.Int64, reflect.Uint8:
-				//			if ints < numOfIntegerRegisters() {
-				//				ints++
-				//			} else {
-				//				stack++
-				//			}
-				//		case reflect.Float32, reflect.Float64:
-				//			if floats < numOfFloats {
-				//				floats++
-				//			} else {
-				//				stack++
-				//			}
-				//		default:
-				//			panic("purego: unknown kind " + f.Type.Kind().String())
-				//		}
-				//	}
-				//}
 			default:
 				panic("purego: unsupported kind " + arg.Kind().String())
 			}
