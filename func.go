@@ -6,7 +6,6 @@
 package purego
 
 import (
-	"fmt"
 	"math"
 	"reflect"
 	"runtime"
@@ -408,57 +407,44 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 							case reflect.Pointer:
 								placedOnStack = true
 								break loop
-							case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+							case reflect.Int8, reflect.Int16, reflect.Int32:
+								sizeInBytes := int(f.Type().Size())
+								mask := uint64(0xFF)
+								for k := 1; k < sizeInBytes; k++ {
+									mask = (mask << 8) + 0xFF
+								}
+								var val uint64
+								var k int
+								for k = i; k < numFields; k++ {
+									elm := v.Field(k)
+									if elm.Kind() != f.Kind() {
+										placedOnStack = true
+										break loop
+									}
+									val |= (uint64(elm.Int()) & mask) << ((k - i) * (8 * sizeInBytes))
+								}
+								i = k - 1
+								addInt(uintptr(val))
+							case reflect.Int, reflect.Int64:
 								addInt(uintptr(f.Int()))
-							case reflect.Uint8:
-								val := f.Uint()
+							case reflect.Uint8, reflect.Uint16, reflect.Uint32:
+								sizeInBytes := int(f.Type().Size())
+								var val uint64
 								var k int
 								for k = i; k < numFields; k++ {
 									elm := v.Field(k)
-									// val = ((val << 8 * 1) & ^uint64(0xFF)) | elm.Uint()
-									val = (val & ^(uint64(0xFF) << ((k - i) * 8))) | elm.Uint()<<((k-i)*8)
-								}
-								// Reverse the bytes
-								// 0xdeadbeef becomes 0xefbeadde
-								/*switch k - i {
-								case 1:
-									// do nothing
-								case 2:
-									val = uint64(bits.ReverseBytes16(uint16(val)))
-								case 4:
-									val = uint64(bits.ReverseBytes32(uint32(val)))
-								case 8:
-									val = uint64(bits.ReverseBytes64(uint64(val)))
-								default:
-									panic("purego: can't reverse bits")
-								}*/
-								i = k - 1
-								addInt(uintptr(val))
-							case reflect.Uint16:
-								val := f.Uint()
-								var k int
-								for k = i; k < numFields; k++ {
-									elm := v.Field(k)
-									val = ((val << (8 * 2)) & ^uint64(0xFFFF)) | elm.Uint()
-									// val = (val & ^(uint64(0xFF) << ((k - i) * 8))) | elm.Uint()<<((k-i)*8)
-								}
-								fmt.Printf("%#x\n", val)
-								// Reverse the uint16s
-								// 0xdeadbeefcafebabe becomes 0xbabecafebeefdead
-								switch k - i {
-								case 1:
-									// do nothing
-								case 2:
-									val = uint64(uint16(val>>0))<<16 | uint64(uint16(val>>16))<<0
-								case 4:
-									val = uint64(uint16(val>>0))<<48 | uint64(uint16(val>>16))<<32 | uint64(uint16(val>>32))<<16 | uint64(uint16(val>>48))
-								default:
-									panic("purego: can't reverse bits")
+									if elm.Kind() != f.Kind() {
+										placedOnStack = true
+										break loop
+									}
+									// Reverse the uint8s  > 0xde_ad_be_ef becomes 0xef_be_ad_de
+									// Reverse the uint16s > 0xdead_beef becomes 0xbeef_dead
+									// Reverse the uint32s > 0xcafebabe_deadbeef becomes 0xdeadbeef_cafebabe
+									val |= elm.Uint() << ((k - i) * 8 * sizeInBytes)
 								}
 								i = k - 1
-								fmt.Printf("%#x\n", val)
 								addInt(uintptr(val))
-							case reflect.Uint, reflect.Uint32, reflect.Uint64:
+							case reflect.Uint, reflect.Uint64:
 								addInt(uintptr(f.Uint()))
 							case reflect.Float32:
 								if i+1 < numFields {
@@ -493,8 +479,34 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 										elm := f.Index(k)
 										addFloat(uintptr(math.Float32bits(float32(elm.Float()))))
 									}
+								case reflect.Uint8, reflect.Uint16, reflect.Uint32:
+									sizeInBytes := int(arrayFirstType.Size())
+									var val uint64
+									var k int
+									for k = i; k < arraySize; k++ {
+										elm := f.Index(k)
+										// Reverse the bytes
+										// 0xde_ad_be_ef becomes 0xef_be_ad_de
+										val |= elm.Uint() << ((k - i) * (8 * sizeInBytes))
+									}
+									i = k - 1
+									addInt(uintptr(val))
+								case reflect.Int8, reflect.Int16, reflect.Int32:
+									sizeInBytes := int(arrayFirstType.Size())
+									mask := uint64(0xFF)
+									for k := 1; k < sizeInBytes; k++ {
+										mask = (mask << 8) + 0xFF
+									}
+									var val uint64
+									var k int
+									for k = i; k < arraySize; k++ {
+										elm := f.Index(k)
+										val |= (uint64(elm.Int()) & mask) << ((k - i) * (8 * sizeInBytes))
+									}
+									i = k - 1
+									addInt(uintptr(val))
 								default:
-									panic("purego: unsupported kind " + f.Kind().String())
+									panic("purego: unsupported array kind " + arrayFirstType.Kind().String())
 								}
 							default:
 								panic("purego: unsupported kind " + f.Kind().String())

@@ -128,23 +128,6 @@ unsigned long Long(struct Long l) {
     return l.a;
 }
 
-struct Array4UnsignedChars {
-    unsigned char a[4];
-};
-
-unsigned int Array4UnsignedChars(struct Array4UnsignedChars a) {
-    return (((int)a.a[0])<<24) | (((int)a.a[1])<<16) | (((int)a.a[2])<<8) | (((int)a.a[3])<<0);
-}
-
-struct Array4Chars {
-    char a[4];
-};
-
-int Array4Chars(struct Array4Chars a) {
-    return (int)a.a[0] + (int)a.a[1] + (int)a.a[2] + (int)a.a[3];
-}
-
-
 struct Char8Bytes {
     signed char a, b, c, d, e, f, g, h;
 };
@@ -159,4 +142,21 @@ struct Odd {
 
 int Odd(struct Odd o) {
     return (int)o.a + (int)o.b + (int)o.c;
+}
+
+
+struct Array4UnsignedChars {
+    unsigned char a[4];
+};
+
+unsigned int Array4UnsignedChars(struct Array4UnsignedChars a) {
+    return (((int)a.a[0])<<24) | (((int)a.a[1])<<16) | (((int)a.a[2])<<8) | (((int)a.a[3])<<0);
+}
+
+struct Array4Chars {
+    char a[4];
+};
+
+int Array4Chars(struct Array4Chars a) {
+    return (int)a.a[0] + (int)a.a[1] + (int)a.a[2] + (int)a.a[3];
 }
