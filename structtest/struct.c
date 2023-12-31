@@ -144,6 +144,14 @@ int Odd(struct Odd o) {
     return (int)o.a + (int)o.b + (int)o.c;
 }
 
+struct Char2Short1 {
+    unsigned char a, b;
+    unsigned short c;
+};
+
+int Char2Short1s(struct Char2Short1 s) {
+    return (int)s.a + (int)s.b + (int)s.c;
+}
 
 struct Array4UnsignedChars {
     unsigned char a[4];

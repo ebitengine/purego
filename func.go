@@ -337,7 +337,16 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 								f := v.Field(k)
 								switch f.Type().Kind() {
 								case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-									addInt(uintptr(f.Uint()))
+									var shift uint64 = 0
+									var val uint64
+									j := k
+									for ; j < numFields; j++ {
+										f = v.Field(j)
+										val |= f.Uint() << shift
+										shift += uint64(f.Type().Size()) * 8
+									}
+									k = j - 1
+									addInt(uintptr(val))
 								case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 									addInt(uintptr(f.Int()))
 								case reflect.Float32:
@@ -575,7 +584,7 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 
 func isHFA(t reflect.Type) bool {
 	structSize := t.Size()
-	// round up struct size to nearest 8 see section B.5
+	// round up struct size to nearest 8 see section B.4
 	structSize += 7
 	structSize &^= 7
 	if structSize == 0 || t.NumField() > 4 {
@@ -605,7 +614,7 @@ func isHFA(t reflect.Type) bool {
 
 func isHVA(t reflect.Type) bool {
 	structSize := t.Size()
-	// round up struct size to nearest 8 see section B.5
+	// round up struct size to nearest 8 see section B.4
 	structSize += 7
 	structSize &^= 7
 	if structSize == 0 || (structSize != 8 && structSize != 16) {

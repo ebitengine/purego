@@ -208,6 +208,17 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 		}
 	}
 	{
+		type Char2Short1 struct {
+			a, b byte
+			c    uint16
+		}
+		var Char2Short1s func(Char2Short1) int32
+		purego.RegisterLibFunc(&Char2Short1s, lib, "Char2Short1s")
+		if ret := Char2Short1s(Char2Short1{a: 12, b: 23, c: 46}); ret != expectedOdd {
+			t.Fatalf("Char2Short1s returned %d wanted %d", ret, expectedOdd)
+		}
+	}
+	{
 		type Array4UnsignedChars struct {
 			a [4]uint8
 		}
