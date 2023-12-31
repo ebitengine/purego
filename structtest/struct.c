@@ -153,6 +153,15 @@ int Char2Short1s(struct Char2Short1 s) {
     return (int)s.a + (int)s.b + (int)s.c;
 }
 
+struct SignedChar2Short1 {
+    signed char a, b;
+    signed short c;
+};
+
+int SignedChar2Short1(struct SignedChar2Short1 s) {
+    return s.a + s.b + s.c;
+}
+
 struct Array4UnsignedChars {
     unsigned char a[4];
 };
