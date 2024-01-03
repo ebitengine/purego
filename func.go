@@ -581,11 +581,13 @@ func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFl
 	panic("purego: struct has field that can't be allocated")
 }
 
+func roundUpTo8(val uintptr) uintptr {
+	return (val + 7) &^ 7
+}
+
 func isHFA(t reflect.Type) bool {
-	structSize := t.Size()
 	// round up struct size to nearest 8 see section B.4
-	structSize += 7
-	structSize &^= 7
+	structSize := roundUpTo8(t.Size())
 	if structSize == 0 || t.NumField() > 4 {
 		return false
 	}
@@ -612,10 +614,8 @@ func isHFA(t reflect.Type) bool {
 }
 
 func isHVA(t reflect.Type) bool {
-	structSize := t.Size()
 	// round up struct size to nearest 8 see section B.4
-	structSize += 7
-	structSize &^= 7
+	structSize := roundUpTo8(t.Size())
 	if structSize == 0 || (structSize != 8 && structSize != 16) {
 		return false
 	}
