@@ -410,20 +410,22 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 								placedOnStack = true
 								break loop
 							case reflect.Int8, reflect.Int16, reflect.Int32:
-								sizeInBytes := int(f.Type().Size())
-								mask := uint64(0xFF)
-								for k := 1; k < sizeInBytes; k++ {
-									mask = (mask << 8) + 0xFF
-								}
 								var val uint64
 								var k int
+								shift := 0
 								for k = i; k < numFields; k++ {
 									elm := v.Field(k)
-									if elm.Kind() != f.Kind() {
+									sizeInBytes := int(elm.Type().Size())
+									mask := uint64(0xFF)
+									for j := 1; j < sizeInBytes; j++ {
+										mask = (mask << 8) + 0xFF
+									}
+									if kind := elm.Kind(); kind != reflect.Int8 && kind != reflect.Int16 && kind != reflect.Int32 {
 										placedOnStack = true
 										break loop
 									}
-									val |= (uint64(elm.Int()) & mask) << ((k - i) * (8 * sizeInBytes))
+									val |= (uint64(elm.Int()) & mask) << shift
+									shift += sizeInBytes * 8
 								}
 								i = k - 1
 								addInt(uintptr(val))
@@ -435,7 +437,7 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 								var k int
 								for k = i; k < numFields; k++ {
 									elm := v.Field(k)
-									if elm.Kind() != f.Kind() {
+									if kind := elm.Kind(); kind != reflect.Uint8 && kind != reflect.Uint16 && kind != reflect.Uint32 {
 										placedOnStack = true
 										break loop
 									}

@@ -207,28 +207,28 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 			t.Fatalf("OddFn returned %d wanted %d", ret, expectedOdd)
 		}
 	}
-	//{
-	//	type Char2Short1 struct {
-	//		a, b byte
-	//		c    uint16
-	//	}
-	//	var Char2Short1s func(Char2Short1) int32
-	//	purego.RegisterLibFunc(&Char2Short1s, lib, "Char2Short1s")
-	//	if ret := Char2Short1s(Char2Short1{a: 12, b: 23, c: 46}); ret != expectedOdd {
-	//		t.Fatalf("Char2Short1s returned %d wanted %d", ret, expectedOdd)
-	//	}
-	//}
-	//{
-	//	type SignedChar2Short1 struct {
-	//		a, b int8
-	//		c    int16
-	//	}
-	//	var SignedChar2Short1Fn func(SignedChar2Short1) int32
-	//	purego.RegisterLibFunc(&SignedChar2Short1Fn, lib, "SignedChar2Short1")
-	//	if ret := SignedChar2Short1Fn(SignedChar2Short1{a: 100, b: -23, c: -200}); ret != expectedSigned {
-	//		t.Fatalf("SignedChar2Short1Fn returned %d wanted %d", ret, expectedSigned)
-	//	}
-	//}
+	{
+		type Char2Short1 struct {
+			a, b byte
+			c    uint16
+		}
+		var Char2Short1s func(Char2Short1) int32
+		purego.RegisterLibFunc(&Char2Short1s, lib, "Char2Short1s")
+		if ret := Char2Short1s(Char2Short1{a: 12, b: 23, c: 46}); ret != expectedOdd {
+			t.Fatalf("Char2Short1s returned %d wanted %d", ret, expectedOdd)
+		}
+	}
+	{
+		type SignedChar2Short1 struct {
+			a, b int8
+			c    int16
+		}
+		var SignedChar2Short1Fn func(SignedChar2Short1) int32
+		purego.RegisterLibFunc(&SignedChar2Short1Fn, lib, "SignedChar2Short1")
+		if ret := SignedChar2Short1Fn(SignedChar2Short1{a: 100, b: -23, c: -200}); ret != expectedSigned {
+			t.Fatalf("SignedChar2Short1Fn returned %d wanted %d", ret, expectedSigned)
+		}
+	}
 	{
 		type Array4UnsignedChars struct {
 			a [4]uint8
