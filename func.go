@@ -235,12 +235,14 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 				addFloat(uintptr(math.Float64bits(v.Float())))
 			case reflect.Struct:
 				if runtime.GOARCH == "arm64" {
-					if isHFA(v.Type()) {
+					if hva, hfa := isHVA(v.Type()), isHFA(v.Type()); hva || hfa {
 						// if this doesn't fit entirely in registers then
 						// each element goes onto the stack
-						if numFloats+v.NumField() > 8 {
+						if hfa && numFloats+v.NumField() > 8 {
 							numFloats = numOfFloats
 						}
+
+						// short vectors
 						numFields := v.NumField()
 						first := v.Field(0)
 						switch first.Kind() {
@@ -256,27 +258,6 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 									panic("purego: unsupported kind " + f.Kind().String())
 								}
 							}
-						case reflect.Array:
-							arraySize := first.Len()
-							for k := 0; k < arraySize; k++ {
-								f := first.Index(k)
-								switch f.Type().Kind() {
-								case reflect.Float32:
-									addFloat(uintptr(math.Float32bits(float32(f.Float()))))
-								case reflect.Float64:
-									addFloat(uintptr(math.Float64bits(float64(f.Float()))))
-								default:
-									panic("purego: unsupported kind " + f.Kind().String())
-								}
-							}
-						default:
-							panic("purego: unsupported kind " + first.Kind().String())
-						}
-					} else if isHVA(v.Type()) {
-						// short vectors
-						numFields := v.NumField()
-						first := v.Field(0)
-						switch first.Kind() {
 						case reflect.Uint8, reflect.Uint16, reflect.Uint32:
 							var val uintptr
 							size := first.Type().Size()
@@ -336,6 +317,10 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 								case reflect.Int64:
 									addInt(uintptr(f.Int()))
 									shift = 0
+								case reflect.Float32:
+									addFloat(uintptr(math.Float32bits(float32(f.Float()))))
+								case reflect.Float64:
+									addFloat(uintptr(math.Float64bits(float64(f.Float()))))
 								default:
 									panic("purego: unsupported kind " + f.Kind().String())
 								}
@@ -403,8 +388,8 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 						ptr := ptrStruct.Elem().Addr().UnsafePointer()
 						keepAlive = append(keepAlive, ptr)
 						addInt(uintptr(ptr))
-						break // the struct was allocated so don't panic
 					}
+					break // the struct was allocated so don't panic
 				} else if runtime.GOARCH == "amd64" {
 					// https://www.uclibc.org/docs/psABI-x86_64.pdf
 					if v.Type().Size() == 0 {
