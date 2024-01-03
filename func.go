@@ -238,8 +238,10 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 					if hva, hfa := isHVA(v.Type()), isHFA(v.Type()); hva || hfa {
 						// if this doesn't fit entirely in registers then
 						// each element goes onto the stack
-						if hfa && numFloats+v.NumField() > 8 {
+						if hfa && numFloats+v.NumField() > numOfFloats {
 							numFloats = numOfFloats
+						} else if hva && numInts+v.NumField() > numOfIntegerRegisters() {
+							numInts = numOfIntegerRegisters()
 						}
 
 						// short vectors
