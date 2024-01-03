@@ -235,7 +235,7 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 				addFloat(uintptr(math.Float64bits(v.Float())))
 			case reflect.Struct:
 				if runtime.GOARCH == "arm64" {
-					if hva, hfa := isHVA(v.Type()), isHFA(v.Type()); hva || hfa {
+					if hva, hfa, size := isHVA(v.Type()), isHFA(v.Type()), v.Type().Size(); hva || hfa || size <= 16 {
 						// if this doesn't fit entirely in registers then
 						// each element goes onto the stack
 						if hfa && numFloats+v.NumField() > numOfFloats {
@@ -244,96 +244,6 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 							numInts = numOfIntegerRegisters()
 						}
 
-						// short vectors
-						numFields := v.NumField()
-						first := v.Field(0)
-						switch first.Kind() {
-						case reflect.Float32, reflect.Float64:
-							for k := 0; k < numFields; k++ {
-								f := v.Field(k)
-								switch f.Type().Kind() {
-								case reflect.Float32:
-									addFloat(uintptr(math.Float32bits(float32(f.Float()))))
-								case reflect.Float64:
-									addFloat(uintptr(math.Float64bits(float64(f.Float()))))
-								default:
-									panic("purego: unsupported kind " + f.Kind().String())
-								}
-							}
-						case reflect.Uint8, reflect.Uint16, reflect.Uint32:
-							var val uintptr
-							size := first.Type().Size()
-							for i := 0; i < numFields; i++ {
-								a := uintptr(v.Field(i).Uint())
-								val |= a << (i * int(size*8))
-							}
-							// field arguments are placed with the first one in the least significant bits
-							addInt(val)
-						case reflect.Int8, reflect.Int16, reflect.Int32:
-							mask := int64(0xFF)
-							for i := 1; i < int(first.Type().Size()); i++ {
-								mask = (mask << 8) + 0xFF
-							}
-							var val int64
-							size := first.Type().Size()
-							for i := 0; i < numFields; i++ {
-								a := v.Field(i).Int() & mask // mask necessary to clear sign extending
-								val |= a << (i * int(size*8))
-							}
-							// field arguments are placed with the first one in the least significant bits
-							addInt(uintptr(val))
-						case reflect.Array:
-							arraySize := first.Len()
-							var val uint64
-							var shift byte
-							flushed := false
-							for i := 0; i < arraySize; i++ {
-								f := first.Index(i)
-								if shift >= 64 {
-									shift = 0
-									flushed = true
-									addInt(uintptr(val))
-								}
-								switch f.Type().Kind() {
-								case reflect.Uint8:
-									val |= f.Uint() << shift
-									shift += 8
-								case reflect.Uint16:
-									val |= f.Uint() << shift
-									shift += 16
-								case reflect.Uint32:
-									val |= f.Uint() << shift
-									shift += 32
-								case reflect.Uint64:
-									addInt(uintptr(f.Uint()))
-									shift = 0
-								case reflect.Int8:
-									val |= uint64(f.Int()&0xFF) << shift
-									shift += 8
-								case reflect.Int16:
-									val |= uint64(f.Int()&0xFFFF) << shift
-									shift += 16
-								case reflect.Int32:
-									val |= uint64(f.Int()&0xFFFF_FFFF) << shift
-									shift += 32
-								case reflect.Int64:
-									addInt(uintptr(f.Int()))
-									shift = 0
-								case reflect.Float32:
-									addFloat(uintptr(math.Float32bits(float32(f.Float()))))
-								case reflect.Float64:
-									addFloat(uintptr(math.Float64bits(float64(f.Float()))))
-								default:
-									panic("purego: unsupported kind " + f.Kind().String())
-								}
-							}
-							if !flushed {
-								addInt(uintptr(val))
-							}
-						default:
-							panic("purego: unsupported kind " + first.Kind().String())
-						}
-					} else if size := v.Type().Size(); size <= 16 {
 						numFields := v.NumField()
 						var val uint64
 						var shift byte
@@ -374,6 +284,54 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 								addFloat(uintptr(math.Float32bits(float32(f.Float()))))
 							case reflect.Float64:
 								addFloat(uintptr(math.Float64bits(float64(f.Float()))))
+							case reflect.Array:
+								arraySize := f.Len()
+								var arrayVal uint64
+								var arrayShift byte
+								arrayFlushed := false
+								for i := 0; i < arraySize; i++ {
+									elm := f.Index(i)
+									if arrayShift >= 64 {
+										arrayShift = 0
+										arrayFlushed = true
+										addInt(uintptr(arrayVal))
+									}
+									switch elm.Type().Kind() {
+									case reflect.Uint8:
+										arrayVal |= elm.Uint() << arrayShift
+										arrayShift += 8
+									case reflect.Uint16:
+										arrayVal |= elm.Uint() << arrayShift
+										arrayShift += 16
+									case reflect.Uint32:
+										arrayVal |= elm.Uint() << arrayShift
+										arrayShift += 32
+									case reflect.Uint64:
+										addInt(uintptr(elm.Uint()))
+										arrayShift = 0
+									case reflect.Int8:
+										arrayVal |= uint64(elm.Int()&0xFF) << arrayShift
+										arrayShift += 8
+									case reflect.Int16:
+										arrayVal |= uint64(elm.Int()&0xFFFF) << arrayShift
+										arrayShift += 16
+									case reflect.Int32:
+										arrayVal |= uint64(elm.Int()&0xFFFF_FFFF) << arrayShift
+										arrayShift += 32
+									case reflect.Int64:
+										addInt(uintptr(elm.Int()))
+										arrayShift = 0
+									case reflect.Float32:
+										addFloat(uintptr(math.Float32bits(float32(elm.Float()))))
+									case reflect.Float64:
+										addFloat(uintptr(math.Float64bits(float64(elm.Float()))))
+									default:
+										panic("purego: unsupported kind " + elm.Kind().String())
+									}
+								}
+								if !arrayFlushed {
+									addInt(uintptr(arrayVal))
+								}
 							default:
 								panic("purego: unsupported kind " + f.Kind().String())
 							}
