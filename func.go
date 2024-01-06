@@ -433,6 +433,15 @@ func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFl
 		if v.Type().Size() == 0 {
 			return keepAlive
 		} else if v.Type().Size() > 0 {
+			// Class determines where the 8 byte value goes.
+			// Higher value classes win over lower value classes
+			const (
+				NO_CLASS = 0b0000
+				SSE      = 0b0001
+				X87      = 0b0011 // long double not used in Go
+				INTEGER  = 0b0111
+				MEMORY   = 0b1111
+			)
 			var (
 				placedOnStack  = v.Type().Size() > 8*8 // if greater than 64 bytes place on stack
 				savedNumFloats = *numFloats
@@ -440,73 +449,70 @@ func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFl
 				savedNumStack  = *numStack
 			)
 			numFields := v.Type().NumField()
+			var val uint64
+			var shift byte // # of bits to shift
+			flushed := false
+			class := NO_CLASS
 		loop:
 			for i := 0; i < numFields; i++ {
 				f := v.Field(i)
+				if shift+byte(f.Type().Size())*8 > 64 {
+					shift = 0
+					flushed = true
+					if class == SSE {
+						addFloat(uintptr(val))
+					} else {
+						addInt(uintptr(val))
+					}
+					class = NO_CLASS
+				}
 				switch f.Kind() {
 				case reflect.Pointer:
 					placedOnStack = true
 					break loop
-				case reflect.Int8, reflect.Int16, reflect.Int32:
-					var val uint64
-					var k int
-					shift := 0
-					for k = i; k < numFields; k++ {
-						elm := v.Field(k)
-						sizeInBytes := int(elm.Type().Size())
-						mask := uint64(0xFF)
-						for j := 1; j < sizeInBytes; j++ {
-							mask = (mask << 8) + 0xFF
-						}
-						if kind := elm.Kind(); kind != reflect.Int8 && kind != reflect.Int16 && kind != reflect.Int32 {
-							placedOnStack = true
-							break loop
-						}
-						val |= (uint64(elm.Int()) & mask) << shift
-						shift += sizeInBytes * 8
-					}
-					i = k - 1
-					addInt(uintptr(val))
+				case reflect.Int8:
+					val |= uint64(f.Int()&0xFF) << shift
+					shift += 8
+					class |= INTEGER
+				case reflect.Int16:
+					val |= uint64(f.Int()&0xFFFF) << shift
+					shift += 16
+					class |= INTEGER
+				case reflect.Int32:
+					val |= uint64(f.Int()&0xFFFF_FFFF) << shift
+					shift += 32
+					class |= INTEGER
 				case reflect.Int, reflect.Int64:
 					addInt(uintptr(f.Int()))
-				case reflect.Uint8, reflect.Uint16, reflect.Uint32:
-					sizeInBytes := int(f.Type().Size())
-					var val uint64
-					var k int
-					for k = i; k < numFields; k++ {
-						elm := v.Field(k)
-						if kind := elm.Kind(); kind != reflect.Uint8 && kind != reflect.Uint16 && kind != reflect.Uint32 {
-							placedOnStack = true
-							break loop
-						}
-						// Reverse the uint8s  > 0xde_ad_be_ef becomes 0xef_be_ad_de
-						// Reverse the uint16s > 0xdead_beef becomes 0xbeef_dead
-						// Reverse the uint32s > 0xcafebabe_deadbeef becomes 0xdeadbeef_cafebabe
-						val |= elm.Uint() << ((k - i) * 8 * sizeInBytes)
-					}
-					i = k - 1
-					addInt(uintptr(val))
+					shift = 0
+					class = NO_CLASS
+				case reflect.Uint8:
+					val |= f.Uint() << shift
+					shift += 8
+					class |= INTEGER
+				case reflect.Uint16:
+					val |= f.Uint() << shift
+					shift += 16
+					class |= INTEGER
+				case reflect.Uint32:
+					val |= f.Uint() << shift
+					shift += 32
+					class |= INTEGER
 				case reflect.Uint, reflect.Uint64:
 					addInt(uintptr(f.Uint()))
+					shift = 0
+					class = NO_CLASS
 				case reflect.Float32:
-					if i+1 < numFields {
-						if v.Field(i+1).Kind() != reflect.Float32 {
-							// TODO: is this correct?
-							placedOnStack = true
-							break loop
-						} else {
-							addFloat(uintptr(math.Float32bits(float32(v.Field(i+1).Float())))<<32 | uintptr(math.Float32bits(float32(f.Float()))))
-							i++
-						}
-					} else {
-						addFloat(uintptr(math.Float32bits(float32(f.Float()))))
-					}
+					val |= uint64(math.Float32bits(float32(f.Float()))) << shift
+					shift += 32
+					class |= SSE
 				case reflect.Float64:
 					if v.Type().Size() > 16 {
 						placedOnStack = true
 						break loop
 					}
 					addFloat(uintptr(math.Float64bits(f.Float())))
+					class = NO_CLASS
 				case reflect.Array:
 					arraySize := f.Len()
 					arrayFirstType := f.Index(0).Type()
@@ -552,6 +558,13 @@ func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFl
 					}
 				default:
 					panic("purego: unsupported kind " + f.Kind().String())
+				}
+			}
+			if !flushed {
+				if class == SSE {
+					addFloat(uintptr(val))
+				} else {
+					addInt(uintptr(val))
 				}
 			}
 			if placedOnStack {

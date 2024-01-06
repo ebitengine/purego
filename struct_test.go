@@ -92,17 +92,17 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 			t.Fatalf("FloatLessThan16Bytes returned %f wanted %f", ret, expectedFloat)
 		}
 	}
-	//{
-	//	type FloatAndInt struct {
-	//		x float32
-	//		y int32
-	//	}
-	//	var FloatAndIntFn func(FloatAndInt) float32
-	//	purego.RegisterLibFunc(&FloatAndIntFn, lib, "FloatAndInt")
-	//	if ret := FloatAndIntFn(FloatAndInt{3, 7}); ret != expectedFloat {
-	//		t.Fatalf("FloatAndIntFn returned %f wanted %f", ret, expectedFloat)
-	//	}
-	//	}
+	{
+		type FloatAndInt struct {
+			x float32
+			y int32
+		}
+		var FloatAndIntFn func(FloatAndInt) float32
+		purego.RegisterLibFunc(&FloatAndIntFn, lib, "FloatAndInt")
+		if ret := FloatAndIntFn(FloatAndInt{3, 7}); ret != expectedFloat {
+			t.Fatalf("FloatAndIntFn returned %f wanted %f", ret, expectedFloat)
+		}
+	}
 	{
 		type DoubleStruct struct {
 			x float64
