@@ -45,6 +45,19 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 		}
 	}
 	{
+		type EmptyEmpty struct{}
+		var EmptyEmptyFn func(EmptyEmpty) int64
+		purego.RegisterLibFunc(&EmptyEmptyFn, lib, "EmptyEmpty")
+		if ret := EmptyEmptyFn(EmptyEmpty{}); ret != expectedUnsigned {
+			t.Fatalf("EmptyEmpty returned %#x wanted %#x", ret, expectedUnsigned)
+		}
+		var EmptyEmptyWithReg func(uint32, EmptyEmpty, uint32) int64
+		purego.RegisterLibFunc(&EmptyEmptyWithReg, lib, "EmptyEmptyWithReg")
+		if ret := EmptyEmptyWithReg(0xdead, EmptyEmpty{}, 0xbeef); ret != expectedUnsigned {
+			t.Fatalf("EmptyEmptyWithReg returned %#x wanted %#x", ret, expectedUnsigned)
+		}
+	}
+	{
 		type GreaterThan16Bytes struct {
 			x, y, z *int64
 		}

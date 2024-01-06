@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023 The Ebitengine Authors
 
-// TODO: Empty with Empty inside
-// TODO: Empty in the middle of integers
 // TODO: Struct inside of Struct
 
 // Empty is empty
@@ -11,6 +9,18 @@ struct Empty {};
 //NoStruct tests that an empty struct doesn't cause issues
 unsigned long NoStruct(struct Empty e) {
     return 0xdeadbeef;
+}
+
+struct EmptyEmpty {
+    struct Empty x;
+};
+
+unsigned long EmptyEmpty(struct EmptyEmpty e) {
+    return 0xdeadbeef;
+}
+
+unsigned long EmptyEmptyWithReg(unsigned int x, struct EmptyEmpty e, unsigned int y) {
+    return (x << 16) | y;
 }
 
 // GreaterThan16Bytes is 24 bytes on 64 bit systems
