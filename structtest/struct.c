@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023 The Ebitengine Authors
 
-// TODO: Struct inside of Struct
-
 // Empty is empty
 struct Empty {};
 
@@ -50,6 +48,16 @@ unsigned long BeforeRegisters(struct GreaterThan16Bytes bytes, long a, long b) {
     return *bytes.x + *bytes.y + *bytes.z + a + b;
 }
 
+struct GreaterThan16BytesStruct {
+    struct {
+        long  *x, *y, *z;
+    } a ;
+};
+
+unsigned long GreaterThan16BytesStruct(struct GreaterThan16BytesStruct g) {
+    return *(g.a.x) + *(g.a.y) + *(g.a.z);
+}
+
 struct IntLessThan16Bytes {
     long x, y;
 };
@@ -89,6 +97,16 @@ struct TwoDoubleStruct {
 
 double TwoDoubleStruct(struct TwoDoubleStruct d) {
     return d.x + d.y;
+}
+
+struct TwoDoubleTwoStruct {
+    struct {
+        double x, y;
+    } s;
+};
+
+double TwoDoubleTwoStruct(struct TwoDoubleTwoStruct d) {
+    return d.s.x + d.s.y;
 }
 
 struct ThreeDoubleStruct {
@@ -141,6 +159,25 @@ struct UnsignedChar4Bytes {
 
 unsigned int UnsignedChar4Bytes(struct UnsignedChar4Bytes b) {
     return (((int)b.a)<<24) | (((int)b.b)<<16) | (((int)b.c)<<8) | (((int)b.d)<<0);
+}
+
+struct UnsignedChar4BytesStruct {
+    struct {
+        unsigned char a;
+    } x;
+    struct {
+        unsigned char b;
+    } y;
+    struct {
+        unsigned char c;
+    } z;
+    struct {
+        unsigned char d;
+    } w;
+};
+
+unsigned int UnsignedChar4BytesStruct(struct UnsignedChar4BytesStruct b) {
+    return (((int)b.x.a)<<24) | (((int)b.y.b)<<16) | (((int)b.z.c)<<8) | (((int)b.w.d)<<0);
 }
 
 struct Short {

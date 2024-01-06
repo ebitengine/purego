@@ -69,6 +69,19 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 		}
 	}
 	{
+		type GreaterThan16BytesStruct struct {
+			a struct {
+				x, y, z *int64
+			}
+		}
+		var x, y, z int64 = 0xEF, 0xBE00, 0xDEAD0000
+		var GreaterThan16BytesStructFn func(GreaterThan16BytesStruct) int64
+		purego.RegisterLibFunc(&GreaterThan16BytesStructFn, lib, "GreaterThan16BytesStruct")
+		if ret := GreaterThan16BytesStructFn(GreaterThan16BytesStruct{a: struct{ x, y, z *int64 }{x: &x, y: &y, z: &z}}); ret != expectedUnsigned {
+			t.Fatalf("GreaterThan16BytesStructFn returned %#x wanted %#x", ret, expectedUnsigned)
+		}
+	}
+	{
 		type GreaterThan16Bytes struct {
 			x, y, z *int64
 		}
@@ -137,6 +150,18 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 		}
 	}
 	{
+		type TwoDoubleTwoStruct struct {
+			x struct {
+				x, y float64
+			}
+		}
+		var TwoDoubleTwoStructFn func(TwoDoubleTwoStruct) float64
+		purego.RegisterLibFunc(&TwoDoubleTwoStructFn, lib, "TwoDoubleTwoStruct")
+		if ret := TwoDoubleTwoStructFn(TwoDoubleTwoStruct{x: struct{ x, y float64 }{x: 3, y: 7}}); ret != expectedDouble {
+			t.Fatalf("TwoDoubleTwoStruct returned %f wanted %f", ret, expectedDouble)
+		}
+	}
+	{
 		type ThreeDoubleStruct struct {
 			x, y, z float64
 		}
@@ -199,6 +224,32 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 		purego.RegisterLibFunc(&UnsignedChar4BytesFn, lib, "UnsignedChar4Bytes")
 		if ret := UnsignedChar4BytesFn(UnsignedChar4Bytes{a: 0xDE, b: 0xAD, c: 0xBE, d: 0xEF}); ret != expectedUnsigned {
 			t.Fatalf("UnsignedChar4BytesFn returned %#x wanted %#x", ret, expectedUnsigned)
+		}
+	}
+	{
+		type UnsignedChar4BytesStruct struct {
+			x struct {
+				a byte
+			}
+			y struct {
+				b byte
+			}
+			z struct {
+				c byte
+			}
+			w struct {
+				d byte
+			}
+		}
+		var UnsignedChar4BytesStructFn func(UnsignedChar4BytesStruct) uint32
+		purego.RegisterLibFunc(&UnsignedChar4BytesStructFn, lib, "UnsignedChar4BytesStruct")
+		if ret := UnsignedChar4BytesStructFn(UnsignedChar4BytesStruct{
+			x: struct{ a byte }{a: 0xDE},
+			y: struct{ b byte }{b: 0xAD},
+			z: struct{ c byte }{c: 0xBE},
+			w: struct{ d byte }{d: 0xEF},
+		}); ret != expectedUnsigned {
+			t.Fatalf("UnsignedChar4BytesStructFn returned %#x wanted %#x", ret, expectedUnsigned)
 		}
 	}
 	{
