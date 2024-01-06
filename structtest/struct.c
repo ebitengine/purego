@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023 The Ebitengine Authors
 
+// TODO: Empty with Empty inside
+// TODO: Empty in the middle of integers
+// TODO: Struct inside of Struct
+
 // Empty is empty
 struct Empty {};
 
@@ -52,12 +56,37 @@ float FloatLessThan16Bytes(struct FloatLessThan16Bytes f) {
     return f.x + f.y;
 }
 
+struct FloatAndInt {
+    float x;
+    int   y;
+};
+
+float FloatAndInt(struct FloatAndInt f) {
+    return f.x + f.y;
+}
+
 struct DoubleStruct {
     double x;
 };
 
 double DoubleStruct(struct DoubleStruct d) {
     return d.x;
+}
+
+struct TwoDoubleStruct {
+    double x, y;
+};
+
+double TwoDoubleStruct(struct TwoDoubleStruct d) {
+    return d.x + d.y;
+}
+
+struct ThreeDoubleStruct {
+    double x, y, z;
+};
+
+double ThreeDoubleStruct(struct ThreeDoubleStruct d) {
+    return d.x + d.y + d.z;
 }
 
 struct LargeFloatStruct {

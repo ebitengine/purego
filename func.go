@@ -313,6 +313,7 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 
 func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFloat, addStack func(uintptr), keepAlive []interface{}) []interface{} {
 	if runtime.GOARCH == "arm64" {
+		// https://student.cs.uwaterloo.ca/~cs452/docs/rpi4b/aapcs64.pdf
 		if hva, hfa, size := isHVA(v.Type()), isHFA(v.Type()), v.Type().Size(); hva || hfa || size <= 16 {
 			// if this doesn't fit entirely in registers then
 			// each element goes onto the stack
@@ -433,7 +434,7 @@ func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFl
 			return keepAlive
 		} else if v.Type().Size() > 0 {
 			var (
-				placedOnStack  = v.Type().Size() > 8*8 // if greater than 8 8 bytes place on stack
+				placedOnStack  = v.Type().Size() > 8*8 // if greater than 64 bytes place on stack
 				savedNumFloats = *numFloats
 				savedNumInts   = *numInts
 				savedNumStack  = *numStack
@@ -501,7 +502,7 @@ func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFl
 						addFloat(uintptr(math.Float32bits(float32(f.Float()))))
 					}
 				case reflect.Float64:
-					if v.Type().Size() > 8 {
+					if v.Type().Size() > 16 {
 						placedOnStack = true
 						break loop
 					}

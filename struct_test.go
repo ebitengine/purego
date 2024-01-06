@@ -92,6 +92,17 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 			t.Fatalf("FloatLessThan16Bytes returned %f wanted %f", ret, expectedFloat)
 		}
 	}
+	//{
+	//	type FloatAndInt struct {
+	//		x float32
+	//		y int32
+	//	}
+	//	var FloatAndIntFn func(FloatAndInt) float32
+	//	purego.RegisterLibFunc(&FloatAndIntFn, lib, "FloatAndInt")
+	//	if ret := FloatAndIntFn(FloatAndInt{3, 7}); ret != expectedFloat {
+	//		t.Fatalf("FloatAndIntFn returned %f wanted %f", ret, expectedFloat)
+	//	}
+	//	}
 	{
 		type DoubleStruct struct {
 			x float64
@@ -99,7 +110,27 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 		var DoubleStructFn func(DoubleStruct) float64
 		purego.RegisterLibFunc(&DoubleStructFn, lib, "DoubleStruct")
 		if ret := DoubleStructFn(DoubleStruct{10}); ret != expectedDouble {
-			t.Fatalf("DoubleStruct returned %f wanted %f", ret, expectedFloat)
+			t.Fatalf("DoubleStruct returned %f wanted %f", ret, expectedDouble)
+		}
+	}
+	{
+		type TwoDoubleStruct struct {
+			x, y float64
+		}
+		var TwoDoubleStructFn func(TwoDoubleStruct) float64
+		purego.RegisterLibFunc(&TwoDoubleStructFn, lib, "TwoDoubleStruct")
+		if ret := TwoDoubleStructFn(TwoDoubleStruct{3, 7}); ret != expectedDouble {
+			t.Fatalf("TwoDoubleStruct returned %f wanted %f", ret, expectedDouble)
+		}
+	}
+	{
+		type ThreeDoubleStruct struct {
+			x, y, z float64
+		}
+		var ThreeDoubleStructFn func(ThreeDoubleStruct) float64
+		purego.RegisterLibFunc(&ThreeDoubleStructFn, lib, "ThreeDoubleStruct")
+		if ret := ThreeDoubleStructFn(ThreeDoubleStruct{1, 3, 6}); ret != expectedDouble {
+			t.Fatalf("ThreeDoubleStructFn returned %f wanted %f", ret, expectedDouble)
 		}
 	}
 	{
