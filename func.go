@@ -314,6 +314,11 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFloat, addStack func(uintptr), keepAlive []interface{}) []interface{} {
 	if runtime.GOARCH == "arm64" {
 		// https://student.cs.uwaterloo.ca/~cs452/docs/rpi4b/aapcs64.pdf
+		const (
+			NO_CLASS = 0b00
+			FLOAT    = 0b01
+			INT      = 0b11
+		)
 		if hva, hfa, size := isHVA(v.Type()), isHFA(v.Type()), v.Type().Size(); hva || hfa || size <= 16 {
 			// if this doesn't fit entirely in registers then
 			// each element goes onto the stack
@@ -327,42 +332,61 @@ func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFl
 			var val uint64
 			var shift byte
 			flushed := false
+			class := NO_CLASS
 			for k := 0; k < numFields; k++ {
 				f := v.Field(k)
 				if shift >= 64 {
 					shift = 0
 					flushed = true
-					addInt(uintptr(val))
+					if class == FLOAT {
+						addFloat(uintptr(val))
+					} else {
+						addInt(uintptr(val))
+					}
 				}
 				switch f.Type().Kind() {
 				case reflect.Uint8:
 					val |= f.Uint() << shift
 					shift += 8
+					class |= INT
 				case reflect.Uint16:
 					val |= f.Uint() << shift
 					shift += 16
+					class |= INT
 				case reflect.Uint32:
 					val |= f.Uint() << shift
 					shift += 32
+					class |= INT
 				case reflect.Uint64:
 					addInt(uintptr(f.Uint()))
 					shift = 0
 				case reflect.Int8:
 					val |= uint64(f.Int()&0xFF) << shift
 					shift += 8
+					class |= INT
 				case reflect.Int16:
 					val |= uint64(f.Int()&0xFFFF) << shift
 					shift += 16
+					class |= INT
 				case reflect.Int32:
 					val |= uint64(f.Int()&0xFFFF_FFFF) << shift
 					shift += 32
+					class |= INT
 				case reflect.Int64:
 					addInt(uintptr(f.Int()))
 					shift = 0
 				case reflect.Float32:
-					addFloat(uintptr(math.Float32bits(float32(f.Float()))))
+					if class == FLOAT {
+						addFloat(uintptr(val))
+						val = 0
+						shift = 0
+					}
+					val |= uint64(math.Float32bits(float32(f.Float()))) << shift
+					shift += 32
+					class |= FLOAT
 				case reflect.Float64:
 					addFloat(uintptr(math.Float64bits(float64(f.Float()))))
+					shift = 0
 				case reflect.Array:
 					arraySize := f.Len()
 					var arrayVal uint64
@@ -416,7 +440,11 @@ func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFl
 				}
 			}
 			if !flushed {
-				addInt(uintptr(val))
+				if class == FLOAT {
+					addFloat(uintptr(val))
+				} else {
+					addInt(uintptr(val))
+				}
 			}
 		} else {
 			// Struct is too big to be placed in registers.
