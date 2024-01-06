@@ -285,3 +285,22 @@ struct Array3Short {
 int Array3Shorts(struct Array3Short a) {
     return (int)a.a[0] + (int)a.a[1] + (int)a.a[2];
 }
+
+struct BoolStruct {
+    _Bool b;
+};
+
+_Bool BoolStruct(struct BoolStruct b) {
+    return b.b;
+}
+
+struct BoolFloat {
+    _Bool b;
+    float f;
+};
+
+float BoolFloat(struct BoolFloat s) {
+    if (s.b)
+        return s.f;
+    return -s.f;
+}

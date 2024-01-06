@@ -81,6 +81,12 @@ func RegisterLibFunc(fptr interface{}, handle uintptr, name string) {
 // using unsafe.Slice. Doing this means that it becomes the responsibility of the caller to care about the lifetime
 // of the pointer
 //
+// # Structs
+//
+// Purego can handle the most common structs that have fields of builtin types like int8, uint16, float32, etc. However,
+// it does not _currently_ support aligning fields properly. It is therefore the responsibility of the caller to ensure
+// that all padding is added to the Go struct to match the C one. See `BoolStructFn` in struct_test.go for an example.
+//
 // # Example
 //
 // All functions below call this C function:
@@ -352,6 +358,12 @@ func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFl
 					switch f.Type().Kind() {
 					case reflect.Struct:
 						place(f)
+					case reflect.Bool:
+						if f.Bool() {
+							val |= 1
+						}
+						shift += 8
+						class |= INT
 					case reflect.Uint8:
 						val |= f.Uint() << shift
 						shift += 8
@@ -396,41 +408,38 @@ func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFl
 						shift = 0
 					case reflect.Array:
 						arraySize := f.Len()
-						var arrayVal uint64
-						var arrayShift byte
-						arrayFlushed := false
 						for i := 0; i < arraySize; i++ {
 							elm := f.Index(i)
-							if arrayShift >= 64 {
-								arrayShift = 0
-								arrayFlushed = true
-								addInt(uintptr(arrayVal))
+							if shift >= 64 {
+								shift = 0
+								flushed = true
+								addInt(uintptr(val))
 							}
 							switch elm.Type().Kind() {
 							case reflect.Uint8:
-								arrayVal |= elm.Uint() << arrayShift
-								arrayShift += 8
+								val |= elm.Uint() << shift
+								shift += 8
 							case reflect.Uint16:
-								arrayVal |= elm.Uint() << arrayShift
-								arrayShift += 16
+								val |= elm.Uint() << shift
+								shift += 16
 							case reflect.Uint32:
-								arrayVal |= elm.Uint() << arrayShift
-								arrayShift += 32
+								val |= elm.Uint() << shift
+								shift += 32
 							case reflect.Uint64:
 								addInt(uintptr(elm.Uint()))
-								arrayShift = 0
+								shift = 0
 							case reflect.Int8:
-								arrayVal |= uint64(elm.Int()&0xFF) << arrayShift
-								arrayShift += 8
+								val |= uint64(elm.Int()&0xFF) << shift
+								shift += 8
 							case reflect.Int16:
-								arrayVal |= uint64(elm.Int()&0xFFFF) << arrayShift
-								arrayShift += 16
+								val |= uint64(elm.Int()&0xFFFF) << shift
+								shift += 16
 							case reflect.Int32:
-								arrayVal |= uint64(elm.Int()&0xFFFF_FFFF) << arrayShift
-								arrayShift += 32
+								val |= uint64(elm.Int()&0xFFFF_FFFF) << shift
+								shift += 32
 							case reflect.Int64:
 								addInt(uintptr(elm.Int()))
-								arrayShift = 0
+								shift = 0
 							case reflect.Float32:
 								addFloat(uintptr(math.Float32bits(float32(elm.Float()))))
 							case reflect.Float64:
@@ -438,9 +447,6 @@ func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFl
 							default:
 								panic("purego: unsupported kind " + elm.Kind().String())
 							}
-						}
-						if !arrayFlushed {
-							addInt(uintptr(arrayVal))
 						}
 					default:
 						panic("purego: unsupported kind " + f.Kind().String())
@@ -506,6 +512,12 @@ func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFl
 				switch f.Kind() {
 				case reflect.Struct:
 					place(f)
+				case reflect.Bool:
+					if f.Bool() {
+						val |= 1
+					}
+					shift += 8
+					class |= INTEGER
 				case reflect.Pointer:
 					placedOnStack = true
 					break loop
