@@ -568,30 +568,30 @@ func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFl
 						}
 					case reflect.Uint8, reflect.Uint16, reflect.Uint32:
 						sizeInBytes := int(arrayFirstType.Size())
-						var val uint64
+						var arrayVal uint64
 						var k int
 						for k = i; k < arraySize; k++ {
 							elm := f.Index(k)
 							// Reverse the bytes
 							// 0xde_ad_be_ef becomes 0xef_be_ad_de
-							val |= elm.Uint() << ((k - i) * (8 * sizeInBytes))
+							arrayVal |= elm.Uint() << ((k - i) * (8 * sizeInBytes))
 						}
 						i = k - 1
-						addInt(uintptr(val))
+						addInt(uintptr(arrayVal))
 					case reflect.Int8, reflect.Int16, reflect.Int32:
 						sizeInBytes := int(arrayFirstType.Size())
 						mask := uint64(0xFF)
 						for k := 1; k < sizeInBytes; k++ {
 							mask = (mask << 8) + 0xFF
 						}
-						var val uint64
+						var arrayVal uint64
 						var k int
 						for k = i; k < arraySize; k++ {
 							elm := f.Index(k)
-							val |= (uint64(elm.Int()) & mask) << ((k - i) * (8 * sizeInBytes))
+							arrayVal |= (uint64(elm.Int()) & mask) << ((k - i) * (8 * sizeInBytes))
 						}
 						i = k - 1
-						addInt(uintptr(val))
+						addInt(uintptr(arrayVal))
 					default:
 						panic("purego: unsupported array kind " + arrayFirstType.Kind().String())
 					}
