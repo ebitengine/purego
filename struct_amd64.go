@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2024 The Ebitengine Authors
+
 package purego
 
 import (
@@ -9,7 +12,7 @@ func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFl
 	if v.Type().Size() == 0 {
 		return keepAlive
 	}
-	// https://www.uclibc.org/docs/psABI-x86_64.pdf
+	// https://gitlab.com/x86-psABIs/x86-64-ABI
 	// Class determines where the 8 byte value goes.
 	// Higher value classes win over lower value classes
 	const (

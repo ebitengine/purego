@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-FileCopyrightText: 2023 The Ebitengine Authors
+// SPDX-FileCopyrightText: 2024 The Ebitengine Authors
 
 //go:build darwin && (arm64 || amd64)
 

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2024 The Ebitengine Authors
+
 package purego
 
 import (
@@ -9,7 +12,7 @@ func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFl
 	if v.Type().Size() == 0 {
 		return keepAlive
 	}
-	// https://student.cs.uwaterloo.ca/~cs452/docs/rpi4b/aapcs64.pdf
+	// https://github.com/ARM-software/abi-aa/blob/main/sysvabi64/sysvabi64.rst
 	const (
 		NO_CLASS = 0b00
 		FLOAT    = 0b01
@@ -130,9 +133,11 @@ func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFl
 	return keepAlive // the struct was allocated so don't panic
 }
 
-// isHVA reports a Homogeneous Floating-point Aggregate (HFA) which is a Fundamental Data Type that is a
-// Floating-Point type and at most four uniquely addressable members (5.9.5.1).
+// isHFA reports a Homogeneous Floating-point Aggregate (HFA) which is a Fundamental Data Type that is a
+// Floating-Point type and at most four uniquely addressable members (5.9.5.1 in [Arm64 Calling Convention]).
 // This type of struct will be placed more compactly than the individual fields.
+//
+// [Arm64 Calling Convention]: https://github.com/ARM-software/abi-aa/blob/main/sysvabi64/sysvabi64.rst
 func isHFA(t reflect.Type) bool {
 	// round up struct size to nearest 8 see section B.4
 	structSize := roundUpTo8(t.Size())
@@ -162,10 +167,12 @@ func isHFA(t reflect.Type) bool {
 }
 
 // isHVA reports a Homogeneous Aggregate with a Fundamental Data Type that is a Short-Vector type
-// and at most four uniquely addressable members (5.9.5.2).
+// and at most four uniquely addressable members (5.9.5.2 in [Arm64 Calling Convention]).
 // A short vector is a machine type that is composed of repeated instances of one fundamental integral or
-// floating-point type. It may be 8 or 16 bytes in total size (5.4).
+// floating-point type. It may be 8 or 16 bytes in total size (5.4 in [Arm64 Calling Convention]).
 // This type of struct will be placed more compactly than the individual fields.
+//
+// [Arm64 Calling Convention]: https://github.com/ARM-software/abi-aa/blob/main/sysvabi64/sysvabi64.rst
 func isHVA(t reflect.Type) bool {
 	// round up struct size to nearest 8 see section B.4
 	structSize := roundUpTo8(t.Size())
