@@ -598,7 +598,7 @@ func roundUpTo8(val uintptr) uintptr {
 	return (val + 7) &^ 7
 }
 
-// an HFA is a Homogeneous Floating-point Aggregate (HFA) which is a Fundamental Data Type that is a
+// isHVA reports a Homogeneous Floating-point Aggregate (HFA) which is a Fundamental Data Type that is a
 // Floating-Point type and at most four uniquely addressable members (5.9.5.1).
 // This type of struct will be placed more compactly than the individual fields.
 func isHFA(t reflect.Type) bool {
@@ -629,7 +629,7 @@ func isHFA(t reflect.Type) bool {
 	}
 }
 
-// a HVA is a Homogeneous Aggregate with a Fundamental Data Type that is a Short-Vector type
+// isHVA reports a Homogeneous Aggregate with a Fundamental Data Type that is a Short-Vector type
 // and at most four uniquely addressable members (5.9.5.2).
 // A short vector is a machine type that is composed of repeated instances of one fundamental integral or
 // floating-point type. It may be 8 or 16 bytes in total size (5.4).
