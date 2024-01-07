@@ -343,9 +343,19 @@ func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFl
 			class := NO_CLASS
 			var place func(v reflect.Value)
 			place = func(v reflect.Value) {
-				numFields := v.NumField()
+				var numFields int
+				if v.Kind() == reflect.Struct {
+					numFields = v.Type().NumField()
+				} else {
+					numFields = v.Type().Len()
+				}
 				for k := 0; k < numFields; k++ {
-					f := v.Field(k)
+					var f reflect.Value
+					if v.Kind() == reflect.Struct {
+						f = v.Field(k)
+					} else {
+						f = v.Index(k)
+					}
 					if shift >= 64 {
 						shift = 0
 						flushed = true
@@ -407,47 +417,7 @@ func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFl
 						addFloat(uintptr(math.Float64bits(float64(f.Float()))))
 						shift = 0
 					case reflect.Array:
-						arraySize := f.Len()
-						for i := 0; i < arraySize; i++ {
-							elm := f.Index(i)
-							if shift >= 64 {
-								shift = 0
-								flushed = true
-								addInt(uintptr(val))
-							}
-							switch elm.Type().Kind() {
-							case reflect.Uint8:
-								val |= elm.Uint() << shift
-								shift += 8
-							case reflect.Uint16:
-								val |= elm.Uint() << shift
-								shift += 16
-							case reflect.Uint32:
-								val |= elm.Uint() << shift
-								shift += 32
-							case reflect.Uint64:
-								addInt(uintptr(elm.Uint()))
-								shift = 0
-							case reflect.Int8:
-								val |= uint64(elm.Int()&0xFF) << shift
-								shift += 8
-							case reflect.Int16:
-								val |= uint64(elm.Int()&0xFFFF) << shift
-								shift += 16
-							case reflect.Int32:
-								val |= uint64(elm.Int()&0xFFFF_FFFF) << shift
-								shift += 32
-							case reflect.Int64:
-								addInt(uintptr(elm.Int()))
-								shift = 0
-							case reflect.Float32:
-								addFloat(uintptr(math.Float32bits(float32(elm.Float()))))
-							case reflect.Float64:
-								addFloat(uintptr(math.Float64bits(float64(elm.Float()))))
-							default:
-								panic("purego: unsupported kind " + elm.Kind().String())
-							}
-						}
+						place(f)
 					default:
 						panic("purego: unsupported kind " + f.Kind().String())
 					}
@@ -495,10 +465,21 @@ func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFl
 		class := NO_CLASS
 		var place func(v reflect.Value)
 		place = func(v reflect.Value) {
-			numFields := v.Type().NumField()
+			var numFields int
+			if v.Kind() == reflect.Struct {
+				numFields = v.Type().NumField()
+			} else {
+				numFields = v.Type().Len()
+			}
+
 		loop:
 			for i := 0; i < numFields; i++ {
-				f := v.Field(i)
+				var f reflect.Value
+				if v.Kind() == reflect.Struct {
+					f = v.Field(i)
+				} else {
+					f = v.Index(i)
+				}
 				if shift >= 64 {
 					shift = 0
 					flushed = true
@@ -565,47 +546,7 @@ func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFl
 					addFloat(uintptr(math.Float64bits(f.Float())))
 					class = NO_CLASS
 				case reflect.Array:
-					arraySize := f.Len()
-					for k := 0; k < arraySize; k++ {
-						elm := f.Index(k)
-						if shift >= 64 {
-							shift = 0
-							flushed = true
-							addInt(uintptr(val))
-						}
-						switch elm.Type().Kind() {
-						case reflect.Uint8:
-							val |= elm.Uint() << shift
-							shift += 8
-						case reflect.Uint16:
-							val |= elm.Uint() << shift
-							shift += 16
-						case reflect.Uint32:
-							val |= elm.Uint() << shift
-							shift += 32
-						case reflect.Uint64:
-							addInt(uintptr(elm.Uint()))
-							shift = 0
-						case reflect.Int8:
-							val |= uint64(elm.Int()&0xFF) << shift
-							shift += 8
-						case reflect.Int16:
-							val |= uint64(elm.Int()&0xFFFF) << shift
-							shift += 16
-						case reflect.Int32:
-							val |= uint64(elm.Int()&0xFFFF_FFFF) << shift
-							shift += 32
-						case reflect.Int64:
-							addInt(uintptr(elm.Int()))
-							shift = 0
-						case reflect.Float32:
-							addFloat(uintptr(math.Float32bits(float32(elm.Float()))))
-						case reflect.Float64:
-							addFloat(uintptr(math.Float64bits(float64(elm.Float()))))
-						default:
-							panic("purego: unsupported kind " + elm.Kind().String())
-						}
-					}
+					place(f)
 				default:
 					panic("purego: unsupported kind " + f.Kind().String())
 				}
