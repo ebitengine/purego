@@ -566,46 +566,45 @@ func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFl
 					class = NO_CLASS
 				case reflect.Array:
 					arraySize := f.Len()
-					arrayFirstType := f.Index(0).Type()
-					switch arrayFirstType.Kind() {
-					case reflect.Float64:
-						for k := 0; k < arraySize; k++ {
-							elm := f.Index(k)
-							addFloat(uintptr(math.Float64bits(float64(elm.Float()))))
+					for k := 0; k < arraySize; k++ {
+						elm := f.Index(k)
+						if shift >= 64 {
+							shift = 0
+							flushed = true
+							addInt(uintptr(val))
 						}
-					case reflect.Float32:
-						for k := 0; k < arraySize; k++ {
-							elm := f.Index(k)
+						switch elm.Type().Kind() {
+						case reflect.Uint8:
+							val |= elm.Uint() << shift
+							shift += 8
+						case reflect.Uint16:
+							val |= elm.Uint() << shift
+							shift += 16
+						case reflect.Uint32:
+							val |= elm.Uint() << shift
+							shift += 32
+						case reflect.Uint64:
+							addInt(uintptr(elm.Uint()))
+							shift = 0
+						case reflect.Int8:
+							val |= uint64(elm.Int()&0xFF) << shift
+							shift += 8
+						case reflect.Int16:
+							val |= uint64(elm.Int()&0xFFFF) << shift
+							shift += 16
+						case reflect.Int32:
+							val |= uint64(elm.Int()&0xFFFF_FFFF) << shift
+							shift += 32
+						case reflect.Int64:
+							addInt(uintptr(elm.Int()))
+							shift = 0
+						case reflect.Float32:
 							addFloat(uintptr(math.Float32bits(float32(elm.Float()))))
+						case reflect.Float64:
+							addFloat(uintptr(math.Float64bits(float64(elm.Float()))))
+						default:
+							panic("purego: unsupported kind " + elm.Kind().String())
 						}
-					case reflect.Uint8, reflect.Uint16, reflect.Uint32:
-						sizeInBytes := int(arrayFirstType.Size())
-						var arrayVal uint64
-						var k int
-						for k = i; k < arraySize; k++ {
-							elm := f.Index(k)
-							// Reverse the bytes
-							// 0xde_ad_be_ef becomes 0xef_be_ad_de
-							arrayVal |= elm.Uint() << ((k - i) * (8 * sizeInBytes))
-						}
-						i = k - 1
-						addInt(uintptr(arrayVal))
-					case reflect.Int8, reflect.Int16, reflect.Int32:
-						sizeInBytes := int(arrayFirstType.Size())
-						mask := uint64(0xFF)
-						for k := 1; k < sizeInBytes; k++ {
-							mask = (mask << 8) + 0xFF
-						}
-						var arrayVal uint64
-						var k int
-						for k = i; k < arraySize; k++ {
-							elm := f.Index(k)
-							arrayVal |= (uint64(elm.Int()) & mask) << ((k - i) * (8 * sizeInBytes))
-						}
-						i = k - 1
-						addInt(uintptr(arrayVal))
-					default:
-						panic("purego: unsupported array kind " + arrayFirstType.Kind().String())
 					}
 				default:
 					panic("purego: unsupported kind " + f.Kind().String())
