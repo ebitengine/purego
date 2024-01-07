@@ -1,0 +1,195 @@
+package purego
+
+import (
+	"math"
+	"reflect"
+)
+
+func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFloat, addStack func(uintptr), keepAlive []interface{}) []interface{} {
+	if v.Type().Size() == 0 {
+		return keepAlive
+	}
+	// https://student.cs.uwaterloo.ca/~cs452/docs/rpi4b/aapcs64.pdf
+	const (
+		NO_CLASS = 0b00
+		FLOAT    = 0b01
+		INT      = 0b11
+	)
+	if hva, hfa, size := isHVA(v.Type()), isHFA(v.Type()), v.Type().Size(); hva || hfa || size <= 16 {
+		// if this doesn't fit entirely in registers then
+		// each element goes onto the stack
+		if hfa && *numFloats+v.NumField() > numOfFloats {
+			*numFloats = numOfFloats
+		} else if hva && *numInts+v.NumField() > numOfIntegerRegisters() {
+			*numInts = numOfIntegerRegisters()
+		}
+
+		var val uint64
+		var shift byte
+		var flushed bool
+		class := NO_CLASS
+		var place func(v reflect.Value)
+		place = func(v reflect.Value) {
+			var numFields int
+			if v.Kind() == reflect.Struct {
+				numFields = v.Type().NumField()
+			} else {
+				numFields = v.Type().Len()
+			}
+			for k := 0; k < numFields; k++ {
+				var f reflect.Value
+				if v.Kind() == reflect.Struct {
+					f = v.Field(k)
+				} else {
+					f = v.Index(k)
+				}
+				if shift >= 64 {
+					shift = 0
+					flushed = true
+					if class == FLOAT {
+						addFloat(uintptr(val))
+					} else {
+						addInt(uintptr(val))
+					}
+				}
+				switch f.Type().Kind() {
+				case reflect.Struct:
+					place(f)
+				case reflect.Bool:
+					if f.Bool() {
+						val |= 1
+					}
+					shift += 8
+					class |= INT
+				case reflect.Uint8:
+					val |= f.Uint() << shift
+					shift += 8
+					class |= INT
+				case reflect.Uint16:
+					val |= f.Uint() << shift
+					shift += 16
+					class |= INT
+				case reflect.Uint32:
+					val |= f.Uint() << shift
+					shift += 32
+					class |= INT
+				case reflect.Uint64:
+					addInt(uintptr(f.Uint()))
+					shift = 0
+				case reflect.Int8:
+					val |= uint64(f.Int()&0xFF) << shift
+					shift += 8
+					class |= INT
+				case reflect.Int16:
+					val |= uint64(f.Int()&0xFFFF) << shift
+					shift += 16
+					class |= INT
+				case reflect.Int32:
+					val |= uint64(f.Int()&0xFFFF_FFFF) << shift
+					shift += 32
+					class |= INT
+				case reflect.Int64:
+					addInt(uintptr(f.Int()))
+					shift = 0
+				case reflect.Float32:
+					if class == FLOAT {
+						addFloat(uintptr(val))
+						val = 0
+						shift = 0
+					}
+					val |= uint64(math.Float32bits(float32(f.Float()))) << shift
+					shift += 32
+					class |= FLOAT
+				case reflect.Float64:
+					addFloat(uintptr(math.Float64bits(float64(f.Float()))))
+					shift = 0
+				case reflect.Array:
+					place(f)
+				default:
+					panic("purego: unsupported kind " + f.Kind().String())
+				}
+			}
+		}
+		place(v)
+		if !flushed {
+			if class == FLOAT {
+				addFloat(uintptr(val))
+			} else {
+				addInt(uintptr(val))
+			}
+		}
+	} else {
+		// Struct is too big to be placed in registers.
+		// Copy to heap and place the pointer in register
+		ptrStruct := reflect.New(v.Type())
+		ptrStruct.Elem().Set(v)
+		ptr := ptrStruct.Elem().Addr().UnsafePointer()
+		keepAlive = append(keepAlive, ptr)
+		addInt(uintptr(ptr))
+	}
+	return keepAlive // the struct was allocated so don't panic
+}
+
+// isHVA reports a Homogeneous Floating-point Aggregate (HFA) which is a Fundamental Data Type that is a
+// Floating-Point type and at most four uniquely addressable members (5.9.5.1).
+// This type of struct will be placed more compactly than the individual fields.
+func isHFA(t reflect.Type) bool {
+	// round up struct size to nearest 8 see section B.4
+	structSize := roundUpTo8(t.Size())
+	if structSize == 0 || t.NumField() > 4 {
+		return false
+	}
+	first := t.Field(0)
+	switch first.Type.Kind() {
+	case reflect.Float32, reflect.Float64:
+		firstKind := first.Type.Kind()
+		for i := 0; i < t.NumField(); i++ {
+			if t.Field(i).Type.Kind() != firstKind {
+				return false
+			}
+		}
+		return true
+	case reflect.Array:
+		switch first.Type.Elem().Kind() {
+		case reflect.Float32, reflect.Float64:
+			return true
+		default:
+			return false
+		}
+	default:
+		return false
+	}
+}
+
+// isHVA reports a Homogeneous Aggregate with a Fundamental Data Type that is a Short-Vector type
+// and at most four uniquely addressable members (5.9.5.2).
+// A short vector is a machine type that is composed of repeated instances of one fundamental integral or
+// floating-point type. It may be 8 or 16 bytes in total size (5.4).
+// This type of struct will be placed more compactly than the individual fields.
+func isHVA(t reflect.Type) bool {
+	// round up struct size to nearest 8 see section B.4
+	structSize := roundUpTo8(t.Size())
+	if structSize == 0 || (structSize != 8 && structSize != 16) {
+		return false
+	}
+	first := t.Field(0)
+	switch first.Type.Kind() {
+	case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Int8, reflect.Int16, reflect.Int32:
+		firstKind := first.Type.Kind()
+		for i := 0; i < t.NumField(); i++ {
+			if t.Field(i).Type.Kind() != firstKind {
+				return false
+			}
+		}
+		return true
+	case reflect.Array:
+		switch first.Type.Elem().Kind() {
+		case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Int8, reflect.Int16, reflect.Int32:
+			return true
+		default:
+			return false
+		}
+	default:
+		return false
+	}
+}
