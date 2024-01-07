@@ -594,17 +594,6 @@ func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFl
 	panic("purego: struct has field that can't be allocated")
 }
 
-func countNoneStructFields(v reflect.Value) (numFields int) {
-	for i := 0; i < v.NumField(); i++ {
-		if v.Field(i).Kind() == reflect.Struct {
-			numFields += countNoneStructFields(v.Field(i))
-		} else {
-			numFields++
-		}
-	}
-	return numFields
-}
-
 func roundUpTo8(val uintptr) uintptr {
 	return (val + 7) &^ 7
 }
