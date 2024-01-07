@@ -52,7 +52,7 @@ func RegisterLibFunc(fptr interface{}, handle uintptr, name string) {
 //	int64 <=> int64_t
 //	float32 <=> float
 //	float64 <=> double
-//	struct <=> struct (WIP - macOS only)
+//	struct <=> struct (WIP - darwin only)
 //	func <=> C function
 //	unsafe.Pointer, *T <=> void*
 //	[]T => void*
@@ -141,7 +141,7 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 				}
 			case reflect.Struct:
 				if runtime.GOOS != "darwin" || (runtime.GOARCH != "amd64" && runtime.GOARCH != "arm64") {
-					panic("purego: struct arguments are only supported on macOS amd64 & arm64")
+					panic("purego: struct arguments are only supported on darwin amd64 & arm64")
 				}
 				addInt := func(u uintptr) {
 					ints++
@@ -321,7 +321,8 @@ func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFl
 	if v.Type().Size() == 0 {
 		return keepAlive
 	}
-	if runtime.GOARCH == "arm64" {
+	switch runtime.GOARCH {
+	case "arm64":
 		// https://student.cs.uwaterloo.ca/~cs452/docs/rpi4b/aapcs64.pdf
 		const (
 			NO_CLASS = 0b00
@@ -339,7 +340,7 @@ func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFl
 
 			var val uint64
 			var shift byte
-			flushed := false
+			var flushed bool
 			class := NO_CLASS
 			var place func(v reflect.Value)
 			place = func(v reflect.Value) {
@@ -441,7 +442,7 @@ func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFl
 			addInt(uintptr(ptr))
 		}
 		return keepAlive // the struct was allocated so don't panic
-	} else if runtime.GOARCH == "amd64" {
+	case "amd64":
 		// https://www.uclibc.org/docs/psABI-x86_64.pdf
 		// Class determines where the 8 byte value goes.
 		// Higher value classes win over lower value classes
@@ -461,7 +462,7 @@ func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFl
 
 		var val uint64
 		var shift byte // # of bits to shift
-		flushed := false
+		var flushed bool
 		class := NO_CLASS
 		var place func(v reflect.Value)
 		place = func(v reflect.Value) {
