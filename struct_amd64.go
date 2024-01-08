@@ -122,12 +122,14 @@ func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFl
 			}
 		}
 	}
-	place(v)
-	if !flushed {
-		if class == SSE {
-			addFloat(uintptr(val))
-		} else {
-			addInt(uintptr(val))
+	if !placedOnStack {
+		place(v)
+		if !flushed {
+			if class == SSE {
+				addFloat(uintptr(val))
+			} else {
+				addInt(uintptr(val))
+			}
 		}
 	}
 	if placedOnStack {
