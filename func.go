@@ -143,6 +143,9 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 				if runtime.GOOS != "darwin" || (runtime.GOARCH != "amd64" && runtime.GOARCH != "arm64") {
 					panic("purego: struct arguments are only supported on darwin amd64 & arm64")
 				}
+				if arg.Size() == 0 {
+					continue
+				}
 				addInt := func(u uintptr) {
 					ints++
 				}
@@ -151,9 +154,6 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 				}
 				addStack := func(u uintptr) {
 					stack++
-				}
-				if arg.Size() == 0 {
-					continue
 				}
 				_ = addStruct(reflect.New(arg).Elem(), &ints, &floats, &stack, addInt, addFloat, addStack, nil)
 			default:
