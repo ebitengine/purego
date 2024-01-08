@@ -84,7 +84,7 @@ func RegisterLibFunc(fptr interface{}, handle uintptr, name string) {
 // # Structs
 //
 // Purego can handle the most common structs that have fields of builtin types like int8, uint16, float32, etc. However,
-// it does not _currently_ support aligning fields properly. It is therefore the responsibility of the caller to ensure
+// it does not support aligning fields properly. It is therefore the responsibility of the caller to ensure
 // that all padding is added to the Go struct to match the C one. See `BoolStructFn` in struct_test.go for an example.
 //
 // # Example
