@@ -25,22 +25,22 @@ func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFl
 		return keepAlive
 	}
 
-	// if less than or equal to 64 bytes place in registers
-	if v.Type().Size() <= 4*8 {
-		var (
-			savedNumFloats = *numFloats
-			savedNumInts   = *numInts
-			savedNumStack  = *numStack
-		)
-		placeOnStack := postMerger(v.Type()) || !tryPlaceRegister(v, addFloat, addInt)
-		if placeOnStack {
-			// reset any values placed in registers
-			*numFloats = savedNumFloats
-			*numInts = savedNumInts
-			*numStack = savedNumStack
-			placeStack(v, addStack)
-		}
-	} else {
+	// if greater than 64 bytes place on stack
+	if v.Type().Size() > 8*8 {
+		placeStack(v, addStack)
+		return keepAlive
+	}
+	var (
+		savedNumFloats = *numFloats
+		savedNumInts   = *numInts
+		savedNumStack  = *numStack
+	)
+	placeOnStack := postMerger(v.Type()) || !tryPlaceRegister(v, addFloat, addInt)
+	if placeOnStack {
+		// reset any values placed in registers
+		*numFloats = savedNumFloats
+		*numInts = savedNumInts
+		*numStack = savedNumStack
 		placeStack(v, addStack)
 	}
 	return keepAlive
