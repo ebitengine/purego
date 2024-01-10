@@ -412,4 +412,20 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 			t.Fatalf("BoolFloatFn returned %f wanted %f", ret, -expectedFloat)
 		}
 	}
+	{
+		type point struct{ x, y float64 }
+		type size struct{ width, height float64 }
+		type Content struct {
+			point point
+			size  size
+		}
+		var InitWithContentRect func(*int, Content, int32, int32, bool) uint64
+		purego.RegisterLibFunc(&InitWithContentRect, lib, "InitWithContentRect")
+		if ret := InitWithContentRect(new(int),
+			// These number are created so that when divided by 11 it produces 0xdeadbeef
+			Content{point{x: 41_000_000_000, y: 95_000_000}, size{width: 214_000, height: 149}},
+			15, 4, true); ret != expectedUnsigned {
+			t.Fatalf("InitWithContentRect returned %d wanted %#x", ret, expectedUnsigned)
+		}
+	}
 }

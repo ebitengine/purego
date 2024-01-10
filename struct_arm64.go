@@ -50,6 +50,7 @@ func tryPlaceRegisters(v reflect.Value, addFloat func(uintptr), addInt func(uint
 			numFields = v.Type().Len()
 		}
 		for k := 0; k < numFields; k++ {
+			flushed = false
 			var f reflect.Value
 			if v.Kind() == reflect.Struct {
 				f = v.Field(k)
@@ -89,6 +90,7 @@ func tryPlaceRegisters(v reflect.Value, addFloat func(uintptr), addInt func(uint
 			case reflect.Uint64:
 				addInt(uintptr(f.Uint()))
 				shift = 0
+				flushed = true
 			case reflect.Int8:
 				val |= uint64(f.Int()&0xFF) << shift
 				shift += 8
@@ -104,6 +106,7 @@ func tryPlaceRegisters(v reflect.Value, addFloat func(uintptr), addInt func(uint
 			case reflect.Int64:
 				addInt(uintptr(f.Int()))
 				shift = 0
+				flushed = true
 			case reflect.Float32:
 				if class == _FLOAT {
 					addFloat(uintptr(val))
@@ -116,6 +119,7 @@ func tryPlaceRegisters(v reflect.Value, addFloat func(uintptr), addInt func(uint
 			case reflect.Float64:
 				addFloat(uintptr(math.Float64bits(float64(f.Float()))))
 				shift = 0
+				flushed = true
 			case reflect.Array:
 				place(f)
 			default:
@@ -172,6 +176,13 @@ func isHFA(t reflect.Type) bool {
 		default:
 			return false
 		}
+	case reflect.Struct:
+		for i := 0; i < first.Type.NumField(); i++ {
+			if !isHFA(first.Type) {
+				return false
+			}
+		}
+		return true
 	default:
 		return false
 	}

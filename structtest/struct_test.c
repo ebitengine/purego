@@ -304,3 +304,16 @@ float BoolFloat(struct BoolFloat s) {
         return s.f;
     return -s.f;
 }
+
+struct Content {
+      struct { double x, y; } point;
+      struct { double width, height; } size;
+};
+
+unsigned long InitWithContentRect(int *win, struct Content c, int style, int backing, _Bool flag) {
+  if (win == 0)
+      return 0xBAD;
+  if (!flag)
+      return 0xF1A6; // FLAG
+  return (unsigned long)(c.point.x + c.point.y + c.size.width + c.size.height) / (style - backing);
+}
