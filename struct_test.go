@@ -422,7 +422,7 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 		var InitWithContentRect func(*int, Content, int32, int32, bool) uint64
 		purego.RegisterLibFunc(&InitWithContentRect, lib, "InitWithContentRect")
 		if ret := InitWithContentRect(new(int),
-			// These number are created so that when divided by 11 it produces 0xdeadbeef
+			// These numbers are created so that when added together and then divided by 11 it produces 0xdeadbeef
 			Content{point{x: 41_000_000_000, y: 95_000_000}, size{width: 214_000, height: 149}},
 			15, 4, true); ret != expectedUnsigned {
 			t.Fatalf("InitWithContentRect returned %d wanted %#x", ret, expectedUnsigned)

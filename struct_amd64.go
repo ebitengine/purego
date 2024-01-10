@@ -8,6 +8,7 @@ import (
 	"reflect"
 )
 
+// https://refspecs.linuxbase.org/elf/x86_64-abi-0.99.pdf
 // https://gitlab.com/x86-psABIs/x86-64-ABI
 // Class determines where the 8 byte value goes.
 // Higher value classes win over lower value classes
@@ -24,24 +25,49 @@ func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFl
 		return keepAlive
 	}
 
-	var placeOnStack bool
-	var (
-		savedNumFloats = *numFloats
-		savedNumInts   = *numInts
-		savedNumStack  = *numStack
-	)
 	// if less than or equal to 64 bytes place in registers
-	if v.Type().Size() <= 8*8 {
-		placeOnStack = !tryPlaceRegister(v, addFloat, addInt)
-	}
-	if placeOnStack {
-		// reset any values placed in registers
-		*numFloats = savedNumFloats
-		*numInts = savedNumInts
-		*numStack = savedNumStack
+	if v.Type().Size() <= 4*8 {
+		var (
+			savedNumFloats = *numFloats
+			savedNumInts   = *numInts
+			savedNumStack  = *numStack
+		)
+		placeOnStack := postMerger(v.Type()) || !tryPlaceRegister(v, addFloat, addInt)
+		if placeOnStack {
+			// reset any values placed in registers
+			*numFloats = savedNumFloats
+			*numInts = savedNumInts
+			*numStack = savedNumStack
+			placeStack(v, addStack)
+		}
+	} else {
 		placeStack(v, addStack)
 	}
 	return keepAlive
+}
+
+func postMerger(t reflect.Type) bool {
+	// (c) If the size of the aggregate exceeds two eightbytes and the first eight- byte isn’t SSE or any other
+	// eightbyte isn’t SSEUP, the whole argument is passed in memory.
+	if t.Kind() != reflect.Struct {
+		return false
+	}
+	if t.Size() <= 2*8 {
+		return false
+	}
+	first := getFirst(t).Kind()
+	if first != reflect.Float32 && first != reflect.Float64 {
+		return false
+	}
+	return true
+}
+
+func getFirst(t reflect.Type) reflect.Type {
+	first := t.Field(0).Type
+	if first.Kind() == reflect.Struct {
+		return getFirst(first)
+	}
+	return first
 }
 
 func tryPlaceRegister(v reflect.Value, addFloat func(uintptr), addInt func(uintptr)) (ok bool) {
@@ -60,6 +86,7 @@ func tryPlaceRegister(v reflect.Value, addFloat func(uintptr), addInt func(uintp
 		}
 
 		for i := 0; i < numFields; i++ {
+			flushed = false
 			var f reflect.Value
 			if v.Kind() == reflect.Struct {
 				f = v.Field(i)
@@ -100,10 +127,11 @@ func tryPlaceRegister(v reflect.Value, addFloat func(uintptr), addInt func(uintp
 				val |= uint64(f.Int()&0xFFFF_FFFF) << shift
 				shift += 32
 				class |= _INTEGER
-			case reflect.Int, reflect.Int64:
+			case reflect.Int64:
 				addInt(uintptr(f.Int()))
 				shift = 0
 				class = _NO_CLASS
+				flushed = true
 			case reflect.Uint8:
 				val |= f.Uint() << shift
 				shift += 8
@@ -116,10 +144,11 @@ func tryPlaceRegister(v reflect.Value, addFloat func(uintptr), addInt func(uintp
 				val |= f.Uint() << shift
 				shift += 32
 				class |= _INTEGER
-			case reflect.Uint, reflect.Uint64:
+			case reflect.Uint64:
 				addInt(uintptr(f.Uint()))
 				shift = 0
 				class = _NO_CLASS
+				flushed = true
 			case reflect.Float32:
 				val |= uint64(math.Float32bits(float32(f.Float()))) << shift
 				shift += 32
@@ -131,6 +160,7 @@ func tryPlaceRegister(v reflect.Value, addFloat func(uintptr), addInt func(uintp
 				}
 				addFloat(uintptr(math.Float64bits(f.Float())))
 				class = _NO_CLASS
+				flushed = true
 			case reflect.Array:
 				place(f)
 			default:

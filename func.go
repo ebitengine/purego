@@ -6,7 +6,6 @@
 package purego
 
 import (
-	"fmt"
 	"math"
 	"reflect"
 	"runtime"
@@ -179,10 +178,6 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 				args = tmp
 			}
 		}
-		for i := 0; i < len(args); i++ {
-			fmt.Print(args[i].Kind(), " ")
-		}
-		fmt.Println()
 		var sysargs [maxArgs]uintptr
 		stack := sysargs[numOfIntegerRegisters():]
 		var floats [numOfFloats]uintptr
@@ -262,7 +257,6 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 				panic("purego: unsupported kind: " + v.Kind().String())
 			}
 		}
-		fmt.Println(sysargs, floats)
 		// TODO: support structs
 		var r1, r2 uintptr
 		if runtime.GOARCH == "arm64" || runtime.GOOS != "windows" {
