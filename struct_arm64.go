@@ -8,16 +8,18 @@ import (
 	"reflect"
 )
 
+// https://github.com/ARM-software/abi-aa/blob/main/sysvabi64/sysvabi64.rst
+const (
+	_NO_CLASS = 0b00
+	_FLOAT    = 0b01
+	_INT      = 0b11
+)
+
 func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFloat, addStack func(uintptr), keepAlive []interface{}) []interface{} {
 	if v.Type().Size() == 0 {
 		return keepAlive
 	}
-	// https://github.com/ARM-software/abi-aa/blob/main/sysvabi64/sysvabi64.rst
-	const (
-		NO_CLASS = 0b00
-		FLOAT    = 0b01
-		INT      = 0b11
-	)
+
 	if hva, hfa, size := isHVA(v.Type()), isHFA(v.Type()), v.Type().Size(); hva || hfa || size <= 16 {
 		// if this doesn't fit entirely in registers then
 		// each element goes onto the stack
@@ -27,110 +29,119 @@ func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFl
 			*numInts = numOfIntegerRegisters()
 		}
 
-		var val uint64
-		var shift byte
-		var flushed bool
-		class := NO_CLASS
-		var place func(v reflect.Value)
-		place = func(v reflect.Value) {
-			var numFields int
-			if v.Kind() == reflect.Struct {
-				numFields = v.Type().NumField()
-			} else {
-				numFields = v.Type().Len()
-			}
-			for k := 0; k < numFields; k++ {
-				var f reflect.Value
-				if v.Kind() == reflect.Struct {
-					f = v.Field(k)
-				} else {
-					f = v.Index(k)
-				}
-				if shift >= 64 {
-					shift = 0
-					flushed = true
-					if class == FLOAT {
-						addFloat(uintptr(val))
-					} else {
-						addInt(uintptr(val))
-					}
-				}
-				switch f.Type().Kind() {
-				case reflect.Struct:
-					place(f)
-				case reflect.Bool:
-					if f.Bool() {
-						val |= 1
-					}
-					shift += 8
-					class |= INT
-				case reflect.Uint8:
-					val |= f.Uint() << shift
-					shift += 8
-					class |= INT
-				case reflect.Uint16:
-					val |= f.Uint() << shift
-					shift += 16
-					class |= INT
-				case reflect.Uint32:
-					val |= f.Uint() << shift
-					shift += 32
-					class |= INT
-				case reflect.Uint64:
-					addInt(uintptr(f.Uint()))
-					shift = 0
-				case reflect.Int8:
-					val |= uint64(f.Int()&0xFF) << shift
-					shift += 8
-					class |= INT
-				case reflect.Int16:
-					val |= uint64(f.Int()&0xFFFF) << shift
-					shift += 16
-					class |= INT
-				case reflect.Int32:
-					val |= uint64(f.Int()&0xFFFF_FFFF) << shift
-					shift += 32
-					class |= INT
-				case reflect.Int64:
-					addInt(uintptr(f.Int()))
-					shift = 0
-				case reflect.Float32:
-					if class == FLOAT {
-						addFloat(uintptr(val))
-						val = 0
-						shift = 0
-					}
-					val |= uint64(math.Float32bits(float32(f.Float()))) << shift
-					shift += 32
-					class |= FLOAT
-				case reflect.Float64:
-					addFloat(uintptr(math.Float64bits(float64(f.Float()))))
-					shift = 0
-				case reflect.Array:
-					place(f)
-				default:
-					panic("purego: unsupported kind " + f.Kind().String())
-				}
-			}
-		}
-		place(v)
-		if !flushed {
-			if class == FLOAT {
-				addFloat(uintptr(val))
-			} else {
-				addInt(uintptr(val))
-			}
-		}
+		tryPlaceRegisters(v, addFloat, addInt)
 	} else {
-		// Struct is too big to be placed in registers.
-		// Copy to heap and place the pointer in register
-		ptrStruct := reflect.New(v.Type())
-		ptrStruct.Elem().Set(v)
-		ptr := ptrStruct.Elem().Addr().UnsafePointer()
-		keepAlive = append(keepAlive, ptr)
-		addInt(uintptr(ptr))
+		keepAlive = placeStack(v, keepAlive, addInt)
 	}
 	return keepAlive // the struct was allocated so don't panic
+}
+
+func tryPlaceRegisters(v reflect.Value, addFloat func(uintptr), addInt func(uintptr)) {
+	var val uint64
+	var shift byte
+	var flushed bool
+	class := _NO_CLASS
+	var place func(v reflect.Value)
+	place = func(v reflect.Value) {
+		var numFields int
+		if v.Kind() == reflect.Struct {
+			numFields = v.Type().NumField()
+		} else {
+			numFields = v.Type().Len()
+		}
+		for k := 0; k < numFields; k++ {
+			var f reflect.Value
+			if v.Kind() == reflect.Struct {
+				f = v.Field(k)
+			} else {
+				f = v.Index(k)
+			}
+			if shift >= 64 {
+				shift = 0
+				flushed = true
+				if class == _FLOAT {
+					addFloat(uintptr(val))
+				} else {
+					addInt(uintptr(val))
+				}
+			}
+			switch f.Type().Kind() {
+			case reflect.Struct:
+				place(f)
+			case reflect.Bool:
+				if f.Bool() {
+					val |= 1
+				}
+				shift += 8
+				class |= _INT
+			case reflect.Uint8:
+				val |= f.Uint() << shift
+				shift += 8
+				class |= _INT
+			case reflect.Uint16:
+				val |= f.Uint() << shift
+				shift += 16
+				class |= _INT
+			case reflect.Uint32:
+				val |= f.Uint() << shift
+				shift += 32
+				class |= _INT
+			case reflect.Uint64:
+				addInt(uintptr(f.Uint()))
+				shift = 0
+			case reflect.Int8:
+				val |= uint64(f.Int()&0xFF) << shift
+				shift += 8
+				class |= _INT
+			case reflect.Int16:
+				val |= uint64(f.Int()&0xFFFF) << shift
+				shift += 16
+				class |= _INT
+			case reflect.Int32:
+				val |= uint64(f.Int()&0xFFFF_FFFF) << shift
+				shift += 32
+				class |= _INT
+			case reflect.Int64:
+				addInt(uintptr(f.Int()))
+				shift = 0
+			case reflect.Float32:
+				if class == _FLOAT {
+					addFloat(uintptr(val))
+					val = 0
+					shift = 0
+				}
+				val |= uint64(math.Float32bits(float32(f.Float()))) << shift
+				shift += 32
+				class |= _FLOAT
+			case reflect.Float64:
+				addFloat(uintptr(math.Float64bits(float64(f.Float()))))
+				shift = 0
+			case reflect.Array:
+				place(f)
+			default:
+				panic("purego: unsupported kind " + f.Kind().String())
+			}
+		}
+	}
+	place(v)
+	if !flushed {
+		if class == _FLOAT {
+			addFloat(uintptr(val))
+		} else {
+			addInt(uintptr(val))
+		}
+	}
+}
+
+func placeStack(v reflect.Value, keepAlive []interface{}, addInt func(uintptr)) []interface{} {
+	// Struct is too big to be placed in registers.
+	// Copy to heap and place the pointer in register
+	ptrStruct := reflect.New(v.Type())
+	ptrStruct.Elem().Set(v)
+	ptr := ptrStruct.Elem().Addr().UnsafePointer()
+	keepAlive = append(keepAlive, ptr)
+	addInt(uintptr(ptr))
+	return keepAlive
 }
 
 // isHFA reports a Homogeneous Floating-point Aggregate (HFA) which is a Fundamental Data Type that is a

@@ -4,7 +4,7 @@
 // Empty is empty
 struct Empty {};
 
-//NoStruct tests that an empty struct doesn't cause issues
+// NoStruct tests that an empty struct doesn't cause issues
 unsigned long NoStruct(struct Empty e) {
     return 0xdeadbeef;
 }
