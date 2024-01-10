@@ -8,27 +8,43 @@ import (
 	"reflect"
 )
 
+// https://gitlab.com/x86-psABIs/x86-64-ABI
+// Class determines where the 8 byte value goes.
+// Higher value classes win over lower value classes
+const (
+	NO_CLASS = 0b0000
+	SSE      = 0b0001
+	X87      = 0b0011 // long double not used in Go
+	INTEGER  = 0b0111
+	MEMORY   = 0b1111
+)
+
 func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFloat, addStack func(uintptr), keepAlive []interface{}) []interface{} {
 	if v.Type().Size() == 0 {
 		return keepAlive
 	}
-	// https://gitlab.com/x86-psABIs/x86-64-ABI
-	// Class determines where the 8 byte value goes.
-	// Higher value classes win over lower value classes
-	const (
-		NO_CLASS = 0b0000
-		SSE      = 0b0001
-		X87      = 0b0011 // long double not used in Go
-		INTEGER  = 0b0111
-		MEMORY   = 0b1111
-	)
+
+	var placeOnStack bool
 	var (
-		placedOnStack  = v.Type().Size() > 8*8 // if greater than 64 bytes place on stack
 		savedNumFloats = *numFloats
 		savedNumInts   = *numInts
 		savedNumStack  = *numStack
 	)
+	// if less than or equal to 64 bytes place in registers
+	if v.Type().Size() <= 8*8 {
+		placeOnStack = attemptPlaceRegisters(v, addFloat, addInt)
+	}
+	if placeOnStack {
+		// reset any values placed in registers
+		*numFloats = savedNumFloats
+		*numInts = savedNumInts
+		*numStack = savedNumStack
+		placeStack(v, addStack)
+	}
+	return keepAlive
+}
 
+func attemptPlaceRegisters(v reflect.Value, addFloat func(uintptr), addInt func(uintptr)) (placeOnStack bool) {
 	var val uint64
 	var shift byte // # of bits to shift
 	var flushed bool
@@ -42,7 +58,6 @@ func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFl
 			numFields = v.Type().Len()
 		}
 
-	loop:
 		for i := 0; i < numFields; i++ {
 			var f reflect.Value
 			if v.Kind() == reflect.Struct {
@@ -70,8 +85,8 @@ func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFl
 				shift += 8
 				class |= INTEGER
 			case reflect.Pointer:
-				placedOnStack = true
-				break loop
+				placeOnStack = true
+				return
 			case reflect.Int8:
 				val |= uint64(f.Int()&0xFF) << shift
 				shift += 8
@@ -110,8 +125,8 @@ func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFl
 				class |= SSE
 			case reflect.Float64:
 				if v.Type().Size() > 16 {
-					placedOnStack = true
-					break loop
+					placeOnStack = true
+					return
 				}
 				addFloat(uintptr(math.Float64bits(f.Float())))
 				class = NO_CLASS
@@ -122,44 +137,36 @@ func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFl
 			}
 		}
 	}
-	if !placedOnStack {
-		place(v)
-		if !flushed {
-			if class == SSE {
-				addFloat(uintptr(val))
-			} else {
-				addInt(uintptr(val))
-			}
+
+	place(v)
+	if !flushed {
+		if class == SSE {
+			addFloat(uintptr(val))
+		} else {
+			addInt(uintptr(val))
 		}
 	}
-	if placedOnStack {
-		// reset any values placed in registers
-		*numFloats = savedNumFloats
-		*numInts = savedNumInts
-		*numStack = savedNumStack
-		var placeStack func(v reflect.Value)
-		placeStack = func(v reflect.Value) {
-			for i := 0; i < v.Type().NumField(); i++ {
-				f := v.Field(i)
-				switch f.Kind() {
-				case reflect.Pointer:
-					addStack(f.Pointer())
-				case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-					addStack(uintptr(f.Int()))
-				case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-					addStack(uintptr(f.Uint()))
-				case reflect.Float32:
-					addStack(uintptr(math.Float32bits(float32(f.Float()))))
-				case reflect.Float64:
-					addStack(uintptr(math.Float64bits(f.Float())))
-				case reflect.Struct:
-					placeStack(f)
-				default:
-					panic("purego: unsupported kind " + f.Kind().String())
-				}
-			}
+	return placeOnStack
+}
+
+func placeStack(v reflect.Value, addStack func(uintptr)) {
+	for i := 0; i < v.Type().NumField(); i++ {
+		f := v.Field(i)
+		switch f.Kind() {
+		case reflect.Pointer:
+			addStack(f.Pointer())
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			addStack(uintptr(f.Int()))
+		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+			addStack(uintptr(f.Uint()))
+		case reflect.Float32:
+			addStack(uintptr(math.Float32bits(float32(f.Float()))))
+		case reflect.Float64:
+			addStack(uintptr(math.Float64bits(f.Float())))
+		case reflect.Struct:
+			placeStack(f, addStack)
+		default:
+			panic("purego: unsupported kind " + f.Kind().String())
 		}
-		placeStack(v)
 	}
-	return keepAlive
 }
