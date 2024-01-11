@@ -29,14 +29,14 @@ func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFl
 			*numInts = numOfIntegerRegisters()
 		}
 
-		tryPlaceRegisters(v, addFloat, addInt)
+		placeRegisters(v, addFloat, addInt)
 	} else {
 		keepAlive = placeStack(v, keepAlive, addInt)
 	}
 	return keepAlive // the struct was allocated so don't panic
 }
 
-func tryPlaceRegisters(v reflect.Value, addFloat func(uintptr), addInt func(uintptr)) {
+func placeRegisters(v reflect.Value, addFloat func(uintptr), addInt func(uintptr)) {
 	var val uint64
 	var shift byte
 	var flushed bool
