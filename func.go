@@ -52,7 +52,7 @@ func RegisterLibFunc(fptr interface{}, handle uintptr, name string) {
 //	int64 <=> int64_t
 //	float32 <=> float
 //	float64 <=> double
-//	struct <=> struct (WIP)
+//	struct <=> struct (WIP - darwin only)
 //	func <=> C function
 //	unsafe.Pointer, *T <=> void*
 //	[]T => void*
@@ -80,6 +80,12 @@ func RegisterLibFunc(fptr interface{}, handle uintptr, name string) {
 // to point to C memory (because it's a buffer for example) then use a pointer to byte and then convert that to a slice
 // using unsafe.Slice. Doing this means that it becomes the responsibility of the caller to care about the lifetime
 // of the pointer
+//
+// # Structs
+//
+// Purego can handle the most common structs that have fields of builtin types like int8, uint16, float32, etc. However,
+// it does not support aligning fields properly. It is therefore the responsibility of the caller to ensure
+// that all padding is added to the Go struct to match the C one. See `BoolStructFn` in struct_test.go for an example.
 //
 // # Example
 //
@@ -133,6 +139,23 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 				} else {
 					stack++
 				}
+			case reflect.Struct:
+				if runtime.GOOS != "darwin" || (runtime.GOARCH != "amd64" && runtime.GOARCH != "arm64") {
+					panic("purego: struct arguments are only supported on darwin amd64 & arm64")
+				}
+				if arg.Size() == 0 {
+					continue
+				}
+				addInt := func(u uintptr) {
+					ints++
+				}
+				addFloat := func(u uintptr) {
+					floats++
+				}
+				addStack := func(u uintptr) {
+					stack++
+				}
+				_ = addStruct(reflect.New(arg).Elem(), &ints, &floats, &stack, addInt, addFloat, addStack, nil)
 			default:
 				panic("purego: unsupported kind " + arg.Kind().String())
 			}
@@ -228,6 +251,8 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 				addFloat(uintptr(math.Float32bits(float32(v.Float()))))
 			case reflect.Float64:
 				addFloat(uintptr(math.Float64bits(v.Float())))
+			case reflect.Struct:
+				keepAlive = addStruct(v, &numInts, &numFloats, &numStack, addInt, addFloat, addStack, keepAlive)
 			default:
 				panic("purego: unsupported kind: " + v.Kind().String())
 			}
@@ -290,6 +315,10 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 		return []reflect.Value{v}
 	})
 	fn.Set(v)
+}
+
+func roundUpTo8(val uintptr) uintptr {
+	return (val + 7) &^ 7
 }
 
 func numOfIntegerRegisters() int {
