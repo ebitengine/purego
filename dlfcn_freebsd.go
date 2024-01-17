@@ -11,8 +11,3 @@ const (
 	RTLD_LOCAL   = 0x00000         // All symbols are not made available for relocation processing by other modules.
 	RTLD_GLOBAL  = 0x00100         // All symbols are available for relocation processing of other modules.
 )
-
-//go:cgo_import_dynamic purego_dlopen dlopen "libc.so.7"
-//go:cgo_import_dynamic purego_dlsym dlsym "libc.so.7"
-//go:cgo_import_dynamic purego_dlerror dlerror "libc.so.7"
-//go:cgo_import_dynamic purego_dlclose dlclose "libc.so.7"
