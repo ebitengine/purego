@@ -11,7 +11,6 @@ package cgo
 #include <dlfcn.h>
 */
 import "C"
-import _ "unsafe" // for go:linkname
 
 // all that is needed is to assign each dl function because then its
 // symbol will then be made available to the linker and linked to inside dlfcn.go
