@@ -12,4 +12,8 @@ package purego
 // which will import this package automatically. Normally this isn't an issue since it
 // usually isn't possible to call into C without using that import. However, with purego
 // it is since we don't use `import "C"`!
-import _ "runtime/cgo"
+import (
+	_ "runtime/cgo"
+
+	_ "github.com/ebitengine/purego/internal/cgo"
+)
