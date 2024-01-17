@@ -13,3 +13,4 @@ package purego
 // usually isn't possible to call into C without using that import. However, with purego
 // it is since we don't use `import "C"`!
 import _ "runtime/cgo"
+import _ "github.com/ebitengine/purego/internal/cgo"

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2022 The Ebitengine Authors
 
-//go:build freebsd || linux
+//go:build freebsd || (linux && !(arm64 || amd64))
 
 package cgo
 
@@ -41,15 +41,6 @@ import "unsafe"
 
 // assign purego.syscall15XABI0 to the C version of this function.
 var Syscall15XABI0 = unsafe.Pointer(C.syscall15)
-
-// all that is needed is to assign each dl function because then its
-// symbol will then be made available to the linker and linked to inside dlfcn.go
-var (
-	_ = C.dlopen
-	_ = C.dlsym
-	_ = C.dlerror
-	_ = C.dlclose
-)
 
 //go:nosplit
 func Syscall15X(fn, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15 uintptr) (r1, r2, err uintptr) {
