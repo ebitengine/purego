@@ -12,3 +12,13 @@ const (
 	RTLD_LOCAL   = 0x4             // All symbols are not made available for relocation processing by other modules.
 	RTLD_GLOBAL  = 0x8             // All symbols are available for relocation processing of other modules.
 )
+
+//go:cgo_import_dynamic purego_dlopen dlopen "/usr/lib/libSystem.B.dylib"
+//go:cgo_import_dynamic purego_dlsym dlsym "/usr/lib/libSystem.B.dylib"
+//go:cgo_import_dynamic purego_dlerror dlerror "/usr/lib/libSystem.B.dylib"
+//go:cgo_import_dynamic purego_dlclose dlclose "/usr/lib/libSystem.B.dylib"
+
+//go:cgo_import_dynamic purego_dlopen dlopen "/usr/lib/libSystem.B.dylib"
+//go:cgo_import_dynamic purego_dlsym dlsym "/usr/lib/libSystem.B.dylib"
+//go:cgo_import_dynamic purego_dlerror dlerror "/usr/lib/libSystem.B.dylib"
+//go:cgo_import_dynamic purego_dlclose dlclose "/usr/lib/libSystem.B.dylib"
