@@ -3,4 +3,4 @@
 
 package cgo
 
-// Empty so that importing this package doens't cause issue for certain platforms.
+// Empty so that importing this package doesn't cause issue for certain platforms.
