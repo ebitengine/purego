@@ -17,7 +17,7 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 	libFileName := filepath.Join(t.TempDir(), "structtest.so")
 	t.Logf("Build %v", libFileName)
 
-	if err := buildSharedLib("CC", libFileName, filepath.Join("internal", "structtest", "struct_test.c")); err != nil {
+	if err := buildSharedLib("CC", libFileName, filepath.Join("testdata", "structtest", "struct_test.c")); err != nil {
 		t.Fatal(err)
 	}
 	defer os.Remove(libFileName)
