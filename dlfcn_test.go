@@ -28,7 +28,7 @@ func TestNestedDlopenCall(t *testing.T) {
 	libFileName := filepath.Join(t.TempDir(), "libdlnested.so")
 	t.Logf("Build %v", libFileName)
 
-	if err := buildSharedLib("CXX", libFileName, filepath.Join("libdlnested", "nested_test.cpp")); err != nil {
+	if err := buildSharedLib("CXX", libFileName, filepath.Join("internal", "libdlnested", "nested_test.cpp")); err != nil {
 		t.Fatal(err)
 	}
 	defer os.Remove(libFileName)
