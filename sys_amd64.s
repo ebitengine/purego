@@ -96,13 +96,12 @@ TEXT syscall15X(SB), NOSPLIT|NOFRAME, $0
 	RET
 
 TEXT callbackasm1(SB), NOSPLIT|NOFRAME, $0
-	// remove return address from stack, we are not returning to callbackasm, but to its caller.
-	MOVQ 0(SP), AX
-	//ADDQ $8, SP
+	MOVQ 0(SP), AX // save the return address to calculate the cb index
 	MOVQ 8(SP), R10 // get the return SP so that we can align register args with stack args
+    ADDQ $8, SP // remove return address from stack, we are not returning to callbackasm, but to its caller.
 
 	// make space for first six int and 8 float arguments below the frame
-	ADJSP $13*8, SP
+	ADJSP $14*8, SP
 	MOVSD X0, (1*8)(SP)
 	MOVSD X1, (2*8)(SP)
 	MOVSD X2, (3*8)(SP)
@@ -157,8 +156,8 @@ TEXT callbackasm1(SB), NOSPLIT|NOFRAME, $0
 
 	MOVQ 0(SP), R10 // get the SP back
     ADDQ $8, SP
-	ADJSP $-13*8, SP // remove arguments
-    ADDQ $8, SP
+	ADJSP $-14*8, SP // remove arguments
+
 	MOVQ R10, 0(SP)
 
 	RET
