@@ -117,8 +117,8 @@ TEXT callbackasm1(SB), NOSPLIT|NOFRAME, $0
 	MOVQ  R8, (13*8)(SP)
 	MOVQ  R9, (14*8)(SP)
 	LEAQ  8(SP), R8      // R8 = address of args vector
-	SUBQ  $8, SP
-	MOVQ  R10, 0(SP)     // push the stack pointer below registers
+
+	PUSHQ R10     // push the stack pointer below registers
 
 	// determine index into runtime·cbs table
 	MOVQ $callbackasm(SB), DX
@@ -154,8 +154,7 @@ TEXT callbackasm1(SB), NOSPLIT|NOFRAME, $0
 
 	POP_REGS_HOST_TO_ABI0()
 
-	MOVQ  0(SP), R10 // get the SP back
-	ADDQ  $8, SP
+    POPQ R10 // get the SP back
 	ADJSP $-14*8, SP // remove arguments
 
 	MOVQ R10, 0(SP)
