@@ -74,11 +74,9 @@ TEXT syscall9X(SB), NOSPLIT|NOFRAME, $0
 	RET
 
 TEXT callbackasm1(SB), NOSPLIT|NOFRAME, $0
-	// remove return address from stack, we are not returning to callbackasm, but to its caller.
-	MOVQ 0(SP), AX
-	ADDQ $8, SP
-
-	MOVQ 0(SP), R10 // get the return SP so that we can align register args with stack args
+	MOVQ 0(SP), AX  // save the return address to calculate the cb index
+	MOVQ 8(SP), R10 // get the return SP so that we can align register args with stack args
+	ADDQ $8, SP     // remove return address from stack, we are not returning to callbackasm, but to its caller.
 
 	// make space for first six int and 8 float arguments below the frame
 	ADJSP $14*8, SP
@@ -98,7 +96,7 @@ TEXT callbackasm1(SB), NOSPLIT|NOFRAME, $0
 	MOVQ  R9, (14*8)(SP)
 	LEAQ  8(SP), R8      // R8 = address of args vector
 
-	MOVQ R10, 0(SP) // push the stack pointer below registers
+	PUSHQ R10 // push the stack pointer below registers
 
 	// determine index into runtime·cbs table
 	MOVQ $callbackasm(SB), DX
@@ -134,8 +132,7 @@ TEXT callbackasm1(SB), NOSPLIT|NOFRAME, $0
 
 	POP_REGS_HOST_TO_ABI0()
 
-	MOVQ 0(SP), R10 // get the SP back
-
+	POPQ  R10        // get the SP back
 	ADJSP $-14*8, SP // remove arguments
 
 	MOVQ R10, 0(SP)
