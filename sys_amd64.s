@@ -99,8 +99,6 @@ TEXT callbackasm1(SB), NOSPLIT|NOFRAME, $0
 	// remove return address from stack, we are not returning to callbackasm, but to its caller.
 	MOVQ 0(SP), AX
 	//ADDQ $8, SP
-    MOVQ $0, R10
-    MOVQ R10, 0(SP)
 	MOVQ 8(SP), R10 // get the return SP so that we can align register args with stack args
 
 	// make space for first six int and 8 float arguments below the frame
