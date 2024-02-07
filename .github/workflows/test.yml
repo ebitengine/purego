@@ -110,7 +110,7 @@ jobs:
   freebsd:
     strategy:
       matrix:
-        go: ['1.18.10', '1.19.13', '1.20.13', '1.21.6', '1.22.0']
+        go: ['1.18.10', '1.19.13', '1.20.14', '1.21.7', '1.22.0']
     name: Test with Go ${{ matrix.go }} on FreeBSD
     runs-on: ubuntu-22.04
     defaults:
