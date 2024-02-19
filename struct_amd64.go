@@ -168,8 +168,7 @@ func tryPlaceRegister(v reflect.Value, addFloat func(uintptr), addInt func(uintp
 
 			if shift == 64 {
 				flush()
-			}
-			if shift > 64 {
+			} else if shift > 64 {
 				// Should never happen, but may if we forget to reset shift after flush (or forget to flush),
 				// better fall apart here, than corrupt arguments.
 				panic("purego: tryPlaceRegisters shift > 64")
