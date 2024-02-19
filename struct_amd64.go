@@ -76,6 +76,17 @@ func tryPlaceRegister(v reflect.Value, addFloat func(uintptr), addInt func(uintp
 	var shift byte // # of bits to shift
 	var flushed bool
 	class := _NO_CLASS
+	flush := func() {
+		flushed = true
+		if class == _SSE {
+			addFloat(uintptr(val))
+		} else {
+			addInt(uintptr(val))
+		}
+		val = 0
+		shift = 0
+		class = _NO_CLASS
+	}
 	var place func(v reflect.Value)
 	place = func(v reflect.Value) {
 		var numFields int
@@ -92,19 +103,6 @@ func tryPlaceRegister(v reflect.Value, addFloat func(uintptr), addInt func(uintp
 				f = v.Field(i)
 			} else {
 				f = v.Index(i)
-			}
-			if shift >= 64 {
-				// not marking flushed = true even though have flushed
-				// because now we're processing a new field
-				// and if we exit now - we have to flush that field
-				shift = 0
-				if class == _SSE {
-					addFloat(uintptr(val))
-				} else {
-					addInt(uintptr(val))
-				}
-				val = 0
-				class = _NO_CLASS
 			}
 			switch f.Kind() {
 			case reflect.Struct:
@@ -131,10 +129,9 @@ func tryPlaceRegister(v reflect.Value, addFloat func(uintptr), addInt func(uintp
 				shift += 32
 				class |= _INTEGER
 			case reflect.Int64:
-				addInt(uintptr(f.Int()))
-				shift = 0
-				class = _NO_CLASS
-				flushed = true
+				val = uint64(f.Int())
+				shift = 64
+				class = _INTEGER
 			case reflect.Uint8:
 				val |= f.Uint() << shift
 				shift += 8
@@ -148,10 +145,9 @@ func tryPlaceRegister(v reflect.Value, addFloat func(uintptr), addInt func(uintp
 				shift += 32
 				class |= _INTEGER
 			case reflect.Uint64:
-				addInt(uintptr(f.Uint()))
-				shift = 0
-				class = _NO_CLASS
-				flushed = true
+				val = f.Uint()
+				shift = 64
+				class = _INTEGER
 			case reflect.Float32:
 				val |= uint64(math.Float32bits(float32(f.Float()))) << shift
 				shift += 32
@@ -161,24 +157,29 @@ func tryPlaceRegister(v reflect.Value, addFloat func(uintptr), addInt func(uintp
 					ok = false
 					return
 				}
-				addFloat(uintptr(math.Float64bits(f.Float())))
-				class = _NO_CLASS
-				flushed = true
+				val = uint64(math.Float64bits(f.Float()))
+				shift = 64
+				class = _SSE
 			case reflect.Array:
 				place(f)
 			default:
 				panic("purego: unsupported kind " + f.Kind().String())
+			}
+
+			if shift == 64 {
+				flush()
+			}
+			if shift > 64 {
+				// Should never happen, but may if we forget to reset shift after flush (or forget to flush),
+				// better fall apart here, than corrupt arguments.
+				panic("purego: tryPlaceRegisters shift > 64")
 			}
 		}
 	}
 
 	place(v)
 	if !flushed {
-		if class == _SSE {
-			addFloat(uintptr(val))
-		} else {
-			addInt(uintptr(val))
-		}
+		flush()
 	}
 	return ok
 }
