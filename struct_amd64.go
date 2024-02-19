@@ -94,13 +94,16 @@ func tryPlaceRegister(v reflect.Value, addFloat func(uintptr), addInt func(uintp
 				f = v.Index(i)
 			}
 			if shift >= 64 {
+				// not marking flushed = true even though have flushed
+				// because now we're processing a new field
+				// and if we exit now - we have to flush that field
 				shift = 0
-				flushed = true
 				if class == _SSE {
 					addFloat(uintptr(val))
 				} else {
 					addInt(uintptr(val))
 				}
+				val = 0
 				class = _NO_CLASS
 			}
 			switch f.Kind() {
