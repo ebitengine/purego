@@ -119,6 +119,16 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 		}
 	}
 	{
+		type ThreeSmallFields struct {
+			x, y, z float32
+		}
+		var ThreeSmallFieldsFn func(ThreeSmallFields) float32
+		purego.RegisterLibFunc(&ThreeSmallFieldsFn, lib, "ThreeSmallFields")
+		if ret := ThreeSmallFieldsFn(ThreeSmallFields{1, 2, 7}); ret != expectedFloat {
+			t.Fatalf("ThreeSmallFields returned %f wanted %f", ret, expectedFloat)
+		}
+	}
+	{
 		type FloatAndInt struct {
 			x float32
 			y int32
