@@ -74,6 +74,14 @@ float FloatLessThan16Bytes(struct FloatLessThan16Bytes f) {
     return f.x + f.y;
 }
 
+struct ThreeSmallFields {
+    float x, y, z;
+};
+
+float ThreeSmallFields(struct ThreeSmallFields f) {
+    return f.x + f.y + f.z;
+}
+
 struct FloatAndInt {
     float x;
     int   y;
