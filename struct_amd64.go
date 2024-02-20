@@ -76,7 +76,10 @@ func tryPlaceRegister(v reflect.Value, addFloat func(uintptr), addInt func(uintp
 	var shift byte // # of bits to shift
 	var flushed bool
 	class := _NO_CLASS
-	flush := func() {
+	flushIfNeeded := func() {
+		if flushed {
+			return
+		}
 		flushed = true
 		if class == _SSE {
 			addFloat(uintptr(val))
@@ -167,7 +170,7 @@ func tryPlaceRegister(v reflect.Value, addFloat func(uintptr), addInt func(uintp
 			}
 
 			if shift == 64 {
-				flush()
+				flushIfNeeded()
 			} else if shift > 64 {
 				// Should never happen, but may if we forget to reset shift after flush (or forget to flush),
 				// better fall apart here, than corrupt arguments.
@@ -177,9 +180,7 @@ func tryPlaceRegister(v reflect.Value, addFloat func(uintptr), addInt func(uintp
 	}
 
 	place(v)
-	if !flushed {
-		flush()
-	}
+	flushIfNeeded()
 	return ok
 }
 
