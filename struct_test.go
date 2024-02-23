@@ -439,3 +439,80 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 		}
 	}
 }
+
+func TestRegisterFunc_structReturns(t *testing.T) {
+	libFileName := filepath.Join(t.TempDir(), "structreturntest.so")
+	t.Logf("Build %v", libFileName)
+
+	if err := buildSharedLib("CC", libFileName, filepath.Join("testdata", "structtest", "structreturn_test.c")); err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove(libFileName)
+
+	lib, err := purego.Dlopen(libFileName, purego.RTLD_NOW|purego.RTLD_GLOBAL)
+	if err != nil {
+		t.Fatalf("Dlopen(%q) failed: %v", libFileName, err)
+	}
+
+	{
+		type Empty struct{}
+		var ReturnEmpty func() Empty
+		purego.RegisterLibFunc(&ReturnEmpty, lib, "ReturnEmpty")
+		ret := ReturnEmpty()
+		_ = ret
+	}
+	{
+		type ThreeShorts struct{ a, b, c int16 }
+		var ReturnThreeShorts func(a, b, c int16) ThreeShorts
+		purego.RegisterLibFunc(&ReturnThreeShorts, lib, "ReturnThreeShorts")
+		expected := ThreeShorts{^int16(0), 2, 3}
+		if ret := ReturnThreeShorts(^int16(0), 2, 3); ret != expected {
+			t.Fatalf("ReturnThreeShorts returned %+v wanted %+v", ret, expected)
+		}
+	}
+	{
+		type FourShorts struct{ a, b, c, d int16 }
+		var ReturnFourShorts func(a, b, c, d int16) FourShorts
+		purego.RegisterLibFunc(&ReturnFourShorts, lib, "ReturnFourShorts")
+		expected := FourShorts{^int16(0), 2, 3, 4}
+		if ret := ReturnFourShorts(^int16(0), 2, 3, 4); ret != expected {
+			t.Fatalf("ReturnFourShorts returned %+v wanted %+v", ret, expected)
+		}
+	}
+	{
+		type OneLong struct{ a int64 }
+		var ReturnOneLong func(a int64) OneLong
+		purego.RegisterLibFunc(&ReturnOneLong, lib, "ReturnOneLong")
+		expected := OneLong{5}
+		if ret := ReturnOneLong(5); ret != expected {
+			t.Fatalf("ReturnOneLong returned %+v wanted %+v", ret, expected)
+		}
+	}
+	{
+		type TwoLongs struct{ a, b int64 }
+		var ReturnTwoLongs func(a, b int64) TwoLongs
+		purego.RegisterLibFunc(&ReturnTwoLongs, lib, "ReturnTwoLongs")
+		expected := TwoLongs{1, 2}
+		if ret := ReturnTwoLongs(1, 2); ret != expected {
+			t.Fatalf("ReturnTwoLongs returned %+v wanted %+v", ret, expected)
+		}
+	}
+	{
+		type ThreeLongs struct{ a, b, c int64 }
+		var ReturnThreeLongs func(a, b, c int64) ThreeLongs
+		purego.RegisterLibFunc(&ReturnThreeLongs, lib, "ReturnThreeLongs")
+		expected := ThreeLongs{1, 2, 3}
+		if ret := ReturnThreeLongs(1, 2, 3); ret != expected {
+			t.Fatalf("ReturnThreeLongs returned %+v wanted %+v", ret, expected)
+		}
+	}
+	{
+		type ThreeDoubles struct{ a, b, c float64 }
+		var ReturnThreeDoubles func(a, b, c float64) ThreeDoubles
+		purego.RegisterLibFunc(&ReturnThreeDoubles, lib, "ReturnThreeDoubles")
+		expected := ThreeDoubles{1, 2, 3}
+		if ret := ReturnThreeDoubles(1, 2, 3); ret != expected {
+			t.Fatalf("ReturnThreeDoubles returned %+v wanted %+v", ret, expected)
+		}
+	}
+}

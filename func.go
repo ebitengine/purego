@@ -160,6 +160,14 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 				panic("purego: unsupported kind " + arg.Kind().String())
 			}
 		}
+		if ty.NumOut() > 0 && ty.Out(0).Kind() == reflect.Struct {
+			if runtime.GOOS != "darwin" {
+				panic("purego: struct return values only supported on darwin")
+			}
+			// TODO: check fields
+			// TODO: check size to see if it a pointer
+			ints++
+		}
 		sizeOfStack := maxArgs - numOfIntegerRegisters()
 		if stack > sizeOfStack {
 			panic("purego: too many arguments")
@@ -226,6 +234,14 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 			runtime.KeepAlive(keepAlive)
 			runtime.KeepAlive(args)
 		}()
+		if ty.NumOut() == 1 && ty.Out(0).Kind() == reflect.Struct {
+			outType := ty.Out(0)
+			if outType.Size() > 16 {
+				val := reflect.New(outType)
+				keepAlive = append(keepAlive, val)
+				addInt(val.Pointer())
+			}
+		}
 		for _, v := range args {
 			switch v.Kind() {
 			case reflect.String:
@@ -258,7 +274,7 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 			}
 		}
 		// TODO: support structs
-		var r1, r2 uintptr
+		var r1, r2, r3 uintptr
 		if runtime.GOARCH == "arm64" || runtime.GOOS != "windows" {
 			// Use the normal arm64 calling convention even on Windows
 			syscall := syscall15Args{
@@ -270,7 +286,7 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 				0, 0, 0,
 			}
 			runtime_cgocall(syscall15XABI0, unsafe.Pointer(&syscall))
-			r1, r2 = syscall.r1, syscall.r2
+			r1, r2, r3 = syscall.r1, syscall.r2, syscall.a1
 		} else {
 			// This is a fallback for Windows amd64, 386, and arm. Note this may not support floats
 			r1, r2, _ = syscall_syscall15X(cfn, sysargs[0], sysargs[1], sysargs[2], sysargs[3], sysargs[4],
@@ -309,6 +325,22 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 			// NOTE: r2 is only the floating return value on 64bit platforms.
 			// On 32bit platforms r2 is the upper part of a 64bit return.
 			v.SetFloat(math.Float64frombits(uint64(r2)))
+		case reflect.Struct:
+			outSize := outType.Size()
+			if outSize == 0 {
+				break // ignore empty structs
+			} else if outSize <= 8 {
+				// up to 8 bytes is returned in RAX
+				v = reflect.NewAt(outType, unsafe.Pointer(&struct{ a uintptr }{r1})).Elem()
+				break
+			} else if outSize <= 16 {
+				// up to 16 bytes is returned in RAX and RDX
+				v = reflect.NewAt(outType, unsafe.Pointer(&struct{ a, b uintptr }{r1, r3})).Elem()
+			} else {
+				// create struct from the Go pointer created above
+				// weird pointer dereference to circumvent go vet
+				v = reflect.NewAt(outType, *(*unsafe.Pointer)(unsafe.Pointer(&r1))).Elem()
+			}
 		default:
 			panic("purego: unsupported return kind: " + outType.Kind().String())
 		}
