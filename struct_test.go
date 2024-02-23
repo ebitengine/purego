@@ -613,4 +613,30 @@ func TestRegisterFunc_structReturns(t *testing.T) {
 			t.Fatalf("ReturnUnaligned1 returned %+v wanted %+v", ret, expected)
 		}
 	}
+	{
+		type Mixed1 struct {
+			a float32
+			b int32
+		}
+		var ReturnMixed1 func(a float32, b int32) Mixed1
+		purego.RegisterLibFunc(&ReturnMixed1, lib, "ReturnMixed1")
+		expected := Mixed1{1, 2}
+		if ret := ReturnMixed1(1, 2); ret != expected {
+			t.Fatalf("ReturnMixed1 returned %+v wanted %+v", ret, expected)
+		}
+	}
+	{
+		type Mixed2 struct {
+			a float32
+			b int32
+			c float32
+			d int32
+		}
+		var ReturnMixed2 func(a float32, b int32, c float32, d int32) Mixed2
+		purego.RegisterLibFunc(&ReturnMixed2, lib, "ReturnMixed2")
+		expected := Mixed2{1, 2, 3, 4}
+		if ret := ReturnMixed2(1, 2, 3, 4); ret != expected {
+			t.Fatalf("ReturnMixed2 returned %+v wanted %+v", ret, expected)
+		}
+	}
 }

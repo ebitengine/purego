@@ -156,9 +156,20 @@ struct Mixed1{
      int32_t b;
 };
 
+struct Mixed1 ReturnMixed1(float a, int32_t b) {
+    struct Mixed1 e = {a, b};
+    return e;
+}
+
 struct Mixed2{
      float a;
      int32_t b;
      float c;
      int32_t d;
 };
+
+
+struct Mixed2 ReturnMixed2(float a, int32_t b, float c, int32_t d) {
+    struct Mixed2 e = {a, b, c, d};
+    return e;
+}

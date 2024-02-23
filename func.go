@@ -339,8 +339,7 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 			if outSize == 0 {
 				break // ignore empty structs
 			} else if outSize <= 8 {
-				kind := outType.Field(0).Type.Kind()
-				if kind == reflect.Float64 || kind == reflect.Float32 {
+				if isAllFloats(outType) {
 					// float64s are return in the float register
 					v = reflect.NewAt(outType, unsafe.Pointer(&struct{ a uintptr }{syscall.f1})).Elem()
 				} else {
@@ -349,10 +348,7 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 				}
 				break
 			} else if outSize <= 16 {
-				kind1 := outType.Field(0).Type.Kind()
-				kind2 := outType.Field(1).Type.Kind()
-				if kind1 == reflect.Float32 || kind1 == reflect.Float64 &&
-					kind2 == reflect.Float32 || kind2 == reflect.Float64 {
+				if isAllFloats(outType) {
 					v = reflect.NewAt(outType, unsafe.Pointer(&struct{ a, b uintptr }{syscall.f1, syscall.f2})).Elem()
 				} else {
 					// up to 16 bytes is returned in RAX and RDX
@@ -373,6 +369,18 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 		return []reflect.Value{v}
 	})
 	fn.Set(v)
+}
+
+func isAllFloats(ty reflect.Type) bool {
+	for i := 0; i < ty.NumField(); i++ {
+		f := ty.Field(i)
+		switch f.Type.Kind() {
+		case reflect.Float64, reflect.Float32:
+		default:
+			return false
+		}
+	}
+	return true
 }
 
 func checkStruct(ty reflect.Type) {
