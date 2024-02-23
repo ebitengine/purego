@@ -66,12 +66,77 @@ struct ThreeLongs ReturnThreeLongs(int64_t a, int64_t b, int64_t c) {
     return e;
 }
 
+struct OneFloat{
+    float a;
+};
+
+struct TwoFloats{
+    float a, b;
+};
+
+struct TwoFloats ReturnTwoFloats(float a, float b) {
+    struct TwoFloats e = {a, b};
+    return e;
+}
+
+struct ThreeFloats{
+    float a, b, c;
+};
+
+struct ThreeFloats ReturnThreeFloats(float a, float b, float c) {
+    struct ThreeFloats e = {a, b, c};
+    return e;
+}
+
+struct OneFloat ReturnOneFloat(float a) {
+    struct OneFloat e = {a};
+    return e;
+}
+
+struct OneDouble{
+    double a;
+};
+
+struct OneDouble ReturnOneDouble(double a) {
+    struct OneDouble e = {a};
+    return e;
+}
+
+struct TwoDoubles{
+    double a, b;
+};
+
+struct TwoDoubles ReturnTwoDoubles(double a, double b) {
+    struct TwoDoubles e = {a, b};
+    return e;
+}
+
 struct ThreeDoubles{
     double a, b, c;
 };
 
 struct ThreeDoubles ReturnThreeDoubles(double a, double b, double c) {
     struct ThreeDoubles e = {a, b, c};
+    return e;
+}
+
+struct OneFloatOneDouble{
+    float a;
+    double b;
+};
+
+struct OneFloatOneDouble ReturnOneFloatOneDouble(float a, double b) {
+    struct OneFloatOneDouble e = {a, b};
+    return e;
+}
+
+struct OneDoubleOneFloat{
+    double a;
+    float b;
+};
+
+struct OneDoubleOneFloat ReturnOneDoubleOneFloat(double a, float b) {
+    struct OneDoubleOneFloat e = {a, b};
     return e;
 }
 
@@ -85,3 +150,15 @@ struct Unaligned1 ReturnUnaligned1(int8_t a, int16_t b, int64_t c) {
     struct Unaligned1 e = {a, b, c};
     return e;
 }
+
+struct Mixed1{
+     float a;
+     int32_t b;
+};
+
+struct Mixed2{
+     float a;
+     int32_t b;
+     float c;
+     int32_t d;
+};

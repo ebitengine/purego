@@ -521,12 +521,81 @@ func TestRegisterFunc_structReturns(t *testing.T) {
 		}
 	}
 	{
+		type OneFloat struct{ a float32 }
+		var ReturnOneFloat func(a float32) OneFloat
+		purego.RegisterLibFunc(&ReturnOneFloat, lib, "ReturnOneFloat")
+		expected := OneFloat{1}
+		if ret := ReturnOneFloat(1); ret != expected {
+			t.Fatalf("ReturnOneFloat returned %+v wanted %+v", ret, expected)
+		}
+	}
+	{
+		type TwoFloats struct{ a, b float32 }
+		var ReturnTwoFloats func(a, b float32) TwoFloats
+		purego.RegisterLibFunc(&ReturnTwoFloats, lib, "ReturnTwoFloats")
+		expected := TwoFloats{1, 2}
+		if ret := ReturnTwoFloats(1, 2); ret != expected {
+			t.Fatalf("ReturnTwoFloats returned %+v wanted %+v", ret, expected)
+		}
+	}
+	{
+		type ThreeFloats struct{ a, b, c float32 }
+		var ReturnThreeFloats func(a, b, c float32) ThreeFloats
+		purego.RegisterLibFunc(&ReturnThreeFloats, lib, "ReturnThreeFloats")
+		expected := ThreeFloats{1, 2, 3}
+		if ret := ReturnThreeFloats(1, 2, 3); ret != expected {
+			t.Fatalf("ReturnThreeFloats returned %+v wanted %+v", ret, expected)
+		}
+	}
+	{
+		type OneDouble struct{ a float64 }
+		var ReturnOneDouble func(a float64) OneDouble
+		purego.RegisterLibFunc(&ReturnOneDouble, lib, "ReturnOneDouble")
+		expected := OneDouble{1}
+		if ret := ReturnOneDouble(1); ret != expected {
+			t.Fatalf("ReturnOneDouble returned %+v wanted %+v", ret, expected)
+		}
+	}
+	{
+		type TwoDoubles struct{ a, b float64 }
+		var ReturnTwoDoubles func(a, b float64) TwoDoubles
+		purego.RegisterLibFunc(&ReturnTwoDoubles, lib, "ReturnTwoDoubles")
+		expected := TwoDoubles{1, 2}
+		if ret := ReturnTwoDoubles(1, 2); ret != expected {
+			t.Fatalf("ReturnTwoDoubles returned %+v wanted %+v", ret, expected)
+		}
+	}
+	{
 		type ThreeDoubles struct{ a, b, c float64 }
 		var ReturnThreeDoubles func(a, b, c float64) ThreeDoubles
 		purego.RegisterLibFunc(&ReturnThreeDoubles, lib, "ReturnThreeDoubles")
 		expected := ThreeDoubles{1, 2, 3}
 		if ret := ReturnThreeDoubles(1, 2, 3); ret != expected {
 			t.Fatalf("ReturnThreeDoubles returned %+v wanted %+v", ret, expected)
+		}
+	}
+	{
+		type OneFloatOneDouble struct {
+			a float32
+			b float64
+		}
+		var ReturnOneFloatOneDouble func(a float32, b float64) OneFloatOneDouble
+		purego.RegisterLibFunc(&ReturnOneFloatOneDouble, lib, "ReturnOneFloatOneDouble")
+		expected := OneFloatOneDouble{1, 2}
+		if ret := ReturnOneFloatOneDouble(1, 2); ret != expected {
+			t.Fatalf("ReturnOneFloatOneDouble returned %+v wanted %+v", ret, expected)
+		}
+	}
+	{
+		type OneDoubleOneFloat struct {
+			a float64
+			b float32
+		}
+		var ReturnOneDoubleOneFloat func(a float64, b float32) OneDoubleOneFloat
+		purego.RegisterLibFunc(&ReturnOneDoubleOneFloat, lib, "ReturnOneDoubleOneFloat")
+		expected := OneDoubleOneFloat{1, 2}
+		if ret := ReturnOneDoubleOneFloat(1, 2); ret != expected {
+			t.Fatalf("ReturnOneDoubleOneFloat returned %+v wanted %+v", ret, expected)
 		}
 	}
 	{

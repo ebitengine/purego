@@ -282,11 +282,11 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 				panic("purego: unsupported kind: " + v.Kind().String())
 			}
 		}
-		// TODO: support structs
 		var r1, r2, r3 uintptr
+		var syscall syscall15Args
 		if runtime.GOARCH == "arm64" || runtime.GOOS != "windows" {
 			// Use the normal arm64 calling convention even on Windows
-			syscall := syscall15Args{
+			syscall = syscall15Args{
 				cfn,
 				sysargs[0], sysargs[1], sysargs[2], sysargs[3], sysargs[4], sysargs[5],
 				sysargs[6], sysargs[7], sysargs[8], sysargs[9], sysargs[10], sysargs[11],
@@ -339,12 +339,25 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 			if outSize == 0 {
 				break // ignore empty structs
 			} else if outSize <= 8 {
-				// up to 8 bytes is returned in RAX
-				v = reflect.NewAt(outType, unsafe.Pointer(&struct{ a uintptr }{r1})).Elem()
+				kind := outType.Field(0).Type.Kind()
+				if kind == reflect.Float64 || kind == reflect.Float32 {
+					// float64s are return in the float register
+					v = reflect.NewAt(outType, unsafe.Pointer(&struct{ a uintptr }{syscall.f1})).Elem()
+				} else {
+					// up to 8 bytes is returned in RAX
+					v = reflect.NewAt(outType, unsafe.Pointer(&struct{ a uintptr }{r1})).Elem()
+				}
 				break
 			} else if outSize <= 16 {
-				// up to 16 bytes is returned in RAX and RDX
-				v = reflect.NewAt(outType, unsafe.Pointer(&struct{ a, b uintptr }{r1, r3})).Elem()
+				kind1 := outType.Field(0).Type.Kind()
+				kind2 := outType.Field(1).Type.Kind()
+				if kind1 == reflect.Float32 || kind1 == reflect.Float64 &&
+					kind2 == reflect.Float32 || kind2 == reflect.Float64 {
+					v = reflect.NewAt(outType, unsafe.Pointer(&struct{ a, b uintptr }{syscall.f1, syscall.f2})).Elem()
+				} else {
+					// up to 16 bytes is returned in RAX and RDX
+					v = reflect.NewAt(outType, unsafe.Pointer(&struct{ a, b uintptr }{r1, r3})).Elem()
+				}
 			} else {
 				// create struct from the Go pointer created above
 				// weird pointer dereference to circumvent go vet

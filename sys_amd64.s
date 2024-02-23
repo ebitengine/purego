@@ -89,6 +89,8 @@ TEXT syscall15X(SB), NOSPLIT|NOFRAME, $0
 	MOVQ AX, syscall15Args_r1(DI) // r1
 	MOVQ X0, syscall15Args_r2(DI) // r2
 	MOVQ DX, syscall15Args_a1(DI) // r3
+	MOVQ X0, syscall15Args_f1(DI) // f1
+	MOVQ X1, syscall15Args_f2(DI) // f1
 
 	XORL AX, AX          // no error (it's ignored anyway)
 	ADDQ $STACK_SIZE, SP
