@@ -10,6 +10,17 @@ struct Empty ReturnEmpty() {
     return e;
 }
 
+struct StructInStruct{
+    struct{ int16_t a; } a;
+    struct{ int16_t b; } b;
+    struct{ int16_t c; } c;
+};
+
+struct StructInStruct ReturnStructInStruct(int16_t a, int16_t b, int16_t c) {
+    struct StructInStruct e = {{a}, {b}, {c}};
+    return e;
+}
+
 struct ThreeShorts{
     int16_t a, b, c;
 };
@@ -61,5 +72,16 @@ struct ThreeDoubles{
 
 struct ThreeDoubles ReturnThreeDoubles(double a, double b, double c) {
     struct ThreeDoubles e = {a, b, c};
+    return e;
+}
+
+struct Unaligned1{
+    int8_t  a;
+    int16_t b;
+    int64_t c;
+};
+
+struct Unaligned1 ReturnUnaligned1(int8_t a, int16_t b, int64_t c) {
+    struct Unaligned1 e = {a, b, c};
     return e;
 }

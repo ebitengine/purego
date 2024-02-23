@@ -6,6 +6,7 @@
 package purego
 
 import (
+	"fmt"
 	"math"
 	"reflect"
 	"runtime"
@@ -162,11 +163,14 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 		}
 		if ty.NumOut() > 0 && ty.Out(0).Kind() == reflect.Struct {
 			if runtime.GOOS != "darwin" {
-				panic("purego: struct return values only supported on darwin")
+				panic("purego: struct return values only supported on darwin arm64 & amd64")
 			}
 			// TODO: check fields
-			// TODO: check size to see if it a pointer
-			ints++
+			outType := ty.Out(0)
+			checkStruct(outType)
+			if outType.Size() > 16 {
+				ints++
+			}
 		}
 		sizeOfStack := maxArgs - numOfIntegerRegisters()
 		if stack > sizeOfStack {
@@ -347,6 +351,25 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 		return []reflect.Value{v}
 	})
 	fn.Set(v)
+}
+
+func checkStruct(ty reflect.Type) {
+	for i := 0; i < ty.NumField(); i++ {
+		f := ty.Field(i).Type
+		if f.Kind() == reflect.Array {
+			f = f.Elem()
+		} else if f.Kind() == reflect.Struct {
+			checkStruct(f)
+			continue
+		}
+		switch f.Kind() {
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+			reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
+			reflect.Float64, reflect.Float32:
+		default:
+			panic(fmt.Sprintf("purego: struct field type %s is not supported", f))
+		}
+	}
 }
 
 func roundUpTo8(val uintptr) uintptr {

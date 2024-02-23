@@ -462,6 +462,20 @@ func TestRegisterFunc_structReturns(t *testing.T) {
 		_ = ret
 	}
 	{
+		type inner struct{ a int16 }
+		type StructInStruct struct {
+			a inner
+			b inner
+			c inner
+		}
+		var ReturnStructInStruct func(a, b, c int16) StructInStruct
+		purego.RegisterLibFunc(&ReturnStructInStruct, lib, "ReturnStructInStruct")
+		expected := StructInStruct{inner{^int16(0)}, inner{2}, inner{3}}
+		if ret := ReturnStructInStruct(^int16(0), 2, 3); ret != expected {
+			t.Fatalf("StructInStruct returned %+v wanted %+v", ret, expected)
+		}
+	}
+	{
 		type ThreeShorts struct{ a, b, c int16 }
 		var ReturnThreeShorts func(a, b, c int16) ThreeShorts
 		purego.RegisterLibFunc(&ReturnThreeShorts, lib, "ReturnThreeShorts")
@@ -513,6 +527,21 @@ func TestRegisterFunc_structReturns(t *testing.T) {
 		expected := ThreeDoubles{1, 2, 3}
 		if ret := ReturnThreeDoubles(1, 2, 3); ret != expected {
 			t.Fatalf("ReturnThreeDoubles returned %+v wanted %+v", ret, expected)
+		}
+	}
+	{
+		type Unaligned1 struct {
+			a int8
+			_ [1]int8
+			b int16
+			_ [1]int32
+			c int64
+		}
+		var ReturnUnaligned1 func(a int8, b int16, c int64) Unaligned1
+		purego.RegisterLibFunc(&ReturnUnaligned1, lib, "ReturnUnaligned1")
+		expected := Unaligned1{a: 1, b: 2, c: 3}
+		if ret := ReturnUnaligned1(1, 2, 3); ret != expected {
+			t.Fatalf("ReturnUnaligned1 returned %+v wanted %+v", ret, expected)
 		}
 	}
 }
