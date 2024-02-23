@@ -51,14 +51,15 @@ TEXT syscall15X(SB), NOSPLIT, $0
 	FMOVD syscall15Args_f7(R9), F6 // f7
 	FMOVD syscall15Args_f8(R9), F7 // f8
 
-	MOVD syscall15Args_a1(R9), R0 // a1
-	MOVD syscall15Args_a2(R9), R1 // a2
-	MOVD syscall15Args_a3(R9), R2 // a3
-	MOVD syscall15Args_a4(R9), R3 // a4
-	MOVD syscall15Args_a5(R9), R4 // a5
-	MOVD syscall15Args_a6(R9), R5 // a6
-	MOVD syscall15Args_a7(R9), R6 // a7
-	MOVD syscall15Args_a8(R9), R7 // a8
+	MOVD syscall15Args_a1(R9), R0       // a1
+	MOVD syscall15Args_a2(R9), R1       // a2
+	MOVD syscall15Args_a3(R9), R2       // a3
+	MOVD syscall15Args_a4(R9), R3       // a4
+	MOVD syscall15Args_a5(R9), R4       // a5
+	MOVD syscall15Args_a6(R9), R5       // a6
+	MOVD syscall15Args_a7(R9), R6       // a7
+	MOVD syscall15Args_a8(R9), R7       // a8
+	MOVD syscall15Args_arm64_r8(R9), R8 // r8
 
 	MOVD syscall15Args_a9(R9), R10
 	MOVD R10, 0(RSP)                // push a9 onto stack
@@ -82,4 +83,6 @@ TEXT syscall15X(SB), NOSPLIT, $0
 	ADD   $STACK_SIZE, RSP
 	MOVD  R0, syscall15Args_r1(R2) // save r1
 	FMOVD F0, syscall15Args_r2(R2) // save r2
+	MOVD  R1, syscall15Args_a1(R2) // save r3
+
 	RET
