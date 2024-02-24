@@ -165,7 +165,6 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 			if runtime.GOOS != "darwin" {
 				panic("purego: struct return values only supported on darwin arm64 & amd64")
 			}
-			// TODO: check fields
 			outType := ty.Out(0)
 			checkStruct(outType)
 			if outType.Size() > 16 {
