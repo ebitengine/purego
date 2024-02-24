@@ -299,7 +299,7 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 			runtime_cgocall(syscall15XABI0, unsafe.Pointer(&syscall))
 		} else {
 			// This is a fallback for Windows amd64, 386, and arm. Note this may not support floats
-			syscall.r1, syscall.r2, _ = syscall_syscall15X(cfn, sysargs[0], sysargs[1], sysargs[2], sysargs[3], sysargs[4],
+			syscall.a1, syscall.a2, _ = syscall_syscall15X(cfn, sysargs[0], sysargs[1], sysargs[2], sysargs[3], sysargs[4],
 				sysargs[5], sysargs[6], sysargs[7], sysargs[8], sysargs[9], sysargs[10], sysargs[11],
 				sysargs[12], sysargs[13], sysargs[14])
 			syscall.f1 = syscall.r2 // on amd64 r2 stores the float return. On 32bit platforms floats aren't support
@@ -311,23 +311,23 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 		v := reflect.New(outType).Elem()
 		switch outType.Kind() {
 		case reflect.Uintptr, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-			v.SetUint(uint64(syscall.r1))
+			v.SetUint(uint64(syscall.a1))
 		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-			v.SetInt(int64(syscall.r1))
+			v.SetInt(int64(syscall.a1))
 		case reflect.Bool:
-			v.SetBool(byte(syscall.r1) != 0)
+			v.SetBool(byte(syscall.a1) != 0)
 		case reflect.UnsafePointer:
 			// We take the address and then dereference it to trick go vet from creating a possible miss-use of unsafe.Pointer
-			v.SetPointer(*(*unsafe.Pointer)(unsafe.Pointer(&syscall.r1)))
+			v.SetPointer(*(*unsafe.Pointer)(unsafe.Pointer(&syscall.a1)))
 		case reflect.Ptr:
 			// It is safe to have the address of syscall.r1 not escape because it is immediately dereferenced with .Elem()
-			v = reflect.NewAt(outType, runtime_noescape(unsafe.Pointer(&syscall.r1))).Elem()
+			v = reflect.NewAt(outType, runtime_noescape(unsafe.Pointer(&syscall.a1))).Elem()
 		case reflect.Func:
 			// wrap this C function in a nicely typed Go function
 			v = reflect.New(outType)
-			RegisterFunc(v.Interface(), syscall.r1)
+			RegisterFunc(v.Interface(), syscall.a1)
 		case reflect.String:
-			v.SetString(strings.GoString(syscall.r1))
+			v.SetString(strings.GoString(syscall.a1))
 		case reflect.Float32:
 			// NOTE: syscall.r2 is only the floating return value on 64bit platforms.
 			// On 32bit platforms syscall.r2 is the upper part of a 64bit return.

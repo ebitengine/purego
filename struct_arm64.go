@@ -22,10 +22,10 @@ func getStruct(outType reflect.Type, syscall syscall15Args) (v reflect.Value) {
 				v = reflect.NewAt(outType, unsafe.Pointer(&struct{ a uintptr }{syscall.f1})).Elem()
 			}
 		} else {
-			v = reflect.NewAt(outType, unsafe.Pointer(&struct{ a uintptr }{syscall.r1})).Elem()
+			v = reflect.NewAt(outType, unsafe.Pointer(&struct{ a uintptr }{syscall.a1})).Elem()
 		}
 	case outSize <= 16:
-		r1, r2 := syscall.r1, syscall.a1
+		r1, r2 := syscall.a1, syscall.a2
 		if isAllSameFloat(outType) {
 			switch outType.NumField() {
 			case 4:
