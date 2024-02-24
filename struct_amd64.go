@@ -6,7 +6,35 @@ package purego
 import (
 	"math"
 	"reflect"
+	"unsafe"
 )
+
+func getStruct(outType reflect.Type, syscall syscall15Args) (v reflect.Value) {
+	outSize := outType.Size()
+	if outSize == 0 {
+		return reflect.New(outType).Elem()
+	} else if outSize <= 8 {
+		if isAllFloats(outType) {
+			// float64s are return in the float register
+			v = reflect.NewAt(outType, unsafe.Pointer(&struct{ a uintptr }{syscall.f1})).Elem()
+		} else {
+			// up to 8 bytes is returned in RAX
+			v = reflect.NewAt(outType, unsafe.Pointer(&struct{ a uintptr }{syscall.r1})).Elem()
+		}
+	} else if outSize <= 16 {
+		if isAllFloats(outType) {
+			v = reflect.NewAt(outType, unsafe.Pointer(&struct{ a, b uintptr }{syscall.f1, syscall.f2})).Elem()
+		} else {
+			// up to 16 bytes is returned in RAX and RDX
+			v = reflect.NewAt(outType, unsafe.Pointer(&struct{ a, b uintptr }{syscall.r1, syscall.a1})).Elem()
+		}
+	} else {
+		// create struct from the Go pointer created above
+		// weird pointer dereference to circumvent go vet
+		v = reflect.NewAt(outType, *(*unsafe.Pointer)(unsafe.Pointer(&syscall.r1))).Elem()
+	}
+	return v
+}
 
 // https://refspecs.linuxbase.org/elf/x86_64-abi-0.99.pdf
 // https://gitlab.com/x86-psABIs/x86-64-ABI

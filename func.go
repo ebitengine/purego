@@ -282,7 +282,7 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 				panic("purego: unsupported kind: " + v.Kind().String())
 			}
 		}
-		var r1, r2, r3 uintptr
+		var r1, r2 uintptr
 		var syscall syscall15Args
 		if runtime.GOARCH == "arm64" || runtime.GOOS != "windows" {
 			// Use the normal arm64 calling convention even on Windows
@@ -295,7 +295,7 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 				0, 0, 0, arm64_r8,
 			}
 			runtime_cgocall(syscall15XABI0, unsafe.Pointer(&syscall))
-			r1, r2, r3 = syscall.r1, syscall.r2, syscall.a1
+			r1, r2, _ = syscall.r1, syscall.r2, syscall.a1
 		} else {
 			// This is a fallback for Windows amd64, 386, and arm. Note this may not support floats
 			r1, r2, _ = syscall_syscall15X(cfn, sysargs[0], sysargs[1], sysargs[2], sysargs[3], sysargs[4],
@@ -335,34 +335,7 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 			// On 32bit platforms r2 is the upper part of a 64bit return.
 			v.SetFloat(math.Float64frombits(uint64(r2)))
 		case reflect.Struct:
-			outSize := outType.Size()
-			if outSize == 0 {
-				break // ignore empty structs
-			} else if outSize <= 8 {
-				if isAllFloats(outType) {
-					// float64s are return in the float register
-					v = reflect.NewAt(outType, unsafe.Pointer(&struct{ a uintptr }{syscall.f1})).Elem()
-				} else {
-					// up to 8 bytes is returned in RAX
-					v = reflect.NewAt(outType, unsafe.Pointer(&struct{ a uintptr }{r1})).Elem()
-				}
-				break
-			} else if outSize <= 16 {
-				if isAllFloats(outType) {
-					v = reflect.NewAt(outType, unsafe.Pointer(&struct{ a, b uintptr }{syscall.f1, syscall.f2})).Elem()
-				} else {
-					// up to 16 bytes is returned in RAX and RDX
-					v = reflect.NewAt(outType, unsafe.Pointer(&struct{ a, b uintptr }{r1, r3})).Elem()
-				}
-			} else {
-				// create struct from the Go pointer created above
-				// weird pointer dereference to circumvent go vet
-				if runtime.GOARCH == "amd64" {
-					v = reflect.NewAt(outType, *(*unsafe.Pointer)(unsafe.Pointer(&r1))).Elem()
-				} else if runtime.GOARCH == "arm64" {
-					v = reflect.NewAt(outType, *(*unsafe.Pointer)(unsafe.Pointer(&arm64_r8))).Elem()
-				}
-			}
+			v = getStruct(outType, syscall)
 		default:
 			panic("purego: unsupported return kind: " + outType.Kind().String())
 		}
