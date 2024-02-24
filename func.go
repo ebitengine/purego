@@ -344,18 +344,6 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 	fn.Set(v)
 }
 
-func isAllFloats(ty reflect.Type) bool {
-	for i := 0; i < ty.NumField(); i++ {
-		f := ty.Field(i)
-		switch f.Type.Kind() {
-		case reflect.Float64, reflect.Float32:
-		default:
-			return false
-		}
-	}
-	return true
-}
-
 func checkStruct(ty reflect.Type) {
 	for i := 0; i < ty.NumField(); i++ {
 		f := ty.Field(i).Type

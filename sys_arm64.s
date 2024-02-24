@@ -82,14 +82,6 @@ TEXT syscall15X(SB), NOSPLIT, $0
 	MOVD PTR_ADDRESS(RSP), R2 // pop structure pointer
 	ADD  $STACK_SIZE, RSP
 
-	MOVD ZR, syscall15Args_r1(R2) // TODO: remove zeroing just for testing
-	MOVD ZR, syscall15Args_r2(R2)
-	MOVD ZR, syscall15Args_a1(R2)
-	MOVD ZR, syscall15Args_f1(R2)
-	MOVD ZR, syscall15Args_f2(R2)
-	MOVD ZR, syscall15Args_f3(R2)
-	MOVD ZR, syscall15Args_f4(R2)
-
 	MOVD  R0, syscall15Args_r1(R2) // save r1
 	FMOVD F0, syscall15Args_r2(R2) // save r2
 	MOVD  R1, syscall15Args_a1(R2) // save r3

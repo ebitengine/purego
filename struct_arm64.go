@@ -15,7 +15,7 @@ func getStruct(outType reflect.Type, syscall syscall15Args) (v reflect.Value) {
 	case outSize == 0:
 		return reflect.New(outType).Elem()
 	case outSize <= 8:
-		if isAllFloats(outType) {
+		if isAllSameFloat(outType) {
 			if outType.NumField() == 2 {
 				v = reflect.NewAt(outType, unsafe.Pointer(&struct{ a uintptr }{syscall.f2<<32 | syscall.f1})).Elem()
 			} else {
@@ -32,18 +32,8 @@ func getStruct(outType reflect.Type, syscall syscall15Args) (v reflect.Value) {
 				r1 = syscall.f2<<32 | syscall.f1
 				r2 = syscall.f4<<32 | syscall.f3
 			case 3:
-				field1 := outType.Field(0).Type.Kind()
-				field2 := outType.Field(1).Name
-				if field1 == reflect.Float64 {
-					r1 = syscall.f1
-					r2 = syscall.f3<<32 | syscall.f2
-				} else if field2 != "_" {
-					r1 = syscall.f2<<32 | syscall.f1
-					r2 = syscall.f3
-				} else {
-					r1 = syscall.r1
-					r2 = syscall.a1
-				}
+				r1 = syscall.f2<<32 | syscall.f1
+				r2 = syscall.f3
 			case 2:
 				r1 = syscall.f1
 				r2 = syscall.f2
@@ -53,9 +43,20 @@ func getStruct(outType reflect.Type, syscall syscall15Args) (v reflect.Value) {
 		}
 		v = reflect.NewAt(outType, unsafe.Pointer(&struct{ a, b uintptr }{r1, r2})).Elem()
 	default:
-		// create struct from the Go pointer created above
-		// weird pointer dereference to circumvent go vet
-		v = reflect.NewAt(outType, *(*unsafe.Pointer)(unsafe.Pointer(&syscall.arm64_r8))).Elem()
+		if isAllSameFloat(outType) && outType.NumField() <= 4 {
+			switch outType.NumField() {
+			case 4:
+				v = reflect.NewAt(outType, unsafe.Pointer(&struct{ a, b, c, d uintptr }{syscall.f1, syscall.f2, syscall.f3, syscall.f4})).Elem()
+			case 3:
+				v = reflect.NewAt(outType, unsafe.Pointer(&struct{ a, b, c uintptr }{syscall.f1, syscall.f2, syscall.f3})).Elem()
+			default:
+				panic("unreachable")
+			}
+		} else {
+			// create struct from the Go pointer created in arm64_r8
+			// weird pointer dereference to circumvent go vet
+			v = reflect.NewAt(outType, *(*unsafe.Pointer)(unsafe.Pointer(&syscall.arm64_r8))).Elem()
+		}
 	}
 	return v
 }

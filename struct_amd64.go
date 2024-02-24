@@ -36,6 +36,18 @@ func getStruct(outType reflect.Type, syscall syscall15Args) (v reflect.Value) {
 	return v
 }
 
+func isAllFloats(ty reflect.Type) bool {
+	for i := 0; i < ty.NumField(); i++ {
+		f := ty.Field(i)
+		switch f.Type.Kind() {
+		case reflect.Float64, reflect.Float32:
+		default:
+			return false
+		}
+	}
+	return true
+}
+
 // https://refspecs.linuxbase.org/elf/x86_64-abi-0.99.pdf
 // https://gitlab.com/x86-psABIs/x86-64-ABI
 // Class determines where the 8 byte value goes.

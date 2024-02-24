@@ -533,8 +533,8 @@ func TestRegisterFunc_structReturns(t *testing.T) {
 		type TwoFloats struct{ a, b float32 }
 		var ReturnTwoFloats func(a, b float32) TwoFloats
 		purego.RegisterLibFunc(&ReturnTwoFloats, lib, "ReturnTwoFloats")
-		expected := TwoFloats{1, 2}
-		if ret := ReturnTwoFloats(1, 2); ret != expected {
+		expected := TwoFloats{3, 10}
+		if ret := ReturnTwoFloats(5, 2); ret != expected {
 			t.Fatalf("ReturnTwoFloats returned %+v wanted %+v", ret, expected)
 		}
 	}
@@ -565,15 +565,24 @@ func TestRegisterFunc_structReturns(t *testing.T) {
 			t.Fatalf("ReturnTwoDoubles returned %+v wanted %+v", ret, expected)
 		}
 	}
-	//{
-	//	type ThreeDoubles struct{ a, b, c float64 }
-	//	var ReturnThreeDoubles func(a, b, c float64) ThreeDoubles
-	//	purego.RegisterLibFunc(&ReturnThreeDoubles, lib, "ReturnThreeDoubles")
-	//	expected := ThreeDoubles{1, 2, 3}
-	//	if ret := ReturnThreeDoubles(1, 2, 3); ret != expected {
-	//		t.Fatalf("ReturnThreeDoubles returned %+v wanted %+v", ret, expected)
-	//	}
-	//}
+	{
+		type ThreeDoubles struct{ a, b, c float64 }
+		var ReturnThreeDoubles func(a, b, c float64) ThreeDoubles
+		purego.RegisterLibFunc(&ReturnThreeDoubles, lib, "ReturnThreeDoubles")
+		expected := ThreeDoubles{1, 2, 3}
+		if ret := ReturnThreeDoubles(1, 2, 3); ret != expected {
+			t.Fatalf("ReturnThreeDoubles returned %+v wanted %+v", ret, expected)
+		}
+	}
+	{
+		type FourDoubles struct{ a, b, c, d float64 }
+		var ReturnFourDoubles func(a, b, c, d float64) FourDoubles
+		purego.RegisterLibFunc(&ReturnFourDoubles, lib, "ReturnFourDoubles")
+		expected := FourDoubles{1, 2, 3, 4}
+		if ret := ReturnFourDoubles(1, 2, 3, 4); ret != expected {
+			t.Fatalf("ReturnFourDoubles returned %+v wanted %+v", ret, expected)
+		}
+	}
 	{
 		type OneFloatOneDouble struct {
 			a float32
@@ -599,21 +608,21 @@ func TestRegisterFunc_structReturns(t *testing.T) {
 			t.Fatalf("ReturnOneDoubleOneFloat returned %+v wanted %+v", ret, expected)
 		}
 	}
-	//{
-	//	type Unaligned1 struct {
-	//		a int8
-	//		_ [1]int8
-	//		b int16
-	//		_ [1]int32
-	//		c int64
-	//	}
-	//	var ReturnUnaligned1 func(a int8, b int16, c int64) Unaligned1
-	//	purego.RegisterLibFunc(&ReturnUnaligned1, lib, "ReturnUnaligned1")
-	//	expected := Unaligned1{a: 1, b: 2, c: 3}
-	//	if ret := ReturnUnaligned1(1, 2, 3); ret != expected {
-	//		t.Fatalf("ReturnUnaligned1 returned %+v wanted %+v", ret, expected)
-	//	}
-	//}
+	{
+		type Unaligned1 struct {
+			a int8
+			_ [1]int8
+			b int16
+			_ [1]int32
+			c int64
+		}
+		var ReturnUnaligned1 func(a int8, b int16, c int64) Unaligned1
+		purego.RegisterLibFunc(&ReturnUnaligned1, lib, "ReturnUnaligned1")
+		expected := Unaligned1{a: 1, b: 2, c: 3}
+		if ret := ReturnUnaligned1(1, 2, 3); ret != expected {
+			t.Fatalf("ReturnUnaligned1 returned %+v wanted %+v", ret, expected)
+		}
+	}
 	{
 		type Mixed1 struct {
 			a float32
