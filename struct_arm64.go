@@ -6,33 +6,74 @@ package purego
 import (
 	"math"
 	"reflect"
+	"unsafe"
 )
 
 func getStruct(outType reflect.Type, syscall syscall15Args) (v reflect.Value) {
 	outSize := outType.Size()
-	if outSize == 0 {
+	switch {
+	case outSize == 0:
 		return reflect.New(outType).Elem()
-	} else if outSize <= 8 {
+	case outSize <= 8:
 		if isAllFloats(outType) {
-			// float64s are return in the float register
-			v = reflect.NewAt(outType, unsafe.Pointer(&struct{ a uintptr }{syscall.f1})).Elem()
+			if outType.NumField() == 2 {
+				v = reflect.NewAt(outType, unsafe.Pointer(&struct{ a uintptr }{syscall.f2<<32 | syscall.f1})).Elem()
+			} else {
+				v = reflect.NewAt(outType, unsafe.Pointer(&struct{ a uintptr }{syscall.f1})).Elem()
+			}
 		} else {
-			// up to 8 bytes is returned in RAX
 			v = reflect.NewAt(outType, unsafe.Pointer(&struct{ a uintptr }{syscall.r1})).Elem()
 		}
-	} else if outSize <= 16 {
-		if isAllFloats(outType) {
-			v = reflect.NewAt(outType, unsafe.Pointer(&struct{ a, b uintptr }{syscall.f1, syscall.f2})).Elem()
-		} else {
-			// up to 16 bytes is returned in RAX and RDX
-			v = reflect.NewAt(outType, unsafe.Pointer(&struct{ a, b uintptr }{syscall.r1, syscall.a1})).Elem()
+	case outSize <= 16:
+		r1, r2 := syscall.r1, syscall.a1
+		if isAllSameFloat(outType) {
+			switch outType.NumField() {
+			case 4:
+				r1 = syscall.f2<<32 | syscall.f1
+				r2 = syscall.f4<<32 | syscall.f3
+			case 3:
+				field1 := outType.Field(0).Type.Kind()
+				field2 := outType.Field(1).Name
+				if field1 == reflect.Float64 {
+					r1 = syscall.f1
+					r2 = syscall.f3<<32 | syscall.f2
+				} else if field2 != "_" {
+					r1 = syscall.f2<<32 | syscall.f1
+					r2 = syscall.f3
+				} else {
+					r1 = syscall.r1
+					r2 = syscall.a1
+				}
+			case 2:
+				r1 = syscall.f1
+				r2 = syscall.f2
+			default:
+				panic("unreachable")
+			}
 		}
-	} else {
+		v = reflect.NewAt(outType, unsafe.Pointer(&struct{ a, b uintptr }{r1, r2})).Elem()
+	default:
 		// create struct from the Go pointer created above
 		// weird pointer dereference to circumvent go vet
-		v = reflect.NewAt(outType, *(*unsafe.Pointer)(unsafe.Pointer(&syscall.r1))).Elem()
+		v = reflect.NewAt(outType, *(*unsafe.Pointer)(unsafe.Pointer(&syscall.arm64_r8))).Elem()
 	}
 	return v
+}
+
+func isAllSameFloat(ty reflect.Type) bool {
+	first := ty.Field(0).Type.Kind()
+	if first != reflect.Float32 && first != reflect.Float64 {
+		return false
+	}
+	for i := 0; i < ty.NumField(); i++ {
+		f := ty.Field(i)
+		switch f.Type.Kind() {
+		case first:
+		default:
+			return false
+		}
+	}
+	return true
 }
 
 // https://github.com/ARM-software/abi-aa/blob/main/sysvabi64/sysvabi64.rst
