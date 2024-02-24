@@ -83,7 +83,6 @@ TEXT syscall15X(SB), NOSPLIT, $0
 	ADD  $STACK_SIZE, RSP
 
 	MOVD  R0, syscall15Args_r1(R2) // save r1
-	FMOVD F0, syscall15Args_r2(R2) // save r2
 	MOVD  R1, syscall15Args_a1(R2) // save r3
 	FMOVD F0, syscall15Args_f1(R2) // save f0
 	FMOVD F1, syscall15Args_f2(R2) // save f1

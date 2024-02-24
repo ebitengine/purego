@@ -87,7 +87,6 @@ TEXT syscall15X(SB), NOSPLIT|NOFRAME, $0
 
 	MOVQ PTR_ADDRESS(BP), DI      // get the pointer back
 	MOVQ AX, syscall15Args_r1(DI) // r1
-	MOVQ X0, syscall15Args_r2(DI) // r2
 	MOVQ DX, syscall15Args_a1(DI) // r3
 	MOVQ X0, syscall15Args_f1(DI) // f1
 	MOVQ X1, syscall15Args_f2(DI) // f1

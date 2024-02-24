@@ -135,6 +135,9 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 					stack++
 				}
 			case reflect.Float32, reflect.Float64:
+				if is32bit() {
+					panic("purego: floats only supported on 64bit platforms")
+				}
 				if floats < numOfFloats {
 					floats++
 				} else {
@@ -299,6 +302,7 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 			syscall.r1, syscall.r2, _ = syscall_syscall15X(cfn, sysargs[0], sysargs[1], sysargs[2], sysargs[3], sysargs[4],
 				sysargs[5], sysargs[6], sysargs[7], sysargs[8], sysargs[9], sysargs[10], sysargs[11],
 				sysargs[12], sysargs[13], sysargs[14])
+			syscall.f1 = syscall.r2 // on amd64 r2 stores the float return. On 32bit platforms floats aren't support
 		}
 		if ty.NumOut() == 0 {
 			return nil
@@ -327,11 +331,11 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 		case reflect.Float32:
 			// NOTE: syscall.r2 is only the floating return value on 64bit platforms.
 			// On 32bit platforms syscall.r2 is the upper part of a 64bit return.
-			v.SetFloat(float64(math.Float32frombits(uint32(syscall.r2))))
+			v.SetFloat(float64(math.Float32frombits(uint32(syscall.f1))))
 		case reflect.Float64:
 			// NOTE: syscall.r2 is only the floating return value on 64bit platforms.
 			// On 32bit platforms syscall.r2 is the upper part of a 64bit return.
-			v.SetFloat(math.Float64frombits(uint64(syscall.r2)))
+			v.SetFloat(math.Float64frombits(uint64(syscall.f1)))
 		case reflect.Struct:
 			v = getStruct(outType, syscall)
 		default:
@@ -379,6 +383,15 @@ func checkStruct(ty reflect.Type) {
 
 func roundUpTo8(val uintptr) uintptr {
 	return (val + 7) &^ 7
+}
+
+func is32bit() bool {
+	switch runtime.GOARCH {
+	case "arm64", "amd64":
+		return false
+	default:
+		return true
+	}
 }
 
 func numOfIntegerRegisters() int {
