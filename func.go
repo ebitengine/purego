@@ -238,7 +238,7 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 			runtime.KeepAlive(keepAlive)
 			runtime.KeepAlive(args)
 		}()
-		var arm64_r8 uintptr
+		var syscall syscall15Args
 		if ty.NumOut() == 1 && ty.Out(0).Kind() == reflect.Struct {
 			outType := ty.Out(0)
 			if runtime.GOARCH == "amd64" && outType.Size() > 16 {
@@ -248,7 +248,7 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 			} else if runtime.GOARCH == "arm64" && outType.Size() > 16 {
 				val := reflect.New(outType)
 				keepAlive = append(keepAlive, val)
-				arm64_r8 = val.Pointer()
+				syscall.arm64_r8 = val.Pointer()
 			}
 		}
 		for _, v := range args {
@@ -283,7 +283,6 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 			}
 		}
 		var r1, r2 uintptr
-		var syscall syscall15Args
 		if runtime.GOARCH == "arm64" || runtime.GOOS != "windows" {
 			// Use the normal arm64 calling convention even on Windows
 			syscall = syscall15Args{
@@ -292,7 +291,7 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 				sysargs[6], sysargs[7], sysargs[8], sysargs[9], sysargs[10], sysargs[11],
 				sysargs[12], sysargs[13], sysargs[14],
 				floats[0], floats[1], floats[2], floats[3], floats[4], floats[5], floats[6], floats[7],
-				0, 0, 0, arm64_r8,
+				0, 0, 0, syscall.arm64_r8,
 			}
 			runtime_cgocall(syscall15XABI0, unsafe.Pointer(&syscall))
 			r1, r2, _ = syscall.r1, syscall.r2, syscall.a1
