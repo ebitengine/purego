@@ -584,6 +584,15 @@ func TestRegisterFunc_structReturns(t *testing.T) {
 		}
 	}
 	{
+		type FiveDoubles struct{ a, b, c, d, e float64 }
+		var ReturnFiveDoubles func(a, b, c, d, e float64) FiveDoubles
+		purego.RegisterLibFunc(&ReturnFiveDoubles, lib, "ReturnFiveDoubles")
+		expected := FiveDoubles{1, 2, 3, 4, 5}
+		if ret := ReturnFiveDoubles(1, 2, 3, 4, 5); ret != expected {
+			t.Fatalf("ReturnFiveDoubles returned %+v wanted %+v", ret, expected)
+		}
+	}
+	{
 		type OneFloatOneDouble struct {
 			a float32
 			_ float32

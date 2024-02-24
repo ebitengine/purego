@@ -129,6 +129,15 @@ struct FourDoubles ReturnFourDoubles(double a, double b, double c, double d) {
     return e;
 }
 
+struct FiveDoubles{
+    double a, b, c, d, e;
+};
+
+struct FiveDoubles ReturnFiveDoubles(double a, double b, double c, double d, double e) {
+    struct FiveDoubles s = {a, b, c, d, e};
+    return s;
+}
+
 struct OneFloatOneDouble{
     float a;
     double b;

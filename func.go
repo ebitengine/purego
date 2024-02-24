@@ -246,9 +246,11 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 				keepAlive = append(keepAlive, val)
 				addInt(val.Pointer())
 			} else if runtime.GOARCH == "arm64" && outType.Size() > 16 {
-				val := reflect.New(outType)
-				keepAlive = append(keepAlive, val)
-				syscall.arm64_r8 = val.Pointer()
+				if !isAllSameFloat(outType) || outType.NumField() > 4 {
+					val := reflect.New(outType)
+					keepAlive = append(keepAlive, val)
+					syscall.arm64_r8 = val.Pointer()
+				}
 			}
 		}
 		for _, v := range args {
@@ -339,6 +341,22 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 		return []reflect.Value{v}
 	})
 	fn.Set(v)
+}
+
+func isAllSameFloat(ty reflect.Type) bool {
+	first := ty.Field(0).Type.Kind()
+	if first != reflect.Float32 && first != reflect.Float64 {
+		return false
+	}
+	for i := 0; i < ty.NumField(); i++ {
+		f := ty.Field(i)
+		switch f.Type.Kind() {
+		case first:
+		default:
+			return false
+		}
+	}
+	return true
 }
 
 func checkStruct(ty reflect.Type) {

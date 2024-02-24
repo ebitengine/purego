@@ -61,22 +61,6 @@ func getStruct(outType reflect.Type, syscall syscall15Args) (v reflect.Value) {
 	return v
 }
 
-func isAllSameFloat(ty reflect.Type) bool {
-	first := ty.Field(0).Type.Kind()
-	if first != reflect.Float32 && first != reflect.Float64 {
-		return false
-	}
-	for i := 0; i < ty.NumField(); i++ {
-		f := ty.Field(i)
-		switch f.Type.Kind() {
-		case first:
-		default:
-			return false
-		}
-	}
-	return true
-}
-
 // https://github.com/ARM-software/abi-aa/blob/main/sysvabi64/sysvabi64.rst
 const (
 	_NO_CLASS = 0b00
