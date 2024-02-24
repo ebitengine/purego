@@ -302,7 +302,7 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 			syscall.a1, syscall.a2, _ = syscall_syscall15X(cfn, sysargs[0], sysargs[1], sysargs[2], sysargs[3], sysargs[4],
 				sysargs[5], sysargs[6], sysargs[7], sysargs[8], sysargs[9], sysargs[10], sysargs[11],
 				sysargs[12], sysargs[13], sysargs[14])
-			syscall.f1 = syscall.r2 // on amd64 r2 stores the float return. On 32bit platforms floats aren't support
+			syscall.f1 = syscall.a2 // on amd64 a2 stores the float return. On 32bit platforms floats aren't support
 		}
 		if ty.NumOut() == 0 {
 			return nil
