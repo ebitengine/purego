@@ -135,9 +135,6 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 					stack++
 				}
 			case reflect.Float32, reflect.Float64:
-				if is32bit() {
-					panic("purego: floats only supported on 64bit platforms")
-				}
 				if floats < numOfFloats {
 					floats++
 				} else {
@@ -374,7 +371,7 @@ func checkStruct(ty reflect.Type) {
 		switch f.Kind() {
 		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
 			reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
-			reflect.Float64, reflect.Float32:
+			reflect.Uintptr, reflect.Float64, reflect.Float32:
 		default:
 			panic(fmt.Sprintf("purego: struct field type %s is not supported", f))
 		}
@@ -383,15 +380,6 @@ func checkStruct(ty reflect.Type) {
 
 func roundUpTo8(val uintptr) uintptr {
 	return (val + 7) &^ 7
-}
-
-func is32bit() bool {
-	switch runtime.GOARCH {
-	case "arm64", "amd64":
-		return false
-	default:
-		return true
-	}
 }
 
 func numOfIntegerRegisters() int {

@@ -17,12 +17,12 @@ func getStruct(outType reflect.Type, syscall syscall15Args) (v reflect.Value) {
 	case outSize <= 8:
 		if isAllSameFloat(outType) {
 			if outType.NumField() == 2 {
-				v = reflect.NewAt(outType, unsafe.Pointer(&struct{ a uintptr }{syscall.f2<<32 | syscall.f1})).Elem()
+				return reflect.NewAt(outType, unsafe.Pointer(&struct{ a uintptr }{syscall.f2<<32 | syscall.f1})).Elem()
 			} else {
-				v = reflect.NewAt(outType, unsafe.Pointer(&struct{ a uintptr }{syscall.f1})).Elem()
+				return reflect.NewAt(outType, unsafe.Pointer(&struct{ a uintptr }{syscall.f1})).Elem()
 			}
 		} else {
-			v = reflect.NewAt(outType, unsafe.Pointer(&struct{ a uintptr }{syscall.a1})).Elem()
+			return reflect.NewAt(outType, unsafe.Pointer(&struct{ a uintptr }{syscall.a1})).Elem()
 		}
 	case outSize <= 16:
 		r1, r2 := syscall.a1, syscall.a2
@@ -41,21 +41,21 @@ func getStruct(outType reflect.Type, syscall syscall15Args) (v reflect.Value) {
 				panic("unreachable")
 			}
 		}
-		v = reflect.NewAt(outType, unsafe.Pointer(&struct{ a, b uintptr }{r1, r2})).Elem()
+		return reflect.NewAt(outType, unsafe.Pointer(&struct{ a, b uintptr }{r1, r2})).Elem()
 	default:
 		if isAllSameFloat(outType) && outType.NumField() <= 4 {
 			switch outType.NumField() {
 			case 4:
-				v = reflect.NewAt(outType, unsafe.Pointer(&struct{ a, b, c, d uintptr }{syscall.f1, syscall.f2, syscall.f3, syscall.f4})).Elem()
+				return reflect.NewAt(outType, unsafe.Pointer(&struct{ a, b, c, d uintptr }{syscall.f1, syscall.f2, syscall.f3, syscall.f4})).Elem()
 			case 3:
-				v = reflect.NewAt(outType, unsafe.Pointer(&struct{ a, b, c uintptr }{syscall.f1, syscall.f2, syscall.f3})).Elem()
+				return reflect.NewAt(outType, unsafe.Pointer(&struct{ a, b, c uintptr }{syscall.f1, syscall.f2, syscall.f3})).Elem()
 			default:
 				panic("unreachable")
 			}
 		} else {
 			// create struct from the Go pointer created in arm64_r8
 			// weird pointer dereference to circumvent go vet
-			v = reflect.NewAt(outType, *(*unsafe.Pointer)(unsafe.Pointer(&syscall.arm64_r8))).Elem()
+			return reflect.NewAt(outType, *(*unsafe.Pointer)(unsafe.Pointer(&syscall.arm64_r8))).Elem()
 		}
 	}
 	return v

@@ -16,24 +16,23 @@ func getStruct(outType reflect.Type, syscall syscall15Args) (v reflect.Value) {
 	} else if outSize <= 8 {
 		if isAllFloats(outType) {
 			// float64s are return in the float register
-			v = reflect.NewAt(outType, unsafe.Pointer(&struct{ a uintptr }{syscall.f1})).Elem()
+			return reflect.NewAt(outType, unsafe.Pointer(&struct{ a uintptr }{syscall.f1})).Elem()
 		} else {
 			// up to 8 bytes is returned in RAX
-			v = reflect.NewAt(outType, unsafe.Pointer(&struct{ a uintptr }{syscall.a1})).Elem()
+			return reflect.NewAt(outType, unsafe.Pointer(&struct{ a uintptr }{syscall.a1})).Elem()
 		}
 	} else if outSize <= 16 {
 		if isAllFloats(outType) {
-			v = reflect.NewAt(outType, unsafe.Pointer(&struct{ a, b uintptr }{syscall.f1, syscall.f2})).Elem()
+			return reflect.NewAt(outType, unsafe.Pointer(&struct{ a, b uintptr }{syscall.f1, syscall.f2})).Elem()
 		} else {
 			// up to 16 bytes is returned in RAX and RDX
-			v = reflect.NewAt(outType, unsafe.Pointer(&struct{ a, b uintptr }{syscall.a1, syscall.a2})).Elem()
+			return reflect.NewAt(outType, unsafe.Pointer(&struct{ a, b uintptr }{syscall.a1, syscall.a2})).Elem()
 		}
 	} else {
 		// create struct from the Go pointer created above
 		// weird pointer dereference to circumvent go vet
-		v = reflect.NewAt(outType, *(*unsafe.Pointer)(unsafe.Pointer(&syscall.a1))).Elem()
+		return reflect.NewAt(outType, *(*unsafe.Pointer)(unsafe.Pointer(&syscall.a1))).Elem()
 	}
-	return v
 }
 
 func isAllFloats(ty reflect.Type) bool {
