@@ -166,7 +166,7 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 				panic("purego: struct return values only supported on darwin arm64 & amd64")
 			}
 			outType := ty.Out(0)
-			checkStruct(outType)
+			areStructFieldsSupported(outType)
 			if outType.Size() > 16 {
 				ints++
 			}
@@ -359,13 +359,13 @@ func isAllSameFloat(ty reflect.Type) bool {
 	return true
 }
 
-func checkStruct(ty reflect.Type) {
+func areStructFieldsSupported(ty reflect.Type) {
 	for i := 0; i < ty.NumField(); i++ {
 		f := ty.Field(i).Type
 		if f.Kind() == reflect.Array {
 			f = f.Elem()
 		} else if f.Kind() == reflect.Struct {
-			checkStruct(f)
+			areStructFieldsSupported(f)
 			continue
 		}
 		switch f.Kind() {
