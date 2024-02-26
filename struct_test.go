@@ -658,4 +658,21 @@ func TestRegisterFunc_structReturns(t *testing.T) {
 			t.Fatalf("ReturnMixed2 returned %+v wanted %+v", ret, expected)
 		}
 	}
+	{
+		type Mixed3 struct {
+			a float32
+			b uint32
+			c float64
+			d int32
+			e int16
+			f uint8
+			g uint8
+		}
+		var ReturnMixed3 func(a float32, b uint32, c float64, d int32, e int16, f, g uint8) Mixed3
+		purego.RegisterLibFunc(&ReturnMixed3, lib, "ReturnMixed3")
+		expected := Mixed3{1, 2, 3, 4, 5, 6, 7}
+		if ret := ReturnMixed3(1, 2, 3, 4, 5, 6, 7); ret != expected {
+			t.Fatalf("ReturnMixed3 returned %+v wanted %+v", ret, expected)
+		}
+	}
 }

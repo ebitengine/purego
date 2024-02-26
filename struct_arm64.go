@@ -15,15 +15,14 @@ func getStruct(outType reflect.Type, syscall syscall15Args) (v reflect.Value) {
 	case outSize == 0:
 		return reflect.New(outType).Elem()
 	case outSize <= 8:
+		r1 := syscall.a1
 		if isAllSameFloat(outType) {
+			r1 = syscall.f1
 			if outType.NumField() == 2 {
-				return reflect.NewAt(outType, unsafe.Pointer(&struct{ a uintptr }{syscall.f2<<32 | syscall.f1})).Elem()
-			} else {
-				return reflect.NewAt(outType, unsafe.Pointer(&struct{ a uintptr }{syscall.f1})).Elem()
+				r1 = syscall.f2<<32 | syscall.f1
 			}
-		} else {
-			return reflect.NewAt(outType, unsafe.Pointer(&struct{ a uintptr }{syscall.a1})).Elem()
 		}
+		return reflect.NewAt(outType, unsafe.Pointer(&struct{ a uintptr }{r1})).Elem()
 	case outSize <= 16:
 		r1, r2 := syscall.a1, syscall.a2
 		if isAllSameFloat(outType) {
@@ -52,11 +51,10 @@ func getStruct(outType reflect.Type, syscall syscall15Args) (v reflect.Value) {
 			default:
 				panic("unreachable")
 			}
-		} else {
-			// create struct from the Go pointer created in arm64_r8
-			// weird pointer dereference to circumvent go vet
-			return reflect.NewAt(outType, *(*unsafe.Pointer)(unsafe.Pointer(&syscall.arm64_r8))).Elem()
 		}
+		// create struct from the Go pointer created in arm64_r8
+		// weird pointer dereference to circumvent go vet
+		return reflect.NewAt(outType, *(*unsafe.Pointer)(unsafe.Pointer(&syscall.arm64_r8))).Elem()
 	}
 }
 
