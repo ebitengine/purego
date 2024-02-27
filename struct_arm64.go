@@ -6,7 +6,57 @@ package purego
 import (
 	"math"
 	"reflect"
+	"unsafe"
 )
+
+func getStruct(outType reflect.Type, syscall syscall15Args) (v reflect.Value) {
+	outSize := outType.Size()
+	switch {
+	case outSize == 0:
+		return reflect.New(outType).Elem()
+	case outSize <= 8:
+		r1 := syscall.a1
+		if isAllSameFloat(outType) {
+			r1 = syscall.f1
+			if outType.NumField() == 2 {
+				r1 = syscall.f2<<32 | syscall.f1
+			}
+		}
+		return reflect.NewAt(outType, unsafe.Pointer(&struct{ a uintptr }{r1})).Elem()
+	case outSize <= 16:
+		r1, r2 := syscall.a1, syscall.a2
+		if isAllSameFloat(outType) {
+			switch outType.NumField() {
+			case 4:
+				r1 = syscall.f2<<32 | syscall.f1
+				r2 = syscall.f4<<32 | syscall.f3
+			case 3:
+				r1 = syscall.f2<<32 | syscall.f1
+				r2 = syscall.f3
+			case 2:
+				r1 = syscall.f1
+				r2 = syscall.f2
+			default:
+				panic("unreachable")
+			}
+		}
+		return reflect.NewAt(outType, unsafe.Pointer(&struct{ a, b uintptr }{r1, r2})).Elem()
+	default:
+		if isAllSameFloat(outType) && outType.NumField() <= 4 {
+			switch outType.NumField() {
+			case 4:
+				return reflect.NewAt(outType, unsafe.Pointer(&struct{ a, b, c, d uintptr }{syscall.f1, syscall.f2, syscall.f3, syscall.f4})).Elem()
+			case 3:
+				return reflect.NewAt(outType, unsafe.Pointer(&struct{ a, b, c uintptr }{syscall.f1, syscall.f2, syscall.f3})).Elem()
+			default:
+				panic("unreachable")
+			}
+		}
+		// create struct from the Go pointer created in arm64_r8
+		// weird pointer dereference to circumvent go vet
+		return reflect.NewAt(outType, *(*unsafe.Pointer)(unsafe.Pointer(&syscall.arm64_r8))).Elem()
+	}
+}
 
 // https://github.com/ARM-software/abi-aa/blob/main/sysvabi64/sysvabi64.rst
 const (
