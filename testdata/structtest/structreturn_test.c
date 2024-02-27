@@ -186,7 +186,6 @@ struct Mixed2{
      int32_t d;
 };
 
-
 struct Mixed2 ReturnMixed2(float a, int32_t b, float c, int32_t d) {
     struct Mixed2 e = {a, b, c, d};
     return e;
@@ -198,19 +197,28 @@ struct Mixed3{
      double c;
 };
 
-
 struct Mixed3 ReturnMixed3(float a, uint32_t b, double c) {
     struct Mixed3 s = {a, b, c};
     return s;
 }
+
 struct Mixed4{
      double a;
      uint32_t b;
      float c;
 };
 
-
 struct Mixed4 ReturnMixed4(double a, uint32_t b, float c) {
     struct Mixed4 s = {a, b, c};
+    return s;
+}
+
+struct Ptr1{
+     int64_t *a;
+     void *b;
+};
+
+struct Ptr1 ReturnPtr1(int64_t *a, void *b) {
+    struct Ptr1 s = {a, b};
     return s;
 }

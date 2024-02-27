@@ -374,7 +374,7 @@ func checkStructFieldsSupported(ty reflect.Type) {
 		switch f.Kind() {
 		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
 			reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
-			reflect.Uintptr, reflect.Float64, reflect.Float32:
+			reflect.Uintptr, reflect.Ptr, reflect.UnsafePointer, reflect.Float64, reflect.Float32:
 		default:
 			panic(fmt.Sprintf("purego: struct field type %s is not supported", f))
 		}
