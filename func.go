@@ -170,7 +170,9 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 			}
 			outType := ty.Out(0)
 			checkStructFieldsSupported(outType)
-			if outType.Size() > 16 {
+			if runtime.GOARCH == "amd64" && outType.Size() > 16 {
+				// on amd64 if struct is bigger than 16 bytes allocate the return struct
+				// and pass it in as a hidden first argument.
 				ints++
 			}
 		}
