@@ -170,7 +170,7 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 			}
 			outType := ty.Out(0)
 			checkStructFieldsSupported(outType)
-			if runtime.GOARCH == "amd64" && outType.Size() > 16 {
+			if runtime.GOARCH == "amd64" && outType.Size() > maxRegAllocStructSize {
 				// on amd64 if struct is bigger than 16 bytes allocate the return struct
 				// and pass it in as a hidden first argument.
 				ints++
@@ -245,11 +245,11 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 		var syscall syscall15Args
 		if ty.NumOut() == 1 && ty.Out(0).Kind() == reflect.Struct {
 			outType := ty.Out(0)
-			if runtime.GOARCH == "amd64" && outType.Size() > 16 {
+			if runtime.GOARCH == "amd64" && outType.Size() > maxRegAllocStructSize {
 				val := reflect.New(outType)
 				keepAlive = append(keepAlive, val)
 				addInt(val.Pointer())
-			} else if runtime.GOARCH == "arm64" && outType.Size() > 16 {
+			} else if runtime.GOARCH == "arm64" && outType.Size() > maxRegAllocStructSize {
 				if !isAllSameFloat(outType) || outType.NumField() > 4 {
 					val := reflect.New(outType)
 					keepAlive = append(keepAlive, val)
@@ -347,6 +347,11 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 	})
 	fn.Set(v)
 }
+
+// maxRegAllocStructSize is the biggest a struct can be while still fitting in registers.
+// if it is bigger than this than enough space must be allocated on the heap and then passed into
+// the function as the first parameter on amd64 or in R8 on arm64.
+const maxRegAllocStructSize = 16
 
 func isAllSameFloat(ty reflect.Type) bool {
 	first := ty.Field(0).Type.Kind()
