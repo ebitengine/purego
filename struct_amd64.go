@@ -48,10 +48,11 @@ func getStruct(outType reflect.Type, syscall syscall15Args) (v reflect.Value) {
 			if f1.Kind() == reflect.Float64 || f1.Kind() == reflect.Float32 && i+1 == outType.NumField() {
 				r2 = syscall.f1
 			} else if hasFirstFloat {
+				// if the first field was a float then that means the second integer field
+				// comes from the first integer register
 				r2 = syscall.a1
 			}
 		}
-		// up to 16 bytes is returned in RAX and RDX
 		return reflect.NewAt(outType, unsafe.Pointer(&struct{ a, b uintptr }{r1, r2})).Elem()
 	default:
 		// create struct from the Go pointer created above
