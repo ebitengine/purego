@@ -164,7 +164,7 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 				panic("purego: unsupported kind " + arg.Kind().String())
 			}
 		}
-		if ty.NumOut() > 0 && ty.Out(0).Kind() == reflect.Struct {
+		if ty.NumOut() == 1 && ty.Out(0).Kind() == reflect.Struct {
 			if runtime.GOOS != "darwin" {
 				panic("purego: struct return values only supported on darwin arm64 & amd64")
 			}
@@ -353,9 +353,7 @@ func isAllSameFloat(ty reflect.Type) bool {
 	}
 	for i := 0; i < ty.NumField(); i++ {
 		f := ty.Field(i)
-		switch f.Type.Kind() {
-		case first:
-		default:
+		if f.Type.Kind() != first {
 			return false
 		}
 	}

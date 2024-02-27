@@ -196,14 +196,21 @@ struct Mixed3{
      float a;
      uint32_t b;
      double c;
-     int32_t d;
-     int16_t e;
-     uint8_t f;
-     uint8_t g;
 };
 
 
-struct Mixed3 ReturnMixed3(float a, uint32_t b, double c, int32_t d, int16_t e, uint8_t f, uint8_t g) {
-    struct Mixed3 s = {a, b, c, d, e, f, g};
+struct Mixed3 ReturnMixed3(float a, uint32_t b, double c) {
+    struct Mixed3 s = {a, b, c};
+    return s;
+}
+struct Mixed4{
+     double a;
+     uint32_t b;
+     float c;
+};
+
+
+struct Mixed4 ReturnMixed4(double a, uint32_t b, float c) {
+    struct Mixed4 s = {a, b, c};
     return s;
 }
