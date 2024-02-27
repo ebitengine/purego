@@ -4,6 +4,7 @@
 package purego
 
 import (
+	"fmt"
 	"math"
 	"reflect"
 	"unsafe"
@@ -23,17 +24,20 @@ func getStruct(outType reflect.Type, syscall syscall15Args) (v reflect.Value) {
 		return reflect.NewAt(outType, unsafe.Pointer(&struct{ a uintptr }{syscall.a1})).Elem()
 	case outSize <= 16:
 		r1, r2 := syscall.a1, syscall.a2
+		fmt.Println(r1, r2)
 		if isAllFloats(outType) {
 			r1 = syscall.f1
 			r2 = syscall.f2
 		} else {
 			// check first 8 bytes if it's floats
+			hasFirstFloat := false
 			f1 := outType.Field(0).Type
 			if f1.Kind() == reflect.Float64 {
 				r1 = syscall.f1
-				// break?
+				hasFirstFloat = true
 			} else if f1.Kind() == reflect.Float32 && outType.Field(1).Type.Kind() == reflect.Float32 {
 				r1 = syscall.f1
+				hasFirstFloat = true
 			}
 
 			// find index of the field that starts the second 8 bytes
@@ -43,16 +47,18 @@ func getStruct(outType reflect.Type, syscall syscall15Args) (v reflect.Value) {
 					break
 				}
 			}
+
 			// check last 8 bytes if they are floats
 			f1 = outType.Field(i).Type
 			if f1.Kind() == reflect.Float64 {
 				r2 = syscall.f1
-			} else if f1.Kind() == reflect.Float32 {
-				if i+1 >= outType.NumField() || i+1 < outType.NumField() && outType.Field(i+1).Type.Kind() == reflect.Float32 {
-					r2 = syscall.f1
-				}
+			} else if f1.Kind() == reflect.Float32 && i+1 == outType.NumField() {
+				r2 = syscall.f1
+			} else if hasFirstFloat {
+				r2 = syscall.a1
 			}
 		}
+		fmt.Println("???", r1, r2)
 		// up to 16 bytes is returned in RAX and RDX
 		return reflect.NewAt(outType, unsafe.Pointer(&struct{ a, b uintptr }{r1, r2})).Elem()
 	default:
