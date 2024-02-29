@@ -6,8 +6,9 @@ package purego_test
 import (
 	"os"
 	"testing"
+	"unsafe"
 
-	_ "github.com/ebitengine/purego"
+	"github.com/ebitengine/purego"
 )
 
 func TestOS(t *testing.T) {
@@ -19,5 +20,17 @@ func TestOS(t *testing.T) {
 	err = os.Unsetenv("TESTING")
 	if err != nil {
 		t.Errorf("failed to Unsetenv: %s", err)
+	}
+}
+
+func TestSyscallN(t *testing.T) {
+	var dlsym uintptr
+	var err error
+	if dlsym, err = purego.Dlsym(purego.RTLD_DEFAULT, "dlsym"); err != nil {
+		t.Errorf("Dlsym with RTLD_DEFAULT failed: %v", err)
+	}
+	r1, _, err2 := purego.SyscallN(dlsym, purego.RTLD_DEFAULT, uintptr(unsafe.Pointer(&[]byte("dlsym\x00")[0])))
+	if dlsym != r1 {
+		t.Fatalf("SyscallN didn't return the same result as purego.Dlsym: %d", err2)
 	}
 }
