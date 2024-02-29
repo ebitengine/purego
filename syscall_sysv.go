@@ -17,7 +17,6 @@ var syscall15XABI0 uintptr
 type syscall15Args struct {
 	fn, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15 uintptr
 	f1, f2, f3, f4, f5, f6, f7, f8                                       uintptr
-	r1, r2, err                                                          uintptr
 	arm64_r8                                                             uintptr
 }
 
@@ -26,10 +25,10 @@ func syscall_syscall15X(fn, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a
 	args := syscall15Args{
 		fn, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15,
 		a1, a2, a3, a4, a5, a6, a7, a8,
-		r1, r2, err, 0,
+		0,
 	}
 	runtime_cgocall(syscall15XABI0, unsafe.Pointer(&args))
-	return args.r1, args.r2, args.err
+	return args.a1, args.a2, 0
 }
 
 // NewCallback converts a Go function to a function pointer conforming to the C calling convention.

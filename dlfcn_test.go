@@ -14,6 +14,7 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+	"unsafe"
 
 	"github.com/ebitengine/purego"
 )
@@ -80,4 +81,16 @@ func buildSharedLib(compilerEnv, libFile string, sources ...string) error {
 	}
 
 	return nil
+}
+
+func TestSyscallN(t *testing.T) {
+	var dlsym uintptr
+	var err error
+	if dlsym, err = purego.Dlsym(purego.RTLD_DEFAULT, "dlsym"); err != nil {
+		t.Errorf("Dlsym with RTLD_DEFAULT failed: %v", err)
+	}
+	r1, _, err2 := purego.SyscallN(dlsym, purego.RTLD_DEFAULT, uintptr(unsafe.Pointer(&[]byte("dlsym\x00")[0])))
+	if dlsym != r1 {
+		t.Fatalf("SyscallN didn't return the same result as purego.Dlsym: %d", err2)
+	}
 }

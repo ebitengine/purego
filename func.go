@@ -296,7 +296,7 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 				sysargs[6], sysargs[7], sysargs[8], sysargs[9], sysargs[10], sysargs[11],
 				sysargs[12], sysargs[13], sysargs[14],
 				floats[0], floats[1], floats[2], floats[3], floats[4], floats[5], floats[6], floats[7],
-				0, 0, 0, syscall.arm64_r8,
+				syscall.arm64_r8,
 			}
 			runtime_cgocall(syscall15XABI0, unsafe.Pointer(&syscall))
 		} else {
