@@ -6,6 +6,8 @@ package purego_test
 import (
 	"os"
 	"testing"
+
+	_ "github.com/ebitengine/purego"
 )
 
 func TestOS(t *testing.T) {
