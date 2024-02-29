@@ -20,7 +20,7 @@ typedef struct syscall15Args {
 	uintptr_t fn;
 	uintptr_t a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15;
 	uintptr_t f1, f2, f3, f4, f5, f6, f7, f8;
-	uintptr_t err;
+	uintptr_t r1, r2, err;
 } syscall15Args;
 
 void syscall15(struct syscall15Args *args) {
@@ -31,7 +31,7 @@ void syscall15(struct syscall15Args *args) {
 	*(void**)(&func_name) = (void*)(args->fn);
 	uintptr_t r1 =  func_name(args->a1,args->a2,args->a3,args->a4,args->a5,args->a6,args->a7,args->a8,args->a9,
 		args->a10,args->a11,args->a12,args->a13,args->a14,args->a15);
-	args->a1 = r1;
+	args->r1 = r1;
 	args->err = errno;
 }
 
@@ -51,5 +51,5 @@ func Syscall15X(fn, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14,
 		C.uintptr_t(a13), C.uintptr_t(a14), C.uintptr_t(a15), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	}
 	C.syscall15(&args)
-	return uintptr(args.a1), uintptr(args.a2), uintptr(args.err)
+	return uintptr(args.r1), uintptr(args.r2), uintptr(args.err)
 }
