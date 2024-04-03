@@ -129,6 +129,20 @@ struct FourDoubles ReturnFourDoubles(double a, double b, double c, double d) {
     return e;
 }
 
+struct FourDoublesInternal{
+    struct {
+        double a, b;
+    } f;
+    struct {
+        double c, d;
+    } g;
+};
+
+struct FourDoublesInternal ReturnFourDoublesInternal(double a, double b, double c, double d) {
+    struct FourDoublesInternal e = { {a, b}, {c, d} };
+    return e;
+}
+
 struct FiveDoubles{
     double a, b, c, d, e;
 };
