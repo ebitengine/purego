@@ -16,17 +16,17 @@ func getStruct(outType reflect.Type, syscall syscall15Args) (v reflect.Value) {
 		return reflect.New(outType).Elem()
 	case outSize <= 8:
 		r1 := syscall.a1
-		if isAllSameFloat(outType) {
+		if isAllFloats, numFields := isAllSameFloat(outType); isAllFloats {
 			r1 = syscall.f1
-			if outType.NumField() == 2 {
+			if numFields == 2 {
 				r1 = syscall.f2<<32 | syscall.f1
 			}
 		}
 		return reflect.NewAt(outType, unsafe.Pointer(&struct{ a uintptr }{r1})).Elem()
 	case outSize <= 16:
 		r1, r2 := syscall.a1, syscall.a2
-		if isAllSameFloat(outType) {
-			switch outType.NumField() {
+		if isAllFloats, numFields := isAllSameFloat(outType); isAllFloats {
+			switch numFields {
 			case 4:
 				r1 = syscall.f2<<32 | syscall.f1
 				r2 = syscall.f4<<32 | syscall.f3
@@ -42,8 +42,8 @@ func getStruct(outType reflect.Type, syscall syscall15Args) (v reflect.Value) {
 		}
 		return reflect.NewAt(outType, unsafe.Pointer(&struct{ a, b uintptr }{r1, r2})).Elem()
 	default:
-		if isAllSameFloat(outType) && outType.NumField() <= 4 {
-			switch outType.NumField() {
+		if isAllFloats, numFields := isAllSameFloat(outType); isAllFloats && numFields <= 4 {
+			switch numFields {
 			case 4:
 				return reflect.NewAt(outType, unsafe.Pointer(&struct{ a, b, c, d uintptr }{syscall.f1, syscall.f2, syscall.f3, syscall.f4})).Elem()
 			case 3:

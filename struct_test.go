@@ -586,6 +586,18 @@ func TestRegisterFunc_structReturns(t *testing.T) {
 		}
 	}
 	{
+		type FourDoublesInternal struct {
+			f struct{ a, b float64 }
+			g struct{ c, d float64 }
+		}
+		var ReturnFourDoublesInternal func(a, b, c, d float64) FourDoublesInternal
+		purego.RegisterLibFunc(&ReturnFourDoublesInternal, lib, "ReturnFourDoublesInternal")
+		expected := FourDoublesInternal{f: struct{ a, b float64 }{a: 1, b: 2}, g: struct{ c, d float64 }{c: 3, d: 4}}
+		if ret := ReturnFourDoublesInternal(1, 2, 3, 4); ret != expected {
+			t.Fatalf("ReturnFourDoublesInternal returned %+v wanted %+v", ret, expected)
+		}
+	}
+	{
 		type FiveDoubles struct{ a, b, c, d, e float64 }
 		var ReturnFiveDoubles func(a, b, c, d, e float64) FiveDoubles
 		purego.RegisterLibFunc(&ReturnFiveDoubles, lib, "ReturnFiveDoubles")
