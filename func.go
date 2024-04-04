@@ -250,7 +250,8 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 				keepAlive = append(keepAlive, val)
 				addInt(val.Pointer())
 			} else if runtime.GOARCH == "arm64" && outType.Size() > maxRegAllocStructSize {
-				if !isAllSameFloat(outType) || outType.NumField() > 4 {
+				isAllFloats, numFields := isAllSameFloat(outType)
+				if !isAllFloats || numFields > 4 {
 					val := reflect.New(outType)
 					keepAlive = append(keepAlive, val)
 					syscall.arm64_r8 = val.Pointer()
@@ -351,20 +352,34 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 // maxRegAllocStructSize is the biggest a struct can be while still fitting in registers.
 // if it is bigger than this than enough space must be allocated on the heap and then passed into
 // the function as the first parameter on amd64 or in R8 on arm64.
+//
+// If you change this make sure to update it in objc_runtime_darwin.go
 const maxRegAllocStructSize = 16
 
-func isAllSameFloat(ty reflect.Type) bool {
-	first := ty.Field(0).Type.Kind()
+func isAllSameFloat(ty reflect.Type) (allFloats bool, numFields int) {
+	allFloats = true
+	root := ty.Field(0).Type
+	for root.Kind() == reflect.Struct {
+		root = root.Field(0).Type
+	}
+	first := root.Kind()
 	if first != reflect.Float32 && first != reflect.Float64 {
-		return false
+		allFloats = false
 	}
 	for i := 0; i < ty.NumField(); i++ {
-		f := ty.Field(i)
-		if f.Type.Kind() != first {
-			return false
+		f := ty.Field(i).Type
+		if f.Kind() == reflect.Struct {
+			var structNumFields int
+			allFloats, structNumFields = isAllSameFloat(f)
+			numFields += structNumFields
+			continue
+		}
+		numFields++
+		if f.Kind() != first {
+			allFloats = false
 		}
 	}
-	return true
+	return allFloats, numFields
 }
 
 func checkStructFieldsSupported(ty reflect.Type) {

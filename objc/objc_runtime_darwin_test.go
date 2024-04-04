@@ -117,3 +117,39 @@ func TestSend(t *testing.T) {
 		t.Failed()
 	}
 }
+
+func ExampleSend() {
+	type NSRange struct {
+		Location, Range uint
+	}
+	class_NSString := objc.GetClass("NSString")
+	sel_stringWithUTF8String := objc.RegisterName("stringWithUTF8String:")
+
+	fullString := objc.ID(class_NSString).Send(sel_stringWithUTF8String, "Hello, World!\x00")
+	subString := objc.ID(class_NSString).Send(sel_stringWithUTF8String, "lo, Wor\x00")
+
+	r := objc.Send[NSRange](fullString, objc.RegisterName("rangeOfString:"), subString)
+
+	fmt.Println(r)
+
+	// Output: {3 7}
+}
+
+func ExampleSendSuper() {
+	super := objc.AllocateClassPair(objc.GetClass("NSObject"), "SuperObject2", 0)
+	super.AddMethod(objc.RegisterName("doSomething"), objc.NewIMP(func(self objc.ID, _cmd objc.SEL) int {
+		return 16
+	}), "i@:")
+	super.Register()
+
+	child := objc.AllocateClassPair(super, "ChildObject2", 0)
+	child.AddMethod(objc.RegisterName("doSomething"), objc.NewIMP(func(self objc.ID, _cmd objc.SEL) int {
+		return 24
+	}), "i@:")
+	child.Register()
+
+	res := objc.SendSuper[int](objc.ID(child).Send(objc.RegisterName("new")), objc.RegisterName("doSomething"))
+
+	fmt.Println(res)
+	// Output: 16
+}

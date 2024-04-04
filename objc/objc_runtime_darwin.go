@@ -11,6 +11,7 @@ import (
 	"math"
 	"reflect"
 	"regexp"
+	"runtime"
 	"unicode"
 	"unsafe"
 
@@ -20,28 +21,30 @@ import (
 // TODO: support try/catch?
 // https://stackoverflow.com/questions/7062599/example-of-how-objective-cs-try-catch-implementation-is-executed-at-runtime
 var (
-	objc_msgSend_fn           uintptr
-	objc_msgSend              func(obj ID, cmd SEL, args ...interface{}) ID
-	objc_msgSendSuper2_fn     uintptr
-	objc_msgSendSuper2        func(super *objc_super, cmd SEL, args ...interface{}) ID
-	objc_getClass             func(name string) Class
-	objc_getProtocol          func(name string) *Protocol
-	objc_allocateClassPair    func(super Class, name string, extraBytes uintptr) Class
-	objc_registerClassPair    func(class Class)
-	sel_registerName          func(name string) SEL
-	class_getSuperclass       func(class Class) Class
-	class_getInstanceVariable func(class Class, name string) Ivar
-	class_getInstanceSize     func(class Class) uintptr
-	class_addMethod           func(class Class, name SEL, imp IMP, types string) bool
-	class_addIvar             func(class Class, name string, size uintptr, alignment uint8, types string) bool
-	class_addProtocol         func(class Class, protocol *Protocol) bool
-	ivar_getOffset            func(ivar Ivar) uintptr
-	ivar_getName              func(ivar Ivar) string
-	object_getClass           func(obj ID) Class
-	object_getIvar            func(obj ID, ivar Ivar) ID
-	object_setIvar            func(obj ID, ivar Ivar, value ID)
-	protocol_getName          func(protocol *Protocol) string
-	protocol_isEqual          func(p *Protocol, p2 *Protocol) bool
+	objc_msgSend_fn             uintptr
+	objc_msgSend_stret_fn       uintptr
+	objc_msgSend                func(obj ID, cmd SEL, args ...interface{}) ID
+	objc_msgSendSuper2_fn       uintptr
+	objc_msgSendSuper2_stret_fn uintptr
+	objc_msgSendSuper2          func(super *objc_super, cmd SEL, args ...interface{}) ID
+	objc_getClass               func(name string) Class
+	objc_getProtocol            func(name string) *Protocol
+	objc_allocateClassPair      func(super Class, name string, extraBytes uintptr) Class
+	objc_registerClassPair      func(class Class)
+	sel_registerName            func(name string) SEL
+	class_getSuperclass         func(class Class) Class
+	class_getInstanceVariable   func(class Class, name string) Ivar
+	class_getInstanceSize       func(class Class) uintptr
+	class_addMethod             func(class Class, name SEL, imp IMP, types string) bool
+	class_addIvar               func(class Class, name string, size uintptr, alignment uint8, types string) bool
+	class_addProtocol           func(class Class, protocol *Protocol) bool
+	ivar_getOffset              func(ivar Ivar) uintptr
+	ivar_getName                func(ivar Ivar) string
+	object_getClass             func(obj ID) Class
+	object_getIvar              func(obj ID, ivar Ivar) ID
+	object_setIvar              func(obj ID, ivar Ivar, value ID)
+	protocol_getName            func(protocol *Protocol) string
+	protocol_isEqual            func(p *Protocol, p2 *Protocol) bool
 )
 
 func init() {
@@ -52,6 +55,16 @@ func init() {
 	objc_msgSend_fn, err = purego.Dlsym(objc, "objc_msgSend")
 	if err != nil {
 		panic(fmt.Errorf("objc: %w", err))
+	}
+	if runtime.GOARCH == "amd64" {
+		objc_msgSend_stret_fn, err = purego.Dlsym(objc, "objc_msgSend_stret")
+		if err != nil {
+			panic(fmt.Errorf("objc: %w", err))
+		}
+		objc_msgSendSuper2_stret_fn, err = purego.Dlsym(objc, "objc_msgSendSuper2_stret")
+		if err != nil {
+			panic(fmt.Errorf("objc: %w", err))
+		}
 	}
 	purego.RegisterFunc(&objc_msgSend, objc_msgSend_fn)
 	objc_msgSendSuper2_fn, err = purego.Dlsym(objc, "objc_msgSendSuper2")
@@ -104,12 +117,22 @@ func (id ID) SetIvar(ivar Ivar, value ID) {
 	object_setIvar(id, ivar, value)
 }
 
+// keep in sync with func.go
+const maxRegAllocStructSize = 16
+
 // Send is a convenience method for sending messages to objects that can return any type.
 // This function takes a SEL instead of a string since RegisterName grabs the global Objective-C lock.
 // It is best to cache the result of RegisterName.
 func Send[T any](id ID, sel SEL, args ...any) T {
 	var fn func(id ID, sel SEL, args ...any) T
-	purego.RegisterFunc(&fn, objc_msgSend_fn)
+	var zero T
+	if runtime.GOARCH == "amd64" &&
+		reflect.ValueOf(zero).Kind() == reflect.Struct &&
+		reflect.ValueOf(zero).Type().Size() > maxRegAllocStructSize {
+		purego.RegisterFunc(&fn, objc_msgSend_stret_fn)
+	} else {
+		purego.RegisterFunc(&fn, objc_msgSend_fn)
+	}
 	return fn(id, sel, args...)
 }
 
@@ -141,7 +164,14 @@ func SendSuper[T any](id ID, sel SEL, args ...any) T {
 		superClass: id.Class(),
 	}
 	var fn func(objcSuper *objc_super, sel SEL, args ...any) T
-	purego.RegisterFunc(&fn, objc_msgSendSuper2_fn)
+	var zero T
+	if runtime.GOARCH == "amd64" &&
+		reflect.ValueOf(zero).Kind() == reflect.Struct &&
+		reflect.ValueOf(zero).Type().Size() > maxRegAllocStructSize {
+		purego.RegisterFunc(&fn, objc_msgSendSuper2_stret_fn)
+	} else {
+		purego.RegisterFunc(&fn, objc_msgSendSuper2_fn)
+	}
 	return fn(super, sel, args...)
 }
 
