@@ -193,13 +193,6 @@ func GetClass(name string) Class {
 	return objc_getClass(name)
 }
 
-// AllocateClassPair creates a new class and metaclass. Then returns the new class, or Nil if the class could not be created
-//
-// Deprecated: use RegisterClass instead
-func AllocateClassPair(super Class, name string, extraBytes uintptr) Class {
-	return objc_allocateClassPair(super, name, extraBytes)
-}
-
 // MethodDef represents the Go function and the selector that ObjC uses to access that function.
 type MethodDef struct {
 	Cmd SEL
@@ -506,20 +499,6 @@ func (c Class) AddMethod(name SEL, imp IMP, types string) bool {
 	return class_addMethod(c, name, imp, types)
 }
 
-// AddIvar adds a new instance variable to a class.
-// It may only be called after AllocateClassPair and before Register.
-// Adding an instance variable to an existing class is not supported.
-// The class must not be a metaclass. Adding an instance variable to a metaclass is not supported.
-// It takes the instance of the type of the Ivar and a string representing the type.
-//
-// Deprecated: use RegisterClass instead
-func (c Class) AddIvar(name string, ty interface{}, types string) bool {
-	typeOf := reflect.TypeOf(ty)
-	size := typeOf.Size()
-	alignment := uint8(math.Log2(float64(typeOf.Align())))
-	return class_addIvar(c, name, size, alignment, types)
-}
-
 // AddProtocol adds a protocol to a class.
 // Returns true if the protocol was added successfully, otherwise false (for example,
 // the class already conforms to that protocol).
@@ -535,14 +514,6 @@ func (c Class) InstanceSize() uintptr {
 // InstanceVariable returns an Ivar data structure containing information about the instance variable specified by name.
 func (c Class) InstanceVariable(name string) Ivar {
 	return class_getInstanceVariable(c, name)
-}
-
-// Register registers a class that was allocated using AllocateClassPair.
-// It can now be used to make objects by sending it either alloc and init or new.
-//
-// Deprecated: use RegisterClass instead
-func (c Class) Register() {
-	objc_registerClassPair(c)
 }
 
 // Ivar an opaque type that represents an instance variable.

@@ -12,15 +12,27 @@ import (
 	"github.com/ebitengine/purego/objc"
 )
 
-func ExampleAllocateClassPair() {
-	class := objc.AllocateClassPair(objc.GetClass("NSObject"), "FooObject", 0)
-	class.AddMethod(objc.RegisterName("run"), objc.NewIMP(func(self objc.ID, _cmd objc.SEL) {
-		fmt.Println("Hello World!")
-	}), "v@:")
-	class.Register()
+func ExampleRegisterClass_helloworld() {
+	class, err := objc.RegisterClass(
+		"FooObject",
+		objc.GetClass("NSObject"),
+		nil,
+		nil,
+		[]objc.MethodDef{
+			{
+				Cmd: objc.RegisterName("run"),
+				Fn: func(self objc.ID, _cmd objc.SEL) {
+					fmt.Println("Hello World!")
+				},
+			},
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
 
-	fooObject := objc.ID(class).Send(objc.RegisterName("new"))
-	fooObject.Send(objc.RegisterName("run"))
+	object := objc.ID(class).Send(objc.RegisterName("new"))
+	object.Send(objc.RegisterName("run"))
 	// Output: Hello World!
 }
 
@@ -78,26 +90,48 @@ func ExampleIMP() {
 	})
 
 	purego.SyscallN(uintptr(imp), 105, 567, 9, 2, 3, ^uintptr(4), 4, 8, 9)
-
 	// Output: IMP: 105 567 9 2 3 -5 4 8 9
 }
 
 func ExampleID_SendSuper() {
-	super := objc.AllocateClassPair(objc.GetClass("NSObject"), "SuperObject", 0)
-	super.AddMethod(objc.RegisterName("doSomething"), objc.NewIMP(func(self objc.ID, _cmd objc.SEL) {
-		fmt.Println("In Super!")
-	}), "v@:")
-	super.Register()
+	super, err := objc.RegisterClass(
+		"SuperObject",
+		objc.GetClass("NSObject"),
+		nil,
+		nil,
+		[]objc.MethodDef{
+			{
+				Cmd: objc.RegisterName("doSomething"),
+				Fn: func(self objc.ID, _cmd objc.SEL) {
+					fmt.Println("In Super!")
+				},
+			},
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
 
-	child := objc.AllocateClassPair(super, "ChildObject", 0)
-	child.AddMethod(objc.RegisterName("doSomething"), objc.NewIMP(func(self objc.ID, _cmd objc.SEL) {
-		fmt.Println("In Child")
-		self.SendSuper(_cmd)
-	}), "v@:")
-	child.Register()
+	child, err := objc.RegisterClass(
+		"ChildObject",
+		super,
+		nil,
+		nil,
+		[]objc.MethodDef{
+			{
+				Cmd: objc.RegisterName("doSomething"),
+				Fn: func(self objc.ID, _cmd objc.SEL) {
+					fmt.Println("In Child")
+					self.SendSuper(_cmd)
+				},
+			},
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
 
 	objc.ID(child).Send(objc.RegisterName("new")).Send(objc.RegisterName("doSomething"))
-
 	// Output: In Child
 	// In Super!
 }
@@ -129,27 +163,48 @@ func ExampleSend() {
 	subString := objc.ID(class_NSString).Send(sel_stringWithUTF8String, "lo, Wor\x00")
 
 	r := objc.Send[NSRange](fullString, objc.RegisterName("rangeOfString:"), subString)
-
 	fmt.Println(r)
-
 	// Output: {3 7}
 }
 
 func ExampleSendSuper() {
-	super := objc.AllocateClassPair(objc.GetClass("NSObject"), "SuperObject2", 0)
-	super.AddMethod(objc.RegisterName("doSomething"), objc.NewIMP(func(self objc.ID, _cmd objc.SEL) int {
-		return 16
-	}), "i@:")
-	super.Register()
+	super, err := objc.RegisterClass(
+		"SuperObject2",
+		objc.GetClass("NSObject"),
+		nil,
+		nil,
+		[]objc.MethodDef{
+			{
+				Cmd: objc.RegisterName("doSomething"),
+				Fn: func(self objc.ID, _cmd objc.SEL) int {
+					return 16
+				},
+			},
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
 
-	child := objc.AllocateClassPair(super, "ChildObject2", 0)
-	child.AddMethod(objc.RegisterName("doSomething"), objc.NewIMP(func(self objc.ID, _cmd objc.SEL) int {
-		return 24
-	}), "i@:")
-	child.Register()
+	child, err := objc.RegisterClass(
+		"ChildObject2",
+		super,
+		nil,
+		nil,
+		[]objc.MethodDef{
+			{
+				Cmd: objc.RegisterName("doSomething"),
+				Fn: func(self objc.ID, _cmd objc.SEL) int {
+					return 24
+				},
+			},
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
 
 	res := objc.SendSuper[int](objc.ID(child).Send(objc.RegisterName("new")), objc.RegisterName("doSomething"))
-
 	fmt.Println(res)
 	// Output: 16
 }
