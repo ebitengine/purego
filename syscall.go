@@ -10,6 +10,12 @@ const (
 	numOfFloats = 8 // arm64 and amd64 both have 8 float registers
 )
 
+type syscall15Args struct {
+	fn, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15 uintptr
+	f1, f2, f3, f4, f5, f6, f7, f8                                       uintptr
+	arm64_r8                                                             uintptr
+}
+
 // SyscallN takes fn, a C function pointer and a list of arguments as uintptr.
 // There is an internal maximum number of arguments that SyscallN can take. It panics
 // when the maximum is exceeded. It returns the result and the libc error code if there is one.
