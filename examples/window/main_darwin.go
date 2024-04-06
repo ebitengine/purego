@@ -37,8 +37,8 @@ func main() {
 	if _, err := purego.Dlopen("/System/Library/Frameworks/Cocoa.framework/Cocoa", purego.RTLD_GLOBAL|purego.RTLD_LAZY); err != nil {
 		panic(err)
 	}
-	NSApp := objc.ID(objc.GetClass("NSApplication")).Send(objc.RegisterName("sharedApplication"))
-	NSApp.Send(objc.RegisterName("setActivationPolicy:"), NSApplicationActivationPolicyRegular)
+	nsApp := objc.ID(objc.GetClass("NSApplication")).Send(objc.RegisterName("sharedApplication"))
+	nsApp.Send(objc.RegisterName("setActivationPolicy:"), NSApplicationActivationPolicyRegular)
 	wnd := objc.ID(objc.GetClass("NSWindow")).Send(objc.RegisterName("alloc"))
 	wnd = wnd.Send(objc.RegisterName("initWithContentRect:styleMask:backing:defer:"),
 		NSMakeRect(0, 0, 320, 240),
@@ -51,8 +51,8 @@ func main() {
 	wnd.Send(objc.RegisterName("setTitle:"), title)
 	wnd.Send(objc.RegisterName("makeKeyAndOrderFront:"), objc.ID(0))
 	wnd.Send(objc.RegisterName("center"))
-	NSApp.Send(objc.RegisterName("activateIgnoringOtherApps:"), true)
-	NSApp.Send(objc.RegisterName("run"))
+	nsApp.Send(objc.RegisterName("activateIgnoringOtherApps:"), true)
+	nsApp.Send(objc.RegisterName("run"))
 }
 
 func NSMakeRect(x, y, width, height float64) NSRect {

@@ -4,10 +4,12 @@
 package main
 
 import (
+	"runtime"
 	"unsafe"
 
-	"github.com/ebitengine/purego"
 	"golang.org/x/sys/windows"
+
+	"github.com/ebitengine/purego"
 )
 
 const (
@@ -89,6 +91,8 @@ func init() {
 	purego.RegisterLibFunc(&DispatchMessage, user32, "DispatchMessageW")
 	purego.RegisterLibFunc(&DefWindowProc, user32, "DefWindowProcW")
 	purego.RegisterLibFunc(&PostQuitMessage, user32, "PostQuitMessage")
+
+	runtime.LockOSThread()
 }
 
 func main() {
@@ -104,7 +108,12 @@ func main() {
 
 	RegisterClassEx(&wc)
 
-	wr := RECT{0, 0, 320, 240}
+	wr := RECT{
+		Left:   0,
+		Top:    0,
+		Right:  320,
+		Bottom: 240,
+	}
 	AdjustWindowRect(&wr, WS_OVERLAPPEDWINDOW, false)
 	hwnd := CreateWindowEx(
 		0, className,
@@ -119,7 +128,7 @@ func main() {
 
 	ShowWindow(hwnd, SW_SHOW)
 
-	msg := MSG{}
+	var msg MSG
 	for GetMessage(&msg, 0, 0, 0) != 0 {
 		TranslateMessage(&msg)
 		DispatchMessage(&msg)
