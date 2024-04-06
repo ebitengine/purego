@@ -7,7 +7,6 @@ import (
 	"unsafe"
 
 	"github.com/ebitengine/purego"
-
 	"golang.org/x/sys/windows"
 )
 
