@@ -1,0 +1,29 @@
+name: Feature Request
+description: Provide details about a feature you'd like to see.
+labels:
+- feature
+- request
+body:
+- type: checkboxes
+  id: os
+  attributes:
+    label: Operating System
+    options:
+      - label: Windows
+      - label: macOS
+      - label: Linux
+      - label: FreeBSD
+      - label: Android
+      - label: iOS
+  validations:
+    required: true
+- type: textarea
+  id: what
+  attributes:
+    label: What feature would you like to be added?
+  validations:
+    required: true
+- type: textarea
+  id: why
+  attributes:
+    label: Why is this needed?
