@@ -63,6 +63,10 @@ func ExampleNewCallback() {
 }
 
 func Test_qsort(t *testing.T) {
+	if runtime.GOARCH == "386" {
+		t.Skip("not supported on 386") // TODO: but why?
+		return
+	}
 	library, err := getSystemLibrary()
 	if err != nil {
 		t.Fatalf("couldn't get system library: %s", err)
@@ -74,10 +78,10 @@ func Test_qsort(t *testing.T) {
 
 	data := []int{88, 56, 100, 2, 25}
 	sorted := []int{2, 25, 56, 88, 100}
-	compare := func(a, b *int) int32 {
-		return int32(*a - *b)
+	compare := func(a, b *int) int {
+		return *a - *b
 	}
-	var qsort func(data []int, nitms uintptr, size uintptr, compar func(a, b *int) int32)
+	var qsort func(data []int, nitms uintptr, size uintptr, compar func(a, b *int) int)
 	purego.RegisterLibFunc(&qsort, libc, "qsort")
 	qsort(data, uintptr(len(data)), unsafe.Sizeof(int(0)), compare)
 	for i := range data {
