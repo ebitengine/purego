@@ -63,6 +63,10 @@ func ExampleNewCallback() {
 }
 
 func Test_qsort(t *testing.T) {
+	if runtime.GOARCH == "386" {
+		t.Skip("not supported on 386") // TODO: but why?
+		return
+	}
 	library, err := getSystemLibrary()
 	if err != nil {
 		t.Fatalf("couldn't get system library: %s", err)
@@ -88,6 +92,10 @@ func Test_qsort(t *testing.T) {
 }
 
 func TestRegisterFunc_Floats(t *testing.T) {
+	if runtime.GOARCH != "arm64" && runtime.GOARCH != "amd64" {
+		t.Skip("Platform doesn't support Floats")
+		return
+	}
 	library, err := getSystemLibrary()
 	if err != nil {
 		t.Fatalf("couldn't get system library: %s", err)

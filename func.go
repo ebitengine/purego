@@ -117,6 +117,10 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 	if cfn == 0 {
 		panic("purego: cfn is nil")
 	}
+	if ty.NumOut() == 1 && ty.Out(0).Kind() == reflect.Float32 || ty.Out(0).Kind() == reflect.Float64 &&
+		runtime.GOARCH != "arm64" && runtime.GOARCH != "amd64" {
+		panic("purego: float returns are not supported")
+	}
 	{
 		// this code checks how many registers and stack this function will use
 		// to avoid crashing with too many arguments
