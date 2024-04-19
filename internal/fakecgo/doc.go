@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2022 The Ebitengine Authors
 
-//go:build darwin || freebsd
-
 // Package fakecgo implements the Cgo runtime (runtime/cgo) entirely in Go.
 // This allows code that calls into C to function properly when CGO_ENABLED=0.
 //
@@ -28,6 +26,3 @@
 // Purego will pick which ever Cgo runtime is available and prefer the one that
 // comes with Go (runtime/cgo).
 package fakecgo
-
-//go:generate go run gen.go
-//go:generate gofmt -s -w symbols.go
