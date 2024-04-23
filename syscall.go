@@ -5,6 +5,10 @@
 
 package purego
 
+// Cdecl wraps a function that should be called using the cdecl calling convention when passed to NewCallback.
+// This is only used on windows and does nothing for other platforms.
+type Cdecl any
+
 const (
 	maxArgs     = 15
 	numOfFloats = 8 // arm64 and amd64 both have 8 float registers

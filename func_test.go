@@ -78,7 +78,7 @@ func Test_qsort(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	purego.SyscallN(qsort, uintptr(unsafe.Pointer(&data[0])), uintptr(len(data)), unsafe.Sizeof(int(0)), purego.NewCallback(compare))
+	purego.SyscallN(qsort, uintptr(unsafe.Pointer(&data[0])), uintptr(len(data)), unsafe.Sizeof(int(0)), purego.NewCallback(purego.Cdecl(compare)))
 	for i := range data {
 		if data[i] != sorted[i] {
 			t.Errorf("got %d wanted %d at %d", data[i], sorted[i], i)
