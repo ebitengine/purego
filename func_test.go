@@ -60,10 +60,6 @@ func ExampleNewCallback() {
 }
 
 func Test_qsort(t *testing.T) {
-	if runtime.GOARCH == "386" {
-		t.Skip("not supported on 386") // TODO: but why?
-		return
-	}
 	library, err := getSystemLibrary()
 	if err != nil {
 		t.Fatalf("couldn't get system library: %s", err)
