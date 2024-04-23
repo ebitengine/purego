@@ -81,9 +81,11 @@ func Test_qsort(t *testing.T) {
 	compare := func(a, b *int) int {
 		return *a - *b
 	}
-	var qsort func(data []int, nitms uintptr, size uintptr, compar func(a, b *int) int)
-	purego.RegisterLibFunc(&qsort, libc, "qsort")
-	qsort(data, uintptr(len(data)), unsafe.Sizeof(int(0)), compare)
+	qsort, err := purego.Dlsym(libc, "qsort")
+	if err != nil {
+		panic(err)
+	}
+	purego.SyscallN(qsort, uintptr(unsafe.Pointer(&data[0])), uintptr(len(data)), unsafe.Sizeof(int(0)), purego.NewCallback(compare))
 	for i := range data {
 		if data[i] != sorted[i] {
 			t.Errorf("got %d wanted %d at %d", data[i], sorted[i], i)
@@ -134,7 +136,7 @@ func TestRegisterLibFunc_Bool(t *testing.T) {
 	// this callback recreates the state where the return register
 	// contains other information but the least significant byte is false
 	cbFalse := purego.NewCallback(func() uintptr {
-		return uintptr(uint64(0x7F5948AE9A00) & uint64(^uintptr(0)))
+		return uintptr(uint64(0x7F5948AE9A00))
 	})
 	var runFalse func() bool
 	purego.RegisterFunc(&runFalse, cbFalse)
