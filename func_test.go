@@ -133,7 +133,8 @@ func TestRegisterLibFunc_Bool(t *testing.T) {
 	// this callback recreates the state where the return register
 	// contains other information but the least significant byte is false
 	cbFalse := purego.NewCallback(func() uintptr {
-		return uintptr(uint64(0x7F5948AE9A00))
+		x := uint64(0x7F5948AE9A00)
+		return uintptr(x)
 	})
 	var runFalse func() bool
 	purego.RegisterFunc(&runFalse, cbFalse)
