@@ -6,8 +6,6 @@ package purego
 import (
 	"syscall"
 	_ "unsafe" // only for go:linkname
-
-	"golang.org/x/sys/windows"
 )
 
 var syscall15XABI0 uintptr
@@ -26,14 +24,4 @@ func syscall_syscall15X(fn, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a
 // differently.
 func NewCallback(fn interface{}) uintptr {
 	return syscall.NewCallback(fn)
-}
-
-//go:linkname openLibrary openLibrary
-func openLibrary(name string) (uintptr, error) {
-	handle, err := windows.LoadLibrary(name)
-	return uintptr(handle), err
-}
-
-func loadSymbol(handle uintptr, name string) (uintptr, error) {
-	return windows.GetProcAddress(windows.Handle(handle), name)
 }
