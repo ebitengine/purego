@@ -9,13 +9,10 @@ import (
 	"testing"
 	"unsafe"
 
+	"github.com/ebitengine/purego/internal/load"
+
 	"github.com/ebitengine/purego"
 )
-
-// This is an internal OS-dependent function for getting the handle to a library
-//
-//go:linkname openLibrary openLibrary
-func openLibrary(name string) (uintptr, error)
 
 func getSystemLibrary() (string, error) {
 	switch runtime.GOOS {
@@ -37,7 +34,7 @@ func TestRegisterFunc(t *testing.T) {
 	if err != nil {
 		t.Fatalf("couldn't get system library: %s", err)
 	}
-	libc, err := openLibrary(library)
+	libc, err := load.OpenLibrary(library)
 	if err != nil {
 		t.Fatalf("failed to dlopen: %s", err)
 	}
@@ -71,7 +68,7 @@ func Test_qsort(t *testing.T) {
 	if err != nil {
 		t.Fatalf("couldn't get system library: %s", err)
 	}
-	libc, err := openLibrary(library)
+	libc, err := load.OpenLibrary(library)
 	if err != nil {
 		t.Fatalf("failed to dlopen: %s", err)
 	}
@@ -81,7 +78,7 @@ func Test_qsort(t *testing.T) {
 	compare := func(a, b *int) int {
 		return *a - *b
 	}
-	qsort, err := purego.Dlsym(libc, "qsort")
+	qsort, err := load.OpenSymbol(libc, "qsort")
 	if err != nil {
 		panic(err)
 	}
@@ -102,7 +99,7 @@ func TestRegisterFunc_Floats(t *testing.T) {
 	if err != nil {
 		t.Fatalf("couldn't get system library: %s", err)
 	}
-	libc, err := openLibrary(library)
+	libc, err := load.OpenLibrary(library)
 	if err != nil {
 		t.Fatalf("failed to dlopen: %s", err)
 	}

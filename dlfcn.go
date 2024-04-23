@@ -63,11 +63,6 @@ func Dlclose(handle uintptr) error {
 	return nil
 }
 
-//go:linkname openLibrary openLibrary
-func openLibrary(name string) (uintptr, error) {
-	return Dlopen(name, RTLD_NOW|RTLD_GLOBAL)
-}
-
 func loadSymbol(handle uintptr, name string) (uintptr, error) {
 	return Dlsym(handle, name)
 }
