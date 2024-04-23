@@ -12,14 +12,13 @@ import (
 	"runtime"
 	"unsafe"
 
-	"github.com/ebitengine/purego/internal/load"
 	"github.com/ebitengine/purego/internal/strings"
 )
 
 // RegisterLibFunc is a wrapper around RegisterFunc that uses the C function returned from Dlsym(handle, name).
 // It panics if it can't find the name symbol.
 func RegisterLibFunc(fptr interface{}, handle uintptr, name string) {
-	sym, err := load.OpenSymbol(handle, name)
+	sym, err := openSymbol(handle, name)
 	if err != nil {
 		panic(err)
 	}

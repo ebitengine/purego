@@ -63,6 +63,10 @@ func Dlclose(handle uintptr) error {
 	return nil
 }
 
+func openSymbol(lib uintptr, name string) (uintptr, error) {
+	return Dlsym(lib, name)
+}
+
 // these functions exist in dlfcn_stubs.s and are calling C functions linked to in dlfcn_GOOS.go
 // the indirection is necessary because a function is actually a pointer to the pointer to the code.
 // sadly, I do not know of anyway to remove the assembly stubs entirely because //go:linkname doesn't
