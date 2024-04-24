@@ -95,7 +95,7 @@ func TestSyscallN(t *testing.T) {
 	}
 }
 
-func ExampleNewCallback_CDecl() {
+func ExampleNewCallback_cdecl() {
 	fn := func(_ purego.CDecl, a int) {
 		fmt.Println(a)
 	}
