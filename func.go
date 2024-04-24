@@ -18,7 +18,7 @@ import (
 // RegisterLibFunc is a wrapper around RegisterFunc that uses the C function returned from Dlsym(handle, name).
 // It panics if it can't find the name symbol.
 func RegisterLibFunc(fptr interface{}, handle uintptr, name string) {
-	sym, err := openSymbol(handle, name)
+	sym, err := loadSymbol(handle, name)
 	if err != nil {
 		panic(err)
 	}

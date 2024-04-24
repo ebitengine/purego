@@ -63,7 +63,7 @@ func Dlclose(handle uintptr) error {
 	return nil
 }
 
-func openSymbol(lib uintptr, name string) (uintptr, error) {
+func loadSymbol(lib uintptr, name string) (uintptr, error) {
 	return Dlsym(lib, name)
 }
 

@@ -4,6 +4,7 @@
 package purego
 
 import (
+	"reflect"
 	"syscall"
 
 	"golang.org/x/sys/windows"
@@ -24,12 +25,13 @@ func syscall_syscall15X(fn, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a
 // callbacks can always be created. Although this function is similiar to the darwin version it may act
 // differently.
 func NewCallback(fn interface{}) uintptr {
-	if _, ok := fn.(Cdecl); ok {
+	// TODO: check to make sure it doesn't appear anywhere else
+	if reflect.TypeOf(fn).In(0).AssignableTo(reflect.TypeOf(Cdecl{})) {
 		return syscall.NewCallbackCDecl(fn)
 	}
 	return syscall.NewCallback(fn)
 }
 
-func openSymbol(lib uintptr, name string) (uintptr, error) {
+func loadSymbol(lib uintptr, name string) (uintptr, error) {
 	return windows.GetProcAddress(windows.Handle(lib), name)
 }

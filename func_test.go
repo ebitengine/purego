@@ -71,14 +71,12 @@ func Test_qsort(t *testing.T) {
 
 	data := []int{88, 56, 100, 2, 25}
 	sorted := []int{2, 25, 56, 88, 100}
-	compare := func(a, b *int) int {
+	compare := func(_ purego.Cdecl, a, b *int) int {
 		return *a - *b
 	}
-	qsort, err := load.OpenSymbol(libc, "qsort")
-	if err != nil {
-		panic(err)
-	}
-	purego.SyscallN(qsort, uintptr(unsafe.Pointer(&data[0])), uintptr(len(data)), unsafe.Sizeof(int(0)), purego.NewCallback(purego.Cdecl(compare)))
+	var qsort func(data []int, nitms uintptr, size uintptr, compar func(_ purego.Cdecl, a, b *int) int)
+	purego.RegisterLibFunc(&qsort, libc, "qsort")
+	qsort(data, uintptr(len(data)), unsafe.Sizeof(int(0)), compare)
 	for i := range data {
 		if data[i] != sorted[i] {
 			t.Errorf("got %d wanted %d at %d", data[i], sorted[i], i)

@@ -73,7 +73,12 @@ func compileCallback(fn interface{}) uintptr {
 	for i := 0; i < ty.NumIn(); i++ {
 		in := ty.In(i)
 		switch in.Kind() {
-		case reflect.Struct, reflect.Interface, reflect.Func, reflect.Slice,
+		case reflect.Struct:
+			if i == 0 && in.AssignableTo(reflect.TypeOf(Cdecl{})) {
+				continue
+			}
+			fallthrough
+		case reflect.Interface, reflect.Func, reflect.Slice,
 			reflect.Chan, reflect.Complex64, reflect.Complex128,
 			reflect.String, reflect.Map, reflect.Invalid:
 			panic("purego: unsupported argument type: " + in.Kind().String())
@@ -143,7 +148,12 @@ func callbackWrap(a *callbackArgs) {
 				pos = floatsN
 			}
 			floatsN++
+		case reflect.Struct:
+			// This is the Cdecl field
+			args[i] = reflect.Zero(fnType.In(i))
+			continue
 		default:
+
 			if intsN >= numOfIntegerRegisters() {
 				pos = stack
 				stack++

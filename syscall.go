@@ -7,7 +7,7 @@ package purego
 
 // Cdecl wraps a function that should be called using the cdecl calling convention when passed to NewCallback.
 // This is only used on windows and does nothing for other platforms.
-type Cdecl any
+type Cdecl struct{}
 
 const (
 	maxArgs     = 15
