@@ -43,6 +43,6 @@ func NewCallback(fn interface{}) uintptr {
 	return syscall.NewCallback(fn)
 }
 
-func loadSymbol(lib uintptr, name string) (uintptr, error) {
-	return windows.GetProcAddress(windows.Handle(lib), name)
+func loadSymbol(handle uintptr, name string) (uintptr, error) {
+	return windows.GetProcAddress(windows.Handle(handle), name)
 }
