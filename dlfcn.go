@@ -63,8 +63,8 @@ func Dlclose(handle uintptr) error {
 	return nil
 }
 
-func loadSymbol(lib uintptr, name string) (uintptr, error) {
-	return Dlsym(lib, name)
+func loadSymbol(handle uintptr, name string) (uintptr, error) {
+	return Dlsym(handle, name)
 }
 
 // these functions exist in dlfcn_stubs.s and are calling C functions linked to in dlfcn_GOOS.go

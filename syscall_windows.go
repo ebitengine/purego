@@ -25,9 +25,19 @@ func syscall_syscall15X(fn, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a
 // callbacks can always be created. Although this function is similiar to the darwin version it may act
 // differently.
 func NewCallback(fn interface{}) uintptr {
-	// TODO: check to make sure it doesn't appear anywhere else
+	isCDecl := false
 	ty := reflect.TypeOf(fn)
-	if ty.NumIn() > 0 && ty.In(0).AssignableTo(reflect.TypeOf(Cdecl{})) {
+	for i := 0; i < ty.NumIn(); i++ {
+		in := ty.In(i)
+		if !in.AssignableTo(reflect.TypeOf(CDecl{})) {
+			continue
+		}
+		if i != 0 {
+			panic("purego: CDecl must be the first argument")
+		}
+		isCDecl = true
+	}
+	if isCDecl {
 		return syscall.NewCallbackCDecl(fn)
 	}
 	return syscall.NewCallback(fn)

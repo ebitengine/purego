@@ -32,6 +32,16 @@ func syscall_syscall15X(fn, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a
 // for these callbacks is never released. At least 2000 callbacks can always be created. Although this function
 // provides similar functionality to windows.NewCallback it is distinct.
 func NewCallback(fn interface{}) uintptr {
+	ty := reflect.TypeOf(fn)
+	for i := 0; i < ty.NumIn(); i++ {
+		in := ty.In(i)
+		if !in.AssignableTo(reflect.TypeOf(CDecl{})) {
+			continue
+		}
+		if i != 0 {
+			panic("purego: CDecl must be the first argument")
+		}
+	}
 	return compileCallback(fn)
 }
 
@@ -74,7 +84,7 @@ func compileCallback(fn interface{}) uintptr {
 		in := ty.In(i)
 		switch in.Kind() {
 		case reflect.Struct:
-			if i == 0 && in.AssignableTo(reflect.TypeOf(Cdecl{})) {
+			if i == 0 && in.AssignableTo(reflect.TypeOf(CDecl{})) {
 				continue
 			}
 			fallthrough
@@ -149,7 +159,7 @@ func callbackWrap(a *callbackArgs) {
 			}
 			floatsN++
 		case reflect.Struct:
-			// This is the Cdecl field
+			// This is the CDecl field
 			args[i] = reflect.Zero(fnType.In(i))
 			continue
 		default:

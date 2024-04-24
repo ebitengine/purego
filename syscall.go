@@ -5,9 +5,12 @@
 
 package purego
 
-// Cdecl wraps a function that should be called using the cdecl calling convention when passed to NewCallback.
-// This is only used on windows and does nothing for other platforms.
-type Cdecl struct{}
+// CDecl marks a function as being called using the __cdecl calling convention as defined in
+// the [MSDocs] when passed to NewCallback. It must be the first argument to the function.
+// This is only useful on 386, but it is safe to use on other platforms.
+//
+// [MSDocs]: https://learn.microsoft.com/en-us/cpp/cpp/cdecl?view=msvc-170
+type CDecl struct{}
 
 const (
 	maxArgs     = 15

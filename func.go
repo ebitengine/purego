@@ -130,9 +130,22 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 		for i := 0; i < ty.NumIn(); i++ {
 			arg := ty.In(i)
 			switch arg.Kind() {
+			case reflect.Func:
+				// This only does preliminary testing to ensure the CDecl argument
+				// is the first argument. Full testing is done when the callback is actually
+				// created in NewCallback.
+				for j := 0; j < arg.NumIn(); j++ {
+					in := arg.In(j)
+					if !in.AssignableTo(reflect.TypeOf(CDecl{})) {
+						continue
+					}
+					if j != 0 {
+						panic("purego: CDecl must be the first argument")
+					}
+				}
 			case reflect.String, reflect.Uintptr, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
-				reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Ptr, reflect.UnsafePointer, reflect.Slice,
-				reflect.Func, reflect.Bool:
+				reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Ptr, reflect.UnsafePointer,
+				reflect.Slice, reflect.Bool:
 				if ints < numOfIntegerRegisters() {
 					ints++
 				} else {

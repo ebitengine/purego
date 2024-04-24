@@ -94,3 +94,13 @@ func TestSyscallN(t *testing.T) {
 		t.Fatalf("SyscallN didn't return the same result as purego.Dlsym: %d", err2)
 	}
 }
+
+func ExampleNewCallback_CDecl() {
+	fn := func(_ purego.CDecl, a int) {
+		fmt.Println(a)
+	}
+	cb := purego.NewCallback(fn)
+	purego.SyscallN(cb, 83)
+
+	// Output: 83
+}

@@ -70,10 +70,10 @@ func Test_qsort(t *testing.T) {
 
 	data := []int{88, 56, 100, 2, 25}
 	sorted := []int{2, 25, 56, 88, 100}
-	compare := func(_ purego.Cdecl, a, b *int) int {
+	compare := func(_ purego.CDecl, a, b *int) int {
 		return *a - *b
 	}
-	var qsort func(data []int, nitms uintptr, size uintptr, compar func(_ purego.Cdecl, a, b *int) int)
+	var qsort func(data []int, nitms uintptr, size uintptr, compar func(_ purego.CDecl, a, b *int) int)
 	purego.RegisterLibFunc(&qsort, libc, "qsort")
 	qsort(data, uintptr(len(data)), unsafe.Sizeof(int(0)), compare)
 	for i := range data {
