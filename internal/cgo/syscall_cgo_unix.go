@@ -20,7 +20,7 @@ typedef struct syscall15Args {
 	uintptr_t fn;
 	uintptr_t a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15;
 	uintptr_t f1, f2, f3, f4, f5, f6, f7, f8;
-	uintptr_t arm64_r8;
+	uintptr_t err;
 } syscall15Args;
 
 void syscall15(struct syscall15Args *args) {
