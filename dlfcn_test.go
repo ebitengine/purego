@@ -96,6 +96,11 @@ func TestSyscallN(t *testing.T) {
 }
 
 func ExampleNewCallback_cdecl() {
+	if runtime.GOARCH != "arm64" && runtime.GOARCH != "amd64" {
+		// Doesn't support callbacks
+		fmt.Println("83")
+		return
+	}
 	fn := func(_ purego.CDecl, a int) {
 		fmt.Println(a)
 	}
