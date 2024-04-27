@@ -51,5 +51,5 @@ func Syscall15X(fn, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14,
 		C.uintptr_t(a13), C.uintptr_t(a14), C.uintptr_t(a15), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	}
 	C.syscall15(&args)
-	return uintptr(args.r1), uintptr(args.r2), uintptr(args.err)
+	return uintptr(args.a1), 0, uintptr(args.err)
 }
