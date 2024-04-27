@@ -64,6 +64,10 @@ func ExampleNewCallback() {
 }
 
 func Test_qsort(t *testing.T) {
+	if runtime.GOARCH != "arm64" && runtime.GOARCH != "amd64" {
+		t.Skip("Platform doesn't support Floats")
+		return
+	}
 	library, err := getSystemLibrary()
 	if err != nil {
 		t.Fatalf("couldn't get system library: %s", err)
