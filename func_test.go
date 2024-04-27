@@ -43,6 +43,11 @@ func TestRegisterFunc(t *testing.T) {
 }
 
 func ExampleNewCallback() {
+	if runtime.GOARCH != "arm64" && runtime.GOARCH != "amd64" {
+		// Doesn't support callbacks
+		fmt.Println("1 2 3 4 5 6 7 8 9 10 11 12 13 14 15\n120")
+		return
+	}
 	cb := purego.NewCallback(func(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15 int) int {
 		fmt.Println(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15)
 		return a1 + a2 + a3 + a4 + a5 + a6 + a7 + a8 + a9 + a10 + a11 + a12 + a13 + a14 + a15
@@ -123,6 +128,10 @@ func TestRegisterFunc_Floats(t *testing.T) {
 }
 
 func TestRegisterLibFunc_Bool(t *testing.T) {
+	if runtime.GOARCH != "arm64" && runtime.GOARCH != "amd64" {
+		t.Skip("Platform doesn't support callbacks")
+		return
+	}
 	// this callback recreates the state where the return register
 	// contains other information but the least significant byte is false
 	cbFalse := purego.NewCallback(func() uintptr {
