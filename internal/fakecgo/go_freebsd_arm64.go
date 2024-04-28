@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+//go:build !cgo
+
 package fakecgo
 
 import "unsafe"
@@ -14,7 +16,7 @@ func _cgo_sys_thread_start(ts *ThreadStart) {
 	var size size_t
 	var err int
 
-	//fprintf(stderr, "runtime/cgo: _cgo_sys_thread_start: fn=%p, g=%p\n", ts->fn, ts->g); // debug
+	// fprintf(stderr, "runtime/cgo: _cgo_sys_thread_start: fn=%p, g=%p\n", ts->fn, ts->g); // debug
 	sigfillset(&ign)
 	pthread_sigmask(SIG_SETMASK, &ign, &oset)
 
