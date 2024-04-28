@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023 The Ebitengine Authors
 
-//go:build darwin || (linux && (!cgo || amd64 || arm64))
+//go:build darwin || (linux && (amd64 || arm64))
 
 package purego_test
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -145,4 +146,30 @@ func TestNewCallbackFloat32AndFloat64(t *testing.T) {
 	if cbTotalF64 != expectedCbTotalF64 {
 		t.Errorf("cbTotalF64 not correct got %f but wanted %f", cbTotalF64, expectedCbTotalF64)
 	}
+}
+
+func ExampleNewCallback() {
+	cb := purego.NewCallback(func(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15 int) int {
+		fmt.Println(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15)
+		return a1 + a2 + a3 + a4 + a5 + a6 + a7 + a8 + a9 + a10 + a11 + a12 + a13 + a14 + a15
+	})
+
+	var fn func(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15 int) int
+	purego.RegisterFunc(&fn, cb)
+
+	ret := fn(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)
+	fmt.Println(ret)
+
+	// Output: 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15
+	// 120
+}
+
+func ExampleNewCallback_cdecl() {
+	fn := func(_ purego.CDecl, a int) {
+		fmt.Println(a)
+	}
+	cb := purego.NewCallback(fn)
+	purego.SyscallN(cb, 83)
+
+	// Output: 83
 }

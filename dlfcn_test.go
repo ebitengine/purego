@@ -96,18 +96,3 @@ func TestSyscallN(t *testing.T) {
 		t.Fatalf("SyscallN didn't return the same result as purego.Dlsym: %d", err2)
 	}
 }
-
-func ExampleNewCallback_cdecl() {
-	if runtime.GOARCH != "arm64" && runtime.GOARCH != "amd64" {
-		// Doesn't support callbacks
-		fmt.Println("83")
-		return
-	}
-	fn := func(_ purego.CDecl, a int) {
-		fmt.Println(a)
-	}
-	cb := purego.NewCallback(fn)
-	purego.SyscallN(cb, 83)
-
-	// Output: 83
-}
