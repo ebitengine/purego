@@ -59,7 +59,9 @@ func buildSharedLib(compilerEnv, libFile string, sources ...string) error {
 	} else {
 		args = []string{"-shared", "-Wall", "-Werror", "-o", libFile}
 	}
-
+	if runtime.GOARCH == "386" {
+		args = append(args, "-m32")
+	}
 	// macOS arm64 can run amd64 tests through Rossetta.
 	// Build the shared library based on the GOARCH and not
 	// the default behavior of the compiler.
