@@ -4,8 +4,8 @@
 package purego
 
 import (
+	"reflect"
 	"syscall"
-	_ "unsafe" // only for go:linkname
 
 	"golang.org/x/sys/windows"
 )
@@ -25,13 +25,22 @@ func syscall_syscall15X(fn, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a
 // callbacks can always be created. Although this function is similiar to the darwin version it may act
 // differently.
 func NewCallback(fn interface{}) uintptr {
+	isCDecl := false
+	ty := reflect.TypeOf(fn)
+	for i := 0; i < ty.NumIn(); i++ {
+		in := ty.In(i)
+		if !in.AssignableTo(reflect.TypeOf(CDecl{})) {
+			continue
+		}
+		if i != 0 {
+			panic("purego: CDecl must be the first argument")
+		}
+		isCDecl = true
+	}
+	if isCDecl {
+		return syscall.NewCallbackCDecl(fn)
+	}
 	return syscall.NewCallback(fn)
-}
-
-//go:linkname openLibrary openLibrary
-func openLibrary(name string) (uintptr, error) {
-	handle, err := windows.LoadLibrary(name)
-	return uintptr(handle), err
 }
 
 func loadSymbol(handle uintptr, name string) (uintptr, error) {

@@ -6,8 +6,6 @@
 package purego
 
 import (
-	_ "unsafe" // for go:linkname
-
 	"github.com/ebitengine/purego/internal/cgo"
 )
 

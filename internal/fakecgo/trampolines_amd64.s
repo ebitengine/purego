@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2022 The Ebitengine Authors
 
-//go:build darwin || linux || freebsd
+//go:build !cgo && (darwin || linux || freebsd)
 
 /*
 trampoline for emulating required C functions for cgo in go (see cgo.go)
