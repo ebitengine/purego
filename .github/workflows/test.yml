@@ -109,11 +109,7 @@ jobs:
       - name: go test (Linux 386)
         if: runner.os == 'Linux'
         run: |
-           sudo dpkg --add-architecture i386
-           sudo apt-get update
-           sudo apt-get install gcc-multilib
-           sudo apt-get install g++-multilib
-           env CGO_ENABLED=1 GOARCH=386 go test -shuffle=on -v -count=10 ./...
+          env CGO_ENABLED=1 CC=i386-linux-gnu-gcc CXX=i386-linux-gnu-g++ GOOS=linux GOARCH=386 go test -shuffle=on -v -count=10 ./...
 
       - name: go test race
         if: ${{ !startsWith(matrix.go, '1.18.') && !startsWith(matrix.go, '1.19.') }}
