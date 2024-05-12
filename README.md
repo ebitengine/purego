@@ -74,7 +74,7 @@ Then to run: `CGO_ENABLED=0 go run main.go`
 ## Questions
 
 If you have questions about how to incorporate purego in your project or want to discuss
-how it works join the [Discord](https://discord.com/channels/842049801528016967/1123106378731487345)!
+how it works join the [Discord](https://discord.gg/HzGZVD6BkY)!
 
 ### External Code
 
