@@ -340,8 +340,7 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 			// We take the address and then dereference it to trick go vet from creating a possible miss-use of unsafe.Pointer
 			v.SetPointer(*(*unsafe.Pointer)(unsafe.Pointer(&syscall.a1)))
 		case reflect.Ptr:
-			// It is safe to have the address of syscall.r1 not escape because it is immediately dereferenced with .Elem()
-			v = reflect.NewAt(outType, runtime_noescape(unsafe.Pointer(&syscall.a1))).Elem()
+			v = reflect.NewAt(outType, unsafe.Pointer(&syscall.a1)).Elem()
 		case reflect.Func:
 			// wrap this C function in a nicely typed Go function
 			v = reflect.New(outType)
