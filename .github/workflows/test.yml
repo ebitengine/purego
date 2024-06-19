@@ -106,7 +106,7 @@ jobs:
           
           echo "=> go build plugin"
           # Make sure that plugin buildmode works since we save the R15 register (#254)
-          go build -buildmode=plugin ./examples/libc
+          env GOOS=linux GOARCH=arm64 CGO_ENABLED=1 go build -buildmode=plugin ./examples/libc
           
           go env -u CC
           go env -u CXX
