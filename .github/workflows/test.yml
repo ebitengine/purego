@@ -39,6 +39,12 @@ jobs:
         run: |
           go vet -v ./...
 
+      - name: go build plugin
+        if: runner.os == 'Linux' || runner.os == 'macOS'
+        run:
+          # Make sure that plugin buildmode works since we save the R15 register (#254)
+          go build -buildmode=plugin ./examples/libc
+
       - name: go build
         run: |
           go build -v ./...
@@ -97,6 +103,11 @@ jobs:
           env QEMU_LD_PREFIX=/usr/aarch64-linux-gnu qemu-aarch64 ./purego-test-nocgo -test.shuffle=on -test.v -test.count=10
           env GOOS=linux GOARCH=arm64 CGO_ENABLED=1 go test -c -o=purego-test-cgo .
           env QEMU_LD_PREFIX=/usr/aarch64-linux-gnu qemu-aarch64 ./purego-test-cgo -test.shuffle=on -test.v -test.count=10
+          
+          echo "=> go build plugin"
+          # Make sure that plugin buildmode works since we save the R15 register (#254)
+          env GOOS=linux GOARCH=arm64 CGO_ENABLED=1 go build -buildmode=plugin ./examples/libc
+          
           go env -u CC
           go env -u CXX
 
@@ -147,6 +158,10 @@ jobs:
 
             # verify Go is available
             go version
+            
+            echo "=> go build plugin"
+            # Make sure that plugin buildmode works since we save the R15 register (#254)
+            go build -buildmode=plugin ./examples/libc
 
             echo "=> go build"
             go build -v ./...

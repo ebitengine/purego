@@ -122,6 +122,9 @@ TEXT callbackasm1(SB), NOSPLIT|NOFRAME, $0
 
 	PUSHQ R10 // push the stack pointer below registers
 
+	// Switch from the host ABI to the Go ABI.
+	PUSH_REGS_HOST_TO_ABI0()
+
 	// determine index into runtime·cbs table
 	MOVQ $callbackasm(SB), DX
 	SUBQ DX, AX
@@ -129,9 +132,6 @@ TEXT callbackasm1(SB), NOSPLIT|NOFRAME, $0
 	MOVQ $5, CX               // divide by 5 because each call instruction in ·callbacks is 5 bytes long
 	DIVL CX
 	SUBQ $1, AX               // subtract 1 because return PC is to the next slot
-
-	// Switch from the host ABI to the Go ABI.
-	PUSH_REGS_HOST_TO_ABI0()
 
 	// Create a struct callbackArgs on our stack to be passed as
 	// the "frame" to cgocallback and on to callbackWrap.
