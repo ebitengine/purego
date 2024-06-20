@@ -39,12 +39,6 @@ jobs:
         run: |
           go vet -v ./...
 
-      - name: go build plugin
-        if: runner.os == 'Linux' || runner.os == 'macOS'
-        run:
-          # Make sure that plugin buildmode works since we save the R15 register (#254)
-          go build -buildmode=plugin ./examples/libc
-
       - name: go build
         run: |
           go build -v ./...
@@ -72,6 +66,12 @@ jobs:
           # FreeBSD to add the symbols that libc.so depends on.
           env GOOS=freebsd GOARCH=amd64 go build -gcflags="github.com/ebitengine/purego/internal/fakecgo=-std" -v ./...
           env GOOS=freebsd GOARCH=arm64 go build -gcflags="github.com/ebitengine/purego/internal/fakecgo=-std" -v ./...
+
+      - name: go build (plugin)
+        if: runner.os == 'Linux' || runner.os == 'macOS'
+        run:
+          # Make sure that plugin buildmode works since we save the R15 register (#254)
+          go build -buildmode=plugin ./examples/libc
 
       - name: go mod vendor
         if: runner.os != 'Linux'
@@ -158,10 +158,6 @@ jobs:
 
             # verify Go is available
             go version
-            
-            echo "=> go build plugin"
-            # Make sure that plugin buildmode works since we save the R15 register (#254)
-            go build -buildmode=plugin ./examples/libc
 
             echo "=> go build"
             go build -v ./...
@@ -187,6 +183,10 @@ jobs:
             # Check cross-compiling FreeBSD binaries.
             env GOOS=freebsd GOARCH=amd64 go build -gcflags="github.com/ebitengine/purego/internal/fakecgo=-std" -v ./...
             env GOOS=freebsd GOARCH=arm64 go build -gcflags="github.com/ebitengine/purego/internal/fakecgo=-std" -v ./...
+
+            echo "=> go build (plugin)"
+            # Make sure that plugin buildmode works since we save the R15 register (#254)
+            go build -buildmode=plugin ./examples/libc
 
             echo "=> go mod vendor"
             mkdir /tmp/vendoring
