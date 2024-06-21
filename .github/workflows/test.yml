@@ -104,7 +104,7 @@ jobs:
           env GOOS=linux GOARCH=arm64 CGO_ENABLED=1 go test -c -o=purego-test-cgo .
           env QEMU_LD_PREFIX=/usr/aarch64-linux-gnu qemu-aarch64 ./purego-test-cgo -test.shuffle=on -test.v -test.count=10
           
-          echo "=> go build plugin"
+          echo "=> go build (plugin)"
           # Make sure that plugin buildmode works since we save the R15 register (#254)
           env GOOS=linux GOARCH=arm64 CGO_ENABLED=1 go build -buildmode=plugin ./examples/libc
           
