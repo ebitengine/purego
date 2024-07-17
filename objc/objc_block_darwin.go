@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-FileCopyrightText: 2022 The Ebitengine Authors
-// SPDX-FileContributor: K1000000
+// SPDX-FileCopyrightText: 2024 The Ebitengine Authors
 
 package objc
 
@@ -172,7 +171,7 @@ func (b *blockCache) GetLayout(typ reflect.Type) blockLayout {
 		).Interface(),
 	)
 
-	// store it ands return it
+	// store it and return it
 	b.layouts[typ] = layout
 	return layout
 }
@@ -207,7 +206,7 @@ func (b Block) Copy() Block {
 	return _Block_copy(b)
 }
 
-// GetImplementation pouplates a function pointer with the implementation of a Block.
+// GetImplementation populates a function pointer with the implementation of a Block.
 // Function will panic if the Block is not kept alive while it is in use
 // (possibly by using Block.Copy()).
 func (b Block) GetImplementation(fptr any) {
