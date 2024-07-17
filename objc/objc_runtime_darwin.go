@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2022 The Ebitengine Authors
-// SPDX-FileContributor: Modified by K1000000
 
 // Package objc is a low-level pure Go objective-c runtime. This package is easy to use incorrectly, so it is best
 // to use a wrapper that provides the functionality you need in a safer way.
