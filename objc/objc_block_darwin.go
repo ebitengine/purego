@@ -88,13 +88,11 @@ func newBlockFunctionCache() *blockFunctionCache {
 	return &blockFunctionCache{functions: map[Block]reflect.Value{}}
 }
 
-/*
-blockCache is a thread safe cache of block layouts.
-
-It takes advantage of the block being the first argument of a block call being the block closure,
-only invoking purego.NewCallback() when it encounters a new function type (rather than on for every block creation.)
-This should mitigate block creations putting pressure on the callback limit.
-*/
+// blockCache is a thread safe cache of block layouts.
+//
+// It takes advantage of the block being the first argument of a block call being the block closure,
+// only invoking purego.NewCallback() when it encounters a new function type (rather than on for every block creation.)
+// This should mitigate block creations putting pressure on the callback limit.
 type blockCache struct {
 	sync.Mutex
 	descriptorTemplate blockDescriptor
@@ -140,7 +138,7 @@ func (*blockCache) encode(typ reflect.Type) *uint8 {
 	return &append([]uint8(encoding), 0)[0]
 }
 
-// get layout retrieves a blockLayout VALUE constructed with the supplied function type
+// GetLayout retrieves a blockLayout VALUE constructed with the supplied function type
 // It will panic if the type is not a valid block function.
 func (b *blockCache) GetLayout(typ reflect.Type) blockLayout {
 	b.Lock()
