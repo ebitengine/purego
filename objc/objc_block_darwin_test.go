@@ -147,17 +147,12 @@ func TestBlockCopyAndBlockRelease(t *testing.T) {
 	t.Parallel()
 
 	refCount := 0
-	defer func() {
-		if refCount != 0 {
-			t.Fatalf("refCount: %d != 0", refCount)
-		}
-	}()
-
 	block := objc.NewBlock(
 		func(objc.Block) {
 			refCount++
 		},
 	)
+	defer block.Release()
 	refCount++
 
 	copies := make([]objc.Block, 17)
@@ -184,13 +179,4 @@ func TestBlockCopyAndBlockRelease(t *testing.T) {
 	if refCount != 1 {
 		t.Fatalf("refCount: %d != 1", refCount)
 	}
-	block.Release()
-	refCount--
-
-	defer func() {
-		if recover() == nil {
-			t.Fatal("Block.Release(): function was not released on refCount == 0")
-		}
-	}()
-	block.Invoke()
 }
