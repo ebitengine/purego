@@ -12,11 +12,43 @@ package cgo
 */
 import "C"
 
-// all that is needed is to assign each dl function because then its
-// symbol will then be made available to the linker and linked to inside dlfcn.go
-var (
-	_ = C.dlopen
-	_ = C.dlsym
-	_ = C.dlerror
-	_ = C.dlclose
+import (
+	"errors"
+	"unsafe"
 )
+
+var (
+	RTLD_DEFAULT = C.RTLD_DEFAULT
+	RTLD_LAZY    = C.RTLD_LAZY
+	RTLD_NOW     = C.RTLD_NOW
+	RTLD_LOCAL   = C.RTLD_LOCAL
+	RTLD_GLOBAL  = C.RTLD_GLOBAL
+)
+
+func Dlopen(filename string, flag int) (uintptr, error) {
+	cfilename := C.CString(filename)
+	defer C.free(unsafe.Pointer(cfilename))
+	handle := C.dlopen(cfilename, C.int(flag))
+	if handle == nil {
+		return 0, errors.New(C.GoString(C.dlerror()))
+	}
+	return handle, nil
+}
+
+func Dlsym(handle uintptr, symbol string) (uintptr, error) {
+	csymbol := C.CString(symbol)
+	defer C.free(unsafe.Pointer(csymbol))
+	symbolAddr := C.dlsym(handle, csymbol)
+	if symbolAddr == nil {
+		return 0, errors.New(C.GoString(C.dlerror()))
+	}
+	return symbolAddr, nil
+}
+
+func Dlclose(handle uintptr) error {
+	result := C.dlclose(handle)
+	if result != 0 {
+		return errors.New(C.GoString(C.dlerror()))
+	}
+	return nil
+}
