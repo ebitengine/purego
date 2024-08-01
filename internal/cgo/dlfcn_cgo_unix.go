@@ -8,6 +8,10 @@ package cgo
 /*
  #cgo LDFLAGS: -ldl
 
+// Some distrubtions have RTLD_DEFAULT hidden behind this flag
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
 #include <dlfcn.h>
 #include <stdlib.h>
 */
@@ -19,11 +23,11 @@ import (
 )
 
 var (
-	RTLD_DEFAULT int = C.RTLD_DEFAULT
-	RTLD_LAZY    int = C.RTLD_LAZY
-	RTLD_NOW     int = C.RTLD_NOW
-	RTLD_LOCAL   int = C.RTLD_LOCAL
-	RTLD_GLOBAL  int = C.RTLD_GLOBAL
+	RTLD_DEFAULT int = int(uintptr(C.RTLD_DEFAULT))
+	RTLD_LAZY    int = int(uintptr(C.RTLD_LAZY))
+	RTLD_NOW     int = int(uintptr(C.RTLD_NOW))
+	RTLD_LOCAL   int = int(uintptr(C.RTLD_LOCAL))
+	RTLD_GLOBAL  int = int(uintptr(C.RTLD_GLOBAL))
 )
 
 func Dlopen(filename string, flag int) (uintptr, error) {
@@ -33,23 +37,32 @@ func Dlopen(filename string, flag int) (uintptr, error) {
 	if handle == nil {
 		return 0, errors.New(C.GoString(C.dlerror()))
 	}
-	return handle, nil
+	return uintptr(handle), nil
 }
 
 func Dlsym(handle uintptr, symbol string) (uintptr, error) {
 	csymbol := C.CString(symbol)
 	defer C.free(unsafe.Pointer(csymbol))
-	symbolAddr := C.dlsym(handle, csymbol)
+	symbolAddr := C.dlsym(unsafe.Pointer(handle), csymbol)
 	if symbolAddr == nil {
 		return 0, errors.New(C.GoString(C.dlerror()))
 	}
-	return symbolAddr, nil
+	return uintptr(symbolAddr), nil
 }
 
 func Dlclose(handle uintptr) error {
-	result := C.dlclose(handle)
+	result := C.dlclose(unsafe.Pointer(handle))
 	if result != 0 {
 		return errors.New(C.GoString(C.dlerror()))
 	}
 	return nil
 }
+
+// all that is needed is to assign each dl function because then its
+// symbol will then be made available to the linker and linked to inside dlfcn.go
+var (
+	_ = C.dlopen
+	_ = C.dlsym
+	_ = C.dlerror
+	_ = C.dlclose
+)
