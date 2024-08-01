@@ -9,6 +9,7 @@ package cgo
  #cgo LDFLAGS: -ldl
 
 #include <dlfcn.h>
+#include <stdlib.h>
 */
 import "C"
 
@@ -18,11 +19,11 @@ import (
 )
 
 var (
-	RTLD_DEFAULT = C.RTLD_DEFAULT
-	RTLD_LAZY    = C.RTLD_LAZY
-	RTLD_NOW     = C.RTLD_NOW
-	RTLD_LOCAL   = C.RTLD_LOCAL
-	RTLD_GLOBAL  = C.RTLD_GLOBAL
+	RTLD_DEFAULT int = C.RTLD_DEFAULT
+	RTLD_LAZY    int = C.RTLD_LAZY
+	RTLD_NOW     int = C.RTLD_NOW
+	RTLD_LOCAL   int = C.RTLD_LOCAL
+	RTLD_GLOBAL  int = C.RTLD_GLOBAL
 )
 
 func Dlopen(filename string, flag int) (uintptr, error) {
