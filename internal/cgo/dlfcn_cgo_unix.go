@@ -23,11 +23,11 @@ import (
 )
 
 var (
-	RTLD_DEFAULT int = int(uintptr(C.RTLD_DEFAULT))
-	RTLD_LAZY    int = int(uintptr(C.RTLD_LAZY))
-	RTLD_NOW     int = int(uintptr(C.RTLD_NOW))
-	RTLD_LOCAL   int = int(uintptr(C.RTLD_LOCAL))
-	RTLD_GLOBAL  int = int(uintptr(C.RTLD_GLOBAL))
+	RTLD_DEFAULT = int(uintptr(C.RTLD_DEFAULT))
+	RTLD_LAZY    = int(uintptr(C.RTLD_LAZY))
+	RTLD_NOW     = int(uintptr(C.RTLD_NOW))
+	RTLD_LOCAL   = int(uintptr(C.RTLD_LOCAL))
+	RTLD_GLOBAL  = int(uintptr(C.RTLD_GLOBAL))
 )
 
 func Dlopen(filename string, flag int) (uintptr, error) {
@@ -43,7 +43,7 @@ func Dlopen(filename string, flag int) (uintptr, error) {
 func Dlsym(handle uintptr, symbol string) (uintptr, error) {
 	csymbol := C.CString(symbol)
 	defer C.free(unsafe.Pointer(csymbol))
-	symbolAddr := C.dlsym(unsafe.Pointer(handle), csymbol)
+	symbolAddr := C.dlsym(*(*unsafe.Pointer)(unsafe.Pointer(&handle)), csymbol)
 	if symbolAddr == nil {
 		return 0, errors.New(C.GoString(C.dlerror()))
 	}
@@ -51,7 +51,7 @@ func Dlsym(handle uintptr, symbol string) (uintptr, error) {
 }
 
 func Dlclose(handle uintptr) error {
-	result := C.dlclose(unsafe.Pointer(handle))
+	result := C.dlclose(*(*unsafe.Pointer)(unsafe.Pointer(&handle)))
 	if result != 0 {
 		return errors.New(C.GoString(C.dlerror()))
 	}
