@@ -22,14 +22,6 @@ import (
 	"unsafe"
 )
 
-var (
-	RTLD_DEFAULT = int(uintptr(C.RTLD_DEFAULT))
-	RTLD_LAZY    = int(uintptr(C.RTLD_LAZY))
-	RTLD_NOW     = int(uintptr(C.RTLD_NOW))
-	RTLD_LOCAL   = int(uintptr(C.RTLD_LOCAL))
-	RTLD_GLOBAL  = int(uintptr(C.RTLD_GLOBAL))
-)
-
 func Dlopen(filename string, flag int) (uintptr, error) {
 	cfilename := C.CString(filename)
 	defer C.free(unsafe.Pointer(cfilename))
