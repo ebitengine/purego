@@ -5,6 +5,8 @@
 
 package purego
 
+// Source for constants: https://android.googlesource.com/platform/bionic/+/refs/heads/main/libc/include/dlfcn.h
+
 const (
 	RTLD_DEFAULT = 0x00000 // Pseudo-handle for dlsym so search for any loaded symbol
 	RTLD_LAZY    = 0x00001 // Relocations are performed at an implementation-dependent time.
