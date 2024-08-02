@@ -8,7 +8,7 @@ package cgo
 /*
  #cgo LDFLAGS: -ldl
 
-// Some distrubtions have RTLD_DEFAULT hidden behind this flag
+// Some distributions have RTLD_DEFAULT hidden behind this flag
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
