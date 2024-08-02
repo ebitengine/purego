@@ -8,10 +8,6 @@ package cgo
 /*
  #cgo LDFLAGS: -ldl
 
-// Some distributions have RTLD_DEFAULT hidden behind this flag
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE
-#endif
 #include <dlfcn.h>
 #include <stdlib.h>
 */
