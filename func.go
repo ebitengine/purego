@@ -152,6 +152,7 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 					stack++
 				}
 			case reflect.Float32, reflect.Float64:
+				const is32bit = unsafe.Sizeof(uintptr(0)) == 4
 				if is32bit {
 					panic("purego: floats only supported on 64bit platforms")
 				}
@@ -416,8 +417,6 @@ func checkStructFieldsSupported(ty reflect.Type) {
 		}
 	}
 }
-
-const is32bit = unsafe.Sizeof(uintptr(0)) == 4
 
 func roundUpTo8(val uintptr) uintptr {
 	return (val + 7) &^ 7
