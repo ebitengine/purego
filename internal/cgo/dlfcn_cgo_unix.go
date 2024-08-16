@@ -6,7 +6,7 @@
 package cgo
 
 /*
- #cgo LDFLAGS: -ldl
+ #cgo !netbsd LDFLAGS: -ldl
 
 #include <dlfcn.h>
 #include <stdlib.h>
