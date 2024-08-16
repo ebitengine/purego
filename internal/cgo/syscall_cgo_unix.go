@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2022 The Ebitengine Authors
 
-//go:build freebsd || (linux && !(arm64 || amd64))
+//go:build freebsd || (linux && !(arm64 || amd64)) || netbsd
 
 package cgo
 
