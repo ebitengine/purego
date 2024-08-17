@@ -23,6 +23,8 @@ func getSystemLibrary() (string, error) {
 		return "libc.so.7", nil
 	case "windows":
 		return "ucrtbase.dll", nil
+	case "netbsd":
+		return "libc.so", nil
 	default:
 		return "", fmt.Errorf("GOOS=%s is not supported", runtime.GOOS)
 	}
@@ -111,7 +113,7 @@ func TestRegisterFunc_Floats(t *testing.T) {
 }
 
 func TestRegisterLibFunc_Bool(t *testing.T) {
-	if runtime.GOARCH != "arm64" && runtime.GOARCH != "amd64" {
+	if runtime.GOARCH != "arm64" && runtime.GOARCH != "amd64" || runtime.GOOS == "netbsd" {
 		t.Skip("Platform doesn't support callbacks")
 		return
 	}

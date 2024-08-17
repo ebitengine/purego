@@ -17,5 +17,5 @@ func syscall_syscall15X(fn, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a
 }
 
 func NewCallback(_ interface{}) uintptr {
-	panic("purego: NewCallback on Linux is only supported on amd64/arm64")
+	panic("purego: NewCallback is not supported on NetBSD")
 }
