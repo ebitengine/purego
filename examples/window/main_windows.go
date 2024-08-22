@@ -96,7 +96,10 @@ func init() {
 }
 
 func main() {
-	className := windows.StringToUTF16Ptr("Sample Window Class")
+	className, err := windows.UTF16PtrFromString("Sample Window Class")
+	if err != nil {
+		panic(err)
+	}
 	inst := GetModuleHandle(className)
 
 	wc := WNDCLASSEX{
@@ -114,10 +117,14 @@ func main() {
 		Right:  320,
 		Bottom: 240,
 	}
+	title, err := windows.UTF16PtrFromString("My Title")
+	if err != nil {
+		panic(err)
+	}
 	AdjustWindowRect(&wr, WS_OVERLAPPEDWINDOW, false)
 	hwnd := CreateWindowEx(
 		0, className,
-		windows.StringToUTF16Ptr("My Title"),
+		title,
 		WS_OVERLAPPEDWINDOW,
 		CW_USEDEFAULT, CW_USEDEFAULT, int(wr.Right-wr.Left), int(wr.Bottom-wr.Top),
 		0, 0, inst, nil,
