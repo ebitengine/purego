@@ -6,8 +6,6 @@ package purego
 import (
 	"reflect"
 	"syscall"
-
-	"golang.org/x/sys/windows"
 )
 
 var syscall15XABI0 uintptr
@@ -44,5 +42,5 @@ func NewCallback(fn interface{}) uintptr {
 }
 
 func loadSymbol(handle uintptr, name string) (uintptr, error) {
-	return windows.GetProcAddress(windows.Handle(handle), name)
+	return syscall.GetProcAddress(syscall.Handle(handle), name)
 }
