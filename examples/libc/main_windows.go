@@ -3,9 +3,9 @@
 
 package main
 
-import "golang.org/x/sys/windows"
+import "syscall"
 
 func openLibrary(name string) (uintptr, error) {
-	handle, err := windows.LoadLibrary(name)
+	handle, err := syscall.LoadLibrary(name)
 	return uintptr(handle), err
 }

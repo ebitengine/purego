@@ -5,9 +5,8 @@ package main
 
 import (
 	"runtime"
+	"syscall"
 	"unsafe"
-
-	"golang.org/x/sys/windows"
 
 	"github.com/ebitengine/purego"
 )
@@ -78,10 +77,10 @@ var (
 )
 
 func init() {
-	kernel32 := windows.NewLazySystemDLL("kernel32.dll").Handle()
+	kernel32 := uintptr(syscall.MustLoadDLL("kernel32.dll").Handle)
 	purego.RegisterLibFunc(&GetModuleHandle, kernel32, "GetModuleHandleW")
 
-	user32 := windows.NewLazySystemDLL("user32.dll").Handle()
+	user32 := uintptr(syscall.MustLoadDLL("user32.dll").Handle)
 	purego.RegisterLibFunc(&RegisterClassEx, user32, "RegisterClassExW")
 	purego.RegisterLibFunc(&CreateWindowEx, user32, "CreateWindowExW")
 	purego.RegisterLibFunc(&AdjustWindowRect, user32, "AdjustWindowRect")
@@ -96,7 +95,7 @@ func init() {
 }
 
 func main() {
-	className, err := windows.UTF16PtrFromString("Sample Window Class")
+	className, err := syscall.UTF16PtrFromString("Sample Window Class")
 	if err != nil {
 		panic(err)
 	}
@@ -104,7 +103,7 @@ func main() {
 
 	wc := WNDCLASSEX{
 		Size:      uint32(unsafe.Sizeof(WNDCLASSEX{})),
-		WndProc:   windows.NewCallback(wndProc),
+		WndProc:   syscall.NewCallback(wndProc),
 		Instance:  inst,
 		ClassName: className,
 	}
@@ -117,7 +116,7 @@ func main() {
 		Right:  320,
 		Bottom: 240,
 	}
-	title, err := windows.UTF16PtrFromString("My Title")
+	title, err := syscall.UTF16PtrFromString("My Title")
 	if err != nil {
 		panic(err)
 	}
@@ -130,7 +129,7 @@ func main() {
 		0, 0, inst, nil,
 	)
 	if hwnd == 0 {
-		panic(windows.GetLastError())
+		panic(syscall.GetLastError())
 	}
 
 	ShowWindow(hwnd, SW_SHOW)
