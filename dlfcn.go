@@ -50,7 +50,7 @@ func Dlopen(path string, mode int) (uintptr, error) {
 // when that library was loaded, Dlsym returns zero.
 //
 // This function is not available on Windows.
-// Use [golang.org/x/sys/windows.LoadLibrary] behind a //go:build windows tag.
+// Use [golang.org/x/sys/windows.GetProcAddress] behind a //go:build windows tag.
 func Dlsym(handle uintptr, name string) (uintptr, error) {
 	u := fnDlsym(handle, name)
 	if u == 0 {
@@ -64,7 +64,7 @@ func Dlsym(handle uintptr, name string) (uintptr, error) {
 // use symbols in it, then the dynamic library is unloaded.
 //
 // This function is not available on Windows.
-// Use [golang.org/x/sys/windows.LoadLibrary] behind a //go:build windows tag.
+// Use [golang.org/x/sys/windows.FreeLibrary] behind a //go:build windows tag.
 func Dlclose(handle uintptr) error {
 	if fnDlclose(handle) {
 		return Dlerror{fnDlerror()}
