@@ -35,8 +35,8 @@ func init() {
 // Dlopen calls should be balanced with a Dlclose call.
 //
 // This function is not available on Windows.
-// Use [golang.org/x/sys/windows.LoadLibrary], [golang.org/x/sys/windows.NewLazyDLL], or
-// [golang.org/x/sys/windows.NewLazySystemDLL] for Windows instead.
+// Use [golang.org/x/sys/windows.LoadLibrary], [golang.org/x/sys/windows.LoadLibraryEx],
+// [golang.org/x/sys/windows.NewLazyDLL], or [golang.org/x/sys/windows.NewLazySystemDLL] for Windows instead.
 func Dlopen(path string, mode int) (uintptr, error) {
 	u := fnDlopen(path, mode)
 	if u == 0 {
