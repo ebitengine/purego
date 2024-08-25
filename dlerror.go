@@ -6,6 +6,8 @@
 package purego
 
 // Dlerror represents an error value returned from Dlopen, Dlsym, or Dlclose.
+//
+// This type is not available on Windows as there is no counterpart to it on Windows.
 type Dlerror struct {
 	s string
 }
