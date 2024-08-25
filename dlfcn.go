@@ -33,6 +33,9 @@ func init() {
 // A second call to Dlopen with the same path will return the same handle, but the internal
 // reference count for the handle will be incremented. Therefore, all
 // Dlopen calls should be balanced with a Dlclose call.
+//
+// This function is not available on Windows.
+// Use [golang.org/x/sys/windows.LoadLibrary] behind a //go:build windows build tag.
 func Dlopen(path string, mode int) (uintptr, error) {
 	u := fnDlopen(path, mode)
 	if u == 0 {
@@ -45,6 +48,9 @@ func Dlopen(path string, mode int) (uintptr, error) {
 // It returns the address where that symbol is loaded into memory. If the symbol is not found,
 // in the specified library or any of the libraries that were automatically loaded by Dlopen
 // when that library was loaded, Dlsym returns zero.
+//
+// This function is not available on Windows.
+// Use [golang.org/x/sys/windows.LoadLibrary] behind a //go:build windows tag.
 func Dlsym(handle uintptr, name string) (uintptr, error) {
 	u := fnDlsym(handle, name)
 	if u == 0 {
@@ -56,6 +62,9 @@ func Dlsym(handle uintptr, name string) (uintptr, error) {
 // Dlclose decrements the reference count on the dynamic library handle.
 // If the reference count drops to zero and no other loaded libraries
 // use symbols in it, then the dynamic library is unloaded.
+//
+// This function is not available on Windows.
+// Use [golang.org/x/sys/windows.LoadLibrary] behind a //go:build windows tag.
 func Dlclose(handle uintptr) error {
 	if fnDlclose(handle) {
 		return Dlerror{fnDlerror()}
