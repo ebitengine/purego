@@ -35,7 +35,8 @@ except for float arguments and return values.
 
 ## Example
 
-This example only works on macOS and Linux. For a complete example look at [libc](https://github.com/ebitengine/purego/tree/main/examples/libc) which supports Windows and FreeBSD.
+The example below only showcases purego use for macOS and Linux. The other platforms require special handling which can
+be seen in the complete example at [examples/libc](https://github.com/ebitengine/purego/tree/main/examples/libc) which supports Windows and FreeBSD.
 
 ```go
 package main
