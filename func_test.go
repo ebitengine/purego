@@ -17,10 +17,12 @@ func getSystemLibrary() (string, error) {
 	switch runtime.GOOS {
 	case "darwin":
 		return "/usr/lib/libSystem.B.dylib", nil
-	case "linux":
-		return "libc.so.6", nil
 	case "freebsd":
 		return "libc.so.7", nil
+	case "linux":
+		return "libc.so.6", nil
+	case "netbsd":
+		return "libc.so", nil
 	case "windows":
 		return "ucrtbase.dll", nil
 	default:
@@ -43,7 +45,7 @@ func TestRegisterFunc(t *testing.T) {
 }
 
 func Test_qsort(t *testing.T) {
-	if runtime.GOARCH != "arm64" && runtime.GOARCH != "amd64" {
+	if runtime.GOARCH != "arm64" && runtime.GOARCH != "amd64" || runtime.GOOS == "netbsd" {
 		t.Skip("Platform doesn't support Floats")
 		return
 	}
@@ -72,7 +74,7 @@ func Test_qsort(t *testing.T) {
 }
 
 func TestRegisterFunc_Floats(t *testing.T) {
-	if runtime.GOARCH != "arm64" && runtime.GOARCH != "amd64" {
+	if runtime.GOARCH != "arm64" && runtime.GOARCH != "amd64" || runtime.GOOS == "netbsd" {
 		t.Skip("Platform doesn't support Floats")
 		return
 	}
@@ -111,7 +113,7 @@ func TestRegisterFunc_Floats(t *testing.T) {
 }
 
 func TestRegisterLibFunc_Bool(t *testing.T) {
-	if runtime.GOARCH != "arm64" && runtime.GOARCH != "amd64" {
+	if runtime.GOARCH != "arm64" && runtime.GOARCH != "amd64" || runtime.GOOS == "netbsd" {
 		t.Skip("Platform doesn't support callbacks")
 		return
 	}
