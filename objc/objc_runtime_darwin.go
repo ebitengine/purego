@@ -45,6 +45,8 @@ var (
 	object_setIvar              func(obj ID, ivar Ivar, value ID)
 	protocol_getName            func(protocol *Protocol) string
 	protocol_isEqual            func(p *Protocol, p2 *Protocol) bool
+	_Block_copy                 func(Block) Block
+	_Block_release              func(Block)
 )
 
 func init() {
@@ -90,6 +92,10 @@ func init() {
 	purego.RegisterLibFunc(&protocol_isEqual, objc, "protocol_isEqual")
 	purego.RegisterLibFunc(&object_getIvar, objc, "object_getIvar")
 	purego.RegisterLibFunc(&object_setIvar, objc, "object_setIvar")
+
+	purego.RegisterLibFunc(&_Block_copy, objc, "_Block_copy")
+	purego.RegisterLibFunc(&_Block_release, objc, "_Block_release")
+	blocks = newBlockCache()
 }
 
 // ID is an opaque pointer to some Objective-C object
@@ -383,7 +389,7 @@ func encodeType(typ reflect.Type, insidePtr bool) (string, error) {
 	switch typ {
 	case reflect.TypeOf(Class(0)):
 		return encClass, nil
-	case reflect.TypeOf(ID(0)):
+	case reflect.TypeOf(ID(0)), reflect.TypeOf(Block(0)):
 		return encId, nil
 	case reflect.TypeOf(SEL(0)):
 		return encSelector, nil
