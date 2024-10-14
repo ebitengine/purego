@@ -226,8 +226,7 @@ jobs:
         with:
           usesh: true
           prepare: |
-            /usr/sbin/pkg_add curl
-            fetch https://go.dev/dl/go${{matrix.go}}.netbsd-amd64.tar.gz
+            pkg_add -v https://go.dev/dl/go${{matrix.go}}.netbsd-amd64.tar.gz
             rm -fr /usr/local/go && tar -C /usr/local -xf go${{matrix.go}}.netbsd-amd64.tar.gz
             ln -s /usr/local/go/bin/go /usr/local/bin
           run: |
@@ -279,7 +278,7 @@ jobs:
             go mod vendor
             go build -v .
 
-            # TODO: uncomment once Cgo is not required for FreeBSD
+            # TODO: uncomment once Cgo is not required for NetBSD
             # cd $GITHUB_WORKSPACE
             # echo "=> go test CGO_ENABLED=0"
             # env CGO_ENABLED=0 go test -gcflags="github.com/ebitengine/purego/internal/fakecgo=-std" -shuffle=on -v -count=10 ./...
