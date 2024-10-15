@@ -235,7 +235,6 @@ jobs:
             echo "Running tests on $(uname -a) at $PWD"
             
             export PATH=$PATH:/usr/local/go/bin/
-            echo $PATH
 
             # verify Go is available
             go version
