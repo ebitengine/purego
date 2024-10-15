@@ -221,7 +221,7 @@ jobs:
     runs-on: ubuntu-22.04
     defaults:
       run:
-        shell: sh
+        shell: bash
     steps:
       - uses: actions/checkout@v4
       - name: Run in netbsd
@@ -237,6 +237,8 @@ jobs:
             ln -s /usr/local/go/bin/go /usr/local/bin
           run: |
             echo "Running tests on $(uname -a) at $PWD"
+            
+            export PATH=$PATH:/usr/local/bin
 
             # verify Go is available
             go version
