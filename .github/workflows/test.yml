@@ -228,6 +228,7 @@ jobs:
         uses: vmactions/netbsd-vm@v1
         with:
           usesh: true
+          sync: no
           prepare: |
             ftp https://go.dev/dl/go${{matrix.go}}.netbsd-amd64.tar.gz
             mkdir /usr/local
