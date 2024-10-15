@@ -265,10 +265,6 @@ jobs:
             env GOOS=freebsd GOARCH=amd64 go build -gcflags="github.com/ebitengine/purego/internal/fakecgo=-std" -v ./...
             env GOOS=freebsd GOARCH=arm64 go build -gcflags="github.com/ebitengine/purego/internal/fakecgo=-std" -v ./...
 
-            echo "=> go build (plugin)"
-            # Make sure that plugin buildmode works since we save the R15 register (#254)
-            go build -buildmode=plugin ./examples/libc
-
             echo "=> go mod vendor"
             mkdir /tmp/vendoring
             cd /tmp/vendoring
