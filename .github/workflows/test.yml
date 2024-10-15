@@ -216,7 +216,7 @@ jobs:
   netbsd:
     strategy:
       matrix:
-        go: ['1.18.10', '1.19.13', '1.20.14', '1.21.13', '1.22.6', '1.23.0']
+        go: ['1.21.13', '1.22.6', '1.23.0']
     name: Test with Go ${{ matrix.go }} on NetBSD
     runs-on: ubuntu-22.04
     steps:
