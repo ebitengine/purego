@@ -23,10 +23,10 @@ import (
 var (
 	objc_msgSend_fn             uintptr
 	objc_msgSend_stret_fn       uintptr
-	objc_msgSend                func(obj ID, cmd SEL, args ...interface{}) ID
+	objc_msgSend                func(obj ID, cmd SEL, args ...any) ID
 	objc_msgSendSuper2_fn       uintptr
 	objc_msgSendSuper2_stret_fn uintptr
-	objc_msgSendSuper2          func(super *objc_super, cmd SEL, args ...interface{}) ID
+	objc_msgSendSuper2          func(super *objc_super, cmd SEL, args ...any) ID
 	objc_getClass               func(name string) Class
 	objc_getProtocol            func(name string) *Protocol
 	objc_allocateClassPair      func(super Class, name string, extraBytes uintptr) Class
@@ -103,7 +103,7 @@ func (id ID) Class() Class {
 // Send is a convenience method for sending messages to objects. This function takes a SEL
 // instead of a string since RegisterName grabs the global Objective-C lock. It is best to cache the result
 // of RegisterName.
-func (id ID) Send(sel SEL, args ...interface{}) ID {
+func (id ID) Send(sel SEL, args ...any) ID {
 	return objc_msgSend(id, sel, args...)
 }
 
@@ -147,7 +147,7 @@ type objc_super struct {
 // SendSuper is a convenience method for sending message to object's super. This function takes a SEL
 // instead of a string since RegisterName grabs the global Objective-C lock. It is best to cache the result
 // of RegisterName.
-func (id ID) SendSuper(sel SEL, args ...interface{}) ID {
+func (id ID) SendSuper(sel SEL, args ...any) ID {
 	super := &objc_super{
 		receiver:   id,
 		superClass: id.Class(),
@@ -449,7 +449,7 @@ func encodeType(typ reflect.Type, insidePtr bool) (string, error) {
 }
 
 // encodeFunc returns a functions type as if it was given to @encode(fn)
-func encodeFunc(fn interface{}) (string, error) {
+func encodeFunc(fn any) (string, error) {
 	typ := reflect.TypeOf(fn)
 	if typ.Kind() != reflect.Func {
 		return "", errors.New("not a func")
@@ -551,7 +551,7 @@ type IMP uintptr
 // It returns an IMP function pointer that can be called by Objective-C code.
 // The function panics if an error occurs.
 // The function pointer is never deallocated.
-func NewIMP(fn interface{}) IMP {
+func NewIMP(fn any) IMP {
 	ty := reflect.TypeOf(fn)
 	if ty.Kind() != reflect.Func {
 		panic("objc: not a function")
