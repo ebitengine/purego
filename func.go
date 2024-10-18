@@ -16,7 +16,7 @@ import (
 	"github.com/ebitengine/purego/internal/strings"
 )
 
-var pool = sync.Pool{New: func() interface{} {
+var thePool = sync.Pool{New: func() any {
 	return new(syscall15Args)
 }}
 
@@ -253,8 +253,8 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 			runtime.KeepAlive(keepAlive)
 			runtime.KeepAlive(args)
 		}()
-		syscall := pool.Get().(*syscall15Args)
-		defer pool.Put(syscall)
+		syscall := thePool.Get().(*syscall15Args)
+		defer thePool.Put(syscall)
 		if ty.NumOut() == 1 && ty.Out(0).Kind() == reflect.Struct {
 			outType := ty.Out(0)
 			if runtime.GOARCH == "amd64" && outType.Size() > maxRegAllocStructSize {
@@ -336,7 +336,13 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 		default:
 			panic("purego: unsupported return kind: " + outType.Kind().String())
 		}
-		return []reflect.Value{v}
+		if len(args) > 0 {
+			// reuse args slice instead of allocating one when possible
+			args[0] = v
+			return args[:1]
+		} else {
+			return []reflect.Value{v}
+		}
 	})
 	fn.Set(v)
 }
