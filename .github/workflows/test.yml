@@ -93,6 +93,11 @@ jobs:
         run: |
           env CGO_ENABLED=0 go test -shuffle=on -v -count=10 ./...
           env CGO_ENABLED=1 go test -shuffle=on -v -count=10 ./...
+          # Compile without optimization to check potential stack overflow.
+          # The option '-gcflags=all=-N -l' is often used at Visual Studio Code.
+          # See also https://go.googlesource.com/vscode-go/+/HEAD/docs/debugging.md#launch.
+          # TODO: CGO_ENABLED=0 might cause SEGV. Fix this issue.
+          env CGO_ENABLED=1 go test "-gcflags=all=-N -l" -v ./...
 
       - name: go test (Linux arm64)
         if: runner.os == 'Linux'
@@ -208,6 +213,12 @@ jobs:
 
             echo "=> go test CGO_ENABLED=1"
             env CGO_ENABLED=1 go test -shuffle=on -v -count=10 ./...
+
+            echo "=> go test CGO_ENABLED=0 w/o optimization"
+            env CGO_ENABLED=0 go test "-gcflags=all=-N -l" -v ./...
+
+            echo "=> go test CGO_ENABLED=1 w/o optimization"
+            env CGO_ENABLED=1 go test "-gcflags=all=-N -l" -v ./...
 
             if [ -z "$(echo ${{matrix.go}} | grep '^1.1')" ]; then
               echo "=> go test race"
