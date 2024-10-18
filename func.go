@@ -253,8 +253,8 @@ func RegisterFunc(fptr any, cfn uintptr) {
 			runtime.KeepAlive(keepAlive)
 			runtime.KeepAlive(args)
 		}()
-		syscall := thePool.Get().(*syscall15Args)
-		defer thePool.Put(syscall)
+
+		var arm64_r8 uintptr
 		if ty.NumOut() == 1 && ty.Out(0).Kind() == reflect.Struct {
 			outType := ty.Out(0)
 			if runtime.GOARCH == "amd64" && outType.Size() > maxRegAllocStructSize {
@@ -266,7 +266,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 				if !isAllFloats || numFields > 4 {
 					val := reflect.New(outType)
 					keepAlive = append(keepAlive, val)
-					syscall.arm64_r8 = val.Pointer()
+					arm64_r8 = val.Pointer()
 				}
 			}
 		}
@@ -282,6 +282,10 @@ func RegisterFunc(fptr any, cfn uintptr) {
 			}
 			keepAlive = addValue(v, keepAlive, addInt, addFloat, addStack, &numInts, &numFloats, &numStack)
 		}
+
+		syscall := thePool.Get().(*syscall15Args)
+		defer thePool.Put(syscall)
+
 		if runtime.GOARCH == "arm64" || runtime.GOOS != "windows" {
 			// Use the normal arm64 calling convention even on Windows
 			*syscall = syscall15Args{
@@ -290,10 +294,11 @@ func RegisterFunc(fptr any, cfn uintptr) {
 				sysargs[6], sysargs[7], sysargs[8], sysargs[9], sysargs[10], sysargs[11],
 				sysargs[12], sysargs[13], sysargs[14],
 				floats[0], floats[1], floats[2], floats[3], floats[4], floats[5], floats[6], floats[7],
-				syscall.arm64_r8,
+				arm64_r8,
 			}
 			runtime_cgocall(syscall15XABI0, unsafe.Pointer(syscall))
 		} else {
+			*syscall = syscall15Args{}
 			// This is a fallback for Windows amd64, 386, and arm. Note this may not support floats
 			syscall.a1, syscall.a2, _ = syscall_syscall15X(cfn, sysargs[0], sysargs[1], sysargs[2], sysargs[3], sysargs[4],
 				sysargs[5], sysargs[6], sysargs[7], sysargs[8], sysargs[9], sysargs[10], sysargs[11],
