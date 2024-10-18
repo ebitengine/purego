@@ -7,7 +7,7 @@ package purego
 
 import "reflect"
 
-func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFloat, addStack func(uintptr), keepAlive []interface{}) []interface{} {
+func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFloat, addStack func(uintptr), keepAlive []any) []any {
 	panic("purego: struct arguments are not supported")
 }
 

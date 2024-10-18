@@ -22,7 +22,7 @@ var thePool = sync.Pool{New: func() any {
 
 // RegisterLibFunc is a wrapper around RegisterFunc that uses the C function returned from Dlsym(handle, name).
 // It panics if it can't find the name symbol.
-func RegisterLibFunc(fptr interface{}, handle uintptr, name string) {
+func RegisterLibFunc(fptr any, handle uintptr, name string) {
 	sym, err := loadSymbol(handle, name)
 	if err != nil {
 		panic(err)
@@ -65,7 +65,7 @@ func RegisterLibFunc(fptr interface{}, handle uintptr, name string) {
 //
 // There is a special case when the last argument of fptr is a variadic interface (or []interface}
 // it will be expanded into a call to the C function as if it had the arguments in that slice.
-// This means that using arg ...interface{} is like a cast to the function with the arguments inside arg.
+// This means that using arg ...any is like a cast to the function with the arguments inside arg.
 // This is not the same as C variadic.
 //
 // # Memory
@@ -110,7 +110,7 @@ func RegisterLibFunc(fptr interface{}, handle uintptr, name string) {
 //	defer free(mustFree)
 //
 // [Cgo rules]: https://pkg.go.dev/cmd/cgo#hdr-Go_references_to_C
-func RegisterFunc(fptr interface{}, cfn uintptr) {
+func RegisterFunc(fptr any, cfn uintptr) {
 	fn := reflect.ValueOf(fptr).Elem()
 	ty := fn.Type()
 	if ty.Kind() != reflect.Func {
@@ -248,7 +248,7 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 			addFloat = addStack
 		}
 
-		var keepAlive []interface{}
+		var keepAlive []any
 		defer func() {
 			runtime.KeepAlive(keepAlive)
 			runtime.KeepAlive(args)
@@ -271,7 +271,7 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 			}
 		}
 		for i, v := range args {
-			if variadic, ok := args[i].Interface().([]interface{}); ok {
+			if variadic, ok := args[i].Interface().([]any); ok {
 				if i != len(args)-1 {
 					panic("purego: can only expand last parameter")
 				}
@@ -347,7 +347,7 @@ func RegisterFunc(fptr interface{}, cfn uintptr) {
 	fn.Set(v)
 }
 
-func addValue(v reflect.Value, keepAlive []interface{}, addInt func(x uintptr), addFloat func(x uintptr), addStack func(x uintptr), numInts *int, numFloats *int, numStack *int) []interface{} {
+func addValue(v reflect.Value, keepAlive []any, addInt func(x uintptr), addFloat func(x uintptr), addStack func(x uintptr), numInts *int, numFloats *int, numStack *int) []any {
 	switch v.Kind() {
 	case reflect.String:
 		ptr := strings.CString(v.String())

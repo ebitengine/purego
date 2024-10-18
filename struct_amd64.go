@@ -85,7 +85,7 @@ const (
 	_MEMORY   = 0b1111
 )
 
-func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFloat, addStack func(uintptr), keepAlive []interface{}) []interface{} {
+func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFloat, addStack func(uintptr), keepAlive []any) []any {
 	if v.Type().Size() == 0 {
 		return keepAlive
 	}
