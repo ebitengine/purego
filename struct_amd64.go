@@ -121,10 +121,7 @@ func postMerger(t reflect.Type) bool {
 		return false
 	}
 	first := getFirst(t).Kind()
-	if first != reflect.Float32 && first != reflect.Float64 {
-		return false
-	}
-	return true
+	return first != reflect.Float32 && first != reflect.Float64
 }
 
 func getFirst(t reflect.Type) reflect.Type {
@@ -196,7 +193,7 @@ func tryPlaceRegister(v reflect.Value, addFloat func(uintptr), addInt func(uintp
 				val |= uint64(f.Int()&0xFFFF_FFFF) << shift
 				shift += 32
 				class |= _INTEGER
-			case reflect.Int64:
+			case reflect.Int64, reflect.Int:
 				val = uint64(f.Int())
 				shift = 64
 				class = _INTEGER
@@ -212,7 +209,7 @@ func tryPlaceRegister(v reflect.Value, addFloat func(uintptr), addInt func(uintp
 				val |= f.Uint() << shift
 				shift += 32
 				class |= _INTEGER
-			case reflect.Uint64:
+			case reflect.Uint64, reflect.Uint:
 				val = f.Uint()
 				shift = 64
 				class = _INTEGER
