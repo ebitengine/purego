@@ -4,6 +4,7 @@
 package purego
 
 import (
+	"fmt"
 	"math"
 	"reflect"
 	"unsafe"
@@ -121,6 +122,8 @@ func postMerger(t reflect.Type) bool {
 		return false
 	}
 	first := getFirst(t).Kind()
+	fmt.Println(t)
+	fmt.Println(first)
 	return first != reflect.Float32 && first != reflect.Float64
 }
 
