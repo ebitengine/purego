@@ -4,7 +4,6 @@
 package purego
 
 import (
-	"fmt"
 	"math"
 	"reflect"
 	"unsafe"
