@@ -112,7 +112,7 @@ func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFl
 	return keepAlive
 }
 
-func postMerger(t reflect.Type) bool {
+func postMerger(t reflect.Type) (passInMemory bool) {
 	// (c) If the size of the aggregate exceeds two eightbytes and the first eight- byte isn’t SSE or any other
 	// eightbyte isn’t SSEUP, the whole argument is passed in memory.
 	if t.Kind() != reflect.Struct {
@@ -121,18 +121,7 @@ func postMerger(t reflect.Type) bool {
 	if t.Size() <= 2*8 {
 		return false
 	}
-	first := getFirst(t).Kind()
-	fmt.Println(t)
-	fmt.Println(first)
-	return first != reflect.Float32 && first != reflect.Float64
-}
-
-func getFirst(t reflect.Type) reflect.Type {
-	first := t.Field(0).Type
-	if first.Kind() == reflect.Struct {
-		return getFirst(first)
-	}
-	return first
+	return true // Go does not have an SSE/SEEUP type so this is always true
 }
 
 func tryPlaceRegister(v reflect.Value, addFloat func(uintptr), addInt func(uintptr)) (ok bool) {
