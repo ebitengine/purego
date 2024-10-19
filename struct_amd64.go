@@ -120,7 +120,7 @@ func postMerger(t reflect.Type) (passInMemory bool) {
 	if t.Size() <= 2*8 {
 		return false
 	}
-	return true // Go does not have an SSE/SEEUP type so this is always true
+	return true // Go does not have an SSE/SSEUP type so this is always true
 }
 
 func tryPlaceRegister(v reflect.Value, addFloat func(uintptr), addInt func(uintptr)) (ok bool) {
