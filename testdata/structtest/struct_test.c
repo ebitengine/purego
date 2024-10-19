@@ -1,6 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2024 The Ebitengine Authors
 
+#include "stdint.h"
+
+#if defined(__x86_64__) || defined(__aarch64__)
+typedef int64_t GoInt;
+typedef uint64_t GoUint;
+#endif
+
 // Empty is empty
 struct Empty {};
 
@@ -324,4 +331,20 @@ unsigned long InitWithContentRect(int *win, struct Content c, int style, int bac
   if (!flag)
       return 0xF1A6; // FLAG
   return (unsigned long)(c.point.x + c.point.y + c.size.width + c.size.height) / (style - backing);
+}
+
+struct GoInt4 {
+    GoInt a, b, c, d;
+};
+
+GoInt GoInt4(struct GoInt4 g) {
+    return g.a + g.b - g.c + g.d;
+}
+
+struct GoUint4 {
+    GoUint a, b, c, d;
+};
+
+GoUint GoUint4(struct GoUint4 g) {
+    return g.a + g.b + g.c + g.d;
 }
