@@ -50,8 +50,10 @@ func _cgo_try_pthread_create(thread *pthread_t, attr *pthread_attr_t, pfn unsafe
 	var err int
 
 	for tries = 0; tries < 20; tries++ {
+		// inlined this call because it ran out of stack when inlining was disabled
 		err = int(call5(pthread_createABI0, uintptr(unsafe.Pointer(thread)), uintptr(unsafe.Pointer(attr)), uintptr(pfn), uintptr(unsafe.Pointer(arg)), 0))
 		if err == 0 {
+			// inlined this call because it ran out of stack when inlining was disabled
 			call5(pthread_detachABI0, uintptr(*thread), 0, 0, 0, 0)
 			return 0
 		}
@@ -60,6 +62,7 @@ func _cgo_try_pthread_create(thread *pthread_t, attr *pthread_attr_t, pfn unsafe
 		}
 		ts.Sec = 0
 		ts.Nsec = (tries + 1) * 1000 * 1000 // Milliseconds.
+		// inlined this call because it ran out of stack when inlining was disabled
 		call5(nanosleepABI0, uintptr(unsafe.Pointer(&ts)), 0, 0, 0, 0)
 	}
 	return int(syscall.EAGAIN)
