@@ -17,6 +17,7 @@ body:
       - label: macOS
       - label: Linux
       - label: FreeBSD
+      - label: NetBSD
       - label: Android
       - label: iOS
   validations:
