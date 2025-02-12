@@ -20,6 +20,8 @@ func getSystemLibrary() string {
 		return "libc.so.6"
 	case "freebsd":
 		return "libc.so.7"
+	case "netbsd":
+		return "libc.so"
 	case "windows":
 		return "ucrtbase.dll"
 	default:
