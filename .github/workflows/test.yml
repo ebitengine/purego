@@ -65,7 +65,11 @@ jobs:
           # gcflags -std is necessary to make fakecgo the Cgo for
           # FreeBSD to add the symbols that libc.so depends on.
           env GOOS=freebsd GOARCH=amd64 go build -gcflags="github.com/ebitengine/purego/internal/fakecgo=-std" -v ./...
-          env GOOS=freebsd GOARCH=arm64 go build -gcflags="github.com/ebitengine/purego/internal/fakecgo=-std" -v ./...
+          env GOOS=freebsd GOARCH=arm64 go build -gcflags="github.com/ebitengine/purego/internal/fakecgo=-std" -v ./...          
+          
+          # Check cross-compiling NetBSD binaries.
+          env GOOS=netbsd GOARCH=amd64 go build -v ./...
+          env GOOS=netbsd GOARCH=arm64 go build -v ./...
 
       - name: go build (plugin)
         if: runner.os == 'Linux' || runner.os == 'macOS'
@@ -188,6 +192,10 @@ jobs:
             # Check cross-compiling FreeBSD binaries.
             env GOOS=freebsd GOARCH=amd64 go build -gcflags="github.com/ebitengine/purego/internal/fakecgo=-std" -v ./...
             env GOOS=freebsd GOARCH=arm64 go build -gcflags="github.com/ebitengine/purego/internal/fakecgo=-std" -v ./...
+            
+            # Check cross-compiling NetBSD binaries.
+            env GOOS=netbsd GOARCH=amd64 go build -v ./...
+            env GOOS=netbsd GOARCH=arm64 go build -v ./...
 
             echo "=> go build (plugin)"
             # Make sure that plugin buildmode works since we save the R15 register (#254)
@@ -227,7 +235,7 @@ jobs:
   netbsd:
     strategy:
       matrix:
-        go: ['1.21.13', '1.22.6', '1.23.0']
+        go: ['1.21.13', '1.22.12', '1.23.6', '1.24.0']
     name: Test with Go ${{ matrix.go }} on NetBSD
     runs-on: ubuntu-22.04
     steps:
@@ -274,6 +282,10 @@ jobs:
             # Check cross-compiling FreeBSD binaries.
             env GOOS=freebsd GOARCH=amd64 go build -gcflags="github.com/ebitengine/purego/internal/fakecgo=-std" -v ./...
             env GOOS=freebsd GOARCH=arm64 go build -gcflags="github.com/ebitengine/purego/internal/fakecgo=-std" -v ./...
+            
+            # Check cross-compiling NetBSD binaries.
+            env GOOS=netbsd GOARCH=amd64 go build -v ./...
+            env GOOS=netbsd GOARCH=arm64 go build -v ./...
 
             echo "=> go mod vendor"
             mkdir /tmp/vendoring
@@ -289,10 +301,9 @@ jobs:
             go mod vendor
             go build -v .
 
-            # TODO: uncomment once Cgo is not required for NetBSD
-            # cd $GITHUB_WORKSPACE
-            # echo "=> go test CGO_ENABLED=0"
-            # env CGO_ENABLED=0 go test -gcflags="github.com/ebitengine/purego/internal/fakecgo=-std" -shuffle=on -v -count=10 ./...
+            cd $GITHUB_WORKSPACE
+            echo "=> go test CGO_ENABLED=0"
+            env CGO_ENABLED=0 go test -shuffle=on -v -count=10 ./...
 
             echo "=> go test CGO_ENABLED=1"
             env CGO_ENABLED=1 go test -shuffle=on -v -count=10 ./...
