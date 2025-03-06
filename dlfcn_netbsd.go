@@ -3,8 +3,6 @@
 
 package purego
 
-import "github.com/ebitengine/purego/internal/cgo"
-
 // Source for constants: https://github.com/NetBSD/src/blob/trunk/include/dlfcn.h
 
 const (
@@ -15,19 +13,3 @@ const (
 	RTLD_LOCAL   = 0x00000000             // All symbols are not made available for relocation processing by other modules.
 	RTLD_GLOBAL  = 0x00000100             // All symbols are available for relocation processing of other modules.
 )
-
-func Dlopen(path string, mode int) (uintptr, error) {
-	return cgo.Dlopen(path, mode)
-}
-
-func Dlsym(handle uintptr, name string) (uintptr, error) {
-	return cgo.Dlsym(handle, name)
-}
-
-func Dlclose(handle uintptr) error {
-	return cgo.Dlclose(handle)
-}
-
-func loadSymbol(handle uintptr, name string) (uintptr, error) {
-	return Dlsym(handle, name)
-}
