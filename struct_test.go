@@ -6,6 +6,7 @@
 package purego_test
 
 import (
+	"math"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -438,6 +439,28 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 			Content{point{x: 41_000_000_000, y: 95_000_000}, size{width: 214_000, height: 149}},
 			15, 4, true); ret != expectedUnsigned {
 			t.Fatalf("InitWithContentRect returned %d wanted %#x", ret, expectedUnsigned)
+		}
+	}
+	{
+		type GoInt4 struct {
+			A, B, C, D int
+		}
+		var GoInt4Fn func(GoInt4) int
+		purego.RegisterLibFunc(&GoInt4Fn, lib, "GoInt4")
+		const expected = math.MaxInt - 52 - 3 + 4
+		if ret := GoInt4Fn(GoInt4{math.MaxInt, -52, 3, 4}); ret != expected {
+			t.Fatalf("GoInt4Fn returned %d wanted %#x", ret, expected)
+		}
+	}
+	{
+		type GoUint4 struct {
+			A, B, C, D uint
+		}
+		var GoUint4Fn func(GoUint4) uint
+		purego.RegisterLibFunc(&GoUint4Fn, lib, "GoUint4")
+		const expected = 1_000_000 + 53 + 71 + 8
+		if ret := GoUint4Fn(GoUint4{1_000_000, 53, 71, 8}); ret != expected {
+			t.Fatalf("GoUint4Fn returned %d wanted %#x", ret, expected)
 		}
 	}
 }

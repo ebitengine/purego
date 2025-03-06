@@ -27,6 +27,9 @@ type syscall15Args struct {
 // There is an internal maximum number of arguments that SyscallN can take. It panics
 // when the maximum is exceeded. It returns the result and the libc error code if there is one.
 //
+// In order to call this function properly make sure to follow all the rules specified in [unsafe.Pointer]
+// especially point 4.
+//
 // NOTE: SyscallN does not properly call functions that have both integer and float parameters.
 // See discussion comment https://github.com/ebiten/purego/pull/1#issuecomment-1128057607
 // for an explanation of why that is.

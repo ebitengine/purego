@@ -36,6 +36,7 @@ func setg_trampoline(setg uintptr, G uintptr)
 func call5(fn, a1, a2, a3, a4, a5 uintptr) uintptr
 
 {{ range . -}}
+//go:nosplit
 func {{.Name}}(
 {{- range .Args -}}
 	{{- if .Name -}}

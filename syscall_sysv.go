@@ -31,7 +31,7 @@ func syscall_syscall15X(fn, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a
 // of uintptr. Only a limited number of callbacks may be created in a single Go process, and any memory allocated
 // for these callbacks is never released. At least 2000 callbacks can always be created. Although this function
 // provides similar functionality to windows.NewCallback it is distinct.
-func NewCallback(fn interface{}) uintptr {
+func NewCallback(fn any) uintptr {
 	ty := reflect.TypeOf(fn)
 	for i := 0; i < ty.NumIn(); i++ {
 		in := ty.In(i)
@@ -71,7 +71,7 @@ type callbackArgs struct {
 	result uintptr
 }
 
-func compileCallback(fn interface{}) uintptr {
+func compileCallback(fn any) uintptr {
 	val := reflect.ValueOf(fn)
 	if val.Kind() != reflect.Func {
 		panic("purego: the type must be a function but was not")
