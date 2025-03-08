@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2025 The Ebitengine Authors
+
 # FreeBSD & NetBSD tests run within QEMU on Ubuntu.
 # vmactions/freebsd-vm only supports a single "step" where it
 # brings down the VM at the end of the step, so all
