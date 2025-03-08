@@ -161,7 +161,7 @@ jobs:
             ln -s /usr/local/go/bin/go /usr/local/bin
             ls -a -R
             chmod +x $GITHUB_WORKSPACE/.github/scripts/bsd_tests.sh
-          run: bash $GITHUB_WORKSPACE/.github/scripts/bsd_tests.sh
+          run: $GITHUB_WORKSPACE/.github/scripts/bsd_tests.sh
       - name: Run in netbsd
         # there are no prebuilt download links for these versions of Go for NetBSD
         if: matrix.os == 'NetBSD' && !startsWith(matrix.go, '1.18.') && !startsWith(matrix.go, '1.19.') && !startsWith(matrix.go, '1.20.')
@@ -177,4 +177,4 @@ jobs:
             export PATH=$PATH:/usr/local/go/bin/
             ls -a -R
             chmod +x $GITHUB_WORKSPACE/.github/scripts/bsd_tests.sh
-          run: bash $GITHUB_WORKSPACE/.github/scripts/bsd_tests.sh
+          run: $GITHUB_WORKSPACE/.github/scripts/bsd_tests.sh
