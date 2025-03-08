@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: 2025 The Ebitengine Authors
@@ -9,6 +9,8 @@
 # the commands to run need to be put into this single block.
 
 echo "Running tests on $(uname -a) at $PWD"
+
+export PATH=$PATH:/usr/local/go/bin/
 
 # verify Go is available
 go version
