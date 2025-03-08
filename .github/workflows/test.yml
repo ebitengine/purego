@@ -159,7 +159,9 @@ jobs:
             fetch https://go.dev/dl/go${{matrix.go}}.freebsd-amd64.tar.gz
             rm -fr /usr/local/go && tar -C /usr/local -xf go${{matrix.go}}.freebsd-amd64.tar.gz
             ln -s /usr/local/go/bin/go /usr/local/bin
-          run: ./.github/scripts/bsd_tests.sh
+            
+            chmod +x .github/scripts/setup.sh
+          run: bash .github/scripts/bsd_tests.sh
       - name: Run in netbsd
         if: matrix.os == 'NetBSD'
         uses: vmactions/netbsd-vm@v1
@@ -172,6 +174,6 @@ jobs:
             rm -fr /usr/local/go && tar -C /usr/local -xf go${{matrix.go}}.netbsd-amd64.tar.gz
             ln -s /usr/local/go/bin/go /usr/local/bin
             export PATH=$PATH:/usr/local/go/bin/
-          run: |
-            ls -a
-            ./.github/scripts/bsd_tests.sh
+            
+            chmod +x .github/scripts/setup.sh
+          run: bash .github/scripts/bsd_tests.sh
