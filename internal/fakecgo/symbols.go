@@ -56,6 +56,11 @@ func abort() {
 }
 
 //go:nosplit
+func sigaltstack(ss *stack_t, old_ss *stack_t) int32 {
+	return int32(call5(sigaltstackABI0, uintptr(unsafe.Pointer(ss)), uintptr(unsafe.Pointer(old_ss)), 0, 0, 0))
+}
+
+//go:nosplit
 func pthread_attr_init(attr *pthread_attr_t) int32 {
 	return int32(call5(pthread_attr_initABI0, uintptr(unsafe.Pointer(attr)), 0, 0, 0, 0))
 }
@@ -147,6 +152,10 @@ var nanosleepABI0 = uintptr(unsafe.Pointer(&_nanosleep))
 //go:linkname _abort _abort
 var _abort uintptr
 var abortABI0 = uintptr(unsafe.Pointer(&_abort))
+
+//go:linkname _sigaltstack _sigaltstack
+var _sigaltstack uintptr
+var sigaltstackABI0 = uintptr(unsafe.Pointer(&_sigaltstack))
 
 //go:linkname _pthread_attr_init _pthread_attr_init
 var _pthread_attr_init uintptr

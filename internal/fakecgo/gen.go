@@ -139,6 +139,7 @@ var (
 		{"sigfillset", [5]Arg{{"set", "*sigset_t"}}, "int32"},
 		{"nanosleep", [5]Arg{{"ts", "*syscall.Timespec"}, {"rem", "*syscall.Timespec"}}, "int32"},
 		{"abort", [5]Arg{}, ""},
+		{"sigaltstack", [5]Arg{{"ss", "*stack_t"}, {"old_ss", "*stack_t"}}, "int32"},
 	}
 	pthreadSymbols = []Symbol{
 		{"pthread_attr_init", [5]Arg{{"attr", "*pthread_attr_t"}}, "int32"},

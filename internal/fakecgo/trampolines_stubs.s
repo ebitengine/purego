@@ -37,6 +37,10 @@ TEXT _abort(SB), NOSPLIT|NOFRAME, $0-0
 	JMP purego_abort(SB)
 	RET
 
+TEXT _sigaltstack(SB), NOSPLIT|NOFRAME, $0-0
+	JMP purego_sigaltstack(SB)
+	RET
+
 TEXT _pthread_attr_init(SB), NOSPLIT|NOFRAME, $0-0
 	JMP purego_pthread_attr_init(SB)
 	RET

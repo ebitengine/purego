@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//go:build !cgo
+//go:build !cgo && (amd64 || arm64)
 
 package fakecgo
 
@@ -44,8 +44,19 @@ var threadentry_trampolineABI0 = &x_threadentry_trampoline
 
 //go:nosplit
 func threadentry(v unsafe.Pointer) unsafe.Pointer {
+	var ss stack_t
 	ts := *(*ThreadStart)(v)
 	free(v)
+
+	// On NetBSD, a new thread inherits the signal stack of the
+	// creating thread. That confuses minit, so we remove that
+	// signal stack here before calling the regular mstart. It's
+	// a bit baroque to remove a signal stack here only to add one
+	// in minit, but it's a simple change that keeps NetBSD
+	// working like other OS's. At this point all signals are
+	// blocked, so there is no race.
+	ss.ss_flags = SS_DISABLE
+	sigaltstack(&ss, nil)
 
 	setg_trampoline(setg_func, uintptr(unsafe.Pointer(ts.g)))
 
