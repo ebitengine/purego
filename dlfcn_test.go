@@ -53,12 +53,7 @@ func buildSharedLib(compilerEnv, libFile string, sources ...string) error {
 		return errors.New("compiler not found")
 	}
 
-	var args []string
-	if runtime.GOOS == "freebsd" || runtime.GOOS == "netbsd" {
-		args = []string{"-shared", "-Wall", "-Werror", "-fPIC", "-o", libFile}
-	} else {
-		args = []string{"-shared", "-Wall", "-Werror", "-o", libFile}
-	}
+	args := []string{"-shared", "-Wall", "-Werror", "-fPIC", "-o", libFile}
 	if runtime.GOARCH == "386" {
 		args = append(args, "-m32")
 	}
