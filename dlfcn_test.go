@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023 The Ebitengine Authors
 
-//go:build darwin || freebsd || linux
+//go:build darwin || freebsd || linux || netbsd
 
 package purego_test
 
@@ -53,12 +53,7 @@ func buildSharedLib(compilerEnv, libFile string, sources ...string) error {
 		return errors.New("compiler not found")
 	}
 
-	var args []string
-	if runtime.GOOS == "freebsd" {
-		args = []string{"-shared", "-Wall", "-Werror", "-fPIC", "-o", libFile}
-	} else {
-		args = []string{"-shared", "-Wall", "-Werror", "-o", libFile}
-	}
+	args := []string{"-shared", "-Wall", "-Werror", "-fPIC", "-o", libFile}
 	if runtime.GOARCH == "386" {
 		args = append(args, "-m32")
 	}

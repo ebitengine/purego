@@ -65,7 +65,11 @@ jobs:
           # gcflags -std is necessary to make fakecgo the Cgo for
           # FreeBSD to add the symbols that libc.so depends on.
           env GOOS=freebsd GOARCH=amd64 go build -gcflags="github.com/ebitengine/purego/internal/fakecgo=-std" -v ./...
-          env GOOS=freebsd GOARCH=arm64 go build -gcflags="github.com/ebitengine/purego/internal/fakecgo=-std" -v ./...
+          env GOOS=freebsd GOARCH=arm64 go build -gcflags="github.com/ebitengine/purego/internal/fakecgo=-std" -v ./...          
+          
+          # Check cross-compiling NetBSD binaries.
+          env GOOS=netbsd GOARCH=amd64 go build -v ./...
+          env GOOS=netbsd GOARCH=arm64 go build -v ./...
 
       - name: go build (plugin)
         if: runner.os == 'Linux' || runner.os == 'macOS'
@@ -134,11 +138,12 @@ jobs:
         run: |
           go test -race -shuffle=on -v -count=10 ./...
 
-  freebsd:
+  bsd:
     strategy:
       matrix:
+        os: ['FreeBSD', 'NetBSD']
         go: ['1.18.10', '1.19.13', '1.20.14', '1.21.13', '1.22.12', '1.23.6', '1.24.0']
-    name: Test with Go ${{ matrix.go }} on FreeBSD
+    name: Test with Go ${{ matrix.go }} on ${{ matrix.os }}
     runs-on: ubuntu-22.04
     defaults:
       run:
@@ -146,6 +151,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Run in freebsd
+        if: matrix.os == 'FreeBSD'
         uses: vmactions/freebsd-vm@v1
         with:
           usesh: true
@@ -153,74 +159,19 @@ jobs:
             fetch https://go.dev/dl/go${{matrix.go}}.freebsd-amd64.tar.gz
             rm -fr /usr/local/go && tar -C /usr/local -xf go${{matrix.go}}.freebsd-amd64.tar.gz
             ln -s /usr/local/go/bin/go /usr/local/bin
-          run: |
-            # FreeBSD tests run within QEMU on Ubuntu.
-            # vmactions/freebsd-vm only supports a single "step" where it
-            # brings down the VM at the end of the step, so all
-            # the commands to run need to be put into this single block.
-
-            echo "Running tests on $(uname -a) at $PWD"
-
-            # verify Go is available
-            go version
-
-            echo "=> go build"
-            go build -v ./...
-            # Compile without optimization to check potential stack overflow.
-            # The option '-gcflags=all=-N -l' is often used at Visual Studio Code.
-            # See also https://go.googlesource.com/vscode-go/+/HEAD/docs/debugging.md#launch and the issue hajimehoshi/ebiten#2120.
-            go build "-gcflags=all=-N -l" -v ./...
-
-            # Check cross-compiling Windows binaries.
-            env GOOS=windows GOARCH=386 go build -v ./...
-            env GOOS=windows GOARCH=amd64 go build -v ./...
-            env GOOS=windows GOARCH=arm go build -v ./...
-            env GOOS=windows GOARCH=arm64 go build -v ./...
-
-            # Check cross-compiling macOS binaries.
-            env GOOS=darwin GOARCH=amd64 go build -v ./...
-            env GOOS=darwin GOARCH=arm64 go build -v ./...
-
-            # Check cross-compiling Linux binaries.
-            env GOOS=linux GOARCH=amd64 go build -v ./...
-            env GOOS=linux GOARCH=arm64 go build -v ./...
-
-            # Check cross-compiling FreeBSD binaries.
-            env GOOS=freebsd GOARCH=amd64 go build -gcflags="github.com/ebitengine/purego/internal/fakecgo=-std" -v ./...
-            env GOOS=freebsd GOARCH=arm64 go build -gcflags="github.com/ebitengine/purego/internal/fakecgo=-std" -v ./...
-
-            echo "=> go build (plugin)"
-            # Make sure that plugin buildmode works since we save the R15 register (#254)
-            go build -buildmode=plugin ./examples/libc
-
-            echo "=> go mod vendor"
-            mkdir /tmp/vendoring
-            cd /tmp/vendoring
-            go mod init foo
-            echo 'package main' > main.go
-            echo 'import (' >> main.go
-            echo '  _ "github.com/ebitengine/purego"' >> main.go
-            echo ')' >> main.go
-            echo 'func main() {}' >> main.go
-            go mod edit -replace github.com/ebitengine/purego=$GITHUB_WORKSPACE
-            go mod tidy
-            go mod vendor
-            go build -v .
-
-            cd $GITHUB_WORKSPACE
-            echo "=> go test CGO_ENABLED=0"
-            env CGO_ENABLED=0 go test -gcflags="github.com/ebitengine/purego/internal/fakecgo=-std" -shuffle=on -v -count=10 ./...
-
-            echo "=> go test CGO_ENABLED=1"
-            env CGO_ENABLED=1 go test -shuffle=on -v -count=10 ./...
-
-            echo "=> go test CGO_ENABLED=0 w/o optimization"
-            env CGO_ENABLED=0 go test "-gcflags=all=-N -l" -v ./...
-
-            echo "=> go test CGO_ENABLED=1 w/o optimization"
-            env CGO_ENABLED=1 go test "-gcflags=all=-N -l" -v ./...
-
-            if [ -z "$(echo ${{matrix.go}} | grep '^1.1')" ]; then
-              echo "=> go test race"
-              go test -race -shuffle=on -v -count=10 ./...
-            fi
+            chmod +x $GITHUB_WORKSPACE/.github/scripts/bsd_tests.sh
+          run: $GITHUB_WORKSPACE/.github/scripts/bsd_tests.sh
+      - name: Run in netbsd
+        # there are no prebuilt download links for these versions of Go for NetBSD
+        if: matrix.os == 'NetBSD' && !startsWith(matrix.go, '1.18.') && !startsWith(matrix.go, '1.19.') && !startsWith(matrix.go, '1.20.')
+        uses: vmactions/netbsd-vm@v1
+        with:
+          usesh: true
+          prepare: |
+            /usr/sbin/pkg_add -v bash
+            ftp https://go.dev/dl/go${{matrix.go}}.netbsd-amd64.tar.gz
+            mkdir /usr/local
+            rm -fr /usr/local/go && tar -C /usr/local -xf go${{matrix.go}}.netbsd-amd64.tar.gz
+            ln -s /usr/local/go/bin/go /usr/local/bin
+            chmod +x $GITHUB_WORKSPACE/.github/scripts/bsd_tests.sh
+          run: $GITHUB_WORKSPACE/.github/scripts/bsd_tests.sh

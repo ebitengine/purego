@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2022 The Ebitengine Authors
 
-//go:build !cgo && (darwin || freebsd || linux)
+//go:build !cgo && (darwin || freebsd || linux || netbsd)
 
 package fakecgo
 
@@ -53,6 +53,11 @@ func nanosleep(ts *syscall.Timespec, rem *syscall.Timespec) int32 {
 //go:nosplit
 func abort() {
 	call5(abortABI0, 0, 0, 0, 0, 0)
+}
+
+//go:nosplit
+func sigaltstack(ss *stack_t, old_ss *stack_t) int32 {
+	return int32(call5(sigaltstackABI0, uintptr(unsafe.Pointer(ss)), uintptr(unsafe.Pointer(old_ss)), 0, 0, 0))
 }
 
 //go:nosplit
@@ -147,6 +152,10 @@ var nanosleepABI0 = uintptr(unsafe.Pointer(&_nanosleep))
 //go:linkname _abort _abort
 var _abort uintptr
 var abortABI0 = uintptr(unsafe.Pointer(&_abort))
+
+//go:linkname _sigaltstack _sigaltstack
+var _sigaltstack uintptr
+var sigaltstackABI0 = uintptr(unsafe.Pointer(&_sigaltstack))
 
 //go:linkname _pthread_attr_init _pthread_attr_init
 var _pthread_attr_init uintptr
