@@ -143,6 +143,14 @@ jobs:
       matrix:
         os: ['FreeBSD', 'NetBSD']
         go: ['1.18.10', '1.19.13', '1.20.14', '1.21.13', '1.22.12', '1.23.7', '1.24.1']
+        exclude:
+          # there are no prebuilt download links for these versions of Go for NetBSD
+          - os: NetBSD
+            go: '1.18.10'
+          - os: NetBSD
+            go: '1.19.13'
+          - os: NetBSD
+            go: '1.20.14'
     name: Test with Go ${{ matrix.go }} on ${{ matrix.os }}
     runs-on: ubuntu-22.04
     defaults:
@@ -161,8 +169,7 @@ jobs:
             chmod +x $GITHUB_WORKSPACE/.github/scripts/bsd_tests.sh
           run: $GITHUB_WORKSPACE/.github/scripts/bsd_tests.sh
       - name: Run in NetBSD
-        # there are no prebuilt download links for these versions of Go for NetBSD
-        if: matrix.os == 'NetBSD' && !startsWith(matrix.go, '1.18.') && !startsWith(matrix.go, '1.19.') && !startsWith(matrix.go, '1.20.')
+        if: matrix.os == 'NetBSD'
         uses: vmactions/netbsd-vm@v1
         with:
           usesh: true
