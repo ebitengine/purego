@@ -29,14 +29,13 @@ except for float arguments and return values.
 - **FreeBSD**: amd64, arm64
 - **Linux**: amd64, arm64
 - **macOS / iOS**: amd64, arm64
-- **NetBSD**: amd64, arm64
 - **Windows**: 386*, amd64, arm*, arm64
 
 `*` These architectures only support SyscallN and NewCallback
 
 ## Example
 
-The example below only showcases purego use for macOS, NetBSD and Linux. The other platforms require special handling which can
+The example below only showcases purego use for macOS, and Linux. The other platforms require special handling which can
 be seen in the complete example at [examples/libc](https://github.com/ebitengine/purego/tree/main/examples/libc) which supports Windows and FreeBSD.
 
 ```go
