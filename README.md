@@ -35,8 +35,8 @@ except for float arguments and return values.
 
 ## Example
 
-The example below only showcases purego use for macOS, and Linux. The other platforms require special handling which can
-be seen in the complete example at [examples/libc](https://github.com/ebitengine/purego/tree/main/examples/libc) which supports Windows and FreeBSD.
+The example below only showcases purego use for macOS, Linux, and FreeBSD. The other platforms require special handling which can
+be seen in the complete example at [examples/libc](https://github.com/ebitengine/purego/tree/main/examples/libc) which supports Windows.
 
 ```go
 package main
@@ -52,10 +52,10 @@ func getSystemLibrary() string {
 	switch runtime.GOOS {
 	case "darwin":
 		return "/usr/lib/libSystem.B.dylib"
+	case "freebsd":
+		return "libc.so.7"
 	case "linux":
 		return "libc.so.6"
-	case "netbsd":
-		return "libc.so"
 	default:
 		panic(fmt.Errorf("GOOS=%s is not supported", runtime.GOOS))
 	}

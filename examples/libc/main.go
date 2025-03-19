@@ -16,10 +16,10 @@ func getSystemLibrary() string {
 	switch runtime.GOOS {
 	case "darwin":
 		return "/usr/lib/libSystem.B.dylib"
-	case "linux":
-		return "libc.so.6"
 	case "freebsd":
 		return "libc.so.7"
+	case "linux":
+		return "libc.so.6"
 	case "netbsd":
 		return "libc.so"
 	case "windows":
