@@ -35,7 +35,7 @@ except for float arguments and return values.
 
 ## Example
 
-The example below only showcases purego use for macOS, Linux, and FreeBSD. The other platforms require special handling which can
+The example below only showcases purego use for macOS, FreeBSD, and Linux. The other platforms require special handling which can
 be seen in the complete example at [examples/libc](https://github.com/ebitengine/purego/tree/main/examples/libc) which supports Windows.
 
 ```go
