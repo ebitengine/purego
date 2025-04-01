@@ -107,6 +107,8 @@ func placeRegisters(v reflect.Value, addFloat func(uintptr), addInt func(uintptr
 			} else {
 				f = v.Index(k)
 			}
+			align := byte(f.Type().Align()*8 - 1)
+			shift = (shift + align) &^ align
 			if shift >= 64 {
 				shift = 0
 				flushed = true
@@ -137,10 +139,11 @@ func placeRegisters(v reflect.Value, addFloat func(uintptr), addInt func(uintptr
 				val |= f.Uint() << shift
 				shift += 32
 				class |= _INT
-			case reflect.Uint64:
+			case reflect.Uint64, reflect.Uint, reflect.Uintptr:
 				addInt(uintptr(f.Uint()))
 				shift = 0
 				flushed = true
+				class = _NO_CLASS
 			case reflect.Int8:
 				val |= uint64(f.Int()&0xFF) << shift
 				shift += 8
@@ -153,10 +156,11 @@ func placeRegisters(v reflect.Value, addFloat func(uintptr), addInt func(uintptr
 				val |= uint64(f.Int()&0xFFFF_FFFF) << shift
 				shift += 32
 				class |= _INT
-			case reflect.Int64:
+			case reflect.Int64, reflect.Int:
 				addInt(uintptr(f.Int()))
 				shift = 0
 				flushed = true
+				class = _NO_CLASS
 			case reflect.Float32:
 				if class == _FLOAT {
 					addFloat(uintptr(val))
@@ -170,6 +174,12 @@ func placeRegisters(v reflect.Value, addFloat func(uintptr), addInt func(uintptr
 				addFloat(uintptr(math.Float64bits(float64(f.Float()))))
 				shift = 0
 				flushed = true
+				class = _NO_CLASS
+			case reflect.Ptr:
+				addInt(f.Pointer())
+				shift = 0
+				flushed = true
+				class = _NO_CLASS
 			case reflect.Array:
 				place(f)
 			default:

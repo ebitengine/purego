@@ -10,6 +10,7 @@ import (
 	"math"
 	"reflect"
 	"runtime"
+	"strconv"
 	"sync"
 	"unsafe"
 
@@ -206,7 +207,6 @@ func RegisterFunc(fptr any, cfn uintptr) {
 	}
 	v := reflect.MakeFunc(ty, func(args []reflect.Value) (results []reflect.Value) {
 		var sysargs [maxArgs]uintptr
-		stack := sysargs[numOfIntegerRegisters():]
 		var floats [numOfFloats]uintptr
 		var numInts int
 		var numFloats int
@@ -215,7 +215,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 		if runtime.GOARCH == "arm64" || runtime.GOOS != "windows" {
 			// Windows arm64 uses the same calling convention as macOS and Linux
 			addStack = func(x uintptr) {
-				stack[numStack] = x
+				sysargs[numOfIntegerRegisters()+numStack] = x
 				numStack++
 			}
 			addInt = func(x uintptr) {
@@ -279,6 +279,29 @@ func RegisterFunc(fptr any, cfn uintptr) {
 					keepAlive = addValue(reflect.ValueOf(x), keepAlive, addInt, addFloat, addStack, &numInts, &numFloats, &numStack)
 				}
 				continue
+			}
+			if runtime.GOARCH == "arm64" && (numInts >= numOfIntegerRegisters() || numFloats >= numOfFloats) && v.Kind() != reflect.Struct { // hit the stack
+				fields := make([]reflect.StructField, len(args[i:]))
+
+				for j, val := range args[i:] {
+					if val.Kind() == reflect.String {
+						ptr := strings.CString(v.String())
+						keepAlive = append(keepAlive, ptr)
+						val = reflect.ValueOf(ptr)
+						args[i+j] = val
+					}
+					fields[j] = reflect.StructField{
+						Name: "X" + strconv.Itoa(j),
+						Type: val.Type(),
+					}
+				}
+				structType := reflect.StructOf(fields)
+				structInstance := reflect.New(structType).Elem()
+				for j, val := range args[i:] {
+					structInstance.Field(j).Set(val)
+				}
+				placeRegisters(structInstance, addFloat, addInt)
+				break
 			}
 			keepAlive = addValue(v, keepAlive, addInt, addFloat, addStack, &numInts, &numFloats, &numStack)
 		}

@@ -5,6 +5,8 @@ package purego_test
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"runtime"
 	"testing"
 	"unsafe"
@@ -128,5 +130,51 @@ func TestRegisterLibFunc_Bool(t *testing.T) {
 	expected := false
 	if got := runFalse(); got != expected {
 		t.Errorf("runFalse failed. got %t but wanted %t", got, expected)
+	}
+}
+
+func TestABI(t *testing.T) {
+	libFileName := filepath.Join(t.TempDir(), "abitest.so")
+	t.Logf("Build %v", libFileName)
+
+	if err := buildSharedLib("CC", libFileName, filepath.Join("testdata", "abitest", "abi_test.c")); err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove(libFileName)
+
+	lib, err := purego.Dlopen(libFileName, purego.RTLD_NOW|purego.RTLD_GLOBAL)
+	if err != nil {
+		t.Fatalf("Dlopen(%q) failed: %v", libFileName, err)
+	}
+
+	{
+		const cName = "stack_uint8_t"
+		const expect = 2047
+		var fn func(a, b, c, d, e, f, g, h uint32, i, j uint8, k uint32) uint32
+		purego.RegisterLibFunc(&fn, lib, cName)
+		res := fn(256, 512, 4, 8, 16, 32, 64, 128, 1, 2, 1024)
+		if res != expect {
+			t.Fatalf("%s: got %d, want %d", cName, res, expect)
+		}
+	}
+	{
+		const cName = "reg_uint8_t"
+		const expect = 1027
+		var fn func(a, b uint8, c uint32) uint32
+		purego.RegisterLibFunc(&fn, lib, cName)
+		res := fn(1, 2, 1024)
+		if res != expect {
+			t.Fatalf("%s: got %d, want %d", cName, res, expect)
+		}
+	}
+	{
+		const cName = "stack_string"
+		const expect = 255
+		var fn func(a, b, c, d, e, f, g, h uint32, i string) uint32
+		purego.RegisterLibFunc(&fn, lib, cName)
+		res := fn(1, 2, 4, 8, 16, 32, 64, 128, "test")
+		if res != expect {
+			t.Fatalf("%s: got %d, want %d", cName, res, expect)
+		}
 	}
 }

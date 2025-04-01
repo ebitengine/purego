@@ -258,3 +258,7 @@ func placeStack(v reflect.Value, addStack func(uintptr)) {
 		}
 	}
 }
+
+func placeRegisters(v reflect.Value, addFloat func(uintptr), addInt func(uintptr)) {
+	panic("purego: not needed on amd64")
+}
