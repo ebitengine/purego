@@ -34,10 +34,13 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu qemu-user
 
+      - name: Set up the prerequisites
+        if: runner.os == 'Windows'
+        uses: msys2/setup-msys2@v2
+
       - name: go vet
-        if: runner.os != 'Windows' && runner.os != 'macOS'
         run: |
-          go vet -v ./...
+          env CGO_ENABLED=0 go vet -v ./...
 
       - name: go build
         run: |

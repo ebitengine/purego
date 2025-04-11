@@ -4,10 +4,13 @@
 package purego_test
 
 import (
+	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
 	"unsafe"
 
@@ -177,4 +180,42 @@ func TestABI(t *testing.T) {
 			t.Fatalf("%s: got %d, want %d", cName, res, expect)
 		}
 	}
+}
+
+func buildSharedLib(compilerEnv, libFile string, sources ...string) error {
+	out, err := exec.Command("go", "env", compilerEnv).Output()
+	if err != nil {
+		return fmt.Errorf("go env %s error: %w", compilerEnv, err)
+	}
+
+	compiler := strings.TrimSpace(string(out))
+	if compiler == "" {
+		return errors.New("compiler not found")
+	}
+
+	args := []string{"-shared", "-Wall", "-Werror", "-fPIC", "-o", libFile}
+	if runtime.GOARCH == "386" {
+		args = append(args, "-m32")
+	}
+	// macOS arm64 can run amd64 tests through Rossetta.
+	// Build the shared library based on the GOARCH and not
+	// the default behavior of the compiler.
+	if runtime.GOOS == "darwin" {
+		var arch string
+		switch runtime.GOARCH {
+		case "arm64":
+			arch = "arm64"
+		case "amd64":
+			arch = "x86_64"
+		default:
+			return fmt.Errorf("unknown macOS architecture %s", runtime.GOARCH)
+		}
+		args = append(args, "-arch", arch)
+	}
+	cmd := exec.Command(compiler, append(args, sources...)...)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("compile lib: %w\n%q\n%s", err, cmd, string(out))
+	}
+
+	return nil
 }
