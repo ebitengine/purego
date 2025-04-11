@@ -152,7 +152,7 @@ func TestABI(t *testing.T) {
 	}
 	defer func() {
 		if err := load.CloseLibrary(lib); err != nil {
-			t.Errorf("failed to close library: %s", err)
+			t.Fatalf("failed to close library: %s", err)
 		}
 	}()
 	{
