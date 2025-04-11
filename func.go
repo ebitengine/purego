@@ -162,7 +162,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 				if is32bit {
 					panic("purego: floats only supported on 64bit platforms")
 				}
-				if floats < numOfFloats {
+				if floats < numOfFloatRegisters {
 					floats++
 				} else {
 					stack++
@@ -207,7 +207,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 	}
 	v := reflect.MakeFunc(ty, func(args []reflect.Value) (results []reflect.Value) {
 		var sysargs [maxArgs]uintptr
-		var floats [numOfFloats]uintptr
+		var floats [numOfFloatRegisters]uintptr
 		var numInts int
 		var numFloats int
 		var numStack int
@@ -281,7 +281,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 				continue
 			}
 			if runtime.GOARCH == "arm64" && runtime.GOOS == "darwin" &&
-				(numInts >= numOfIntegerRegisters() || numFloats >= numOfFloats) && v.Kind() != reflect.Struct { // hit the stack
+				(numInts >= numOfIntegerRegisters() || numFloats >= numOfFloatRegisters) && v.Kind() != reflect.Struct { // hit the stack
 				fields := make([]reflect.StructField, len(args[i:]))
 
 				for j, val := range args[i:] {

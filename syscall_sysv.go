@@ -146,12 +146,12 @@ func callbackWrap(a *callbackArgs) {
 	var intsN int   // intsN represents the number of integer arguments processed
 	// stack points to the index into frame of the current stack element.
 	// The stack begins after the float and integer registers.
-	stack := numOfIntegerRegisters() + numOfFloats
+	stack := numOfIntegerRegisters() + numOfFloatRegisters
 	for i := range args {
 		var pos int
 		switch fnType.In(i).Kind() {
 		case reflect.Float32, reflect.Float64:
-			if floatsN >= numOfFloats {
+			if floatsN >= numOfFloatRegisters {
 				pos = stack
 				stack++
 			} else {
@@ -169,7 +169,7 @@ func callbackWrap(a *callbackArgs) {
 				stack++
 			} else {
 				// the integers begin after the floats in frame
-				pos = intsN + numOfFloats
+				pos = intsN + numOfFloatRegisters
 			}
 			intsN++
 		}

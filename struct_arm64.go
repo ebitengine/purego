@@ -73,8 +73,8 @@ func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFl
 	if hva, hfa, size := isHVA(v.Type()), isHFA(v.Type()), v.Type().Size(); hva || hfa || size <= 16 {
 		// if this doesn't fit entirely in registers then
 		// each element goes onto the stack
-		if hfa && *numFloats+v.NumField() > numOfFloats {
-			*numFloats = numOfFloats
+		if hfa && *numFloats+v.NumField() > numOfFloatRegisters {
+			*numFloats = numOfFloatRegisters
 		} else if hva && *numInts+v.NumField() > numOfIntegerRegisters() {
 			*numInts = numOfIntegerRegisters()
 		}
