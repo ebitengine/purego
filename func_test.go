@@ -136,6 +136,9 @@ func TestRegisterLibFunc_Bool(t *testing.T) {
 }
 
 func TestABI(t *testing.T) {
+	if runtime.GOOS == "windows" && runtime.GOARCH == "386" {
+		t.Skip("need a 32bit gcc to run this test") // TODO: find 32bit gcc for test
+	}
 	libFileName := filepath.Join(t.TempDir(), "abitest.so")
 	t.Logf("Build %v", libFileName)
 
