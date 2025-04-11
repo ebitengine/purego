@@ -13,8 +13,8 @@ package purego
 type CDecl struct{}
 
 const (
-	maxArgs     = 15
-	numOfFloats = 8 // arm64 and amd64 both have 8 float registers
+	maxArgs             = 15
+	numOfFloatRegisters = 8 // arm64 and amd64 both have 8 float registers
 )
 
 type syscall15Args struct {

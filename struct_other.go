@@ -14,3 +14,7 @@ func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFl
 func getStruct(outType reflect.Type, syscall syscall15Args) (v reflect.Value) {
 	panic("purego: struct returns are not supported")
 }
+
+func placeRegisters(v reflect.Value, addFloat func(uintptr), addInt func(uintptr)) {
+	panic("purego: not needed on other platforms")
+}

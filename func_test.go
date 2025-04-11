@@ -4,8 +4,12 @@
 package purego_test
 
 import (
+	"errors"
 	"fmt"
+	"os/exec"
+	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
 	"unsafe"
 
@@ -129,4 +133,94 @@ func TestRegisterLibFunc_Bool(t *testing.T) {
 	if got := runFalse(); got != expected {
 		t.Errorf("runFalse failed. got %t but wanted %t", got, expected)
 	}
+}
+
+func TestABI(t *testing.T) {
+	if runtime.GOOS == "windows" && runtime.GOARCH == "386" {
+		t.Skip("need a 32bit gcc to run this test") // TODO: find 32bit gcc for test
+	}
+	libFileName := filepath.Join(t.TempDir(), "abitest.so")
+	t.Logf("Build %v", libFileName)
+
+	if err := buildSharedLib("CC", libFileName, filepath.Join("testdata", "abitest", "abi_test.c")); err != nil {
+		t.Fatal(err)
+	}
+
+	lib, err := load.OpenLibrary(libFileName)
+	if err != nil {
+		t.Fatalf("Dlopen(%q) failed: %v", libFileName, err)
+	}
+	defer func() {
+		if err := load.CloseLibrary(lib); err != nil {
+			t.Fatalf("failed to close library: %s", err)
+		}
+	}()
+	{
+		const cName = "stack_uint8_t"
+		const expect = 2047
+		var fn func(a, b, c, d, e, f, g, h uint32, i, j uint8, k uint32) uint32
+		purego.RegisterLibFunc(&fn, lib, cName)
+		res := fn(256, 512, 4, 8, 16, 32, 64, 128, 1, 2, 1024)
+		if res != expect {
+			t.Fatalf("%s: got %d, want %d", cName, res, expect)
+		}
+	}
+	{
+		const cName = "reg_uint8_t"
+		const expect = 1027
+		var fn func(a, b uint8, c uint32) uint32
+		purego.RegisterLibFunc(&fn, lib, cName)
+		res := fn(1, 2, 1024)
+		if res != expect {
+			t.Fatalf("%s: got %d, want %d", cName, res, expect)
+		}
+	}
+	{
+		const cName = "stack_string"
+		const expect = 255
+		var fn func(a, b, c, d, e, f, g, h uint32, i string) uint32
+		purego.RegisterLibFunc(&fn, lib, cName)
+		res := fn(1, 2, 4, 8, 16, 32, 64, 128, "test")
+		if res != expect {
+			t.Fatalf("%s: got %d, want %d", cName, res, expect)
+		}
+	}
+}
+
+func buildSharedLib(compilerEnv, libFile string, sources ...string) error {
+	out, err := exec.Command("go", "env", compilerEnv).Output()
+	if err != nil {
+		return fmt.Errorf("go env %s error: %w", compilerEnv, err)
+	}
+
+	compiler := strings.TrimSpace(string(out))
+	if compiler == "" {
+		return errors.New("compiler not found")
+	}
+
+	args := []string{"-shared", "-Wall", "-Werror", "-fPIC", "-o", libFile}
+	if runtime.GOARCH == "386" {
+		args = append(args, "-m32")
+	}
+	// macOS arm64 can run amd64 tests through Rossetta.
+	// Build the shared library based on the GOARCH and not
+	// the default behavior of the compiler.
+	if runtime.GOOS == "darwin" {
+		var arch string
+		switch runtime.GOARCH {
+		case "arm64":
+			arch = "arm64"
+		case "amd64":
+			arch = "x86_64"
+		default:
+			return fmt.Errorf("unknown macOS architecture %s", runtime.GOARCH)
+		}
+		args = append(args, "-arch", arch)
+	}
+	cmd := exec.Command(compiler, append(args, sources...)...)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("compile lib: %w\n%q\n%s", err, cmd, string(out))
+	}
+
+	return nil
 }
