@@ -6,7 +6,6 @@ package purego_test
 import (
 	"errors"
 	"fmt"
-	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
@@ -143,13 +142,16 @@ func TestABI(t *testing.T) {
 	if err := buildSharedLib("CC", libFileName, filepath.Join("testdata", "abitest", "abi_test.c")); err != nil {
 		t.Fatal(err)
 	}
-	defer os.Remove(libFileName)
 
 	lib, err := load.OpenLibrary(libFileName)
 	if err != nil {
 		t.Fatalf("Dlopen(%q) failed: %v", libFileName, err)
 	}
-
+	defer func() {
+		if err := load.CloseLibrary(lib); err != nil {
+			t.Errorf("failed to close library: %s", err)
+		}
+	}()
 	{
 		const cName = "stack_uint8_t"
 		const expect = 2047
