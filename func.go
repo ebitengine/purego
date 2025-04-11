@@ -280,7 +280,8 @@ func RegisterFunc(fptr any, cfn uintptr) {
 				}
 				continue
 			}
-			if runtime.GOARCH == "arm64" && (numInts >= numOfIntegerRegisters() || numFloats >= numOfFloats) && v.Kind() != reflect.Struct { // hit the stack
+			if runtime.GOARCH == "arm64" && runtime.GOOS == "darwin" &&
+				(numInts >= numOfIntegerRegisters() || numFloats >= numOfFloats) && v.Kind() != reflect.Struct { // hit the stack
 				fields := make([]reflect.StructField, len(args[i:]))
 
 				for j, val := range args[i:] {
