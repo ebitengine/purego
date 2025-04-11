@@ -142,7 +142,7 @@ func TestABI(t *testing.T) {
 	}
 	defer os.Remove(libFileName)
 
-	lib, err := purego.Dlopen(libFileName, purego.RTLD_NOW|purego.RTLD_GLOBAL)
+	lib, err := load.OpenLibrary(libFileName)
 	if err != nil {
 		t.Fatalf("Dlopen(%q) failed: %v", libFileName, err)
 	}
