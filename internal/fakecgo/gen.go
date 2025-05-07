@@ -76,7 +76,7 @@ call5({{.Name}}ABI0,
 {{end}}
 {{- range . }}
 //go:linkname _{{.Name}} _{{.Name}}
-var _{{.Name}} uintptr
+var _{{.Name}} uint8
 var {{.Name}}ABI0 = uintptr(unsafe.Pointer(&_{{.Name}}))
 {{ end }}
 `
