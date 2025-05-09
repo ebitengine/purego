@@ -69,13 +69,11 @@ env CGO_ENABLED=0 go test -gcflags="github.com/ebitengine/purego/internal/fakecg
 echo "=> go test CGO_ENABLED=1"
 env CGO_ENABLED=1 go test -shuffle=on -v -count=10 ./...
 
-# TODO: Enable this test again (#305).
-# echo "=> go test CGO_ENABLED=0 w/o optimization"
-# env CGO_ENABLED=0 go test "-gcflags=all=-N -l" -v ./...
+echo "=> go test CGO_ENABLED=0 w/o optimization"
+env CGO_ENABLED=0 go test "-gcflags=all=-N -l -std" -v ./...
 
-# TODO: Enable this test again (#305).
-# echo "=> go test CGO_ENABLED=1 w/o optimization"
-# env CGO_ENABLED=1 go test "-gcflags=all=-N -l" -v ./...
+echo "=> go test CGO_ENABLED=1 w/o optimization"
+env CGO_ENABLED=1 go test "-gcflags=all=-N -l" -v ./...
 
 if [ -z "$(go version | grep '^1.1')" ]; then
   echo "=> go test race"
