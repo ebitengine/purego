@@ -348,3 +348,7 @@ struct GoUint4 {
 GoUint GoUint4(struct GoUint4 g) {
     return g.a + g.b + g.c + g.d;
 }
+
+GoUint TakeGoUintAndReturn(GoUint a) {
+    return a;
+}
