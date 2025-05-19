@@ -139,7 +139,8 @@ jobs:
       - name: go test race
         if: ${{ !startsWith(matrix.go, '1.18.') && !startsWith(matrix.go, '1.19.') }}
         run: |
-          go test -race -shuffle=on -v -count=10 ./...
+          env CGO_ENABLED=0 go test -race -shuffle=on -v -count=10 ./...
+          env CGO_ENABLED=1 go test -race -shuffle=on -v -count=10 ./...
 
   bsd:
     strategy:
