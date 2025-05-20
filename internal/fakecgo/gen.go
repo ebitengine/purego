@@ -37,6 +37,7 @@ func call5(fn, a1, a2, a3, a4, a5 uintptr) uintptr
 
 {{ range . -}}
 //go:nosplit
+//go:norace
 func {{.Name}}(
 {{- range .Args -}}
 	{{- if .Name -}}

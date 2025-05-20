@@ -129,10 +129,16 @@ jobs:
            sudo apt-get install g++-multilib
            env CGO_ENABLED=1 GOARCH=386 go test -shuffle=on -v -count=10 ./...
 
-      - name: go test race
+      - name: go test race (no Cgo)
+        if: ${{ runner.os == 'macOS' &&  !startsWith(matrix.go, '1.18.') && !startsWith(matrix.go, '1.19.') }}
+        run: |
+          # -race usually requires Cgo, but macOS is an exception. See https://go.dev/doc/articles/race_detector#Requirements
+          env CGO_ENABLED=0 go test -race -shuffle=on -v -count=10 ./...
+
+      - name: go test race (Cgo)
         if: ${{ !startsWith(matrix.go, '1.18.') && !startsWith(matrix.go, '1.19.') }}
         run: |
-          go test -race -shuffle=on -v -count=10 ./...
+          env CGO_ENABLED=1 go test -race -shuffle=on -v -count=10 ./...
 
   freebsd:
     strategy:
