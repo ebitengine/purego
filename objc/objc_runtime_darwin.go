@@ -12,39 +12,73 @@ import (
 	"reflect"
 	"regexp"
 	"runtime"
+	"slices"
 	"unicode"
 	"unsafe"
 
 	"github.com/ebitengine/purego"
+	"github.com/ebitengine/purego/internal/strings"
 )
+
+type MethodDescription struct {
+	name, types uintptr
+}
+
+func (m MethodDescription) Name() string {
+	return strings.GoString(m.name)
+}
+
+func (m MethodDescription) Types() string {
+	return strings.GoString(m.types)
+}
+
+// Property is an opaque type for Objective-C property metadata.
+type Property uintptr
+
+func (p Property) Name() string {
+	return "" // TODO: property_getName(p)
+}
+
+func (p Property) Attributes() string {
+	return "" // TODO: property_getAttributes(p)
+}
 
 // TODO: support try/catch?
 // https://stackoverflow.com/questions/7062599/example-of-how-objective-cs-try-catch-implementation-is-executed-at-runtime
 var (
-	objc_msgSend_fn             uintptr
-	objc_msgSend_stret_fn       uintptr
-	objc_msgSend                func(obj ID, cmd SEL, args ...any) ID
-	objc_msgSendSuper2_fn       uintptr
-	objc_msgSendSuper2_stret_fn uintptr
-	objc_msgSendSuper2          func(super *objc_super, cmd SEL, args ...any) ID
-	objc_getClass               func(name string) Class
-	objc_getProtocol            func(name string) *Protocol
-	objc_allocateClassPair      func(super Class, name string, extraBytes uintptr) Class
-	objc_registerClassPair      func(class Class)
-	sel_registerName            func(name string) SEL
-	class_getSuperclass         func(class Class) Class
-	class_getInstanceVariable   func(class Class, name string) Ivar
-	class_getInstanceSize       func(class Class) uintptr
-	class_addMethod             func(class Class, name SEL, imp IMP, types string) bool
-	class_addIvar               func(class Class, name string, size uintptr, alignment uint8, types string) bool
-	class_addProtocol           func(class Class, protocol *Protocol) bool
-	ivar_getOffset              func(ivar Ivar) uintptr
-	ivar_getName                func(ivar Ivar) string
-	object_getClass             func(obj ID) Class
-	object_getIvar              func(obj ID, ivar Ivar) ID
-	object_setIvar              func(obj ID, ivar Ivar, value ID)
-	protocol_getName            func(protocol *Protocol) string
-	protocol_isEqual            func(p *Protocol, p2 *Protocol) bool
+	objc_msgSend_fn                    uintptr
+	objc_msgSend_stret_fn              uintptr
+	objc_msgSend                       func(obj ID, cmd SEL, args ...any) ID
+	objc_msgSendSuper2_fn              uintptr
+	objc_msgSendSuper2_stret_fn        uintptr
+	objc_msgSendSuper2                 func(super *objc_super, cmd SEL, args ...any) ID
+	objc_getClass                      func(name string) Class
+	objc_getProtocol                   func(name string) *Protocol
+	objc_allocateProtocol              func(name string) *Protocol
+	objc_registerProtocol              func(protocol *Protocol)
+	objc_allocateClassPair             func(super Class, name string, extraBytes uintptr) Class
+	objc_registerClassPair             func(class Class)
+	sel_registerName                   func(name string) SEL
+	class_getSuperclass                func(class Class) Class
+	class_getInstanceVariable          func(class Class, name string) Ivar
+	class_getInstanceSize              func(class Class) uintptr
+	class_addMethod                    func(class Class, name SEL, imp IMP, types string) bool
+	class_addIvar                      func(class Class, name string, size uintptr, alignment uint8, types string) bool
+	class_addProtocol                  func(class Class, protocol *Protocol) bool
+	ivar_getOffset                     func(ivar Ivar) uintptr
+	ivar_getName                       func(ivar Ivar) string
+	object_getClass                    func(obj ID) Class
+	object_getIvar                     func(obj ID, ivar Ivar) ID
+	object_setIvar                     func(obj ID, ivar Ivar, value ID)
+	protocol_getName                   func(protocol *Protocol) string
+	protocol_isEqual                   func(p *Protocol, p2 *Protocol) bool
+	protocol_addMethodDescription      func(p *Protocol, name SEL, types string, isRequiredMethod bool, isInstanceMethod bool)
+	protocol_copyMethodDescriptionList func(p *Protocol, isRequiredMethod bool, isInstanceMethod bool, outCount *uint32) *MethodDescription
+	protocol_copyProtocolList          func(p *Protocol, outCount *uint32) **Protocol
+	protocol_copyPropertyList2         func(p *Protocol, outCount *uint32, isRequiredProperty, isInstanceProperty bool) *Property
+	protocol_addProtocol               func(p *Protocol, p2 *Protocol)
+
+	free func(ptr unsafe.Pointer)
 )
 
 func init() {
@@ -75,6 +109,8 @@ func init() {
 	purego.RegisterLibFunc(&object_getClass, objc, "object_getClass")
 	purego.RegisterLibFunc(&objc_getClass, objc, "objc_getClass")
 	purego.RegisterLibFunc(&objc_getProtocol, objc, "objc_getProtocol")
+	purego.RegisterLibFunc(&objc_allocateProtocol, objc, "objc_allocateProtocol")
+	purego.RegisterLibFunc(&objc_registerProtocol, objc, "objc_registerProtocol")
 	purego.RegisterLibFunc(&objc_allocateClassPair, objc, "objc_allocateClassPair")
 	purego.RegisterLibFunc(&objc_registerClassPair, objc, "objc_registerClassPair")
 	purego.RegisterLibFunc(&sel_registerName, objc, "sel_registerName")
@@ -88,8 +124,13 @@ func init() {
 	purego.RegisterLibFunc(&ivar_getName, objc, "ivar_getName")
 	purego.RegisterLibFunc(&protocol_getName, objc, "protocol_getName")
 	purego.RegisterLibFunc(&protocol_isEqual, objc, "protocol_isEqual")
+	purego.RegisterLibFunc(&protocol_addMethodDescription, objc, "protocol_addMethodDescription")
+	purego.RegisterLibFunc(&protocol_copyMethodDescriptionList, objc, "protocol_copyMethodDescriptionList")
+	purego.RegisterLibFunc(&protocol_copyProtocolList, objc, "protocol_copyProtocolList")
+	purego.RegisterLibFunc(&protocol_addProtocol, objc, "protocol_addProtocol")
 	purego.RegisterLibFunc(&object_getIvar, objc, "object_getIvar")
 	purego.RegisterLibFunc(&object_setIvar, objc, "object_setIvar")
+	purego.RegisterLibFunc(&free, objc, "free")
 }
 
 // ID is an opaque pointer to some Objective-C object
@@ -499,7 +540,7 @@ func (c Class) AddMethod(name SEL, imp IMP, types string) bool {
 	return class_addMethod(c, name, imp, types)
 }
 
-// AddProtocol adds a protocol to a class.
+// AllocateProtocol adds a protocol to a class.
 // Returns true if the protocol was added successfully, otherwise false (for example,
 // the class already conforms to that protocol).
 func (c Class) AddProtocol(protocol *Protocol) bool {
@@ -539,9 +580,53 @@ func GetProtocol(name string) *Protocol {
 	return objc_getProtocol(name)
 }
 
+func AllocateProtocol(name string) *Protocol {
+	return objc_allocateProtocol(name)
+}
+
+func (p *Protocol) Register() {
+	objc_registerProtocol(p)
+}
+
+func (p *Protocol) CopyMethodDescriptionList(isRequiredMethod, isInstanceMethod bool) []MethodDescription {
+	count := uint32(0)
+	desc := protocol_copyMethodDescriptionList(p, isRequiredMethod, isInstanceMethod, &count)
+	methods := slices.Clone(unsafe.Slice(desc, count))
+	free(unsafe.Pointer(desc))
+	return methods
+}
+
+func (p *Protocol) CopyProtocolList() []*Protocol {
+	count := uint32(0)
+	desc := protocol_copyProtocolList(p, &count)
+	protocols := slices.Clone(unsafe.Slice(desc, count))
+	free(unsafe.Pointer(desc))
+	return protocols
+}
+
+func (p *Protocol) CopyPropertyList(isRequiredProperty, isInstanceProperty bool) []Property {
+	count := uint32(0)
+	desc := protocol_copyPropertyList2(p, &count, isRequiredProperty, isInstanceProperty)
+	protocols := slices.Clone(unsafe.Slice(desc, count))
+	free(unsafe.Pointer(desc))
+	return protocols
+}
+
+func (p *Protocol) Name() string {
+	return protocol_getName(p)
+}
+
 // Equals return true if the two protocols are the same.
 func (p *Protocol) Equals(p2 *Protocol) bool {
 	return protocol_isEqual(p, p2)
+}
+
+func (p *Protocol) AddMethodDescription(name SEL, types string, isRequiredMethod, isInstanceMethod bool) {
+	protocol_addMethodDescription(p, name, types, isRequiredMethod, isInstanceMethod)
+}
+
+func (p *Protocol) AddProtocol(protocol *Protocol) {
+	protocol_addProtocol(p, protocol)
 }
 
 // IMP is a function pointer that can be called by Objective-C code.
