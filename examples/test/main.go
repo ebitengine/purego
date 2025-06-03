@@ -122,7 +122,6 @@ func init() {
 		{{- range .OptionalClassProperties }}
 		p.AddProperty("{{ .Name }}", {{ attributeToStructString . }}, false, false)
 		{{- end }}
-
 		p.Register()
 	} // Finished protocol: {{$protocolName}}
 	{{- end }}
@@ -147,7 +146,7 @@ func attributeToStructString(p objc.Property) string {
 	var b strings.Builder
 	b.WriteString("[]objc.PropertyAttribute{")
 	for i, attrib := range attribs {
-		b.WriteString(fmt.Sprintf(`{Name: &[]byte("%s\x00")[0], Value: &[]byte(%s + "\x00")[0]}`, string(attrib[0]), strconv.Quote(attrib[1:])))
+		b.WriteString(fmt.Sprintf(`{Name: &[]byte("%s\x00")[0], Value: &[]byte(%s)[0]}`, string(attrib[0]), strconv.Quote(attrib[1:]+"\x00")))
 		if i != len(attribs)-1 {
 			b.WriteString(", ")
 		}
