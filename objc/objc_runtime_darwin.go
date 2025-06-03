@@ -12,7 +12,6 @@ import (
 	"reflect"
 	"regexp"
 	"runtime"
-	"slices"
 	"unicode"
 	"unsafe"
 
@@ -612,7 +611,7 @@ func (p *Protocol) Register() {
 func (p *Protocol) CopyMethodDescriptionList(isRequiredMethod, isInstanceMethod bool) []MethodDescription {
 	count := uint32(0)
 	desc := protocol_copyMethodDescriptionList(p, isRequiredMethod, isInstanceMethod, &count)
-	methods := slices.Clone(unsafe.Slice(desc, count))
+	methods := clone(unsafe.Slice(desc, count))
 	free(unsafe.Pointer(desc))
 	return methods
 }
@@ -621,7 +620,7 @@ func (p *Protocol) CopyMethodDescriptionList(isRequiredMethod, isInstanceMethod 
 func (p *Protocol) CopyProtocolList() []*Protocol {
 	count := uint32(0)
 	desc := protocol_copyProtocolList(p, &count)
-	protocols := slices.Clone(unsafe.Slice(desc, count))
+	protocols := clone(unsafe.Slice(desc, count))
 	free(unsafe.Pointer(desc))
 	return protocols
 }
@@ -630,7 +629,7 @@ func (p *Protocol) CopyProtocolList() []*Protocol {
 func (p *Protocol) CopyPropertyList(isRequiredProperty, isInstanceProperty bool) []Property {
 	count := uint32(0)
 	desc := protocol_copyPropertyList2(p, &count, isRequiredProperty, isInstanceProperty)
-	protocols := slices.Clone(unsafe.Slice(desc, count))
+	protocols := clone(unsafe.Slice(desc, count))
 	free(unsafe.Pointer(desc))
 	return protocols
 }
@@ -683,4 +682,15 @@ func NewIMP(fn any) IMP {
 		panic("objc: NewIMP must take a (id, SEL) as its first two arguments; got " + ty.String())
 	}
 	return IMP(purego.NewCallback(fn))
+}
+
+// TODO: remove and use slices.Clone when minimum version for purego is 1.21
+func clone[S ~[]E, E any](s S) S {
+	// Preserve nilness in case it matters.
+	if s == nil {
+		return nil
+	}
+	// Avoid s[:0:0] as it leads to unwanted liveness when cloning a
+	// zero-length slice of a large array; see https://go.dev/issue/68488.
+	return append(S{}, s...)
 }
