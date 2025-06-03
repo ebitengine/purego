@@ -11,6 +11,7 @@ import "C"
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"strconv"
@@ -31,6 +32,9 @@ type ProtocolImpl struct {
 	AdoptedProtocols []*objc.Protocol
 
 	RequiredInstanceProperties []objc.Property
+	RequiredClassProperties    []objc.Property
+	OptionalInstanceProperties []objc.Property
+	OptionalClassProperties    []objc.Property
 }
 
 func readProtocol(name string) (imp ProtocolImpl, err error) {
@@ -47,15 +51,20 @@ func readProtocol(name string) (imp ProtocolImpl, err error) {
 	imp.AdoptedProtocols = p.CopyProtocolList()
 
 	imp.RequiredInstanceProperties = p.CopyPropertyList(true, true)
+	imp.RequiredClassProperties = p.CopyPropertyList(true, false)
+	imp.OptionalInstanceProperties = p.CopyPropertyList(false, true)
+	imp.OptionalClassProperties = p.CopyPropertyList(false, false)
 	return imp, nil
 }
 
 func main() {
-	if p, err := readProtocol("NSAccessibility"); err != nil {
+	var imp ProtocolImpl
+	var err error
+	if imp, err = readProtocol("NSAccessibility"); err != nil {
 		panic(err)
-	} else {
-		printProtocol([]ProtocolImpl{p})
 	}
+
+	printProtocol([]ProtocolImpl{imp}, os.Stdout)
 }
 
 const templ = `package main
@@ -102,26 +111,33 @@ func init() {
 		p.AddProperty("{{ .Name }}", {{ attributeToStructString . }}, true, true)
 		{{- end }}
 
+
+		{{- range .RequiredClassProperties }}
+		p.AddProperty("{{ .Name }}", {{ attributeToStructString . }}, true, false)
+		{{- end }}
+
+		{{- range .OptionalInstanceProperties }}
+		p.AddProperty("{{ .Name }}", {{ attributeToStructString . }}, false, true)
+		{{- end }}
+
+		{{- range .OptionalClassProperties }}
+		p.AddProperty("{{ .Name }}", {{ attributeToStructString . }}, false, false)
+		{{- end }}
+
 		p.Register()
-		// Finished protocol: {{$protocolName}}
-	}
+	} // Finished protocol: {{$protocolName}}
 	{{- end }}
 }
 `
 
-func printProtocol(impls []ProtocolImpl) {
+func printProtocol(impls []ProtocolImpl, w io.Writer) {
 	tmpl, err := template.New("protocol.tmpl").Funcs(template.FuncMap{
 		"attributeToStructString": attributeToStructString,
 	}).Parse(templ)
 	if err != nil {
 		log.Fatal(err)
 	}
-	output, err := os.Create("/Users/jarrettkuklis/Documents/GolandProjects/purego/examples/test/protocol.go")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer output.Close()
-	err = tmpl.Execute(output, impls)
+	err = tmpl.Execute(w, impls)
 	if err != nil {
 		log.Fatal(err)
 	}
