@@ -5,6 +5,7 @@ package main
 //#import <AppKit/AppKit.h>
 //__attribute__((used))
 //static Protocol *__force_protocol_load() {
+//  id o = @protocol(NSApplicationDelegate);
 //   return @protocol(NSAccessibility);
 //}
 import "C"
@@ -12,7 +13,6 @@ import "C"
 import (
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -20,6 +20,11 @@ import (
 
 	"github.com/ebitengine/purego/objc"
 )
+
+var protocols = []string{
+	"NSAccessibility",
+	"NSApplicationDelegate",
+}
 
 type ProtocolImpl struct {
 	Name string
@@ -37,34 +42,39 @@ type ProtocolImpl struct {
 	OptionalClassProperties    []objc.Property
 }
 
-func readProtocol(name string) (imp ProtocolImpl, err error) {
-	p := objc.GetProtocol(name)
-	if p == nil {
-		return ProtocolImpl{}, fmt.Errorf("protocol does not exist")
+func readProtocols(names []string) (imps []ProtocolImpl, err error) {
+	for _, name := range names {
+		p := objc.GetProtocol(name)
+		if p == nil {
+			return nil, fmt.Errorf("protocol '%s' does not exist", name)
+		}
+		imp := ProtocolImpl{}
+		imp.Name = name
+		imp.RequiredInstanceMethods = p.CopyMethodDescriptionList(true, true)
+		imp.RequiredObjectMethods = p.CopyMethodDescriptionList(true, false)
+		imp.OptionalInstanceMethods = p.CopyMethodDescriptionList(false, true)
+		imp.OptionalObjectMethods = p.CopyMethodDescriptionList(false, false)
+
+		imp.AdoptedProtocols = p.CopyProtocolList()
+
+		imp.RequiredInstanceProperties = p.CopyPropertyList(true, true)
+		imp.RequiredClassProperties = p.CopyPropertyList(true, false)
+		imp.OptionalInstanceProperties = p.CopyPropertyList(false, true)
+		imp.OptionalClassProperties = p.CopyPropertyList(false, false)
+		imps = append(imps, imp)
 	}
-	imp.Name = name
-	imp.RequiredInstanceMethods = p.CopyMethodDescriptionList(true, true)
-	imp.RequiredObjectMethods = p.CopyMethodDescriptionList(true, false)
-	imp.OptionalInstanceMethods = p.CopyMethodDescriptionList(false, true)
-	imp.OptionalObjectMethods = p.CopyMethodDescriptionList(false, false)
-
-	imp.AdoptedProtocols = p.CopyProtocolList()
-
-	imp.RequiredInstanceProperties = p.CopyPropertyList(true, true)
-	imp.RequiredClassProperties = p.CopyPropertyList(true, false)
-	imp.OptionalInstanceProperties = p.CopyPropertyList(false, true)
-	imp.OptionalClassProperties = p.CopyPropertyList(false, false)
-	return imp, nil
+	return imps, nil
 }
 
 func main() {
-	var imp ProtocolImpl
+	var imps []ProtocolImpl
 	var err error
-	if imp, err = readProtocol("NSAccessibility"); err != nil {
+	if imps, err = readProtocols(protocols); err != nil {
 		panic(err)
 	}
-
-	printProtocol([]ProtocolImpl{imp}, os.Stdout)
+	if err = printProtocols(imps, os.Stdout); err != nil {
+		panic(err)
+	}
 }
 
 const templ = `package main
@@ -128,17 +138,18 @@ func init() {
 }
 `
 
-func printProtocol(impls []ProtocolImpl, w io.Writer) {
+func printProtocols(impls []ProtocolImpl, w io.Writer) error {
 	tmpl, err := template.New("protocol.tmpl").Funcs(template.FuncMap{
 		"attributeToStructString": attributeToStructString,
 	}).Parse(templ)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	err = tmpl.Execute(w, impls)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
+	return nil
 }
 
 func attributeToStructString(p objc.Property) string {
