@@ -20,18 +20,22 @@ import (
 	"github.com/ebitengine/purego/internal/strings"
 )
 
+// MethodDescription holds the name and type definition of a method.
 type MethodDescription struct {
 	name, types uintptr
 }
 
+// Name returns the name of this method.
 func (m MethodDescription) Name() string {
 	return strings.GoString(m.name)
 }
 
+// Types returns the OBJC runtime encoded type description.
 func (m MethodDescription) Types() string {
 	return strings.GoString(m.types)
 }
 
+// PropertyAttribute contains the null-terminated Name and Value pair of a Properties internal description.
 type PropertyAttribute struct {
 	Name, Value *byte
 }
@@ -39,10 +43,12 @@ type PropertyAttribute struct {
 // Property is an opaque type for Objective-C property metadata.
 type Property uintptr
 
+// Name returns the name of this property.
 func (p Property) Name() string {
 	return property_getName(p)
 }
 
+// Attributes returns a comma separated list of PropertyAttribute
 func (p Property) Attributes() string {
 	return property_getAttributes(p)
 }
@@ -551,7 +557,7 @@ func (c Class) AddMethod(name SEL, imp IMP, types string) bool {
 	return class_addMethod(c, name, imp, types)
 }
 
-// AllocateProtocol adds a protocol to a class.
+// AddProtocol adds a protocol to a class.
 // Returns true if the protocol was added successfully, otherwise false (for example,
 // the class already conforms to that protocol).
 func (c Class) AddProtocol(protocol *Protocol) bool {
@@ -591,14 +597,18 @@ func GetProtocol(name string) *Protocol {
 	return objc_getProtocol(name)
 }
 
+// AllocateProtocol creates a new protocol in the OBJC runtime or nil if the protocol already exists.
 func AllocateProtocol(name string) *Protocol {
 	return objc_allocateProtocol(name)
 }
 
+// Register registers the protocol created using AllocateProtocol with the runtime. This must be done
+// before it is used anywhere and can only be called once.
 func (p *Protocol) Register() {
 	objc_registerProtocol(p)
 }
 
+// CopyMethodDescriptionList returns a list of methods that this protocol has given it isRequiredMethod and isInstanceMethod.
 func (p *Protocol) CopyMethodDescriptionList(isRequiredMethod, isInstanceMethod bool) []MethodDescription {
 	count := uint32(0)
 	desc := protocol_copyMethodDescriptionList(p, isRequiredMethod, isInstanceMethod, &count)
@@ -607,6 +617,7 @@ func (p *Protocol) CopyMethodDescriptionList(isRequiredMethod, isInstanceMethod 
 	return methods
 }
 
+// CopyProtocolList returns a list of the protocols that this protocol inherits from.
 func (p *Protocol) CopyProtocolList() []*Protocol {
 	count := uint32(0)
 	desc := protocol_copyProtocolList(p, &count)
@@ -615,6 +626,7 @@ func (p *Protocol) CopyProtocolList() []*Protocol {
 	return protocols
 }
 
+// CopyPropertyList returns a list of properties that this protocol has given it isRequiredProperty and isInstanceProperty.
 func (p *Protocol) CopyPropertyList(isRequiredProperty, isInstanceProperty bool) []Property {
 	count := uint32(0)
 	desc := protocol_copyPropertyList2(p, &count, isRequiredProperty, isInstanceProperty)
@@ -623,6 +635,7 @@ func (p *Protocol) CopyPropertyList(isRequiredProperty, isInstanceProperty bool)
 	return protocols
 }
 
+// Name returns the name of this protocol.
 func (p *Protocol) Name() string {
 	return protocol_getName(p)
 }
@@ -632,14 +645,17 @@ func (p *Protocol) Equals(p2 *Protocol) bool {
 	return protocol_isEqual(p, p2)
 }
 
+// AddMethodDescription adds a method to a protocol. This can only be called between AllocateProtocol and Protocol.Register.
 func (p *Protocol) AddMethodDescription(name SEL, types string, isRequiredMethod, isInstanceMethod bool) {
 	protocol_addMethodDescription(p, name, types, isRequiredMethod, isInstanceMethod)
 }
 
+// AddProtocol marks the protocol as inheriting from another. This can only be called between AllocateProtocol and Protocol.Register.
 func (p *Protocol) AddProtocol(protocol *Protocol) {
 	protocol_addProtocol(p, protocol)
 }
 
+// AddProperty adds a property tp the protocol. This can only be called between AllocateProtocol and Protocol.Register.
 func (p *Protocol) AddProperty(name string, attributes []PropertyAttribute, isRequiredProperty, isInstanceProperty bool) {
 	protocol_addProperty(p, name, attributes, uint32(len(attributes)), isRequiredProperty, isInstanceProperty)
 }
