@@ -34,9 +34,9 @@ type ProtocolImpl struct {
 	Name string
 
 	RequiredInstanceMethods []objc.MethodDescription
-	RequiredObjectMethods   []objc.MethodDescription
+	RequiredClassMethods    []objc.MethodDescription
 	OptionalInstanceMethods []objc.MethodDescription
-	OptionalObjectMethods   []objc.MethodDescription
+	OptionalClassMethods    []objc.MethodDescription
 
 	AdoptedProtocols []*objc.Protocol
 
@@ -55,9 +55,9 @@ func readProtocols(names []string) (imps []ProtocolImpl, err error) {
 		imp := ProtocolImpl{}
 		imp.Name = name
 		imp.RequiredInstanceMethods = p.CopyMethodDescriptionList(true, true)
-		imp.RequiredObjectMethods = p.CopyMethodDescriptionList(true, false)
+		imp.RequiredClassMethods = p.CopyMethodDescriptionList(true, false)
 		imp.OptionalInstanceMethods = p.CopyMethodDescriptionList(false, true)
-		imp.OptionalObjectMethods = p.CopyMethodDescriptionList(false, false)
+		imp.OptionalClassMethods = p.CopyMethodDescriptionList(false, false)
 
 		imp.AdoptedProtocols = p.CopyProtocolList()
 
@@ -89,7 +89,7 @@ func init() {
 		p.AddMethodDescription(objc.RegisterName("{{ .Name }}"), "{{ .Types }}", true, true)
 		{{- end }}
 		
-		{{- range .RequiredObjectMethods }}
+		{{- range .RequiredClassMethods }}
 		p.AddMethodDescription(objc.RegisterName("{{ .Name }}"), "{{ .Types }}", true, false)
 		{{- end }}
 		
@@ -97,7 +97,7 @@ func init() {
 		p.AddMethodDescription(objc.RegisterName("{{ .Name }}"), "{{ .Types }}", false, true)
 		{{- end }}
 		
-		{{- range .OptionalObjectMethods }}
+		{{- range .OptionalClassMethods }}
 		p.AddMethodDescription(objc.RegisterName("{{ .Name }}"), "{{ .Types }}", false, false)
 		{{- end }}
 		var adoptedProtocol *objc.Protocol
