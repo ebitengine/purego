@@ -80,9 +80,8 @@ func init() {
 	{{- range . }}
 	{{- $protocolName := .Name }}
 
-	// Begin Objective-C protocol definition for: {{$protocolName}}
 	p = objc.AllocateProtocol("{{$protocolName}}")
-	if p != nil { // only register if it doesn't exist
+	if p != nil {
 		{{- range .RequiredInstanceMethods }}
 		p.AddMethodDescription(objc.RegisterName("{{ .Name }}"), "{{ .Types }}", true, true)
 		{{- end }}
