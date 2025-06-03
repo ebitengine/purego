@@ -62,7 +62,7 @@ var (
 )
 
 func init() {
-	objc, err := purego.Dlopen("/usr/lib/libobjc.A.dylib", purego.RTLD_GLOBAL)
+	objc, err := purego.Dlopen("/usr/lib/libobjc.A.dylib", purego.RTLD_GLOBAL|purego.RTLD_NOW)
 	if err != nil {
 		panic(fmt.Errorf("objc: %w", err))
 	}
@@ -114,7 +114,7 @@ func init() {
 	purego.RegisterLibFunc(&property_getAttributes, objc, "property_getAttributes")
 	purego.RegisterLibFunc(&object_getIvar, objc, "object_getIvar")
 	purego.RegisterLibFunc(&object_setIvar, objc, "object_setIvar")
-	purego.RegisterLibFunc(&free, objc, "free")
+	purego.RegisterLibFunc(&free, purego.RTLD_DEFAULT, "free")
 }
 
 // ID is an opaque pointer to some Objective-C object
