@@ -20,39 +20,6 @@ import (
 	"github.com/ebitengine/purego/internal/strings"
 )
 
-// MethodDescription holds the name and type definition of a method.
-type MethodDescription struct {
-	name, types uintptr
-}
-
-// Name returns the name of this method.
-func (m MethodDescription) Name() string {
-	return strings.GoString(m.name)
-}
-
-// Types returns the OBJC runtime encoded type description.
-func (m MethodDescription) Types() string {
-	return strings.GoString(m.types)
-}
-
-// PropertyAttribute contains the null-terminated Name and Value pair of a Properties internal description.
-type PropertyAttribute struct {
-	Name, Value *byte
-}
-
-// Property is an opaque type for Objective-C property metadata.
-type Property uintptr
-
-// Name returns the name of this property.
-func (p Property) Name() string {
-	return property_getName(p)
-}
-
-// Attributes returns a comma separated list of PropertyAttribute
-func (p Property) Attributes() string {
-	return property_getAttributes(p)
-}
-
 // TODO: support try/catch?
 // https://stackoverflow.com/questions/7062599/example-of-how-objective-cs-try-catch-implementation-is-executed-at-runtime
 var (
@@ -587,6 +554,39 @@ func (i Ivar) Offset() uintptr {
 
 func (i Ivar) Name() string {
 	return ivar_getName(i)
+}
+
+// MethodDescription holds the name and type definition of a method.
+type MethodDescription struct {
+	name, types uintptr
+}
+
+// Name returns the name of this method.
+func (m MethodDescription) Name() string {
+	return strings.GoString(m.name)
+}
+
+// Types returns the OBJC runtime encoded type description.
+func (m MethodDescription) Types() string {
+	return strings.GoString(m.types)
+}
+
+// PropertyAttribute contains the null-terminated Name and Value pair of a Properties internal description.
+type PropertyAttribute struct {
+	Name, Value *byte
+}
+
+// Property is an opaque type for Objective-C property metadata.
+type Property uintptr
+
+// Name returns the name of this property.
+func (p Property) Name() string {
+	return property_getName(p)
+}
+
+// Attributes returns a comma separated list of PropertyAttribute
+func (p Property) Attributes() string {
+	return property_getAttributes(p)
 }
 
 // Protocol is a type that declares methods that can be implemented by any class.
