@@ -7,13 +7,14 @@ package main
 //static Protocol *__force_protocol_load() {
 //   return @protocol(NSAccessibility);
 //}
-import "C"
+//import "C"
 
 import (
 	"fmt"
 	"log"
 	"os"
-	"slices"
+	"strconv"
+	"strings"
 	"text/template"
 
 	"github.com/ebitengine/purego/objc"
@@ -28,6 +29,8 @@ type ProtocolImpl struct {
 	OptionalObjectMethods   []objc.MethodDescription
 
 	AdoptedProtocols []*objc.Protocol
+
+	RequiredInstanceProperties []objc.Property
 }
 
 func readProtocol(name string) (imp ProtocolImpl, err error) {
@@ -53,12 +56,10 @@ func readProtocol(name string) (imp ProtocolImpl, err error) {
 	//    free(props);
 	//
 	//    printf("objc_registerProtocol(proto);\n");
-	for _, p := range slices.Concat(p.CopyPropertyList(true, true),
-		p.CopyPropertyList(true, false),
-		p.CopyPropertyList(false, false),
-		p.CopyPropertyList(false, true)) {
-		fmt.Println(p.Name(), p.Attributes())
-	}
+	imp.RequiredInstanceProperties = p.CopyPropertyList(true, true)
+	//for _, p := range imp.RequiredInstanceProperties {
+	//	fmt.Println(p.Attributes())
+	//}
 	return imp, nil
 }
 
@@ -106,6 +107,11 @@ func init() {
 		}
 		p.AddProtocol(adoptedProtocol)
 		{{- end }}
+
+		{{- range .RequiredInstanceProperties }}
+		p.AddProperty("{{ .Name }}", {{ attributeToStructString . }}, true, true)
+		{{- end }}
+
 		p.Register()
 		// Finished protocol: {{$protocolName}}
 	}
@@ -114,7 +120,9 @@ func init() {
 `
 
 func printProtocol(impls []ProtocolImpl) {
-	tmpl, err := template.New("protocol.tmpl").Parse(templ)
+	tmpl, err := template.New("protocol.tmpl").Funcs(template.FuncMap{
+		"attributeToStructString": attributeToStructString,
+	}).Parse(templ)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -122,4 +130,15 @@ func printProtocol(impls []ProtocolImpl) {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func attributeToStructString(p objc.Property) string {
+	attribs := strings.Split(p.Attributes(), ",")
+	var b strings.Builder
+	b.WriteString("[]objc.PropertyAttribute{")
+	for _, attrib := range attribs {
+		b.WriteString(fmt.Sprintf(`{ Name: &[]byte("%s\x00")[0], Value: &[]byte(%s+"\x00")[0] },`, string(attrib[0]), strconv.Quote(attrib[1:])))
+	}
+	b.WriteString("}")
+	return b.String()
 }

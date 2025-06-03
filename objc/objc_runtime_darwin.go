@@ -32,6 +32,10 @@ func (m MethodDescription) Types() string {
 	return strings.GoString(m.types)
 }
 
+type PropertyAttribute struct {
+	Name, Value *byte
+}
+
 // Property is an opaque type for Objective-C property metadata.
 type Property uintptr
 
@@ -77,6 +81,7 @@ var (
 	protocol_copyProtocolList          func(p *Protocol, outCount *uint32) **Protocol
 	protocol_copyPropertyList2         func(p *Protocol, outCount *uint32, isRequiredProperty, isInstanceProperty bool) *Property
 	protocol_addProtocol               func(p *Protocol, p2 *Protocol)
+	protocol_addProperty               func(p *Protocol, name string, attributes []PropertyAttribute, attributeCount uint32, isRequiredProperty bool, isInstanceProperty bool)
 	property_getName                   func(p Property) string
 	property_getAttributes             func(p Property) string
 
@@ -130,6 +135,7 @@ func init() {
 	purego.RegisterLibFunc(&protocol_copyMethodDescriptionList, objc, "protocol_copyMethodDescriptionList")
 	purego.RegisterLibFunc(&protocol_copyProtocolList, objc, "protocol_copyProtocolList")
 	purego.RegisterLibFunc(&protocol_addProtocol, objc, "protocol_addProtocol")
+	purego.RegisterLibFunc(&protocol_addProperty, objc, "protocol_addProperty")
 	purego.RegisterLibFunc(&protocol_copyPropertyList2, objc, "protocol_copyPropertyList2")
 	purego.RegisterLibFunc(&property_getName, objc, "property_getName")
 	purego.RegisterLibFunc(&property_getAttributes, objc, "property_getAttributes")
@@ -632,6 +638,10 @@ func (p *Protocol) AddMethodDescription(name SEL, types string, isRequiredMethod
 
 func (p *Protocol) AddProtocol(protocol *Protocol) {
 	protocol_addProtocol(p, protocol)
+}
+
+func (p *Protocol) AddProperty(name string, attributes []PropertyAttribute, isRequiredProperty, isInstanceProperty bool) {
+	protocol_addProperty(p, name, attributes, uint32(len(attributes)), isRequiredProperty, isInstanceProperty)
 }
 
 // IMP is a function pointer that can be called by Objective-C code.
