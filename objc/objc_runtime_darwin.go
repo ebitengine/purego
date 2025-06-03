@@ -36,11 +36,11 @@ func (m MethodDescription) Types() string {
 type Property uintptr
 
 func (p Property) Name() string {
-	return "" // TODO: property_getName(p)
+	return property_getName(p)
 }
 
 func (p Property) Attributes() string {
-	return "" // TODO: property_getAttributes(p)
+	return property_getAttributes(p)
 }
 
 // TODO: support try/catch?
@@ -77,6 +77,8 @@ var (
 	protocol_copyProtocolList          func(p *Protocol, outCount *uint32) **Protocol
 	protocol_copyPropertyList2         func(p *Protocol, outCount *uint32, isRequiredProperty, isInstanceProperty bool) *Property
 	protocol_addProtocol               func(p *Protocol, p2 *Protocol)
+	property_getName                   func(p Property) string
+	property_getAttributes             func(p Property) string
 
 	free func(ptr unsafe.Pointer)
 )
@@ -128,6 +130,9 @@ func init() {
 	purego.RegisterLibFunc(&protocol_copyMethodDescriptionList, objc, "protocol_copyMethodDescriptionList")
 	purego.RegisterLibFunc(&protocol_copyProtocolList, objc, "protocol_copyProtocolList")
 	purego.RegisterLibFunc(&protocol_addProtocol, objc, "protocol_addProtocol")
+	purego.RegisterLibFunc(&protocol_copyPropertyList2, objc, "protocol_copyPropertyList2")
+	purego.RegisterLibFunc(&property_getName, objc, "property_getName")
+	purego.RegisterLibFunc(&property_getAttributes, objc, "property_getAttributes")
 	purego.RegisterLibFunc(&object_getIvar, objc, "object_getIvar")
 	purego.RegisterLibFunc(&object_setIvar, objc, "object_setIvar")
 	purego.RegisterLibFunc(&free, objc, "free")

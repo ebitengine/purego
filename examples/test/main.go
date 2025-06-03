@@ -5,7 +5,7 @@ package main
 //#import <AppKit/AppKit.h>
 //__attribute__((used))
 //static Protocol *__force_protocol_load() {
-//   return @protocol(NSApplicationDelegate);
+//   return @protocol(NSAccessibility);
 //}
 import "C"
 
@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"slices"
 	"text/template"
 
 	"github.com/ebitengine/purego/objc"
@@ -30,7 +31,7 @@ type ProtocolImpl struct {
 }
 
 func readProtocol(name string) (imp ProtocolImpl, err error) {
-	p := objc.GetProtocol("NSApplicationDelegate")
+	p := objc.GetProtocol(name)
 	if p == nil {
 		return ProtocolImpl{}, fmt.Errorf("protocol does not exist")
 	}
@@ -52,11 +53,17 @@ func readProtocol(name string) (imp ProtocolImpl, err error) {
 	//    free(props);
 	//
 	//    printf("objc_registerProtocol(proto);\n");
+	for _, p := range slices.Concat(p.CopyPropertyList(true, true),
+		p.CopyPropertyList(true, false),
+		p.CopyPropertyList(false, false),
+		p.CopyPropertyList(false, true)) {
+		fmt.Println(p.Name(), p.Attributes())
+	}
 	return imp, nil
 }
 
 func main() {
-	if p, err := readProtocol("NSApplicationDelegate"); err != nil {
+	if p, err := readProtocol("NSAccessibility"); err != nil {
 		panic(err)
 	} else {
 		printProtocol([]ProtocolImpl{p})
