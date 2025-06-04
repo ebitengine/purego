@@ -3,15 +3,17 @@
 
 package main
 
-//#cgo CFLAGS: -x objective-c
-//#cgo LDFLAGS: -framework AppKit
-//#import <AppKit/AppKit.h>
-//__attribute__((used))
-//static void __force_protocol_load() {
+// #cgo CFLAGS: -x objective-c
+// #cgo LDFLAGS: -framework AppKit
+//
+// #import <AppKit/AppKit.h>
+//
+// __attribute__((used))
+// static void __force_protocol_load() {
 //	id o = NULL;
 //	o = @protocol(NSAccessibility);
 //	o = @protocol(NSApplicationDelegate);
-//}
+// }
 import "C"
 
 import (

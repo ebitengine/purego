@@ -654,7 +654,7 @@ func (p *Protocol) AddProtocol(protocol *Protocol) {
 	protocol_addProtocol(p, protocol)
 }
 
-// AddProperty adds a property tp the protocol. This can only be called between AllocateProtocol and Protocol.Register.
+// AddProperty adds a property to the protocol. This can only be called between AllocateProtocol and Protocol.Register.
 func (p *Protocol) AddProperty(name string, attributes []PropertyAttribute, isRequiredProperty, isInstanceProperty bool) {
 	protocol_addProperty(p, name, attributes, uint32(len(attributes)), isRequiredProperty, isInstanceProperty)
 }
