@@ -5,6 +5,7 @@ package objc_test
 
 import (
 	"fmt"
+	"log"
 	"reflect"
 	"testing"
 
@@ -207,4 +208,39 @@ func ExampleSendSuper() {
 	res := objc.SendSuper[int](objc.ID(child).Send(objc.RegisterName("new")), objc.RegisterName("doSomething"))
 	fmt.Println(res)
 	// Output: 16
+}
+
+func ExampleAllocateProtocol() {
+	var p *objc.Protocol
+	if p = objc.AllocateProtocol("MyCustomProtocol"); p != nil {
+		p.AddMethodDescription(objc.RegisterName("isFoo"), "B16@0:8", true, true)
+		var adoptedProtocol *objc.Protocol
+		adoptedProtocol = objc.GetProtocol("NSObject")
+		if adoptedProtocol == nil {
+			log.Fatalln("protocol 'NSObject' does not exist")
+		}
+		p.AddProtocol(adoptedProtocol)
+		p.AddProperty("accessibilityElement", []objc.PropertyAttribute{
+			{Name: &[]byte("T\x00")[0], Value: &[]byte("B\x00")[0]},
+			{Name: &[]byte("G\x00")[0], Value: &[]byte("isBar\x00")[0]},
+		}, true, true)
+		p.Register()
+	}
+
+	p = objc.GetProtocol("MyCustomProtocol")
+
+	for _, protocol := range p.CopyProtocolList() {
+		fmt.Println(protocol.Name())
+	}
+	for _, property := range p.CopyPropertyList(true, true) {
+		fmt.Println(property.Name(), property.Attributes())
+	}
+	for _, method := range p.CopyMethodDescriptionList(true, true) {
+		fmt.Println(method.Name(), method.Types())
+	}
+
+	// Output:
+	// NSObject
+	// accessibilityElement TB,GisBar
+	// isFoo B16@0:8
 }
