@@ -17,9 +17,26 @@ func getStruct(outType reflect.Type, syscall syscall15Args) (v reflect.Value) {
 	case outSize <= 8:
 		r1 := syscall.a1
 		if isAllFloats, numFields := isAllSameFloat(outType); isAllFloats {
-			r1 = syscall.f1
-			if numFields == 2 {
-				r1 = syscall.f2<<32 | syscall.f1
+			if numFields == 1 {
+				// Single float32/float64 - always use float register
+				r1 = syscall.f1
+			} else if numFields == 2 {
+				// Two float32s: check if the packed value in a1 makes sense as a struct
+				// vs individual values in f1/f2 making sense as floats
+				a1_as_struct := *(*[2]float32)(unsafe.Pointer(&syscall.a1))
+				f_as_struct := [2]float32{math.Float32frombits(uint32(syscall.f1)), math.Float32frombits(uint32(syscall.f2))}
+
+				// Use a1 if the float registers appear to have been derived from a1 (callback case)
+				// or if f1/f2 are zero/uninitialized
+				if syscall.f1 == 0 && syscall.f2 == 0 {
+					// Definitely use a1
+				} else if a1_as_struct[0] == f_as_struct[1] && a1_as_struct[1] == f_as_struct[0] {
+					// Values are swapped between a1 and f1/f2 - this indicates callback packing
+					// Use a1
+				} else {
+					// Use float registers (regular function call)
+					r1 = syscall.f2<<32 | syscall.f1
+				}
 			}
 		}
 		return reflect.NewAt(outType, unsafe.Pointer(&struct{ a uintptr }{r1})).Elem()
@@ -219,33 +236,77 @@ func isHFA(t reflect.Type) bool {
 	if structSize == 0 || t.NumField() > 4 {
 		return false
 	}
-	first := t.Field(0)
-	switch first.Type.Kind() {
-	case reflect.Float32, reflect.Float64:
-		firstKind := first.Type.Kind()
+
+	// Count the total number of fundamental floating-point types
+	var floatCount int
+	var firstFloatKind reflect.Kind
+
+	var countFloats func(reflect.Type) bool
+	countFloats = func(t reflect.Type) bool {
 		for i := 0; i < t.NumField(); i++ {
-			if t.Field(i).Type.Kind() != firstKind {
-				return false
+			field := t.Field(i)
+			switch field.Type.Kind() {
+			case reflect.Float32, reflect.Float64:
+				if floatCount == 0 {
+					firstFloatKind = field.Type.Kind()
+				} else if field.Type.Kind() != firstFloatKind {
+					return false // Mixed float types
+				}
+				floatCount++
+				if floatCount > 4 {
+					return false // Too many floats
+				}
+			case reflect.Struct:
+				if !countFloats(field.Type) {
+					return false
+				}
+			case reflect.Array:
+				if field.Type.Elem().Kind() == reflect.Float32 || field.Type.Elem().Kind() == reflect.Float64 {
+					if floatCount == 0 {
+						firstFloatKind = field.Type.Elem().Kind()
+					} else if field.Type.Elem().Kind() != firstFloatKind {
+						return false
+					}
+					floatCount += field.Type.Len()
+					if floatCount > 4 {
+						return false
+					}
+				} else {
+					return false // Non-float array
+				}
+			default:
+				return false // Non-float field
 			}
 		}
 		return true
-	case reflect.Array:
-		switch first.Type.Elem().Kind() {
-		case reflect.Float32, reflect.Float64:
-			return true
-		default:
-			return false
-		}
-	case reflect.Struct:
-		for i := 0; i < first.Type.NumField(); i++ {
-			if !isHFA(first.Type) {
-				return false
-			}
-		}
-		return true
-	default:
+	}
+
+	if !countFloats(t) {
 		return false
 	}
+
+	// Must have between 1 and 4 floating-point members
+	return floatCount >= 1 && floatCount <= 4
+}
+
+// hasDirectFloatFields checks if all fields are directly float32 or float64 (no nested structs)
+func hasDirectFloatFields(t reflect.Type) bool {
+	for i := 0; i < t.NumField(); i++ {
+		field := t.Field(i)
+		switch field.Type.Kind() {
+		case reflect.Float32, reflect.Float64:
+			// Direct float field is OK
+		case reflect.Array:
+			// Float array is OK for HFA
+			if field.Type.Elem().Kind() != reflect.Float32 && field.Type.Elem().Kind() != reflect.Float64 {
+				return false
+			}
+		default:
+			// Any non-float field (including nested structs) makes this not suitable for simple HFA handling
+			return false
+		}
+	}
+	return true
 }
 
 // isHVA reports a Homogeneous Aggregate with a Fundamental Data Type that is a Short-Vector type
@@ -280,5 +341,249 @@ func isHVA(t reflect.Type) bool {
 		}
 	default:
 		return false
+	}
+}
+
+// parseCallbackStruct parses a struct argument from callback frame data
+func parseCallbackStruct(structType reflect.Type, frame *[callbackMaxFrame]uintptr, floatsN, intsN, stack *int) reflect.Value {
+	if structType.Size() == 0 {
+		return reflect.New(structType).Elem()
+	}
+
+	// Check for HFA/HVA or small structs that fit in registers
+	hva := isHVA(structType)
+	hfa := hasDirectFloatFields(structType) && isHFA(structType)
+	size := structType.Size()
+
+	if hva || hfa || size <= 16 {
+
+		if hfa {
+			// Homogeneous Floating-point Aggregate
+			numFields := structType.NumField()
+			if *floatsN+numFields > numOfFloatRegisters {
+				// Not enough float registers, use stack
+				result := reflect.New(structType).Elem()
+				for i := 0; i < numFields; i++ {
+					pos := *stack + i
+					field := result.Field(i)
+					if structType.Field(i).Type.Kind() == reflect.Float32 {
+						field.SetFloat(float64(math.Float32frombits(uint32(frame[pos]))))
+					} else {
+						field.SetFloat(math.Float64frombits(uint64(frame[pos])))
+					}
+				}
+				*stack += numFields
+				return result
+			} else {
+				// Use float registers
+				result := reflect.New(structType).Elem()
+				for i := 0; i < numFields; i++ {
+					pos := *floatsN + i
+					field := result.Field(i)
+					fieldType := structType.Field(i).Type
+					if fieldType.Kind() == reflect.Float32 {
+						field.SetFloat(float64(math.Float32frombits(uint32(frame[pos]))))
+					} else if fieldType.Kind() == reflect.Float64 {
+						field.SetFloat(math.Float64frombits(uint64(frame[pos])))
+					} else {
+						// This shouldn't happen in an HFA, but let's handle it gracefully
+						panic("purego: non-float field in HFA struct")
+					}
+				}
+				*floatsN += numFields
+				return result
+			}
+		} else if hva {
+			// Homogeneous Vector Aggregate
+			numFields := structType.NumField()
+			if *intsN+numFields > numOfIntegerRegisters() {
+				// Not enough integer registers, use stack
+				var pos int
+				if *stack == numOfIntegerRegisters()+numOfFloatRegisters {
+					pos = *stack
+				} else {
+					pos = *stack
+				}
+				*stack += (int(structType.Size()) + int(unsafe.Sizeof(uintptr(0))) - 1) / int(unsafe.Sizeof(uintptr(0)))
+				return reflect.NewAt(structType, unsafe.Pointer(&frame[pos])).Elem()
+			} else {
+				// Use integer registers
+				return parseStructFromRegisters(structType, frame, floatsN, intsN, stack)
+			}
+		} else if isAllFloats, numFields := isAllSameFloat(structType); isAllFloats && numFields <= 4 {
+			// All same float type struct
+			if *floatsN+numFields > numOfFloatRegisters {
+				// Use stack
+				var pos int
+				if numFields == 1 {
+					pos = *stack
+					*stack++
+				} else {
+					pos = *stack
+					*stack += numFields
+				}
+				return reflect.NewAt(structType, unsafe.Pointer(&frame[pos])).Elem()
+			} else {
+				// Use float registers
+				switch numFields {
+				case 1:
+					pos := *floatsN
+					*floatsN++
+					return reflect.NewAt(structType, unsafe.Pointer(&frame[pos])).Elem()
+				case 2:
+					pos1, pos2 := *floatsN, *floatsN+1
+					*floatsN += 2
+					if structType.Field(0).Type.Kind() == reflect.Float32 {
+						// Two float32s packed in one register
+						val := frame[pos1]<<32 | frame[pos2]
+						return reflect.NewAt(structType, unsafe.Pointer(&val)).Elem()
+					} else {
+						// Two float64s in separate registers
+						r1, r2 := frame[pos1], frame[pos2]
+						return reflect.NewAt(structType, unsafe.Pointer(&struct{ a, b uintptr }{r1, r2})).Elem()
+					}
+				case 3, 4:
+					result := reflect.New(structType).Elem()
+					for i := 0; i < numFields; i++ {
+						pos := *floatsN + i
+						field := result.Field(i)
+						if structType.Field(i).Type.Kind() == reflect.Float32 {
+							field.SetFloat(float64(math.Float32frombits(uint32(frame[pos]))))
+						} else {
+							field.SetFloat(math.Float64frombits(uint64(frame[pos])))
+						}
+					}
+					*floatsN += numFields
+					return result
+				}
+			}
+		} else {
+			// General small struct (≤ 16 bytes)
+			return parseStructFromRegisters(structType, frame, floatsN, intsN, stack)
+		}
+	} else {
+		// Large struct passed by reference
+		var pos int
+		if *intsN >= numOfIntegerRegisters() {
+			pos = *stack
+			*stack++
+		} else {
+			pos = *intsN + numOfFloatRegisters
+		}
+		*intsN++
+
+		ptr := unsafe.Pointer(frame[pos])
+		if ptr == nil {
+			// Return zero value for nil pointer
+			return reflect.New(structType).Elem()
+		}
+		return reflect.NewAt(structType, ptr).Elem()
+	}
+
+	// Should not reach here
+	panic("purego: unsupported struct layout for callbacks")
+}
+
+// parseStructFromRegisters handles general struct parsing for structs that fit in registers
+func parseStructFromRegisters(structType reflect.Type, frame *[callbackMaxFrame]uintptr, floatsN, intsN, stack *int) reflect.Value {
+	if structType.Size() <= 8 {
+		// Single register
+		var pos int
+		if *intsN >= numOfIntegerRegisters() {
+			pos = *stack
+			*stack++
+		} else {
+			pos = *intsN + numOfFloatRegisters
+		}
+		*intsN++
+		return reflect.NewAt(structType, unsafe.Pointer(&frame[pos])).Elem()
+	} else if structType.Size() <= 16 {
+		// Two registers
+		var pos1, pos2 int
+		if *intsN+1 >= numOfIntegerRegisters() {
+			// Use stack
+			pos1 = *stack
+			pos2 = *stack + 1
+			*stack += 2
+		} else {
+			// Use registers
+			pos1 = *intsN + numOfFloatRegisters
+			pos2 = *intsN + 1 + numOfFloatRegisters
+		}
+		*intsN += 2
+
+		r1, r2 := frame[pos1], frame[pos2]
+		return reflect.NewAt(structType, unsafe.Pointer(&struct{ a, b uintptr }{r1, r2})).Elem()
+	}
+
+	// Fallback for edge cases
+	var pos int
+	if *intsN >= numOfIntegerRegisters() {
+		pos = *stack
+		*stack++
+	} else {
+		pos = *intsN + numOfFloatRegisters
+	}
+	*intsN++
+
+	ptr := unsafe.Pointer(frame[pos])
+	return reflect.NewAt(structType, ptr).Elem()
+}
+
+// handleStructReturn handles struct return values for callbacks
+func handleStructReturn(returnValue reflect.Value, a *callbackArgs) {
+	structType := returnValue.Type()
+	size := structType.Size()
+
+	switch {
+	case size == 0:
+		// Empty struct, nothing to return
+		a.result = 0
+	case size <= 8:
+		// Single register return
+		if hfa := isHFA(structType); hfa {
+			// For callback returns, HFA structs must be packed into the integer result register
+			// because the callback mechanism only supports one result value
+			// Return in float register (D0/S0)
+			if structType.NumField() == 1 {
+				field := returnValue.Field(0)
+				if field.Type().Kind() == reflect.Float64 {
+					a.result = uintptr(math.Float64bits(field.Float()))
+				} else {
+					a.result = uintptr(math.Float32bits(float32(field.Float())))
+				}
+			} else if structType.NumField() == 2 && structType.Field(0).Type.Kind() == reflect.Float32 {
+				// Two float32s: Pack them into a single register for the callback result
+				// The receiving side will read this from a1 and interpret it as a packed struct
+				f1 := uint32(math.Float32bits(float32(returnValue.Field(0).Float()))) // field 0 (A)
+				f2 := uint32(math.Float32bits(float32(returnValue.Field(1).Float()))) // field 1 (B)
+				// Pack as memory layout: field0 in low 32 bits, field1 in high 32 bits
+				a.result = uintptr(uint64(f2)<<32 | uint64(f1))
+			} else {
+				a.result = uintptr(math.Float64bits(returnValue.Field(0).Float()))
+			}
+		} else {
+			// Return in integer register (X0)
+			// Create an addressable copy since returnValue from fn.Call() is not addressable
+			copy := reflect.New(returnValue.Type()).Elem()
+			copy.Set(returnValue)
+			ptr := unsafe.Pointer(copy.UnsafeAddr())
+			a.result = *(*uintptr)(ptr)
+		}
+	case size <= 16:
+		// Two register return would require assembly modifications
+		panic("purego: struct return values of 9-16 bytes not yet supported in callbacks (requires assembly changes)")
+	default:
+		// Large struct return (>16 bytes) - use X8 register pointer
+		if a.structRetPtr == 0 {
+			panic("purego: large struct return requested but no struct return pointer provided (X8)")
+		}
+
+		// Copy the struct to the location specified by the caller (via X8)
+		dst := reflect.NewAt(structType, unsafe.Pointer(a.structRetPtr)).Elem()
+		dst.Set(returnValue)
+
+		// No value returned in registers for large structs
+		a.result = 0
 	}
 }

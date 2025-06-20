@@ -6,6 +6,7 @@
 package purego
 
 import (
+	"math"
 	"reflect"
 	"runtime"
 	"sync"
@@ -53,6 +54,9 @@ var cbs struct {
 	lock  sync.Mutex
 	numFn int                  // the number of functions currently in cbs.funcs
 	funcs [maxCB]reflect.Value // the saved callbacks
+	// largeStructRet tracks whether each callback returns a struct > 16 bytes
+	// This is needed by assembly to handle the hidden pointer parameter
+	largeStructRet [maxCB]bool
 }
 
 type callbackArgs struct {
@@ -69,6 +73,10 @@ type callbackArgs struct {
 	args unsafe.Pointer
 	// Below are out-args from callbackWrap
 	result uintptr
+	// structRetPtr is the pointer where large struct returns should be written
+	// AMD64: hidden first parameter for structs > 16 bytes
+	// ARM64: passed in X8 register for structs > 16 bytes
+	structRetPtr uintptr
 }
 
 func compileCallback(fn any) uintptr {
@@ -87,7 +95,8 @@ func compileCallback(fn any) uintptr {
 			if i == 0 && in.AssignableTo(reflect.TypeOf(CDecl{})) {
 				continue
 			}
-			fallthrough
+			// Allow structs as callback arguments
+			continue
 		case reflect.Interface, reflect.Func, reflect.Slice,
 			reflect.Chan, reflect.Complex64, reflect.Complex128,
 			reflect.String, reflect.Map, reflect.Invalid:
@@ -100,7 +109,7 @@ output:
 		switch ty.Out(0).Kind() {
 		case reflect.Pointer, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
 			reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr,
-			reflect.Bool, reflect.UnsafePointer:
+			reflect.Bool, reflect.UnsafePointer, reflect.Float32, reflect.Float64, reflect.Struct:
 			break output
 		}
 		panic("purego: unsupported return type: " + ty.String())
@@ -113,6 +122,12 @@ output:
 		panic("purego: the maximum number of callbacks has been reached")
 	}
 	cbs.funcs[cbs.numFn] = val
+
+	// Check if this callback returns a large struct
+	if ty.NumOut() == 1 && ty.Out(0).Kind() == reflect.Struct && ty.Out(0).Size() > 16 {
+		cbs.largeStructRet[cbs.numFn] = true
+	}
+
 	cbs.numFn++
 	return callbackasmAddr(cbs.numFn - 1)
 }
@@ -159,8 +174,13 @@ func callbackWrap(a *callbackArgs) {
 			}
 			floatsN++
 		case reflect.Struct:
-			// This is the CDecl field
-			args[i] = reflect.Zero(fnType.In(i))
+			if fnType.In(i).AssignableTo(reflect.TypeOf(CDecl{})) {
+				// This is the CDecl field
+				args[i] = reflect.Zero(fnType.In(i))
+				continue
+			}
+			// Parse actual struct argument
+			args[i] = parseCallbackStruct(fnType.In(i), frame, &floatsN, &intsN, &stack)
 			continue
 		default:
 
@@ -192,6 +212,12 @@ func callbackWrap(a *callbackArgs) {
 			a.result = ret[0].Pointer()
 		case reflect.UnsafePointer:
 			a.result = ret[0].Pointer()
+		case reflect.Float32:
+			a.result = uintptr(math.Float32bits(float32(ret[0].Float())))
+		case reflect.Float64:
+			a.result = uintptr(math.Float64bits(ret[0].Float()))
+		case reflect.Struct:
+			handleStructReturn(ret[0], a)
 		default:
 			panic("purego: unsupported kind: " + k.String())
 		}
