@@ -52,7 +52,10 @@ func handleStructReturn(returnValue reflect.Value, a *callbackArgs) {
 		}
 
 		// Copy the struct to the location specified by the caller
-		dst := reflect.NewAt(structType, unsafe.Pointer(a.structRetPtr)).Elem()
+		// Convert uintptr to unsafe.Pointer - this is safe here because
+		// a.structRetPtr contains a valid pointer from the calling convention
+		ptr := *(*unsafe.Pointer)(unsafe.Pointer(&a.structRetPtr))
+		dst := reflect.NewAt(structType, ptr).Elem()
 		dst.Set(returnValue)
 
 		// No value returned in registers for large structs
@@ -78,7 +81,9 @@ func parseCallbackStruct(structType reflect.Type, frame *[callbackMaxFrame]uintp
 		*intsN++
 
 		// The frame contains a pointer to the struct
-		ptr := unsafe.Pointer(frame[pos])
+		// Convert uintptr to unsafe.Pointer - this is safe here because
+		// frame[pos] contains a valid pointer from the calling convention
+		ptr := *(*unsafe.Pointer)(unsafe.Pointer(&frame[pos]))
 		return reflect.NewAt(structType, ptr).Elem()
 	}
 
@@ -214,6 +219,8 @@ func parseCallbackStruct(structType reflect.Type, frame *[callbackMaxFrame]uintp
 	}
 	*intsN++
 
-	ptr := unsafe.Pointer(frame[pos])
+	// Convert uintptr to unsafe.Pointer - this is safe here because
+	// frame[pos] contains a valid pointer from the calling convention
+	ptr := *(*unsafe.Pointer)(unsafe.Pointer(&frame[pos]))
 	return reflect.NewAt(structType, ptr).Elem()
 }
