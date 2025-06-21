@@ -461,7 +461,7 @@ func encodeType(typ reflect.Type, insidePtr bool) (string, error) {
 			}
 			encoding += tmp
 		}
-		encoding = encStructEnd
+		encoding += encStructEnd
 		return encoding, nil
 	case reflect.UnsafePointer:
 		return encUnsafePtr, nil
