@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	// end-goal of these defaults is to get an Objectve-C memory-managed block object,
+	// end-goal of these defaults is to get an Objective-C memory-managed block object,
 	// that won't try to free() a Go pointer, but will call our custom blockFunctionCache.Delete()
 	// when the reference count drops to zero, so the associated function is also unreferenced.
 
@@ -81,7 +81,7 @@ func (b *blockFunctionCache) Delete(key Block) {
 	delete(b.functions, key)
 }
 
-// newBlockFunctionCache initilizes a new blockFunctionCache
+// newBlockFunctionCache initializes a new blockFunctionCache
 func newBlockFunctionCache() *blockFunctionCache {
 	return &blockFunctionCache{functions: map[Block]reflect.Value{}}
 }
@@ -172,7 +172,7 @@ func (b *blockCache) getLayout(typ reflect.Type) blockLayout {
 	return layout
 }
 
-// newBlockCache initilizes a block cache.
+// newBlockCache initializes a block cache.
 // It should not be called until AFTER libobjc is fully initialized.
 func newBlockCache() *blockCache {
 	cache := &blockCache{
@@ -240,7 +240,7 @@ func (b Block) Release() {
 func NewBlock(fn any) Block {
 	// get or create a block layout for the callback.
 	layout := blocks.getLayout(reflect.TypeOf(fn))
-	// we created the layout in Go memory, so we'll copy it to a newly-created Objectve-C object.
+	// we created the layout in Go memory, so we'll copy it to a newly-created Objective-C object.
 	block := Block(unsafe.Pointer(&layout)).Copy()
 	// associate the fn with the block we created before returning it.
 	return blocks.Functions.Store(block, reflect.ValueOf(fn))
