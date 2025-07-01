@@ -139,7 +139,7 @@ func ExampleID_SendSuper() {
 
 func TestSend(t *testing.T) {
 	// NSNumber comes from Foundation so make sure we have linked to that framework.
-	_, err := purego.Dlopen("/System/Library/Frameworks/Foundation.framework/Foundation", purego.RTLD_GLOBAL)
+	_, err := purego.Dlopen("/System/Library/Frameworks/Foundation.framework/Foundation", purego.RTLD_GLOBAL|purego.RTLD_NOW)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -214,8 +214,7 @@ func ExampleAllocateProtocol() {
 	var p *objc.Protocol
 	if p = objc.AllocateProtocol("MyCustomProtocol"); p != nil {
 		p.AddMethodDescription(objc.RegisterName("isFoo"), "B16@0:8", true, true)
-		var adoptedProtocol *objc.Protocol
-		adoptedProtocol = objc.GetProtocol("NSObject")
+		var adoptedProtocol *objc.Protocol = objc.GetProtocol("NSObject")
 		if adoptedProtocol == nil {
 			log.Fatalln("protocol 'NSObject' does not exist")
 		}

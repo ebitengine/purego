@@ -49,13 +49,11 @@ type blockLayout struct {
 	Descriptor *blockDescriptor
 }
 
-/*
-blockCache is a thread safe cache of block layouts.
-
-The function closures themselves are kept alive by caching them internally until the Objective-C runtime indicates that
-they can be released (presumably when the reference count reaches zero.) This approach is used instead of appending the function
-object to the block allocation, where it is out of the visible domain of Go's GC.
-*/
+// blockFunctionCache is a thread safe cache of block layouts.
+//
+// The function closures themselves are kept alive by caching them internally until the Objective-C runtime indicates that
+// they can be released (presumably when the reference count reaches zero.) This approach is used instead of appending the function
+// object to the block allocation, where it is out of the visible domain of Go's GC.
 type blockFunctionCache struct {
 	mutex     sync.RWMutex
 	functions map[Block]reflect.Value
@@ -138,9 +136,9 @@ func (*blockCache) encode(typ reflect.Type) *uint8 {
 	return &append([]uint8(encoding), 0)[0]
 }
 
-// GetLayout retrieves a blockLayout VALUE constructed with the supplied function type
+// getLayout retrieves a blockLayout VALUE constructed with the supplied function type
 // It will panic if the type is not a valid block function.
-func (b *blockCache) GetLayout(typ reflect.Type) blockLayout {
+func (b *blockCache) getLayout(typ reflect.Type) blockLayout {
 	b.Lock()
 	defer b.Unlock()
 
@@ -152,7 +150,7 @@ func (b *blockCache) GetLayout(typ reflect.Type) blockLayout {
 	// otherwise: create a layout, and populate it with the default templates
 	layout := b.layoutTemplate
 	layout.Descriptor = &blockDescriptor{}
-	(*layout.Descriptor) = b.descriptorTemplate
+	*layout.Descriptor = b.descriptorTemplate
 
 	// getting the signature now will panic on invalid types before we invest in creating a callback.
 	layout.Descriptor.Signature = b.encode(typ)
@@ -213,11 +211,16 @@ func (b Block) GetImplementation(fptr any) {
 	// also, it creates a new copy of the block which must be freed independently,
 	// which would have made this implementation more complicated than necessary.
 	// we know a block ID is actually a pointer to a blockLayout struct, so we'll take advantage of that.
-	if b != 0 {
-		if cfn := (*(**blockLayout)(unsafe.Pointer(&b))).Invoke; cfn != 0 {
-			purego.RegisterFunc(fptr, cfn)
-		}
+	if b == 0 {
+		return
 	}
+
+	cfn := (*(**blockLayout)(unsafe.Pointer(&b))).Invoke
+	if cfn == 0 {
+		return
+	}
+
+	purego.RegisterFunc(fptr, cfn)
 }
 
 // Invoke is calls the implementation of a block.
@@ -236,7 +239,7 @@ func (b Block) Release() {
 // Use Block.Release() to free this block when it is no longer in use.
 func NewBlock(fn interface{}) Block {
 	// get or create a block layout for the callback.
-	layout := blocks.GetLayout(reflect.TypeOf(fn))
+	layout := blocks.getLayout(reflect.TypeOf(fn))
 	// we created the layout in Go memory, so we'll copy it to a newly-created Objectve-C object.
 	block := Block(unsafe.Pointer(&layout)).Copy()
 	// associate the fn with the block we created before returning it.

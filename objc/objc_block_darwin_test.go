@@ -24,7 +24,7 @@ func ExampleNewBlock() {
 		func(block objc.Block, line objc.ID, stop *bool) {
 			count++
 			fmt.Printf("LINE %d: %s\n", count, objc.Send[string](line, objc.RegisterName("UTF8String")))
-			(*stop) = (count == 3)
+			*stop = count == 3
 		},
 	)
 	defer block.Release()

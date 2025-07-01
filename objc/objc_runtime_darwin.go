@@ -475,7 +475,7 @@ func encodeType(typ reflect.Type, insidePtr bool) (string, error) {
 		return encCharPtr, nil
 	}
 
-	return "", errors.New(fmt.Sprintf("unhandled/invalid kind %v typed %v", kind, typ))
+	return "", fmt.Errorf("unhandled/invalid kind %v typed %v", kind, typ)
 }
 
 // encodeFunc returns a functions type as if it was given to @encode(fn)
