@@ -237,7 +237,7 @@ func (b Block) Release() {
 // It returns an Block that can be called by Objective-C code.
 // The function panics if an error occurs.
 // Use Block.Release() to free this block when it is no longer in use.
-func NewBlock(fn interface{}) Block {
+func NewBlock(fn any) Block {
 	// get or create a block layout for the callback.
 	layout := blocks.getLayout(reflect.TypeOf(fn))
 	// we created the layout in Go memory, so we'll copy it to a newly-created Objectve-C object.
