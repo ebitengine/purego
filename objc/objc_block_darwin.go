@@ -136,7 +136,7 @@ func (*blockCache) encode(typ reflect.Type) *uint8 {
 	return &append([]uint8(encoding), 0)[0]
 }
 
-// getLayout retrieves a blockLayout VALUE constructed with the supplied function type
+// getLayout retrieves a blockLayout VALUE constructed with the supplied function type.
 // It will panic if the type is not a valid block function.
 func (b *blockCache) getLayout(typ reflect.Type) blockLayout {
 	b.Lock()
