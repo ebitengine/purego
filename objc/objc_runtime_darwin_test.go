@@ -214,7 +214,8 @@ func ExampleAllocateProtocol() {
 	var p *objc.Protocol
 	if p = objc.AllocateProtocol("MyCustomProtocol"); p != nil {
 		p.AddMethodDescription(objc.RegisterName("isFoo"), "B16@0:8", true, true)
-		var adoptedProtocol *objc.Protocol = objc.GetProtocol("NSObject")
+		var adoptedProtocol *objc.Protocol
+		adoptedProtocol = objc.GetProtocol("NSObject")
 		if adoptedProtocol == nil {
 			log.Fatalln("protocol 'NSObject' does not exist")
 		}
