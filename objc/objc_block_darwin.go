@@ -223,7 +223,7 @@ func (b Block) GetImplementation(fptr any) {
 	purego.RegisterFunc(fptr, cfn)
 }
 
-// Invoke is calls the implementation of a block.
+// Invoke calls the implementation of a block.
 func (b Block) Invoke(args ...any) {
 	InvokeBlock[struct{}](b, args...)
 }
