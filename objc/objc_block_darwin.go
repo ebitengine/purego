@@ -202,30 +202,20 @@ func (b Block) Copy() Block {
 	return _Block_copy(b)
 }
 
-// GetImplementation populates a function pointer with the implementation of a Block.
-// Function will panic if the Block is not kept alive while it is in use
-// (possibly by using Block.Copy()).
-func (b Block) GetImplementation(fptr any) {
-	// there is a runtime function imp_implementationWithBlock that could have been used instead,
-	// but experimentation has shown the returned implementation doesn't actually work as expected.
-	// also, it creates a new copy of the block which must be freed independently,
-	// which would have made this implementation more complicated than necessary.
-	// we know a block ID is actually a pointer to a blockLayout struct, so we'll take advantage of that.
-	if b == 0 {
-		return
-	}
-
-	cfn := (*(**blockLayout)(unsafe.Pointer(&b))).Invoke
-	if cfn == 0 {
-		return
-	}
-
-	purego.RegisterFunc(fptr, cfn)
-}
-
 // Invoke calls the implementation of a block.
 func (b Block) Invoke(args ...any) {
-	InvokeBlock[struct{}](b, args...)
+	blocks.Functions.mutex.RLock()
+	defer blocks.Functions.mutex.RUnlock()
+
+	fn := blocks.Functions.functions[b]
+
+	reflectedArgs := make([]reflect.Value, len(args)+1)
+	reflectedArgs[0] = reflect.ValueOf(b)
+	for i := range args {
+		reflectedArgs[i+1] = reflect.ValueOf(args[i])
+	}
+
+	fn.Call(reflectedArgs)
 }
 
 // Release decrements the Block's reference count, and if it is the last reference, frees it.
@@ -247,11 +237,25 @@ func NewBlock(fn any) Block {
 }
 
 // InvokeBlock is a convenience method for calling the implementation of a block.
-func InvokeBlock[T any](block Block, args ...any) T {
+// The block implementation must return 1 value.
+func InvokeBlock[T any](block Block, args ...any) (result T, err error) {
 	block = block.Copy()
 	defer block.Release()
 
-	var invoke func(Block, ...any) T
-	block.GetImplementation(&invoke)
-	return invoke(block, args...)
+	blocks.Functions.mutex.RLock()
+	defer blocks.Functions.mutex.RUnlock()
+
+	fn := blocks.Functions.functions[block]
+	if fn.Type().NumIn() != len(args)+1 {
+		return result, fmt.Errorf("block callback expects %d arguments, got %d", fn.Type().NumIn()-1, len(args))
+	}
+
+	reflectedArgs := make([]reflect.Value, len(args)+1)
+	reflectedArgs[0] = reflect.ValueOf(block)
+	for i := range args {
+		reflectedArgs[i+1] = reflect.ValueOf(args[i])
+	}
+
+	callResult := fn.Call(reflectedArgs)
+	return callResult[0].Interface().(T), nil
 }

@@ -5,9 +5,7 @@ package objc_test
 
 import (
 	"fmt"
-	"reflect"
 	"testing"
-	"unsafe"
 
 	"github.com/ebitengine/purego"
 	"github.com/ebitengine/purego/objc"
@@ -55,93 +53,56 @@ func ExampleInvokeBlock() {
 	)
 	defer block.Release()
 
-	fmt.Println(*objc.InvokeBlock[*vector](
+	result, err := objc.InvokeBlock[*vector](
 		block,
 		&vector{X: 0.1, Y: 2.3, Z: 4.5},
 		&vector{X: 6.7, Y: 8.9, Z: 0.1},
-	))
-	// Output: {-39.82 30.14 -14.52}
+	)
+
+	fmt.Println(*result, err)
+	// Output: {-39.82 30.14 -14.52} <nil>
 }
 
-func TestNewBlockAndBlockGetImplementation(t *testing.T) {
-	t.Parallel()
-	values := [...]reflect.Value{
-		reflect.ValueOf(true),
-		reflect.ValueOf(2),
-		reflect.ValueOf(int8(3)),
-		reflect.ValueOf(int16(4)),
-		reflect.ValueOf(int32(5)),
-		reflect.ValueOf(int64(6)),
-		reflect.ValueOf(&[]uint8("seven\x00")[0]),
-		reflect.ValueOf(uint(8)),
-		reflect.ValueOf(uint8(9)),
-		reflect.ValueOf(uint16(10)),
-		reflect.ValueOf(uint32(11)),
-		reflect.ValueOf(uint64(12)),
-		reflect.ValueOf(objc.GetClass("NSObject")),
-		reflect.ValueOf(unsafe.Pointer(objc.GetProtocol("NSObject"))),
-	}
+func TestInvoke(t *testing.T) {
+	t.Run("return an error when passing an invalid number of arguments", func(t *testing.T) {
+		block := objc.NewBlock(func(_ objc.Block, a int32, b int32) int32 {
+			return a + b
+		})
+		defer block.Release()
 
-	var argumentRecurse func([]reflect.Value, []reflect.Type, func([]reflect.Value, []reflect.Type))
-	argumentRecurse = func(argumentValues []reflect.Value, argumentTypes []reflect.Type, execute func([]reflect.Value, []reflect.Type)) {
-		if len(argumentValues) == cap(argumentValues) {
-			execute(argumentValues, argumentTypes)
-			return
+		_, err := objc.InvokeBlock[int32](block, int32(8))
+		if err == nil {
+			t.Fatal(err)
 		}
+	})
 
-		argumentValues = append(argumentValues, reflect.Value{})
-		argumentTypes = append(argumentTypes, nil)
-		for index := range values {
-			argumentValues[len(argumentValues)-1] = values[index]
-			argumentTypes[len(argumentTypes)-1] = values[index].Type()
-			argumentRecurse(argumentValues, argumentTypes, execute)
+	t.Run("add two int32's and returns the result", func(t *testing.T) {
+		block := objc.NewBlock(func(_ objc.Block, a int32, b int32) int32 {
+			return a + b
+		})
+		defer block.Release()
+
+		result, err := objc.InvokeBlock[int32](block, int32(8), int32(2))
+		if err != nil {
+			t.Fatal(err)
 		}
-	}
-
-	// Note that we range over the length of values and then 1 more. This is used to create a "doesn't return anything" test case.
-	for out := 0; out <= len(values); out++ {
-		returnValues := make([]reflect.Value, 0, 1)
-		returnTypes := make([]reflect.Type, 0, 1)
-		if out < len(values) {
-			returnValues = append(returnValues, values[out])
-			returnTypes = append(returnTypes, returnValues[0].Type())
+		if result != 10 {
+			t.Fatalf("expected 10, got %d", result)
 		}
+	})
 
-		for in := 1; in < 3; in++ {
-			argumentValues := make([]reflect.Value, 1, in)
-			argumentTypes := make([]reflect.Type, 1, len(argumentValues))
-			argumentValues[0] = reflect.ValueOf(objc.Block(0))
-			argumentTypes[0] = argumentValues[0].Type()
+	t.Run("add two int32's and store the result in a variable", func(t *testing.T) {
+		var result int32
+		block := objc.NewBlock(func(_ objc.Block, a int32, b int32) {
+			result = a + b
+		})
+		defer block.Release()
 
-			argumentRecurse(argumentValues, argumentTypes, func(argumentValues []reflect.Value, argumentTypes []reflect.Type) {
-				functionType := reflect.FuncOf(argumentTypes, returnTypes, false)
-				block := objc.NewBlock(
-					reflect.MakeFunc(
-						functionType,
-						func(args []reflect.Value) (results []reflect.Value) {
-							for index, argumentValue := range args {
-								if argumentValue.Interface() != argumentValues[index].Interface() {
-									t.Fatalf("%v: arg[%d]: %v != %v", functionType, index, argumentValue.Interface(), argumentValues[index].Interface())
-								}
-							}
-							return returnValues
-						},
-					).Interface(),
-				)
-				defer block.Release()
-				argumentValues[0] = reflect.ValueOf(block)
-
-				fptr := reflect.New(functionType)
-				block.GetImplementation(fptr.Interface())
-
-				for index, returnValue := range fptr.Elem().Call(argumentValues) {
-					if returnValue.Interface() != returnValues[index].Interface() {
-						t.Fatalf("%v: return: %v != %v", functionType, returnValue.Interface(), returnValues[index].Interface())
-					}
-				}
-			})
+		block.Invoke(int32(8), int32(2))
+		if result != 10 {
+			t.Fatalf("expected 10, got %d", result)
 		}
-	}
+	})
 }
 
 func TestBlockCopyAndBlockRelease(t *testing.T) {
