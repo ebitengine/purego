@@ -65,7 +65,7 @@ func ExampleInvokeBlock() {
 
 func TestNewBlockAndBlockGetImplementation(t *testing.T) {
 	t.Parallel()
-	values := [14]reflect.Value{
+	values := [...]reflect.Value{
 		reflect.ValueOf(true),
 		reflect.ValueOf(2),
 		reflect.ValueOf(int8(3)),
@@ -91,13 +91,14 @@ func TestNewBlockAndBlockGetImplementation(t *testing.T) {
 
 		argumentValues = append(argumentValues, reflect.Value{})
 		argumentTypes = append(argumentTypes, nil)
-		for index := 0; index < len(values); index++ {
+		for index := range values {
 			argumentValues[len(argumentValues)-1] = values[index]
 			argumentTypes[len(argumentTypes)-1] = values[index].Type()
 			argumentRecurse(argumentValues, argumentTypes, execute)
 		}
 	}
 
+	// Note that we range over the length of values and then 1 more. This is used to create a "doesn't return anything" test case.
 	for out := 0; out <= len(values); out++ {
 		returnValues := make([]reflect.Value, 0, 1)
 		returnTypes := make([]reflect.Type, 0, 1)
