@@ -252,5 +252,12 @@ func InvokeBlock[T any](block Block, args ...any) (result T, err error) {
 	}
 
 	callResult := fn.Call(reflectedArgs)
-	return callResult[0].Interface().(T), nil
+
+	var ok bool
+	result, ok = callResult[0].Interface().(T)
+	if !ok {
+		return result, fmt.Errorf("failed to cast Block implementation return type %s to type %T", callResult[0].Type().String(), result)
+	}
+
+	return result, nil
 }

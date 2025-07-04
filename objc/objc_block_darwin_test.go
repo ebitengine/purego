@@ -75,6 +75,17 @@ func TestInvoke(t *testing.T) {
 		}
 	})
 
+	t.Run("return an error when passing an invalid return type", func(t *testing.T) {
+		block := objc.NewBlock(func(_ objc.Block, a int32, b int32) int32 {
+			return a + b
+		})
+		defer block.Release()
+
+		if _, err := objc.InvokeBlock[string](block, int32(8), int32(2)); err == nil {
+			t.Fatal(err)
+		}
+	})
+
 	t.Run("add two int32's and returns the result", func(t *testing.T) {
 		block := objc.NewBlock(func(_ objc.Block, a int32, b int32) int32 {
 			return a + b
