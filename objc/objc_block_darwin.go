@@ -31,6 +31,8 @@ const (
 
 // blockDescriptor is the Go representation of an Objective-C block descriptor.
 // It is a component to be referenced by blockDescriptor.
+//
+// The layout of this struct matches Block_literal_1 described in https://clang.llvm.org/docs/Block-ABI-Apple.html#high-level
 type blockDescriptor struct {
 	_         uintptr
 	Size      uintptr
@@ -42,6 +44,8 @@ type blockDescriptor struct {
 // blockLayout is the Go representation of the structure abstracted by a block pointer.
 // From the Objective-C point of view, a pointer to this struct is equivalent to an ID that
 // references a block.
+//
+// The layout of this struct matches __block_literal_1 described in https://clang.llvm.org/docs/Block-ABI-Apple.html#high-level
 type blockLayout struct {
 	Isa        Class
 	Flags      uint32
