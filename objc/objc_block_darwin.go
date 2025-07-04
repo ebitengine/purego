@@ -108,7 +108,7 @@ type blockCache struct {
 func (*blockCache) encode(typ reflect.Type) *uint8 {
 	// this algorithm was copied from encodeFunc,
 	// but altered to panic on error, and to only accept a block-type signature.
-	if (typ == nil) || (typ.Kind() != reflect.Func) {
+	if typ == nil || typ.Kind() != reflect.Func {
 		panic("objc: not a function")
 	}
 
@@ -124,7 +124,7 @@ func (*blockCache) encode(typ reflect.Type) *uint8 {
 		encoding = returnType
 	}
 
-	if (typ.NumIn() == 0) || (typ.In(0) != reflect.TypeOf(Block(0))) {
+	if typ.NumIn() == 0 || typ.In(0) != reflect.TypeOf(Block(0)) {
 		panic(fmt.Sprintf("objc: A Block implementation must take a Block as its first argument; got %v", typ.String()))
 	}
 
@@ -201,8 +201,8 @@ var theBlocksCache *blockCache
 // Block is an opaque pointer to an Objective-C object containing a function with its associated closure.
 type Block ID
 
-// Copy creates a copy of a block on the Objective-C heap (or increments the reference count if already on the heap.)
-// Use Block.Release() to free the copy when it is no longer in use.
+// Copy creates a copy of a block on the Objective-C heap (or increments the reference count if already on the heap).
+// Use [Block.Release] to free the copy when it is no longer in use.
 func (b Block) Copy() Block {
 	return _Block_copy(b)
 }
@@ -228,7 +228,7 @@ func (b Block) Release() {
 // NewBlock takes a Go function that takes a Block as its first argument.
 // It returns an Block that can be called by Objective-C code.
 // The function panics if an error occurs.
-// Use Block.Release() to free this block when it is no longer in use.
+// Use [Block.Release] to free this block when it is no longer in use.
 func NewBlock(fn any) Block {
 	// get or create a block layout for the callback.
 	layout := theBlocksCache.getLayout(reflect.TypeOf(fn))
