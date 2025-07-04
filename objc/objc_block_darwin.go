@@ -57,7 +57,7 @@ type blockLayout struct {
 // blockFunctionCache is a thread safe cache of block layouts.
 //
 // The function closures themselves are kept alive by caching them internally until the Objective-C runtime indicates that
-// they can be released (presumably when the reference count reaches zero.) This approach is used instead of appending the function
+// they can be released (presumably when the reference count reaches zero). This approach is used instead of appending the function
 // object to the block allocation, where it is out of the visible domain of Go's GC.
 type blockFunctionCache struct {
 	mutex     sync.RWMutex
@@ -94,7 +94,7 @@ func newBlockFunctionCache() *blockFunctionCache {
 // blockCache is a thread safe cache of block layouts.
 //
 // It takes advantage of the block being the first argument of a block call being the block closure,
-// only invoking purego.NewCallback() when it encounters a new function type (rather than on for every block creation.)
+// only invoking [github.com/ebitengine/purego.NewCallback] when it encounters a new function type (rather than on for every block creation).
 // This should mitigate block creations putting pressure on the callback limit.
 type blockCache struct {
 	sync.Mutex
