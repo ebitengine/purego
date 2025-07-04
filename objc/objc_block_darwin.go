@@ -103,7 +103,7 @@ type blockCache struct {
 // encode returns a blocks type as if it was given to @encode(typ)
 func (*blockCache) encode(typ reflect.Type) *uint8 {
 	// this algorithm was copied from encodeFunc,
-	// but altered to panic on error, and to only accep a block-type signature.
+	// but altered to panic on error, and to only accept a block-type signature.
 	if (typ == nil) || (typ.Kind() != reflect.Func) {
 		panic("objc: not a function")
 	}
