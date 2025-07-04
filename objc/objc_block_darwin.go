@@ -242,7 +242,7 @@ func InvokeBlock[T any](block Block, args ...any) (result T, err error) {
 
 	fn := theBlocksCache.Functions.Load(block)
 	if fn.Type().NumIn() != len(args)+1 {
-		return result, fmt.Errorf("block callback expects %d arguments, got %d", fn.Type().NumIn()-1, len(args))
+		return result, fmt.Errorf("objc: block callback expects %d arguments, got %d", fn.Type().NumIn()-1, len(args))
 	}
 
 	reflectedArgs := make([]reflect.Value, len(args)+1)
@@ -256,7 +256,7 @@ func InvokeBlock[T any](block Block, args ...any) (result T, err error) {
 	var ok bool
 	result, ok = callResult[0].Interface().(T)
 	if !ok {
-		return result, fmt.Errorf("failed to cast Block implementation return type %s to type %T", callResult[0].Type().String(), result)
+		return result, fmt.Errorf("objc: the returned value type %s was not %T", callResult[0].Type().String(), result)
 	}
 
 	return result, nil
