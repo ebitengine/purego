@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	// end-goal of these defaults is to get an Objective-C memory-managed block object,
+	// The end-goal of these defaults is to get an Objective-C memory-managed block object
 	// that won't try to free() a Go pointer, but will call our custom blockFunctionCache.Delete()
 	// when the reference count drops to zero, so the associated function is also unreferenced.
 
@@ -24,6 +24,7 @@ const (
 
 	// blockHasCopyDispose is a flag that tells the Objective-C runtime the block exports Copy and/or Dispose helpers.
 	blockHasCopyDispose = 1 << 25
+
 	// blockHasSignature is a flag that tells the Objective-C runtime the block exports a function signature.
 	blockHasSignature = 1 << 30
 )
@@ -190,8 +191,8 @@ func newBlockCache() *blockCache {
 	return cache
 }
 
-// blocks is the global block cache
-var blocks *blockCache
+// theBlocksCache is the global block cache
+var theBlocksCache *blockCache
 
 // Block is an opaque pointer to an Objective-C object containing a function with its associated closure.
 type Block ID
@@ -204,10 +205,7 @@ func (b Block) Copy() Block {
 
 // Invoke calls the implementation of a block.
 func (b Block) Invoke(args ...any) {
-	blocks.Functions.mutex.RLock()
-	defer blocks.Functions.mutex.RUnlock()
-
-	fn := blocks.Functions.functions[b]
+	fn := theBlocksCache.Functions.Load(b)
 
 	reflectedArgs := make([]reflect.Value, len(args)+1)
 	reflectedArgs[0] = reflect.ValueOf(b)
@@ -229,11 +227,11 @@ func (b Block) Release() {
 // Use Block.Release() to free this block when it is no longer in use.
 func NewBlock(fn any) Block {
 	// get or create a block layout for the callback.
-	layout := blocks.getLayout(reflect.TypeOf(fn))
+	layout := theBlocksCache.getLayout(reflect.TypeOf(fn))
 	// we created the layout in Go memory, so we'll copy it to a newly-created Objective-C object.
 	block := Block(unsafe.Pointer(&layout)).Copy()
 	// associate the fn with the block we created before returning it.
-	return blocks.Functions.Store(block, reflect.ValueOf(fn))
+	return theBlocksCache.Functions.Store(block, reflect.ValueOf(fn))
 }
 
 // InvokeBlock is a convenience method for calling the implementation of a block.
@@ -242,10 +240,7 @@ func InvokeBlock[T any](block Block, args ...any) (result T, err error) {
 	block = block.Copy()
 	defer block.Release()
 
-	blocks.Functions.mutex.RLock()
-	defer blocks.Functions.mutex.RUnlock()
-
-	fn := blocks.Functions.functions[block]
+	fn := theBlocksCache.Functions.Load(block)
 	if fn.Type().NumIn() != len(args)+1 {
 		return result, fmt.Errorf("block callback expects %d arguments, got %d", fn.Type().NumIn()-1, len(args))
 	}

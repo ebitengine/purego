@@ -70,8 +70,7 @@ func TestInvoke(t *testing.T) {
 		})
 		defer block.Release()
 
-		_, err := objc.InvokeBlock[int32](block, int32(8))
-		if err == nil {
+		if _, err := objc.InvokeBlock[int32](block, int32(8)); err == nil {
 			t.Fatal(err)
 		}
 	})
@@ -108,7 +107,7 @@ func TestInvoke(t *testing.T) {
 func TestBlockCopyAndBlockRelease(t *testing.T) {
 	t.Parallel()
 
-	refCount := 0
+	var refCount int
 	block := objc.NewBlock(
 		func(objc.Block) {
 			refCount++

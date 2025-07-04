@@ -119,7 +119,7 @@ func init() {
 
 	purego.RegisterLibFunc(&_Block_copy, objc, "_Block_copy")
 	purego.RegisterLibFunc(&_Block_release, objc, "_Block_release")
-	blocks = newBlockCache()
+	theBlocksCache = newBlockCache()
 }
 
 // ID is an opaque pointer to some Objective-C object
