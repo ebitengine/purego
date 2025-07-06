@@ -57,7 +57,9 @@ var (
 	property_getName                   func(p Property) string
 	property_getAttributes             func(p Property) string
 
-	free func(ptr unsafe.Pointer)
+	free           func(ptr unsafe.Pointer)
+	_Block_copy    func(Block) Block
+	_Block_release func(Block)
 )
 
 func init() {
@@ -114,6 +116,10 @@ func init() {
 	purego.RegisterLibFunc(&object_getIvar, objc, "object_getIvar")
 	purego.RegisterLibFunc(&object_setIvar, objc, "object_setIvar")
 	purego.RegisterLibFunc(&free, purego.RTLD_DEFAULT, "free")
+
+	purego.RegisterLibFunc(&_Block_copy, objc, "_Block_copy")
+	purego.RegisterLibFunc(&_Block_release, objc, "_Block_release")
+	theBlocksCache = newBlockCache()
 }
 
 // ID is an opaque pointer to some Objective-C object
@@ -407,7 +413,7 @@ func encodeType(typ reflect.Type, insidePtr bool) (string, error) {
 	switch typ {
 	case reflect.TypeOf(Class(0)):
 		return encClass, nil
-	case reflect.TypeOf(ID(0)):
+	case reflect.TypeOf(ID(0)), reflect.TypeOf(Block(0)):
 		return encId, nil
 	case reflect.TypeOf(SEL(0)):
 		return encSelector, nil
