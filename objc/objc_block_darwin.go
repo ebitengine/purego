@@ -35,10 +35,10 @@ const (
 // The layout of this struct matches Block_literal_1 described in https://clang.llvm.org/docs/Block-ABI-Apple.html#high-level
 type blockDescriptor struct {
 	_         uintptr
-	Size      uintptr
+	size      uintptr
 	_         uintptr
-	Dispose   uintptr
-	Signature *uint8
+	dispose   uintptr
+	signature *uint8
 }
 
 // blockLayout is the Go representation of the structure abstracted by a block pointer.
@@ -47,11 +47,11 @@ type blockDescriptor struct {
 //
 // The layout of this struct matches __block_literal_1 described in https://clang.llvm.org/docs/Block-ABI-Apple.html#high-level
 type blockLayout struct {
-	Isa        Class
-	Flags      uint32
+	isa        Class
+	flags      uint32
 	_          uint32
-	Invoke     uintptr
-	Descriptor *blockDescriptor
+	invoke     uintptr
+	descriptor *blockDescriptor
 }
 
 // blockFunctionCache is a thread safe cache of block layouts.
@@ -154,16 +154,16 @@ func (b *blockCache) getLayout(typ reflect.Type) blockLayout {
 
 	// otherwise: create a layout, and populate it with the default templates
 	layout := b.layoutTemplate
-	layout.Descriptor = &blockDescriptor{}
-	*layout.Descriptor = b.descriptorTemplate
+	layout.descriptor = &blockDescriptor{}
+	*layout.descriptor = b.descriptorTemplate
 
 	// getting the signature now will panic on invalid types before we invest in creating a callback.
-	layout.Descriptor.Signature = b.encode(typ)
+	layout.descriptor.signature = b.encode(typ)
 
 	// create a global callback.
 	// this single callback can dispatch to any function with the same signature,
 	// since the user-provided functions are associated with the actual block allocations.
-	layout.Invoke = purego.NewCallback(
+	layout.invoke = purego.NewCallback(
 		reflect.MakeFunc(
 			typ,
 			func(args []reflect.Value) (results []reflect.Value) {
@@ -182,16 +182,16 @@ func (b *blockCache) getLayout(typ reflect.Type) blockLayout {
 func newBlockCache() *blockCache {
 	cache := &blockCache{
 		descriptorTemplate: blockDescriptor{
-			Size: unsafe.Sizeof(blockLayout{}),
+			size: unsafe.Sizeof(blockLayout{}),
 		},
 		layoutTemplate: blockLayout{
-			Isa:   GetClass(blockBaseClass),
-			Flags: blockFlags,
+			isa:   GetClass(blockBaseClass),
+			flags: blockFlags,
 		},
 		layouts:   map[reflect.Type]blockLayout{},
 		Functions: newBlockFunctionCache(),
 	}
-	cache.descriptorTemplate.Dispose = purego.NewCallback(cache.Functions.Delete)
+	cache.descriptorTemplate.dispose = purego.NewCallback(cache.Functions.Delete)
 	return cache
 }
 
