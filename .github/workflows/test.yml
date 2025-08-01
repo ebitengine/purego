@@ -7,7 +7,8 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        go: ['1.18.x', '1.19.x', '1.20.x', '1.21.x', '1.22.x', '1.23.x', '1.24.x']
+        go:
+          ["1.18.x", "1.19.x", "1.20.x", "1.21.x", "1.22.x", "1.23.x", "1.24.x"]
     name: Test with Go ${{ matrix.go }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     defaults:
@@ -68,8 +69,8 @@ jobs:
           # gcflags -std is necessary to make fakecgo the Cgo for
           # FreeBSD to add the symbols that libc.so depends on.
           env GOOS=freebsd GOARCH=amd64 go build -gcflags="github.com/ebitengine/purego/internal/fakecgo=-std" -v ./...
-          env GOOS=freebsd GOARCH=arm64 go build -gcflags="github.com/ebitengine/purego/internal/fakecgo=-std" -v ./...          
-          
+          env GOOS=freebsd GOARCH=arm64 go build -gcflags="github.com/ebitengine/purego/internal/fakecgo=-std" -v ./...
+
           # Check cross-compiling NetBSD binaries.
           env GOOS=netbsd GOARCH=amd64 go build -v ./...
           env GOOS=netbsd GOARCH=arm64 go build -v ./...
@@ -115,11 +116,11 @@ jobs:
           env QEMU_LD_PREFIX=/usr/aarch64-linux-gnu qemu-aarch64 ./purego-test-nocgo -test.shuffle=on -test.v -test.count=10
           env GOOS=linux GOARCH=arm64 CGO_ENABLED=1 go test -c -o=purego-test-cgo .
           env QEMU_LD_PREFIX=/usr/aarch64-linux-gnu qemu-aarch64 ./purego-test-cgo -test.shuffle=on -test.v -test.count=10
-          
+
           echo "=> go build (plugin)"
           # Make sure that plugin buildmode works since we save the R15 register (#254)
           env GOOS=linux GOARCH=arm64 CGO_ENABLED=1 go build -buildmode=plugin ./examples/libc
-          
+
           go env -u CC
           go env -u CXX
 
@@ -132,28 +133,43 @@ jobs:
       - name: go test (Linux 386)
         if: runner.os == 'Linux'
         run: |
-           sudo apt-get install gcc-multilib
-           sudo apt-get install g++-multilib
-           env CGO_ENABLED=1 GOARCH=386 go test -shuffle=on -v -count=10 ./...
+          sudo apt-get install gcc-multilib
+          sudo apt-get install g++-multilib
+          env CGO_ENABLED=1 GOARCH=386 go test -shuffle=on -v -count=10 ./...
 
-      - name: go test race
+      - name: go test race (no Cgo)
+        if: ${{ runner.os == 'macOS' &&  !startsWith(matrix.go, '1.18.') && !startsWith(matrix.go, '1.19.') }}
+        run: |
+          # -race usually requires Cgo, but macOS is an exception. See https://go.dev/doc/articles/race_detector#Requirements
+          env CGO_ENABLED=0 go test -race -shuffle=on -v -count=10 ./...
+
+      - name: go test race (Cgo)
         if: ${{ !startsWith(matrix.go, '1.18.') && !startsWith(matrix.go, '1.19.') }}
         run: |
-          go test -race -shuffle=on -v -count=10 ./...
+          env CGO_ENABLED=1 go test -race -shuffle=on -v -count=10 ./...
 
   bsd:
     strategy:
       matrix:
-        os: ['FreeBSD'] # TODO: Add 'NetBSD' again (#304)
-        go: ['1.18.10', '1.19.13', '1.20.14', '1.21.13', '1.22.12', '1.23.9', '1.24.2']
+        os: ["FreeBSD"] # TODO: Add 'NetBSD' again (#304)
+        go:
+          [
+            "1.18.10",
+            "1.19.13",
+            "1.20.14",
+            "1.21.13",
+            "1.22.12",
+            "1.23.11",
+            "1.24.5",
+          ]
         exclude:
           # there are no prebuilt download links for these versions of Go for NetBSD
           - os: NetBSD
-            go: '1.18.10'
+            go: "1.18.10"
           - os: NetBSD
-            go: '1.19.13'
+            go: "1.19.13"
           - os: NetBSD
-            go: '1.20.14'
+            go: "1.20.14"
     name: Test with Go ${{ matrix.go }} on ${{ matrix.os }}
     runs-on: ubuntu-22.04
     defaults:

@@ -463,6 +463,15 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 			t.Fatalf("GoUint4Fn returned %d wanted %#x", ret, expected)
 		}
 	}
+	{
+		type OneLong struct{ a uintptr }
+		var TakeGoUintAndReturn func(a OneLong) uint64
+		purego.RegisterLibFunc(&TakeGoUintAndReturn, lib, "TakeGoUintAndReturn")
+		expected := uint64(7)
+		if ret := TakeGoUintAndReturn(OneLong{7}); ret != expected {
+			t.Fatalf("TakeGoUintAndReturn returned %+v wanted %+v", ret, expected)
+		}
+	}
 }
 
 func TestRegisterFunc_structReturns(t *testing.T) {
