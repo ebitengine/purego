@@ -5,6 +5,7 @@ package main
 
 import (
 	"runtime"
+	"structs"
 
 	"github.com/ebitengine/purego"
 	"github.com/ebitengine/purego/objc"
@@ -16,15 +17,24 @@ const (
 	NSBackingStoreBuffered               = 2
 )
 
+// structs.HostLayout ensures a struct matches the host's memory layout.
+// see: https://pkg.go.dev/structs#HostLayout
+
 type NSPoint struct {
+	_ structs.HostLayout
+
 	X, Y float64
 }
 
 type NSSize struct {
+	_ structs.HostLayout
+
 	Width, Height float64
 }
 
 type NSRect struct {
+	_ structs.HostLayout
+
 	Origin NSPoint
 	Size   NSSize
 }
@@ -56,5 +66,5 @@ func main() {
 }
 
 func NSMakeRect(x, y, width, height float64) NSRect {
-	return NSRect{Origin: NSPoint{x, y}, Size: NSSize{width, height}}
+	return NSRect{Origin: NSPoint{X: x, Y: y}, Size: NSSize{Width: width, Height: height}}
 }

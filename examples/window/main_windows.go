@@ -5,6 +5,7 @@ package main
 
 import (
 	"runtime"
+	"structs"
 	"syscall"
 	"unsafe"
 
@@ -29,7 +30,12 @@ type (
 	HMENU     HANDLE
 )
 
+// structs.HostLayout ensures a struct matches the host's memory layout.
+// see: https://pkg.go.dev/structs#HostLayout
+
 type WNDCLASSEX struct {
+	_ structs.HostLayout
+
 	Size       uint32
 	Style      uint32
 	WndProc    uintptr
@@ -45,14 +51,20 @@ type WNDCLASSEX struct {
 }
 
 type RECT struct {
+	_ structs.HostLayout
+
 	Left, Top, Right, Bottom int32
 }
 
 type POINT struct {
+	_ structs.HostLayout
+
 	X, Y int32
 }
 
 type MSG struct {
+	_ structs.HostLayout
+
 	Hwnd    HWND
 	Message uint32
 	WParam  uintptr
