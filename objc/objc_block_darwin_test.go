@@ -5,6 +5,7 @@ package objc_test
 
 import (
 	"fmt"
+	"structs"
 	"testing"
 
 	"github.com/ebitengine/purego"
@@ -39,6 +40,7 @@ func ExampleNewBlock() {
 
 func ExampleInvokeBlock() {
 	type vector struct {
+		_       structs.HostLayout
 		X, Y, Z float64
 	}
 

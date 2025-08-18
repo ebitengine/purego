@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"reflect"
+	"structs"
 	"testing"
 
 	"github.com/ebitengine/purego"
@@ -155,6 +156,7 @@ func TestSend(t *testing.T) {
 
 func ExampleSend() {
 	type NSRange struct {
+		_               structs.HostLayout
 		Location, Range uint
 	}
 	class_NSString := objc.GetClass("NSString")
