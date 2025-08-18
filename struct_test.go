@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"structs"
 	"testing"
 	"unsafe"
 
@@ -62,6 +63,7 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 	}
 	{
 		type GreaterThan16Bytes struct {
+			_       structs.HostLayout
 			x, y, z *int64
 		}
 		var x, y, z int64 = 0xEF, 0xBE00, 0xDEAD0000
@@ -74,18 +76,24 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 	{
 		type GreaterThan16BytesStruct struct {
 			a struct {
+				_       structs.HostLayout
 				x, y, z *int64
 			}
 		}
 		var x, y, z int64 = 0xEF, 0xBE00, 0xDEAD0000
 		var GreaterThan16BytesStructFn func(GreaterThan16BytesStruct) int64
 		purego.RegisterLibFunc(&GreaterThan16BytesStructFn, lib, "GreaterThan16BytesStruct")
-		if ret := GreaterThan16BytesStructFn(GreaterThan16BytesStruct{a: struct{ x, y, z *int64 }{x: &x, y: &y, z: &z}}); ret != expectedUnsigned {
+		if ret := GreaterThan16BytesStructFn(GreaterThan16BytesStruct{
+			a: struct {
+				_       structs.HostLayout
+				x, y, z *int64
+			}{x: &x, y: &y, z: &z}}); ret != expectedUnsigned {
 			t.Fatalf("GreaterThan16BytesStructFn returned %#x wanted %#x", ret, expectedUnsigned)
 		}
 	}
 	{
 		type GreaterThan16Bytes struct {
+			_       structs.HostLayout
 			x, y, z *int64
 		}
 		var x, y, z int64 = 0xEF, 0xBE00, 0xDEAD0000
@@ -97,130 +105,145 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 		var BeforeRegisters func(bytes GreaterThan16Bytes, a, b int64) uint64
 		z -= 0xFF
 		purego.RegisterLibFunc(&BeforeRegisters, lib, "BeforeRegisters")
-		if ret := BeforeRegisters(GreaterThan16Bytes{&x, &y, &z}, 0x0F, 0xF0); ret != expectedUnsigned {
+		if ret := BeforeRegisters(GreaterThan16Bytes{x: &x, y: &y, z: &z}, 0x0F, 0xF0); ret != expectedUnsigned {
 			t.Fatalf("BeforeRegisters returned %#x wanted %#x", ret, expectedUnsigned)
 		}
 	}
 	{
 		type IntLessThan16Bytes struct {
+			_    structs.HostLayout
 			x, y int64
 		}
 		var IntLessThan16BytesFn func(bytes IntLessThan16Bytes) int64
 		purego.RegisterLibFunc(&IntLessThan16BytesFn, lib, "IntLessThan16Bytes")
-		if ret := IntLessThan16BytesFn(IntLessThan16Bytes{0xDEAD0000, 0xBEEF}); ret != expectedUnsigned {
+		if ret := IntLessThan16BytesFn(IntLessThan16Bytes{x: 0xDEAD0000, y: 0xBEEF}); ret != expectedUnsigned {
 			t.Fatalf("IntLessThan16BytesFn returned %#x wanted %#x", ret, expectedUnsigned)
 		}
 	}
 	{
 		type FloatLessThan16Bytes struct {
+			_    structs.HostLayout
 			x, y float32
 		}
 		var FloatLessThan16BytesFn func(FloatLessThan16Bytes) float32
 		purego.RegisterLibFunc(&FloatLessThan16BytesFn, lib, "FloatLessThan16Bytes")
-		if ret := FloatLessThan16BytesFn(FloatLessThan16Bytes{3, 7}); ret != expectedFloat {
+		if ret := FloatLessThan16BytesFn(FloatLessThan16Bytes{x: 3, y: 7}); ret != expectedFloat {
 			t.Fatalf("FloatLessThan16Bytes returned %f wanted %f", ret, expectedFloat)
 		}
 	}
 	{
 		type ThreeSmallFields struct {
+			_       structs.HostLayout
 			x, y, z float32
 		}
 		var ThreeSmallFieldsFn func(ThreeSmallFields) float32
 		purego.RegisterLibFunc(&ThreeSmallFieldsFn, lib, "ThreeSmallFields")
-		if ret := ThreeSmallFieldsFn(ThreeSmallFields{1, 2, 7}); ret != expectedFloat {
+		if ret := ThreeSmallFieldsFn(ThreeSmallFields{x: 1, y: 2, z: 7}); ret != expectedFloat {
 			t.Fatalf("ThreeSmallFields returned %f wanted %f", ret, expectedFloat)
 		}
 	}
 	{
 		type FloatAndInt struct {
+			_ structs.HostLayout
 			x float32
 			y int32
 		}
 		var FloatAndIntFn func(FloatAndInt) float32
 		purego.RegisterLibFunc(&FloatAndIntFn, lib, "FloatAndInt")
-		if ret := FloatAndIntFn(FloatAndInt{3, 7}); ret != expectedFloat {
+		if ret := FloatAndIntFn(FloatAndInt{x: 3, y: 7}); ret != expectedFloat {
 			t.Fatalf("FloatAndIntFn returned %f wanted %f", ret, expectedFloat)
 		}
 	}
 	{
 		type DoubleStruct struct {
+			_ structs.HostLayout
 			x float64
 		}
 		var DoubleStructFn func(DoubleStruct) float64
 		purego.RegisterLibFunc(&DoubleStructFn, lib, "DoubleStruct")
-		if ret := DoubleStructFn(DoubleStruct{10}); ret != expectedDouble {
+		if ret := DoubleStructFn(DoubleStruct{x: 10}); ret != expectedDouble {
 			t.Fatalf("DoubleStruct returned %f wanted %f", ret, expectedDouble)
 		}
 	}
 	{
 		type TwoDoubleStruct struct {
+			_    structs.HostLayout
 			x, y float64
 		}
 		var TwoDoubleStructFn func(TwoDoubleStruct) float64
 		purego.RegisterLibFunc(&TwoDoubleStructFn, lib, "TwoDoubleStruct")
-		if ret := TwoDoubleStructFn(TwoDoubleStruct{3, 7}); ret != expectedDouble {
+		if ret := TwoDoubleStructFn(TwoDoubleStruct{x: 3, y: 7}); ret != expectedDouble {
 			t.Fatalf("TwoDoubleStruct returned %f wanted %f", ret, expectedDouble)
 		}
 	}
 	{
 		type TwoDoubleTwoStruct struct {
+			_ structs.HostLayout
 			x struct {
+				_    structs.HostLayout
 				x, y float64
 			}
 		}
 		var TwoDoubleTwoStructFn func(TwoDoubleTwoStruct) float64
 		purego.RegisterLibFunc(&TwoDoubleTwoStructFn, lib, "TwoDoubleTwoStruct")
-		if ret := TwoDoubleTwoStructFn(TwoDoubleTwoStruct{x: struct{ x, y float64 }{x: 3, y: 7}}); ret != expectedDouble {
+		if ret := TwoDoubleTwoStructFn(TwoDoubleTwoStruct{x: struct {
+			_    structs.HostLayout
+			x, y float64
+		}{x: 3, y: 7}}); ret != expectedDouble {
 			t.Fatalf("TwoDoubleTwoStruct returned %f wanted %f", ret, expectedDouble)
 		}
 	}
 	{
 		type ThreeDoubleStruct struct {
+			_       structs.HostLayout
 			x, y, z float64
 		}
 		var ThreeDoubleStructFn func(ThreeDoubleStruct) float64
 		purego.RegisterLibFunc(&ThreeDoubleStructFn, lib, "ThreeDoubleStruct")
-		if ret := ThreeDoubleStructFn(ThreeDoubleStruct{1, 3, 6}); ret != expectedDouble {
+		if ret := ThreeDoubleStructFn(ThreeDoubleStruct{x: 1, y: 3, z: 6}); ret != expectedDouble {
 			t.Fatalf("ThreeDoubleStructFn returned %f wanted %f", ret, expectedDouble)
 		}
 	}
 	{
 		type LargeFloatStruct struct {
+			_                structs.HostLayout
 			a, b, c, d, e, f float64
 		}
 		var LargeFloatStructFn func(LargeFloatStruct) float64
 		purego.RegisterLibFunc(&LargeFloatStructFn, lib, "LargeFloatStruct")
-		if ret := LargeFloatStructFn(LargeFloatStruct{1, 2, 3, 4, 5, -5}); ret != expectedDouble {
+		if ret := LargeFloatStructFn(LargeFloatStruct{a: 1, b: 2, c: 3, d: 4, e: 5, f: -5}); ret != expectedDouble {
 			t.Fatalf("LargeFloatStructFn returned %f wanted %f", ret, expectedFloat)
 		}
 		var LargeFloatStructWithRegs func(a, b, c float64, s LargeFloatStruct) float64
 		purego.RegisterLibFunc(&LargeFloatStructWithRegs, lib, "LargeFloatStructWithRegs")
-		if ret := LargeFloatStructWithRegs(1, -1, 0, LargeFloatStruct{1, 2, 3, 4, 5, -5}); ret != expectedDouble {
+		if ret := LargeFloatStructWithRegs(1, -1, 0, LargeFloatStruct{a: 1, b: 2, c: 3, d: 4, e: 5, f: -5}); ret != expectedDouble {
 			t.Fatalf("LargeFloatStructWithRegs returned %f wanted %f", ret, expectedFloat)
 		}
 	}
 	{
 		type Rect struct {
+			_          structs.HostLayout
 			x, y, w, h float64
 		}
 		var RectangleWithRegs func(a, b, c, d, e float64, rect Rect) float64
 		purego.RegisterLibFunc(&RectangleWithRegs, lib, "RectangleWithRegs")
-		if ret := RectangleWithRegs(1, 2, 3, 4, -2, Rect{1, 2, 3, -4}); ret != expectedDouble {
+		if ret := RectangleWithRegs(1, 2, 3, 4, -2, Rect{x: 1, y: 2, w: 3, h: -4}); ret != expectedDouble {
 			t.Fatalf("RectangleWithRegs returned %f wanted %f", ret, expectedDouble)
 		}
 		var RectangleSubtract func(rect Rect) float64
 		purego.RegisterLibFunc(&RectangleSubtract, lib, "RectangleSubtract")
-		if ret := RectangleSubtract(Rect{15, 5, 3, 7}); ret != expectedDouble {
+		if ret := RectangleSubtract(Rect{x: 15, y: 5, w: 3, h: 7}); ret != expectedDouble {
 			t.Fatalf("RectangleSubtract returned %f wanted %f", ret, expectedDouble)
 		}
 		var Rectangle func(rect Rect) float64
 		purego.RegisterLibFunc(&Rectangle, lib, "Rectangle")
-		if ret := Rectangle(Rect{1, 2, 3, 4}); ret != expectedDouble {
+		if ret := Rectangle(Rect{x: 1, y: 2, w: 3, h: 4}); ret != expectedDouble {
 			t.Fatalf("Rectangle returned %f wanted %f", ret, expectedFloat)
 		}
 	}
 	{
 		type FloatArray struct {
+			_ structs.HostLayout
 			a [2]float64
 		}
 		var FloatArrayFn func(rect FloatArray) float64
@@ -231,6 +254,7 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 	}
 	{
 		type UnsignedChar4Bytes struct {
+			_          structs.HostLayout
 			a, b, c, d byte
 		}
 		var UnsignedChar4BytesFn func(UnsignedChar4Bytes) uint32
@@ -241,32 +265,50 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 	}
 	{
 		type UnsignedChar4BytesStruct struct {
+			_ structs.HostLayout
 			x struct {
+				_ structs.HostLayout
 				a byte
 			}
 			y struct {
+				_ structs.HostLayout
 				b byte
 			}
 			z struct {
+				_ structs.HostLayout
 				c byte
 			}
 			w struct {
+				_ structs.HostLayout
 				d byte
 			}
 		}
 		var UnsignedChar4BytesStructFn func(UnsignedChar4BytesStruct) uint32
 		purego.RegisterLibFunc(&UnsignedChar4BytesStructFn, lib, "UnsignedChar4BytesStruct")
 		if ret := UnsignedChar4BytesStructFn(UnsignedChar4BytesStruct{
-			x: struct{ a byte }{a: 0xDE},
-			y: struct{ b byte }{b: 0xAD},
-			z: struct{ c byte }{c: 0xBE},
-			w: struct{ d byte }{d: 0xEF},
+			x: struct {
+				_ structs.HostLayout
+				a byte
+			}{a: 0xDE},
+			y: struct {
+				_ structs.HostLayout
+				b byte
+			}{b: 0xAD},
+			z: struct {
+				_ structs.HostLayout
+				c byte
+			}{c: 0xBE},
+			w: struct {
+				_ structs.HostLayout
+				d byte
+			}{d: 0xEF},
 		}); ret != expectedUnsigned {
 			t.Fatalf("UnsignedChar4BytesStructFn returned %#x wanted %#x", ret, expectedUnsigned)
 		}
 	}
 	{
 		type Short struct {
+			_          structs.HostLayout
 			a, b, c, d uint16
 		}
 		var ShortFn func(Short) uint64
@@ -277,6 +319,7 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 	}
 	{
 		type Int struct {
+			_    structs.HostLayout
 			a, b uint32
 		}
 		var IntFn func(Int) uint64
@@ -287,6 +330,7 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 	}
 	{
 		type Long struct {
+			_ structs.HostLayout
 			a uint64
 		}
 		var LongFn func(Long) uint64
@@ -297,6 +341,7 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 	}
 	{
 		type Char8Bytes struct {
+			_                      structs.HostLayout
 			a, b, c, d, e, f, g, h int8
 		}
 		var Char8BytesFn func(Char8Bytes) int32
@@ -307,6 +352,7 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 	}
 	{
 		type Odd struct {
+			_       structs.HostLayout
 			a, b, c byte
 		}
 		var OddFn func(Odd) int32
@@ -317,6 +363,7 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 	}
 	{
 		type Char2Short1 struct {
+			_    structs.HostLayout
 			a, b byte
 			c    uint16
 		}
@@ -328,6 +375,7 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 	}
 	{
 		type SignedChar2Short1 struct {
+			_    structs.HostLayout
 			a, b int8
 			c    int16
 		}
@@ -339,6 +387,7 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 	}
 	{
 		type Array4UnsignedChars struct {
+			_ structs.HostLayout
 			a [4]uint8
 		}
 		var Array4UnsignedCharsFn func(chars Array4UnsignedChars) uint32
@@ -349,6 +398,7 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 	}
 	{
 		type Array3UnsignedChar struct {
+			_ structs.HostLayout
 			a [3]uint8
 		}
 		var Array3UnsignedChars func(chars Array3UnsignedChar) uint32
@@ -359,6 +409,7 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 	}
 	{
 		type Array2UnsignedShort struct {
+			_ structs.HostLayout
 			a [2]uint16
 		}
 		var Array2UnsignedShorts func(chars Array2UnsignedShort) uint32
@@ -369,6 +420,7 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 	}
 	{
 		type Array4Chars struct {
+			_ structs.HostLayout
 			a [4]int8
 		}
 		var Array4CharsFn func(chars Array4Chars) int32
@@ -379,6 +431,7 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 	}
 	{
 		type Array2Short struct {
+			_ structs.HostLayout
 			a [2]int16
 		}
 		var Array2Shorts func(chars Array2Short) int32
@@ -389,6 +442,7 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 	}
 	{
 		type Array3Short struct {
+			_ structs.HostLayout
 			a [3]int16
 		}
 		var Array3Shorts func(chars Array3Short) int32
@@ -399,19 +453,21 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 	}
 	{
 		type BoolStruct struct {
+			_ structs.HostLayout
 			b bool
 		}
 		var BoolStructFn func(BoolStruct) bool
 		purego.RegisterLibFunc(&BoolStructFn, lib, "BoolStruct")
-		if ret := BoolStructFn(BoolStruct{true}); ret != true {
+		if ret := BoolStructFn(BoolStruct{b: true}); ret != true {
 			t.Fatalf("BoolStructFn returned %v wanted %v", ret, true)
 		}
-		if ret := BoolStructFn(BoolStruct{false}); ret != false {
+		if ret := BoolStructFn(BoolStruct{b: false}); ret != false {
 			t.Fatalf("BoolStructFn returned %v wanted %v", ret, false)
 		}
 	}
 	{
 		type BoolFloat struct {
+			_ structs.HostLayout
 			b bool
 			_ [3]byte // purego won't do padding for you so make sure it aligns properly with C struct
 			f float32
@@ -426,9 +482,16 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 		}
 	}
 	{
-		type point struct{ x, y float64 }
-		type size struct{ width, height float64 }
+		type point struct {
+			_    structs.HostLayout
+			x, y float64
+		}
+		type size struct {
+			_             structs.HostLayout
+			width, height float64
+		}
 		type Content struct {
+			_     structs.HostLayout
 			point point
 			size  size
 		}
@@ -436,39 +499,44 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 		purego.RegisterLibFunc(&InitWithContentRect, lib, "InitWithContentRect")
 		if ret := InitWithContentRect(new(int),
 			// These numbers are created so that when added together and then divided by 11 it produces 0xdeadbeef
-			Content{point{x: 41_000_000_000, y: 95_000_000}, size{width: 214_000, height: 149}},
+			Content{point: point{x: 41_000_000_000, y: 95_000_000}, size: size{width: 214_000, height: 149}},
 			15, 4, true); ret != expectedUnsigned {
 			t.Fatalf("InitWithContentRect returned %d wanted %#x", ret, expectedUnsigned)
 		}
 	}
 	{
 		type GoInt4 struct {
+			_          structs.HostLayout
 			A, B, C, D int
 		}
 		var GoInt4Fn func(GoInt4) int
 		purego.RegisterLibFunc(&GoInt4Fn, lib, "GoInt4")
 		const expected = math.MaxInt - 52 - 3 + 4
-		if ret := GoInt4Fn(GoInt4{math.MaxInt, -52, 3, 4}); ret != expected {
+		if ret := GoInt4Fn(GoInt4{A: math.MaxInt, B: -52, C: 3, D: 4}); ret != expected {
 			t.Fatalf("GoInt4Fn returned %d wanted %#x", ret, expected)
 		}
 	}
 	{
 		type GoUint4 struct {
+			_          structs.HostLayout
 			A, B, C, D uint
 		}
 		var GoUint4Fn func(GoUint4) uint
 		purego.RegisterLibFunc(&GoUint4Fn, lib, "GoUint4")
 		const expected = 1_000_000 + 53 + 71 + 8
-		if ret := GoUint4Fn(GoUint4{1_000_000, 53, 71, 8}); ret != expected {
+		if ret := GoUint4Fn(GoUint4{A: 1_000_000, B: 53, C: 71, D: 8}); ret != expected {
 			t.Fatalf("GoUint4Fn returned %d wanted %#x", ret, expected)
 		}
 	}
 	{
-		type OneLong struct{ a uintptr }
+		type OneLong struct {
+			_ structs.HostLayout
+			a uintptr
+		}
 		var TakeGoUintAndReturn func(a OneLong) uint64
 		purego.RegisterLibFunc(&TakeGoUintAndReturn, lib, "TakeGoUintAndReturn")
 		expected := uint64(7)
-		if ret := TakeGoUintAndReturn(OneLong{7}); ret != expected {
+		if ret := TakeGoUintAndReturn(OneLong{a: 7}); ret != expected {
 			t.Fatalf("TakeGoUintAndReturn returned %+v wanted %+v", ret, expected)
 		}
 	}
@@ -496,150 +564,209 @@ func TestRegisterFunc_structReturns(t *testing.T) {
 		_ = ret
 	}
 	{
-		type inner struct{ a int16 }
+		type inner struct {
+			_ structs.HostLayout
+			a int16
+		}
 		type StructInStruct struct {
+			_ structs.HostLayout
 			a inner
 			b inner
 			c inner
 		}
 		var ReturnStructInStruct func(a, b, c int16) StructInStruct
 		purego.RegisterLibFunc(&ReturnStructInStruct, lib, "ReturnStructInStruct")
-		expected := StructInStruct{inner{^int16(0)}, inner{2}, inner{3}}
+		expected := StructInStruct{a: inner{a: ^int16(0)}, b: inner{a: 2}, c: inner{a: 3}}
 		if ret := ReturnStructInStruct(^int16(0), 2, 3); ret != expected {
 			t.Fatalf("StructInStruct returned %+v wanted %+v", ret, expected)
 		}
 	}
 	{
-		type ThreeShorts struct{ a, b, c int16 }
+		type ThreeShorts struct {
+			_       structs.HostLayout
+			a, b, c int16
+		}
 		var ReturnThreeShorts func(a, b, c int16) ThreeShorts
 		purego.RegisterLibFunc(&ReturnThreeShorts, lib, "ReturnThreeShorts")
-		expected := ThreeShorts{^int16(0), 2, 3}
+		expected := ThreeShorts{a: ^int16(0), b: 2, c: 3}
 		if ret := ReturnThreeShorts(^int16(0), 2, 3); ret != expected {
 			t.Fatalf("ReturnThreeShorts returned %+v wanted %+v", ret, expected)
 		}
 	}
 	{
-		type FourShorts struct{ a, b, c, d int16 }
+		type FourShorts struct {
+			_          structs.HostLayout
+			a, b, c, d int16
+		}
 		var ReturnFourShorts func(a, b, c, d int16) FourShorts
 		purego.RegisterLibFunc(&ReturnFourShorts, lib, "ReturnFourShorts")
-		expected := FourShorts{^int16(0), 2, 3, 4}
+		expected := FourShorts{a: ^int16(0), b: 2, c: 3, d: 4}
 		if ret := ReturnFourShorts(^int16(0), 2, 3, 4); ret != expected {
 			t.Fatalf("ReturnFourShorts returned %+v wanted %+v", ret, expected)
 		}
 	}
 	{
-		type OneLong struct{ a int64 }
+		type OneLong struct {
+			_ structs.HostLayout
+			a int64
+		}
 		var ReturnOneLong func(a int64) OneLong
 		purego.RegisterLibFunc(&ReturnOneLong, lib, "ReturnOneLong")
-		expected := OneLong{5}
+		expected := OneLong{a: 5}
 		if ret := ReturnOneLong(5); ret != expected {
 			t.Fatalf("ReturnOneLong returned %+v wanted %+v", ret, expected)
 		}
 	}
 	{
-		type TwoLongs struct{ a, b int64 }
+		type TwoLongs struct {
+			_    structs.HostLayout
+			a, b int64
+		}
 		var ReturnTwoLongs func(a, b int64) TwoLongs
 		purego.RegisterLibFunc(&ReturnTwoLongs, lib, "ReturnTwoLongs")
-		expected := TwoLongs{1, 2}
+		expected := TwoLongs{a: 1, b: 2}
 		if ret := ReturnTwoLongs(1, 2); ret != expected {
 			t.Fatalf("ReturnTwoLongs returned %+v wanted %+v", ret, expected)
 		}
 	}
 	{
-		type ThreeLongs struct{ a, b, c int64 }
+		type ThreeLongs struct {
+			_       structs.HostLayout
+			a, b, c int64
+		}
 		var ReturnThreeLongs func(a, b, c int64) ThreeLongs
 		purego.RegisterLibFunc(&ReturnThreeLongs, lib, "ReturnThreeLongs")
-		expected := ThreeLongs{1, 2, 3}
+		expected := ThreeLongs{a: 1, b: 2, c: 3}
 		if ret := ReturnThreeLongs(1, 2, 3); ret != expected {
 			t.Fatalf("ReturnThreeLongs returned %+v wanted %+v", ret, expected)
 		}
 	}
 	{
-		type OneFloat struct{ a float32 }
+		type OneFloat struct {
+			_ structs.HostLayout
+			a float32
+		}
 		var ReturnOneFloat func(a float32) OneFloat
 		purego.RegisterLibFunc(&ReturnOneFloat, lib, "ReturnOneFloat")
-		expected := OneFloat{1}
+		expected := OneFloat{a: 1}
 		if ret := ReturnOneFloat(1); ret != expected {
 			t.Fatalf("ReturnOneFloat returned %+v wanted %+v", ret, expected)
 		}
 	}
 	{
-		type TwoFloats struct{ a, b float32 }
+		type TwoFloats struct {
+			_    structs.HostLayout
+			a, b float32
+		}
 		var ReturnTwoFloats func(a, b float32) TwoFloats
 		purego.RegisterLibFunc(&ReturnTwoFloats, lib, "ReturnTwoFloats")
-		expected := TwoFloats{3, 10}
+		expected := TwoFloats{a: 3, b: 10}
 		if ret := ReturnTwoFloats(5, 2); ret != expected {
 			t.Fatalf("ReturnTwoFloats returned %+v wanted %+v", ret, expected)
 		}
 	}
 	{
-		type ThreeFloats struct{ a, b, c float32 }
+		type ThreeFloats struct {
+			_       structs.HostLayout
+			a, b, c float32
+		}
 		var ReturnThreeFloats func(a, b, c float32) ThreeFloats
 		purego.RegisterLibFunc(&ReturnThreeFloats, lib, "ReturnThreeFloats")
-		expected := ThreeFloats{1, 2, 3}
+		expected := ThreeFloats{a: 1, b: 2, c: 3}
 		if ret := ReturnThreeFloats(1, 2, 3); ret != expected {
 			t.Fatalf("ReturnThreeFloats returned %+v wanted %+v", ret, expected)
 		}
 	}
 	{
-		type OneDouble struct{ a float64 }
+		type OneDouble struct {
+			_ structs.HostLayout
+			a float64
+		}
 		var ReturnOneDouble func(a float64) OneDouble
 		purego.RegisterLibFunc(&ReturnOneDouble, lib, "ReturnOneDouble")
-		expected := OneDouble{1}
+		expected := OneDouble{a: 1}
 		if ret := ReturnOneDouble(1); ret != expected {
 			t.Fatalf("ReturnOneDouble returned %+v wanted %+v", ret, expected)
 		}
 	}
 	{
-		type TwoDoubles struct{ a, b float64 }
+		type TwoDoubles struct {
+			_    structs.HostLayout
+			a, b float64
+		}
 		var ReturnTwoDoubles func(a, b float64) TwoDoubles
 		purego.RegisterLibFunc(&ReturnTwoDoubles, lib, "ReturnTwoDoubles")
-		expected := TwoDoubles{1, 2}
+		expected := TwoDoubles{a: 1, b: 2}
 		if ret := ReturnTwoDoubles(1, 2); ret != expected {
 			t.Fatalf("ReturnTwoDoubles returned %+v wanted %+v", ret, expected)
 		}
 	}
 	{
-		type ThreeDoubles struct{ a, b, c float64 }
+		type ThreeDoubles struct {
+			_       structs.HostLayout
+			a, b, c float64
+		}
 		var ReturnThreeDoubles func(a, b, c float64) ThreeDoubles
 		purego.RegisterLibFunc(&ReturnThreeDoubles, lib, "ReturnThreeDoubles")
-		expected := ThreeDoubles{1, 2, 3}
+		expected := ThreeDoubles{a: 1, b: 2, c: 3}
 		if ret := ReturnThreeDoubles(1, 2, 3); ret != expected {
 			t.Fatalf("ReturnThreeDoubles returned %+v wanted %+v", ret, expected)
 		}
 	}
 	{
-		type FourDoubles struct{ a, b, c, d float64 }
+		type FourDoubles struct {
+			_          structs.HostLayout
+			a, b, c, d float64
+		}
 		var ReturnFourDoubles func(a, b, c, d float64) FourDoubles
 		purego.RegisterLibFunc(&ReturnFourDoubles, lib, "ReturnFourDoubles")
-		expected := FourDoubles{1, 2, 3, 4}
+		expected := FourDoubles{a: 1, b: 2, c: 3, d: 4}
 		if ret := ReturnFourDoubles(1, 2, 3, 4); ret != expected {
 			t.Fatalf("ReturnFourDoubles returned %+v wanted %+v", ret, expected)
 		}
 	}
 	{
 		type FourDoublesInternal struct {
-			f struct{ a, b float64 }
-			g struct{ c, d float64 }
+			_ structs.HostLayout
+			f struct {
+				_    structs.HostLayout
+				a, b float64
+			}
+			g struct {
+				_    structs.HostLayout
+				c, d float64
+			}
 		}
 		var ReturnFourDoublesInternal func(a, b, c, d float64) FourDoublesInternal
 		purego.RegisterLibFunc(&ReturnFourDoublesInternal, lib, "ReturnFourDoublesInternal")
-		expected := FourDoublesInternal{f: struct{ a, b float64 }{a: 1, b: 2}, g: struct{ c, d float64 }{c: 3, d: 4}}
+		expected := FourDoublesInternal{
+			f: struct {
+				_    structs.HostLayout
+				a, b float64
+			}{a: 1, b: 2},
+			g: struct {
+				_    structs.HostLayout
+				c, d float64
+			}{c: 3, d: 4}}
 		if ret := ReturnFourDoublesInternal(1, 2, 3, 4); ret != expected {
 			t.Fatalf("ReturnFourDoublesInternal returned %+v wanted %+v", ret, expected)
 		}
 	}
 	{
-		type FiveDoubles struct{ a, b, c, d, e float64 }
+		type FiveDoubles struct {
+			_             structs.HostLayout
+			a, b, c, d, e float64
+		}
 		var ReturnFiveDoubles func(a, b, c, d, e float64) FiveDoubles
 		purego.RegisterLibFunc(&ReturnFiveDoubles, lib, "ReturnFiveDoubles")
-		expected := FiveDoubles{1, 2, 3, 4, 5}
+		expected := FiveDoubles{a: 1, b: 2, c: 3, d: 4, e: 5}
 		if ret := ReturnFiveDoubles(1, 2, 3, 4, 5); ret != expected {
 			t.Fatalf("ReturnFiveDoubles returned %+v wanted %+v", ret, expected)
 		}
 	}
 	{
 		type OneFloatOneDouble struct {
+			_ structs.HostLayout
 			a float32
 			_ float32
 			b float64
@@ -653,18 +780,20 @@ func TestRegisterFunc_structReturns(t *testing.T) {
 	}
 	{
 		type OneDoubleOneFloat struct {
+			_ structs.HostLayout
 			a float64
 			b float32
 		}
 		var ReturnOneDoubleOneFloat func(a float64, b float32) OneDoubleOneFloat
 		purego.RegisterLibFunc(&ReturnOneDoubleOneFloat, lib, "ReturnOneDoubleOneFloat")
-		expected := OneDoubleOneFloat{1, 2}
+		expected := OneDoubleOneFloat{a: 1, b: 2}
 		if ret := ReturnOneDoubleOneFloat(1, 2); ret != expected {
 			t.Fatalf("ReturnOneDoubleOneFloat returned %+v wanted %+v", ret, expected)
 		}
 	}
 	{
 		type Unaligned1 struct {
+			_ structs.HostLayout
 			a int8
 			_ [1]int8
 			b int16
@@ -680,18 +809,20 @@ func TestRegisterFunc_structReturns(t *testing.T) {
 	}
 	{
 		type Mixed1 struct {
+			_ structs.HostLayout
 			a float32
 			b int32
 		}
 		var ReturnMixed1 func(a float32, b int32) Mixed1
 		purego.RegisterLibFunc(&ReturnMixed1, lib, "ReturnMixed1")
-		expected := Mixed1{1, 2}
+		expected := Mixed1{a: 1, b: 2}
 		if ret := ReturnMixed1(1, 2); ret != expected {
 			t.Fatalf("ReturnMixed1 returned %+v wanted %+v", ret, expected)
 		}
 	}
 	{
 		type Mixed2 struct {
+			_ structs.HostLayout
 			a float32
 			b int32
 			c float32
@@ -699,46 +830,49 @@ func TestRegisterFunc_structReturns(t *testing.T) {
 		}
 		var ReturnMixed2 func(a float32, b int32, c float32, d int32) Mixed2
 		purego.RegisterLibFunc(&ReturnMixed2, lib, "ReturnMixed2")
-		expected := Mixed2{1, 2, 3, 4}
+		expected := Mixed2{a: 1, b: 2, c: 3, d: 4}
 		if ret := ReturnMixed2(1, 2, 3, 4); ret != expected {
 			t.Fatalf("ReturnMixed2 returned %+v wanted %+v", ret, expected)
 		}
 	}
 	{
 		type Mixed3 struct {
+			_ structs.HostLayout
 			a float32
 			b uint32
 			c float64
 		}
 		var ReturnMixed3 func(a float32, b uint32, c float64) Mixed3
 		purego.RegisterLibFunc(&ReturnMixed3, lib, "ReturnMixed3")
-		expected := Mixed3{1, 2, 3}
+		expected := Mixed3{a: 1, b: 2, c: 3}
 		if ret := ReturnMixed3(1, 2, 3); ret != expected {
 			t.Fatalf("ReturnMixed3 returned %+v wanted %+v", ret, expected)
 		}
 	}
 	{
 		type Mixed4 struct {
+			_ structs.HostLayout
 			a float64
 			b uint32
 			c float32
 		}
 		var ReturnMixed4 func(a float64, b uint32, c float32) Mixed4
 		purego.RegisterLibFunc(&ReturnMixed4, lib, "ReturnMixed4")
-		expected := Mixed4{1, 2, 3}
+		expected := Mixed4{a: 1, b: 2, c: 3}
 		if ret := ReturnMixed4(1, 2, 3); ret != expected {
 			t.Fatalf("ReturnMixed4 returned %+v wanted %+v", ret, expected)
 		}
 	}
 	{
 		type Ptr1 struct {
+			_ structs.HostLayout
 			a *int64
 			b unsafe.Pointer
 		}
 		var ReturnPtr1 func(a *int64, b unsafe.Pointer) Ptr1
 		purego.RegisterLibFunc(&ReturnPtr1, lib, "ReturnPtr1")
 		a, b := new(int64), new(struct{})
-		expected := Ptr1{a, unsafe.Pointer(b)}
+		expected := Ptr1{a: a, b: unsafe.Pointer(b)}
 		if ret := ReturnPtr1(a, unsafe.Pointer(b)); ret != expected {
 			t.Fatalf("ReturnPtr1 returned %+v wanted %+v", ret, expected)
 		}
