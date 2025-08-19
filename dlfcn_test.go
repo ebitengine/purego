@@ -21,8 +21,8 @@ func TestSimpleDlsym(t *testing.T) {
 }
 
 func TestNestedDlopenCall(t *testing.T) {
-	libFileName, err := buildSharedLib("CC", t.TempDir(), "libdlnested", filepath.Join("testdata", "structtest", "structreturn_test.c"))
-	if err != nil {
+	libFileName := filepath.Join(t.TempDir(), "libdlnested")
+	if err := buildSharedLib("CC", libFileName, filepath.Join("testdata", "structtest", "structreturn_test.c")); err != nil {
 		t.Fatal(err)
 	}
 	defer os.Remove(libFileName)

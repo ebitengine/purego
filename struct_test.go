@@ -14,20 +14,21 @@ import (
 	"unsafe"
 
 	"github.com/ebitengine/purego"
+	"github.com/ebitengine/purego/internal/load"
 )
 
 func TestRegisterFunc_structArgs(t *testing.T) {
-	libFileName, err := buildSharedLib("CC", t.TempDir(), "structtest", filepath.Join("testdata", "structtest", "struct_test.c"))
-	if err != nil {
+	libFileName := filepath.Join(t.TempDir(), "structtest")
+	if err := buildSharedLib("CC", libFileName, filepath.Join("testdata", "structtest", "struct_test.c")); err != nil {
 		t.Fatal(err)
 	}
 	defer os.Remove(libFileName)
 
 	t.Logf("Built %v", libFileName)
 
-	lib, err := loadSharedLib(libFileName)
+	lib, err := load.OpenLibrary(libFileName)
 	if err != nil {
-		t.Fatalf("loadSharedLib(%q) failed: %v", libFileName, err)
+		t.Fatalf("OpenLibrary(%q) failed: %v", libFileName, err)
 	}
 
 	const (
@@ -479,17 +480,17 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 }
 
 func TestRegisterFunc_structReturns(t *testing.T) {
-	libFileName, err := buildSharedLib("CC", t.TempDir(), "structreturntest", filepath.Join("testdata", "structtest", "structreturn_test.c"))
-	if err != nil {
+	libFileName := filepath.Join(t.TempDir(), "structreturntest")
+	if err := buildSharedLib("CC", libFileName, filepath.Join("testdata", "structtest", "structreturn_test.c")); err != nil {
 		t.Fatal(err)
 	}
 	defer os.Remove(libFileName)
 
 	t.Logf("Built %v", libFileName)
 
-	lib, err := loadSharedLib(libFileName)
+	lib, err := load.OpenLibrary(libFileName)
 	if err != nil {
-		t.Fatalf("loadSharedLib(%q) failed: %v", libFileName, err)
+		t.Fatalf("OpenLibrary(%q) failed: %v", libFileName, err)
 	}
 
 	if runtime.GOOS != "windows" {
