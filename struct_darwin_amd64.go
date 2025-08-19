@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2024 The Ebitengine Authors
 
+//go:build darwin && amd64
+
 package purego
 
 import (
@@ -259,6 +261,6 @@ func placeStack(v reflect.Value, addStack func(uintptr)) {
 	}
 }
 
-func placeRegisters(v reflect.Value, addFloat func(uintptr), addInt func(uintptr)) {
+func placeRegisters(v reflect.Value, addFloat func(uintptr), addInt func(uintptr), keepAlive []any) []any {
 	panic("purego: not needed on amd64")
 }

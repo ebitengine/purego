@@ -1,20 +1,26 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2024 The Ebitengine Authors
 
-//go:build !(darwin && (amd64 || arm64)) && !(windows && amd64)
+//go:build windows && amd64
 
 package purego
 
-import "reflect"
+import (
+	"reflect"
+)
 
 func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFloat, addStack func(uintptr), keepAlive []any) []any {
-	panic("purego: struct arguments are not supported")
+	panic("not implemented")
 }
 
 func getStruct(outType reflect.Type, syscall syscall15Args) (v reflect.Value) {
-	panic("purego: struct returns are not supported")
+	panic("not implemented")
 }
 
-func placeRegisters(v reflect.Value, addFloat func(uintptr), addInt func(uintptr)) {
-	panic("purego: not needed on other platforms")
+func placeRegisters(v reflect.Value, addInt, _ func(uintptr), keepAlive []any) []any {
+	panic("not implemented")
+}
+
+func placeStack(v reflect.Value, addInt, addStack func(uintptr), keepAlive []any) []any {
+	panic("not implemented")
 }

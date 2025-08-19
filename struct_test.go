@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2024 The Ebitengine Authors
 
-//go:build darwin && (arm64 || amd64)
+//go:build (darwin && (arm64 || amd64)) || (windows && amd64)
 
 package purego_test
 
@@ -14,10 +14,11 @@ import (
 	"unsafe"
 
 	"github.com/ebitengine/purego"
+	"github.com/ebitengine/purego/internal/load"
 )
 
 func TestRegisterFunc_structArgs(t *testing.T) {
-	libFileName := filepath.Join(t.TempDir(), "structtest.so")
+	libFileName := filepath.Join(t.TempDir(), "structtest")
 	t.Logf("Build %v", libFileName)
 
 	if err := buildSharedLib("CC", libFileName, filepath.Join("testdata", "structtest", "struct_test.c")); err != nil {
@@ -25,9 +26,9 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 	}
 	defer os.Remove(libFileName)
 
-	lib, err := purego.Dlopen(libFileName, purego.RTLD_NOW|purego.RTLD_GLOBAL)
+	lib, err := load.OpenLibrary(libFileName)
 	if err != nil {
-		t.Fatalf("Dlopen(%q) failed: %v", libFileName, err)
+		t.Fatalf("OpenLibrary(%q) failed: %v", libFileName, err)
 	}
 
 	const (
@@ -39,27 +40,31 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 		expectedDouble   float64 = 10
 	)
 
-	{
-		type Empty struct{}
-		var NoStruct func(Empty) int64
-		purego.RegisterLibFunc(&NoStruct, lib, "NoStruct")
-		if ret := NoStruct(Empty{}); ret != expectedUnsigned {
-			t.Fatalf("NoStruct returned %#x wanted %#x", ret, expectedUnsigned)
+	// Empty structs can't be compiled by MSVC
+	if runtime.GOOS != "windows" {
+		{
+			type Empty struct{}
+			var NoStruct func(Empty) int64
+			purego.RegisterLibFunc(&NoStruct, lib, "NoStruct")
+			if ret := NoStruct(Empty{}); ret != expectedUnsigned {
+				t.Fatalf("NoStruct returned %#x wanted %#x", ret, expectedUnsigned)
+			}
+		}
+		{
+			type EmptyEmpty struct{}
+			var EmptyEmptyFn func(EmptyEmpty) int64
+			purego.RegisterLibFunc(&EmptyEmptyFn, lib, "EmptyEmpty")
+			if ret := EmptyEmptyFn(EmptyEmpty{}); ret != expectedUnsigned {
+				t.Fatalf("EmptyEmpty returned %#x wanted %#x", ret, expectedUnsigned)
+			}
+			var EmptyEmptyWithReg func(uint32, EmptyEmpty, uint32) int64
+			purego.RegisterLibFunc(&EmptyEmptyWithReg, lib, "EmptyEmptyWithReg")
+			if ret := EmptyEmptyWithReg(0xdead, EmptyEmpty{}, 0xbeef); ret != expectedUnsigned {
+				t.Fatalf("EmptyEmptyWithReg returned %#x wanted %#x", ret, expectedUnsigned)
+			}
 		}
 	}
-	{
-		type EmptyEmpty struct{}
-		var EmptyEmptyFn func(EmptyEmpty) int64
-		purego.RegisterLibFunc(&EmptyEmptyFn, lib, "EmptyEmpty")
-		if ret := EmptyEmptyFn(EmptyEmpty{}); ret != expectedUnsigned {
-			t.Fatalf("EmptyEmpty returned %#x wanted %#x", ret, expectedUnsigned)
-		}
-		var EmptyEmptyWithReg func(uint32, EmptyEmpty, uint32) int64
-		purego.RegisterLibFunc(&EmptyEmptyWithReg, lib, "EmptyEmptyWithReg")
-		if ret := EmptyEmptyWithReg(0xdead, EmptyEmpty{}, 0xbeef); ret != expectedUnsigned {
-			t.Fatalf("EmptyEmptyWithReg returned %#x wanted %#x", ret, expectedUnsigned)
-		}
-	}
+
 	{
 		type GreaterThan16Bytes struct {
 			x, y, z *int64
@@ -475,7 +480,7 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 }
 
 func TestRegisterFunc_structReturns(t *testing.T) {
-	libFileName := filepath.Join(t.TempDir(), "structreturntest.so")
+	libFileName := filepath.Join(t.TempDir(), "structreturntest")
 	t.Logf("Build %v", libFileName)
 
 	if err := buildSharedLib("CC", libFileName, filepath.Join("testdata", "structtest", "structreturn_test.c")); err != nil {
@@ -483,18 +488,19 @@ func TestRegisterFunc_structReturns(t *testing.T) {
 	}
 	defer os.Remove(libFileName)
 
-	lib, err := purego.Dlopen(libFileName, purego.RTLD_NOW|purego.RTLD_GLOBAL)
+	lib, err := load.OpenLibrary(libFileName)
 	if err != nil {
-		t.Fatalf("Dlopen(%q) failed: %v", libFileName, err)
+		t.Fatalf("OpenLibrary(%q) failed: %v", libFileName, err)
 	}
 
-	{
+	if runtime.GOOS != "windows" {
 		type Empty struct{}
 		var ReturnEmpty func() Empty
 		purego.RegisterLibFunc(&ReturnEmpty, lib, "ReturnEmpty")
 		ret := ReturnEmpty()
 		_ = ret
 	}
+
 	{
 		type inner struct{ a int16 }
 		type StructInStruct struct {

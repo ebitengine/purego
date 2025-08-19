@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2024 The Ebitengine Authors
 
+//go:build darwin && arm64
+
 package purego
 
 import (
@@ -79,14 +81,14 @@ func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFl
 			*numInts = numOfIntegerRegisters()
 		}
 
-		placeRegisters(v, addFloat, addInt)
+		keepAlive = placeRegisters(v, addFloat, addInt, keepAlive)
 	} else {
 		keepAlive = placeStack(v, keepAlive, addInt)
 	}
 	return keepAlive // the struct was allocated so don't panic
 }
 
-func placeRegisters(v reflect.Value, addFloat func(uintptr), addInt func(uintptr)) {
+func placeRegisters(v reflect.Value, addFloat func(uintptr), addInt func(uintptr), keepAlive []any) []any {
 	var val uint64
 	var shift byte
 	var flushed bool
@@ -195,6 +197,8 @@ func placeRegisters(v reflect.Value, addFloat func(uintptr), addInt func(uintptr
 			addInt(uintptr(val))
 		}
 	}
+
+	return keepAlive
 }
 
 func placeStack(v reflect.Value, keepAlive []any, addInt func(uintptr)) []any {
