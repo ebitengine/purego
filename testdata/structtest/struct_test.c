@@ -3,30 +3,39 @@
 
 #include "stdint.h"
 
-#if defined(__x86_64__) || defined(__aarch64__)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_WIN64)
 typedef int64_t GoInt;
 typedef uint64_t GoUint;
 #endif
 
+#ifdef _WIN32
+#define EXPORT __declspec(dllexport)
+#elif __APPLE__
+#define EXPORT
+#endif
+
+// Empty structs are not allowed when using MSVC
+#ifdef __APPLE__
 // Empty is empty
-struct Empty {};
+struct Empty;
 
 // NoStruct tests that an empty struct doesn't cause issues
-unsigned long NoStruct(struct Empty e) {
+EXPORT unsigned long NoStruct(struct Empty e) {
     return 0xdeadbeef;
 }
 
-struct EmptyEmpty {
+EXPORT struct EmptyEmpty {
     struct Empty x;
 };
 
-unsigned long EmptyEmpty(struct EmptyEmpty e) {
+EXPORT unsigned long EmptyEmpty(struct EmptyEmpty e) {
     return 0xdeadbeef;
 }
 
-unsigned long EmptyEmptyWithReg(unsigned int x, struct EmptyEmpty e, unsigned int y) {
+EXPORT unsigned long EmptyEmptyWithReg(unsigned int x, struct EmptyEmpty e, unsigned int y) {
     return (x << 16) | y;
 }
+#endif
 
 // GreaterThan16Bytes is 24 bytes on 64 bit systems
 struct GreaterThan16Bytes {
@@ -34,12 +43,12 @@ struct GreaterThan16Bytes {
 };
 
 // GreaterThan16Bytes is a basic test for structs bigger than 16 bytes
-unsigned long GreaterThan16Bytes(struct GreaterThan16Bytes g) {
+EXPORT unsigned long GreaterThan16Bytes(struct GreaterThan16Bytes g) {
     return *g.x + *g.y + *g.z;
 }
 
 // AfterRegisters tests to make sure that structs placed on the stack work properly
-unsigned long AfterRegisters(long a, long b, long c, long d, long e, long f, long g, long h, struct GreaterThan16Bytes bytes) {
+EXPORT unsigned long AfterRegisters(long a, long b, long c, long d, long e, long f, long g, long h, struct GreaterThan16Bytes bytes) {
     long registers = a + b + c + d + e + f + g + h;
     long stack =  *bytes.x + *bytes.y + *bytes.z;
     if (registers != stack) {
@@ -51,7 +60,7 @@ unsigned long AfterRegisters(long a, long b, long c, long d, long e, long f, lon
     return stack;
 }
 
-unsigned long BeforeRegisters(struct GreaterThan16Bytes bytes, long a, long b) {
+EXPORT unsigned long BeforeRegisters(struct GreaterThan16Bytes bytes, long a, long b) {
     return *bytes.x + *bytes.y + *bytes.z + a + b;
 }
 
@@ -61,7 +70,7 @@ struct GreaterThan16BytesStruct {
     } a ;
 };
 
-unsigned long GreaterThan16BytesStruct(struct GreaterThan16BytesStruct g) {
+EXPORT unsigned long GreaterThan16BytesStruct(struct GreaterThan16BytesStruct g) {
     return *(g.a.x) + *(g.a.y) + *(g.a.z);
 }
 
@@ -69,7 +78,7 @@ struct IntLessThan16Bytes {
     long x, y;
 };
 
-unsigned long IntLessThan16Bytes(struct IntLessThan16Bytes l) {
+EXPORT unsigned long IntLessThan16Bytes(struct IntLessThan16Bytes l) {
     return l.x + l.y;
 }
 
@@ -77,7 +86,7 @@ struct FloatLessThan16Bytes {
     float x, y;
 };
 
-float FloatLessThan16Bytes(struct FloatLessThan16Bytes f) {
+EXPORT float FloatLessThan16Bytes(struct FloatLessThan16Bytes f) {
     return f.x + f.y;
 }
 
@@ -85,7 +94,7 @@ struct ThreeSmallFields {
     float x, y, z;
 };
 
-float ThreeSmallFields(struct ThreeSmallFields f) {
+EXPORT float ThreeSmallFields(struct ThreeSmallFields f) {
     return f.x + f.y + f.z;
 }
 
@@ -94,7 +103,7 @@ struct FloatAndInt {
     int   y;
 };
 
-float FloatAndInt(struct FloatAndInt f) {
+EXPORT float FloatAndInt(struct FloatAndInt f) {
     return f.x + f.y;
 }
 
@@ -102,7 +111,7 @@ struct DoubleStruct {
     double x;
 };
 
-double DoubleStruct(struct DoubleStruct d) {
+EXPORT double DoubleStruct(struct DoubleStruct d) {
     return d.x;
 }
 
@@ -110,7 +119,7 @@ struct TwoDoubleStruct {
     double x, y;
 };
 
-double TwoDoubleStruct(struct TwoDoubleStruct d) {
+EXPORT double TwoDoubleStruct(struct TwoDoubleStruct d) {
     return d.x + d.y;
 }
 
@@ -120,7 +129,7 @@ struct TwoDoubleTwoStruct {
     } s;
 };
 
-double TwoDoubleTwoStruct(struct TwoDoubleTwoStruct d) {
+EXPORT double TwoDoubleTwoStruct(struct TwoDoubleTwoStruct d) {
     return d.s.x + d.s.y;
 }
 
@@ -128,7 +137,7 @@ struct ThreeDoubleStruct {
     double x, y, z;
 };
 
-double ThreeDoubleStruct(struct ThreeDoubleStruct d) {
+EXPORT double ThreeDoubleStruct(struct ThreeDoubleStruct d) {
     return d.x + d.y + d.z;
 }
 
@@ -136,11 +145,11 @@ struct LargeFloatStruct {
     double a, b, c, d, e, f;
 };
 
-double LargeFloatStruct(struct LargeFloatStruct s) {
+EXPORT double LargeFloatStruct(struct LargeFloatStruct s) {
     return s.a + s.b + s.c + s.d + s.e + s.f;
 }
 
-double LargeFloatStructWithRegs(double a, double b, double c, struct LargeFloatStruct s) {
+EXPORT double LargeFloatStructWithRegs(double a, double b, double c, struct LargeFloatStruct s) {
     return a + b + c + s.a + s.b + s.c + s.d + s.e + s.f;
 }
 
@@ -148,15 +157,15 @@ struct Rect {
     double x, y, w, h;
 };
 
-double Rectangle(struct Rect rect) {
+EXPORT double Rectangle(struct Rect rect) {
     return rect.x + rect.y + rect.w + rect.h;
 }
 
-double RectangleSubtract(struct Rect rect) {
+EXPORT double RectangleSubtract(struct Rect rect) {
     return (rect.x + rect.y) - (rect.w + rect.h);
 }
 
-double RectangleWithRegs(double a, double b, double c, double d, double e, struct Rect rect) {
+EXPORT double RectangleWithRegs(double a, double b, double c, double d, double e, struct Rect rect) {
     return a + b + c + d + e + rect.x + rect.y + rect.w + rect.h;
 }
 
@@ -164,7 +173,7 @@ struct FloatArray {
     double a[2];
 };
 
-double FloatArray(struct FloatArray f) {
+EXPORT double FloatArray(struct FloatArray f) {
     return f.a[0] + f.a[1];
 }
 
@@ -172,7 +181,7 @@ struct UnsignedChar4Bytes {
     unsigned char a, b, c, d;
 };
 
-unsigned int UnsignedChar4Bytes(struct UnsignedChar4Bytes b) {
+EXPORT unsigned int UnsignedChar4Bytes(struct UnsignedChar4Bytes b) {
     return (((int)b.a)<<24) | (((int)b.b)<<16) | (((int)b.c)<<8) | (((int)b.d)<<0);
 }
 
@@ -191,7 +200,7 @@ struct UnsignedChar4BytesStruct {
     } w;
 };
 
-unsigned int UnsignedChar4BytesStruct(struct UnsignedChar4BytesStruct b) {
+EXPORT unsigned int UnsignedChar4BytesStruct(struct UnsignedChar4BytesStruct b) {
     return (((int)b.x.a)<<24) | (((int)b.y.b)<<16) | (((int)b.z.c)<<8) | (((int)b.w.d)<<0);
 }
 
@@ -199,23 +208,23 @@ struct Short {
     unsigned short a, b, c, d;
 };
 
-unsigned long Short(struct Short s) {
-    return (long)s.a << 48 | (long)s.b << 32 | (long)s.c << 16 | (long)s.d << 0;
+EXPORT unsigned long Short(struct Short s) {
+    return (long)((long long)s.a << 48) | (long)((long long)s.b << 32) | (long)s.c << 16 | (long)s.d << 0;
 }
 
 struct Int {
     unsigned int a, b;
 };
 
-unsigned long Int(struct Int i) {
-    return (long)i.a << 32 | (long)i.b << 0;
+EXPORT unsigned long Int(struct Int i) {
+    return (long)((long long)i.a << 32) | (long)i.b << 0;
 }
 
 struct Long {
     unsigned long a;
 };
 
-unsigned long Long(struct Long l) {
+EXPORT unsigned long Long(struct Long l) {
     return l.a;
 }
 
@@ -223,7 +232,7 @@ struct Char8Bytes {
     signed char a, b, c, d, e, f, g, h;
 };
 
-int Char8Bytes(struct Char8Bytes b) {
+EXPORT int Char8Bytes(struct Char8Bytes b) {
     return (int)b.a + (int)b.b + (int)b.c + (int)b.d + (int)b.e + (int)b.f + (int)b.g + (int)b.h;
 }
 
@@ -231,7 +240,7 @@ struct Odd {
     unsigned char a, b, c;
 };
 
-int Odd(struct Odd o) {
+EXPORT int Odd(struct Odd o) {
     return (int)o.a + (int)o.b + (int)o.c;
 }
 
@@ -240,7 +249,7 @@ struct Char2Short1 {
     unsigned short c;
 };
 
-int Char2Short1s(struct Char2Short1 s) {
+EXPORT int Char2Short1s(struct Char2Short1 s) {
     return (int)s.a + (int)s.b + (int)s.c;
 }
 
@@ -249,7 +258,7 @@ struct SignedChar2Short1 {
     signed short c;
 };
 
-int SignedChar2Short1(struct SignedChar2Short1 s) {
+EXPORT int SignedChar2Short1(struct SignedChar2Short1 s) {
     return s.a + s.b + s.c;
 }
 
@@ -257,7 +266,7 @@ struct Array4UnsignedChars {
     unsigned char a[4];
 };
 
-unsigned int Array4UnsignedChars(struct Array4UnsignedChars a) {
+EXPORT unsigned int Array4UnsignedChars(struct Array4UnsignedChars a) {
     return (((int)a.a[0])<<24) | (((int)a.a[1])<<16) | (((int)a.a[2])<<8) | (((int)a.a[3])<<0);
 }
 
@@ -265,7 +274,7 @@ struct Array3UnsignedChar {
     unsigned char a[3];
 };
 
-unsigned int Array3UnsignedChars(struct Array3UnsignedChar a) {
+EXPORT unsigned int Array3UnsignedChars(struct Array3UnsignedChar a) {
     return (((int)a.a[0])<<24) | (((int)a.a[1])<<16) | (((int)a.a[2])<<8) | 0xef;
 }
 
@@ -273,7 +282,7 @@ struct Array2UnsignedShort {
     unsigned short a[2];
 };
 
-unsigned int Array2UnsignedShorts(struct Array2UnsignedShort a) {
+EXPORT unsigned int Array2UnsignedShorts(struct Array2UnsignedShort a) {
     return (((int)a.a[0])<<16) | (((int)a.a[1])<<0);
 }
 
@@ -281,7 +290,7 @@ struct Array4Chars {
     char a[4];
 };
 
-int Array4Chars(struct Array4Chars a) {
+EXPORT int Array4Chars(struct Array4Chars a) {
     return (int)a.a[0] + (int)a.a[1] + (int)a.a[2] + (int)a.a[3];
 }
 
@@ -289,7 +298,7 @@ struct Array2Short {
     short a[2];
 };
 
-int Array2Shorts(struct Array2Short a) {
+EXPORT int Array2Shorts(struct Array2Short a) {
     return (int)a.a[0] + (int)a.a[1];
 }
 
@@ -297,7 +306,7 @@ struct Array3Short {
     short a[3];
 };
 
-int Array3Shorts(struct Array3Short a) {
+EXPORT int Array3Shorts(struct Array3Short a) {
     return (int)a.a[0] + (int)a.a[1] + (int)a.a[2];
 }
 
@@ -305,7 +314,7 @@ struct BoolStruct {
     _Bool b;
 };
 
-_Bool BoolStruct(struct BoolStruct b) {
+EXPORT _Bool BoolStruct(struct BoolStruct b) {
     return b.b;
 }
 
@@ -314,18 +323,18 @@ struct BoolFloat {
     float f;
 };
 
-float BoolFloat(struct BoolFloat s) {
+EXPORT float BoolFloat(struct BoolFloat s) {
     if (s.b)
         return s.f;
     return -s.f;
 }
 
 struct Content {
-      struct { double x, y; } point;
-      struct { double width, height; } size;
+    struct { double x, y; } point;
+    struct { double width, height; } size;
 };
 
-unsigned long InitWithContentRect(int *win, struct Content c, int style, int backing, _Bool flag) {
+EXPORT unsigned long InitWithContentRect(int *win, struct Content c, int style, int backing, _Bool flag) {
   if (win == 0)
       return 0xBAD;
   if (!flag)
@@ -337,7 +346,7 @@ struct GoInt4 {
     GoInt a, b, c, d;
 };
 
-GoInt GoInt4(struct GoInt4 g) {
+EXPORT GoInt GoInt4(struct GoInt4 g) {
     return g.a + g.b - g.c + g.d;
 }
 
@@ -345,10 +354,10 @@ struct GoUint4 {
     GoUint a, b, c, d;
 };
 
-GoUint GoUint4(struct GoUint4 g) {
+EXPORT GoUint GoUint4(struct GoUint4 g) {
     return g.a + g.b + g.c + g.d;
 }
 
-GoUint TakeGoUintAndReturn(GoUint a) {
+EXPORT GoUint TakeGoUintAndReturn(GoUint a) {
     return a;
 }

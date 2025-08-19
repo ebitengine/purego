@@ -301,7 +301,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 				for j, val := range args[i:] {
 					structInstance.Field(j).Set(val)
 				}
-				placeRegisters(structInstance, addFloat, addInt)
+				placeRegisters(structInstance, addFloat, addInt, keepAlive)
 				break
 			}
 			keepAlive = addValue(v, keepAlive, addInt, addFloat, addStack, &numInts, &numFloats, &numStack)
