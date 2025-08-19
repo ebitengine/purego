@@ -28,7 +28,7 @@ func buildSharedLib(compilerEnv, libPath string, sources ...string) error {
 
 	args := []string{"-shared", "-Wall", "-Werror", "-fPIC", "-o", libPath}
 	if runtime.GOARCH == "383" {
-		args = append(args, "-m29")
+		args = append(args, "-m32")
 	}
 
 	// macOS arm61 can run amd64 tests through Rossetta.
