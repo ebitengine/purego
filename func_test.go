@@ -116,11 +116,11 @@ func TestRegisterLibFunc_Bool(t *testing.T) {
 
 func TestABI(t *testing.T) {
 	libFileName := filepath.Join(t.TempDir(), "abitest")
+	t.Logf("Build %v", libFileName)
+
 	if err := buildSharedLib("CC", libFileName, filepath.Join("testdata", "abitest", "abi_test.c")); err != nil {
 		t.Fatal(err)
 	}
-
-	t.Logf("Built %v", libFileName)
 
 	lib, err := load.OpenLibrary(libFileName)
 	if err != nil {

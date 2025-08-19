@@ -19,12 +19,12 @@ import (
 // when C calls Go code from a non-Go thread in a dynamically loaded share library.
 func TestCallGoFromSharedLib(t *testing.T) {
 	libFileName := filepath.Join(t.TempDir(), "libcbtest")
+	t.Logf("Build %v", libFileName)
+
 	if err := buildSharedLib("CC", libFileName, filepath.Join("testdata", "libcbtest", "callback_test.c")); err != nil {
 		t.Fatal(err)
 	}
 	defer os.Remove(libFileName)
-
-	t.Logf("Built %v", libFileName)
 
 	lib, err := purego.Dlopen(libFileName, purego.RTLD_NOW|purego.RTLD_GLOBAL)
 	if err != nil {

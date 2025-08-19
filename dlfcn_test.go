@@ -22,12 +22,12 @@ func TestSimpleDlsym(t *testing.T) {
 
 func TestNestedDlopenCall(t *testing.T) {
 	libFileName := filepath.Join(t.TempDir(), "libdlnested")
+	t.Logf("Build %v", libFileName)
+
 	if err := buildSharedLib("CC", libFileName, filepath.Join("testdata", "structtest", "structreturn_test.c")); err != nil {
 		t.Fatal(err)
 	}
 	defer os.Remove(libFileName)
-
-	t.Logf("Built %v", libFileName)
 
 	lib, err := purego.Dlopen(libFileName, purego.RTLD_NOW|purego.RTLD_GLOBAL)
 	if err != nil {

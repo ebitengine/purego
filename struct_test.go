@@ -19,12 +19,12 @@ import (
 
 func TestRegisterFunc_structArgs(t *testing.T) {
 	libFileName := filepath.Join(t.TempDir(), "structtest")
+	t.Logf("Build %v", libFileName)
+
 	if err := buildSharedLib("CC", libFileName, filepath.Join("testdata", "structtest", "struct_test.c")); err != nil {
 		t.Fatal(err)
 	}
 	defer os.Remove(libFileName)
-
-	t.Logf("Built %v", libFileName)
 
 	lib, err := load.OpenLibrary(libFileName)
 	if err != nil {
@@ -481,12 +481,12 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 
 func TestRegisterFunc_structReturns(t *testing.T) {
 	libFileName := filepath.Join(t.TempDir(), "structreturntest")
+	t.Logf("Build %v", libFileName)
+
 	if err := buildSharedLib("CC", libFileName, filepath.Join("testdata", "structtest", "structreturn_test.c")); err != nil {
 		t.Fatal(err)
 	}
 	defer os.Remove(libFileName)
-
-	t.Logf("Built %v", libFileName)
 
 	lib, err := load.OpenLibrary(libFileName)
 	if err != nil {
