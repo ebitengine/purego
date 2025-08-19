@@ -4,7 +4,7 @@
 #ifdef __APPLE__
 #include <dlfcn.h>
 #define DLSYM(F, N) dlsym(F, N)
-#elif _WIN32
+#elif defined(_WIN32)
 #define WIN32_LEAN_AND_MEAN
 #include "Windows.h"
 #define DLSYM(F, N) LoadLibraryA(N)

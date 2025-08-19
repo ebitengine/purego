@@ -8,7 +8,7 @@
 
 #ifdef _WIN32
 #define EXPORT __declspec(dllexport)
-#elif __APPLE__
+#else
 #define EXPORT
 #endif
 

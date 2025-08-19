@@ -3,19 +3,19 @@
 
 #include "stdint.h"
 
-#if defined(__x86_64__) || defined(__aarch64__) || defined(_WIN64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_WIN32)
 typedef int64_t GoInt;
 typedef uint64_t GoUint;
 #endif
 
 #ifdef _WIN32
 #define EXPORT __declspec(dllexport)
-#elif __APPLE__
+#else
 #define EXPORT
 #endif
 
 // Empty structs are not allowed when using MSVC
-#ifdef __APPLE__
+#ifndef _WIN32
 // Empty is empty
 struct Empty;
 

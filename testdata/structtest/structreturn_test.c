@@ -5,12 +5,12 @@
 
 #ifdef _WIN32
 #define EXPORT __declspec(dllexport)
-#elif __APPLE__
+#else
 #define EXPORT
 #endif
 
 // Empty structs are not allowed when using MSVC
-#ifdef __APPLE__
+#ifndef _WIN32
 struct Empty{};
 
 struct Empty ReturnEmpty() {
