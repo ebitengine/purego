@@ -124,7 +124,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 		panic("purego: cfn is nil")
 	}
 	if ty.NumOut() == 1 && (ty.Out(0).Kind() == reflect.Float32 || ty.Out(0).Kind() == reflect.Float64) &&
-		runtime.GOARCH != "arm64" && runtime.GOARCH != "amd64" {
+		runtime.GOARCH != "arm64" && runtime.GOARCH != "amd64" && runtime.GOARCH != "loong64" {
 		panic("purego: float returns are not supported")
 	}
 	{
@@ -257,7 +257,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 		var arm64_r8 uintptr
 		if ty.NumOut() == 1 && ty.Out(0).Kind() == reflect.Struct {
 			outType := ty.Out(0)
-			if runtime.GOARCH == "amd64" && outType.Size() > maxRegAllocStructSize {
+			if (runtime.GOARCH == "amd64" || runtime.GOARCH == "loong64") && outType.Size() > maxRegAllocStructSize {
 				val := reflect.New(outType)
 				keepAlive = append(keepAlive, val)
 				addInt(val.Pointer())
@@ -310,7 +310,17 @@ func RegisterFunc(fptr any, cfn uintptr) {
 		syscall := thePool.Get().(*syscall15Args)
 		defer thePool.Put(syscall)
 
-		if runtime.GOARCH == "arm64" || runtime.GOOS != "windows" {
+		if runtime.GOARCH == "loong64" {
+			*syscall = syscall15Args{
+				cfn,
+				sysargs[0], sysargs[1], sysargs[2], sysargs[3], sysargs[4], sysargs[5],
+				sysargs[6], sysargs[7], sysargs[8], sysargs[9], sysargs[10], sysargs[11],
+				sysargs[12], sysargs[13], sysargs[14],
+				floats[0], floats[1], floats[2], floats[3], floats[4], floats[5], floats[6], floats[7],
+				0,
+			}
+			runtime_cgocall(syscall15XABI0, unsafe.Pointer(syscall))
+		} else if runtime.GOARCH == "arm64" || runtime.GOOS != "windows" {
 			// Use the normal arm64 calling convention even on Windows
 			*syscall = syscall15Args{
 				cfn,
@@ -467,7 +477,7 @@ func roundUpTo8(val uintptr) uintptr {
 
 func numOfIntegerRegisters() int {
 	switch runtime.GOARCH {
-	case "arm64":
+	case "arm64", "loong64":
 		return 8
 	case "amd64":
 		return 6
