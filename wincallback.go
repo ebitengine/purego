@@ -39,8 +39,8 @@ TEXT callbackasm(SB),NOSPLIT|NOFRAME,$0
 		buf.WriteString("\tCALL\tcallbackasm1(SB)\n")
 	}
 
-	filename := fmt.Sprintf("zcallback_amd64.s")
-	err := os.WriteFile(filename, buf.Bytes(), 0666)
+	filename := "zcallback_amd64.s"
+	err := os.WriteFile(filename, buf.Bytes(), 0644)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "wincallback: %s\n", err)
 		os.Exit(2)
@@ -70,7 +70,7 @@ TEXT callbackasm(SB),NOSPLIT|NOFRAME,$0
 		buf.WriteString("\tB\tcallbackasm1(SB)\n")
 	}
 
-	err := os.WriteFile("zcallback_arm64.s", buf.Bytes(), 0666)
+	err := os.WriteFile("zcallback_arm64.s", buf.Bytes(), 0644)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "wincallback: %s\n", err)
 		os.Exit(2)
