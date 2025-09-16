@@ -49,7 +49,7 @@ func TestRegisterFunc(t *testing.T) {
 }
 
 func Test_qsort(t *testing.T) {
-	if runtime.GOARCH != "arm64" && runtime.GOARCH != "amd64" {
+	if runtime.GOARCH != "arm64" && runtime.GOARCH != "amd64" && runtime.GOARCH != "loong64" {
 		t.Skip("Platform doesn't support Floats")
 		return
 	}
@@ -78,7 +78,7 @@ func Test_qsort(t *testing.T) {
 }
 
 func TestRegisterFunc_Floats(t *testing.T) {
-	if runtime.GOARCH != "arm64" && runtime.GOARCH != "amd64" {
+	if runtime.GOARCH != "arm64" && runtime.GOARCH != "amd64" && runtime.GOARCH != "loong64" {
 		t.Skip("Platform doesn't support Floats")
 		return
 	}
@@ -117,7 +117,7 @@ func TestRegisterFunc_Floats(t *testing.T) {
 }
 
 func TestRegisterLibFunc_Bool(t *testing.T) {
-	if runtime.GOARCH != "arm64" && runtime.GOARCH != "amd64" {
+	if runtime.GOARCH != "arm64" && runtime.GOARCH != "amd64" && runtime.GOARCH != "loong64" {
 		t.Skip("Platform doesn't support callbacks")
 		return
 	}

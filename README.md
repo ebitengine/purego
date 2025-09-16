@@ -27,7 +27,7 @@ except for float arguments and return values.
 ## Supported Platforms
 
 - **FreeBSD**: amd64, arm64
-- **Linux**: amd64, arm64
+- **Linux**: amd64, arm64, loong64
 - **macOS / iOS**: amd64, arm64
 - **Windows**: 386*, amd64, arm*, arm64
 
