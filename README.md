@@ -26,12 +26,25 @@ except for float arguments and return values.
 
 ## Supported Platforms
 
-- **FreeBSD**: amd64, arm64
-- **Linux**: amd64, arm64, loong64
-- **macOS / iOS**: amd64, arm64
-- **Windows**: 386*, amd64, arm*, arm64
+### Tier 1
 
-`*` These architectures only support SyscallN and NewCallback
+Tier 1 platforms are the primary targets officially supported by PureGo. When a new version of PureGo is released, any critical bugs found on Tier 1 platforms are treated as release blockers. The release will be postponed until such issues are resolved.
+
+- **Android**: amd64, arm64
+- **iOS**: amd64, arm64
+- **Linux**: amd64, arm64
+- **macOS**: amd64, arm64
+- **Windows**: amd64, arm64
+
+### Tier 2
+
+Tier 2 platforms are supported by PureGo on a best-effort basis. Critical bugs on Tier 2 platforms do not block new PureGo releases. However, fixes contributed by external contributors are very welcome and encouraged.
+
+- **FreeBSD**: amd64, arm64
+- **Linux**: loong64
+- **Windows**: 386*, arm*
+
+`*` These architectures only support `SyscallN` and `NewCallback`
 
 ## Example
 
