@@ -40,8 +40,9 @@ Tier 1 platforms are the primary targets officially supported by PureGo. When a 
 
 Tier 2 platforms are supported by PureGo on a best-effort basis. Critical bugs on Tier 2 platforms do not block new PureGo releases. However, fixes contributed by external contributors are very welcome and encouraged.
 
+- **Android**: 386, arm
 - **FreeBSD**: amd64, arm64
-- **Linux**: loong64
+- **Linux**: 386, arm, loong64
 - **Windows**: 386*, arm*
 
 `*` These architectures only support `SyscallN` and `NewCallback`
