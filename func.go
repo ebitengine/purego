@@ -15,6 +15,7 @@ import (
 	"unsafe"
 
 	"github.com/ebitengine/purego/internal/strings"
+	"github.com/ebitengine/purego/internal/xreflect"
 )
 
 var thePool = sync.Pool{New: func() any {
@@ -271,7 +272,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 			}
 		}
 		for i, v := range args {
-			if variadic, ok := args[i].Interface().([]any); ok {
+			if variadic, ok := xreflect.TypeAssert[[]any](args[i]); ok {
 				if i != len(args)-1 {
 					panic("purego: can only expand last parameter")
 				}
