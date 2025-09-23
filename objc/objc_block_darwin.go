@@ -10,6 +10,7 @@ import (
 	"unsafe"
 
 	"github.com/ebitengine/purego"
+	"github.com/ebitengine/purego/internal/xreflect"
 )
 
 const (
@@ -167,7 +168,11 @@ func (b *blockCache) getLayout(typ reflect.Type) blockLayout {
 		reflect.MakeFunc(
 			typ,
 			func(args []reflect.Value) (results []reflect.Value) {
-				return b.Functions.Load(args[0].Interface().(Block)).Call(args)
+				block, ok := xreflect.TypeAssert[Block](args[0])
+				if !ok {
+					panic(fmt.Sprintf("objc: block argument is not a block but %s", args[0].Type().String()))
+				}
+				return b.Functions.Load(block).Call(args)
 			},
 		).Interface(),
 	)
@@ -258,7 +263,7 @@ func InvokeBlock[T any](block Block, args ...any) (result T, err error) {
 	callResult := fn.Call(reflectedArgs)
 
 	var ok bool
-	result, ok = callResult[0].Interface().(T)
+	result, ok = xreflect.TypeAssert[T](callResult[0])
 	if !ok {
 		return result, fmt.Errorf("objc: the returned value type %s was not %T", callResult[0].Type().String(), result)
 	}
