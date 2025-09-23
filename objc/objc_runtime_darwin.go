@@ -372,7 +372,7 @@ func RegisterClass(name string, superClass Class, protocols []*Protocol, ivars [
 				}
 				id, ok := xreflect.TypeAssert[ID](args[0])
 				if !ok {
-					panic("objc: id argument is not a ID")
+					panic(fmt.Sprintf("objc: id argument is not a ID is %s", args[0].Type().String()))
 				}
 				ptr := *(*unsafe.Pointer)(unsafe.Pointer(&id)) // circumvent go vet
 				// the variable is located at an offset from the id
