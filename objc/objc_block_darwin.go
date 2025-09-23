@@ -170,7 +170,7 @@ func (b *blockCache) getLayout(typ reflect.Type) blockLayout {
 			func(args []reflect.Value) (results []reflect.Value) {
 				block, ok := xreflect.TypeAssert[Block](args[0])
 				if !ok {
-					panic("objc: block argument is not a block")
+					panic(fmt.Sprintf("objc: block argument is not a block but %s", args[0].Type().String()))
 				}
 				return b.Functions.Load(block).Call(args)
 			},

@@ -344,7 +344,7 @@ func RegisterClass(name string, superClass Class, protocols []*Protocol, ivars [
 				// However, since the type of the variable is unknown reflection is used to actually assign the value
 				id, ok := xreflect.TypeAssert[ID](args[0])
 				if !ok {
-					panic("objc: id argument is not a ID")
+					panic(fmt.Sprintf("objc: id argument is not a ID but %s", args[0].Type().String()))
 				}
 				ptr := *(*unsafe.Pointer)(unsafe.Pointer(&id)) // circumvent go vet
 				reflect.NewAt(ivar.Type, unsafe.Add(ptr, offset)).Elem().Set(args[2])
