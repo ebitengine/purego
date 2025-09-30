@@ -108,7 +108,7 @@ This is a list of the copied files:
 * `internal/fakecgo/freebsd.go` from package `runtime/cgo`
 * `internal/fakecgo/netbsd.go` from package `runtime/cgo`
 
-The `internal/fakecgo/go_GOOS.go` files where modified from `runtime/cgo/gcc_GOOS_GOARCH.go`.
+The `internal/fakecgo/go_GOOS.go` files were modified from `runtime/cgo/gcc_GOOS_GOARCH.go`.
 
 The files `abi_*.h` and `internal/fakecgo/abi_*.h` are the same because Bazel does not support cross-package use of
 `#include` so we need each one once per package. (cf. [issue](https://github.com/bazelbuild/rules_go/issues/3636))
