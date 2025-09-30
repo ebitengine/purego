@@ -92,6 +92,8 @@ func x_cgo_init(g *G, setg uintptr) {
 	}
 	pthread_attr_init(attr)
 	pthread_attr_getstacksize(attr, &size)
+	// runtime/cgo uses __builtin_frame_address(0) instead of `uintptr(unsafe.Pointer(&size))`
+	// but this should be OK since we are taking the address of the first variable in this function.
 	g.stacklo = uintptr(unsafe.Pointer(&size)) - uintptr(size) + 4096
 	pthread_attr_destroy(attr)
 	free(unsafe.Pointer(attr))
