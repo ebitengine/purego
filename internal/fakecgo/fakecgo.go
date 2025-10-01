@@ -21,6 +21,7 @@ type argset struct {
 
 //go:nosplit
 //go:norace
-func (a *argset) arg(i int) uintptr {
-	return *(*uintptr)(unsafe.Add(unsafe.Pointer(a.args), uintptr(i)*unsafe.Sizeof(uintptr(0))))
+func (a *argset) arg(i int) unsafe.Pointer {
+	// this indirection is to avoid go vet complaining about possible misuse of unsafe.Pointer
+	return *(*unsafe.Pointer)(unsafe.Add(unsafe.Pointer(a.args), uintptr(i)*unsafe.Sizeof(uintptr(0))))
 }

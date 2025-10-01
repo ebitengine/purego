@@ -7,13 +7,17 @@
 
 #include "textflag.h"
 
+
+TEXT ___errno_location(SB), NOSPLIT, $0-0
+	JMP purego___errno_location(SB)
+
 TEXT _cgo_purego_setegid_trampoline(SB), NOSPLIT, $0
 	MOVD	R0, 8(RSP)
 	MOVD	·x_cgo_purego_setegid_call(SB), R26
 	MOVD	(R26), R2
 	CALL	R2
 	RET
- 
+
 TEXT _setegid(SB), NOSPLIT, $0-0
 	JMP purego_setegid(SB)
 
@@ -23,7 +27,7 @@ TEXT _cgo_purego_seteuid_trampoline(SB), NOSPLIT, $0
 	MOVD	(R26), R2
 	CALL	R2
 	RET
- 
+
 TEXT _seteuid(SB), NOSPLIT, $0-0
 	JMP purego_seteuid(SB)
 
@@ -33,7 +37,7 @@ TEXT _cgo_purego_setgid_trampoline(SB), NOSPLIT, $0
 	MOVD	(R26), R2
 	CALL	R2
 	RET
- 
+
 TEXT _setgid(SB), NOSPLIT, $0-0
 	JMP purego_setgid(SB)
 
@@ -43,7 +47,7 @@ TEXT _cgo_purego_setregid_trampoline(SB), NOSPLIT, $0
 	MOVD	(R26), R2
 	CALL	R2
 	RET
- 
+
 TEXT _setregid(SB), NOSPLIT, $0-0
 	JMP purego_setregid(SB)
 
@@ -53,7 +57,7 @@ TEXT _cgo_purego_setresgid_trampoline(SB), NOSPLIT, $0
 	MOVD	(R26), R2
 	CALL	R2
 	RET
- 
+
 TEXT _setresgid(SB), NOSPLIT, $0-0
 	JMP purego_setresgid(SB)
 
@@ -63,7 +67,7 @@ TEXT _cgo_purego_setresuid_trampoline(SB), NOSPLIT, $0
 	MOVD	(R26), R2
 	CALL	R2
 	RET
- 
+
 TEXT _setresuid(SB), NOSPLIT, $0-0
 	JMP purego_setresuid(SB)
 
@@ -73,7 +77,7 @@ TEXT _cgo_purego_setreuid_trampoline(SB), NOSPLIT, $0
 	MOVD	(R26), R2
 	CALL	R2
 	RET
- 
+
 TEXT _setreuid(SB), NOSPLIT, $0-0
 	JMP purego_setreuid(SB)
 
@@ -83,7 +87,7 @@ TEXT _cgo_purego_setuid_trampoline(SB), NOSPLIT, $0
 	MOVD	(R26), R2
 	CALL	R2
 	RET
- 
+
 TEXT _setuid(SB), NOSPLIT, $0-0
 	JMP purego_setuid(SB)
 
@@ -93,7 +97,7 @@ TEXT _cgo_purego_setgroups_trampoline(SB), NOSPLIT, $0
 	MOVD	(R26), R2
 	CALL	R2
 	RET
- 
+
 TEXT _setgroups(SB), NOSPLIT, $0-0
 	JMP purego_setgroups(SB)
 

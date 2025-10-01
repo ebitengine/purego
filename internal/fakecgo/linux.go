@@ -28,5 +28,7 @@ var _cgo_libc_setuid = &_cgo_purego_setuid_trampoline
 var _cgo_libc_setgroups = &_cgo_purego_setgroups_trampoline
 
 func errno() int32 {
-	return *(*int32)(unsafe.Pointer(__errno_location()))
+	// this indirection is to avoid go vet complaining about possible misuse of unsafe.Pointer
+	loc := __errno_location()
+	return **(**int32)(unsafe.Pointer(&loc))
 }

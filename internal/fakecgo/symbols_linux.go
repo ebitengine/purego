@@ -148,7 +148,7 @@ var x_cgo_purego_setegid_call = x_cgo_purego_setegid
 //go:nosplit
 //go:norace
 func x_cgo_purego_setegid(c *argset) {
-	ret := setegid(int(c.arg(0)))
+	ret := setegid(int(uintptr(c.arg(0))))
 	if ret == -1 {
 		c.retval = uintptr(errno())
 	} else {
@@ -163,7 +163,7 @@ var x_cgo_purego_seteuid_call = x_cgo_purego_seteuid
 //go:nosplit
 //go:norace
 func x_cgo_purego_seteuid(c *argset) {
-	ret := seteuid(int(c.arg(0)))
+	ret := seteuid(int(uintptr(c.arg(0))))
 	if ret == -1 {
 		c.retval = uintptr(errno())
 	} else {
@@ -178,7 +178,7 @@ var x_cgo_purego_setgid_call = x_cgo_purego_setgid
 //go:nosplit
 //go:norace
 func x_cgo_purego_setgid(c *argset) {
-	ret := setgid(int(c.arg(0)))
+	ret := setgid(int(uintptr(c.arg(0))))
 	if ret == -1 {
 		c.retval = uintptr(errno())
 	} else {
@@ -193,7 +193,7 @@ var x_cgo_purego_setregid_call = x_cgo_purego_setregid
 //go:nosplit
 //go:norace
 func x_cgo_purego_setregid(c *argset) {
-	ret := setregid(int(c.arg(0)), int(c.arg(1)))
+	ret := setregid(int(uintptr(c.arg(0))), int(uintptr(c.arg(1))))
 	if ret == -1 {
 		c.retval = uintptr(errno())
 	} else {
@@ -208,7 +208,7 @@ var x_cgo_purego_setresgid_call = x_cgo_purego_setresgid
 //go:nosplit
 //go:norace
 func x_cgo_purego_setresgid(c *argset) {
-	ret := setresgid(int(c.arg(0)), int(c.arg(1)), int(c.arg(2)))
+	ret := setresgid(int(uintptr(c.arg(0))), int(uintptr(c.arg(1))), int(uintptr(c.arg(2))))
 	if ret == -1 {
 		c.retval = uintptr(errno())
 	} else {
@@ -223,7 +223,7 @@ var x_cgo_purego_setresuid_call = x_cgo_purego_setresuid
 //go:nosplit
 //go:norace
 func x_cgo_purego_setresuid(c *argset) {
-	ret := setresuid(int(c.arg(0)), int(c.arg(1)), int(c.arg(2)))
+	ret := setresuid(int(uintptr(c.arg(0))), int(uintptr(c.arg(1))), int(uintptr(c.arg(2))))
 	if ret == -1 {
 		c.retval = uintptr(errno())
 	} else {
@@ -238,7 +238,7 @@ var x_cgo_purego_setreuid_call = x_cgo_purego_setreuid
 //go:nosplit
 //go:norace
 func x_cgo_purego_setreuid(c *argset) {
-	ret := setreuid(int(c.arg(0)), int(c.arg(1)))
+	ret := setreuid(int(uintptr(c.arg(0))), int(uintptr(c.arg(1))))
 	if ret == -1 {
 		c.retval = uintptr(errno())
 	} else {
@@ -253,7 +253,7 @@ var x_cgo_purego_setuid_call = x_cgo_purego_setuid
 //go:nosplit
 //go:norace
 func x_cgo_purego_setuid(c *argset) {
-	ret := setuid(int(c.arg(0)))
+	ret := setuid(int(uintptr(c.arg(0))))
 	if ret == -1 {
 		c.retval = uintptr(errno())
 	} else {
@@ -268,7 +268,7 @@ var x_cgo_purego_setgroups_call = x_cgo_purego_setgroups
 //go:nosplit
 //go:norace
 func x_cgo_purego_setgroups(c *argset) {
-	ret := setgroups(int(c.arg(0)), (*int)(unsafe.Pointer(c.arg(1))))
+	ret := setgroups(int(uintptr(c.arg(0))), (*int)(c.arg(1)))
 	if ret == -1 {
 		c.retval = uintptr(errno())
 	} else {
