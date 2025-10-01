@@ -7,6 +7,8 @@
 
 package fakecgo
 
+import "unsafe"
+
 //go:cgo_import_dynamic purego_malloc malloc "libc.so.6"
 //go:cgo_import_dynamic purego_free free "libc.so.6"
 //go:cgo_import_dynamic purego_setenv setenv "libc.so.6"
@@ -15,6 +17,16 @@ package fakecgo
 //go:cgo_import_dynamic purego_nanosleep nanosleep "libc.so.6"
 //go:cgo_import_dynamic purego_abort abort "libc.so.6"
 //go:cgo_import_dynamic purego_sigaltstack sigaltstack "libc.so.6"
+//go:cgo_import_dynamic purego___errno_location __errno_location "libc.so.6"
+//go:cgo_import_dynamic purego_setegid setegid "libc.so.6"
+//go:cgo_import_dynamic purego_seteuid seteuid "libc.so.6"
+//go:cgo_import_dynamic purego_setgid setgid "libc.so.6"
+//go:cgo_import_dynamic purego_setregid setregid "libc.so.6"
+//go:cgo_import_dynamic purego_setresgid setresgid "libc.so.6"
+//go:cgo_import_dynamic purego_setresuid setresuid "libc.so.6"
+//go:cgo_import_dynamic purego_setreuid setreuid "libc.so.6"
+//go:cgo_import_dynamic purego_setuid setuid "libc.so.6"
+//go:cgo_import_dynamic purego_setgroups setgroups "libc.so.6"
 //go:cgo_import_dynamic purego_pthread_attr_init pthread_attr_init "libpthread.so.0"
 //go:cgo_import_dynamic purego_pthread_create pthread_create "libpthread.so.0"
 //go:cgo_import_dynamic purego_pthread_detach pthread_detach "libpthread.so.0"
@@ -28,3 +40,238 @@ package fakecgo
 //go:cgo_import_dynamic purego_pthread_mutex_unlock pthread_mutex_unlock "libpthread.so.0"
 //go:cgo_import_dynamic purego_pthread_cond_broadcast pthread_cond_broadcast "libpthread.so.0"
 //go:cgo_import_dynamic purego_pthread_setspecific pthread_setspecific "libpthread.so.0"
+
+//go:nosplit
+//go:norace
+func __errno_location() uintptr {
+	return uintptr(call5(__errno_locationABI0, 0, 0, 0, 0, 0))
+}
+
+//go:nosplit
+//go:norace
+func setegid(egid int) int32 {
+	return int32(call5(setegidABI0, uintptr(egid), 0, 0, 0, 0))
+}
+
+//go:nosplit
+//go:norace
+func seteuid(euid int) int32 {
+	return int32(call5(seteuidABI0, uintptr(euid), 0, 0, 0, 0))
+}
+
+//go:nosplit
+//go:norace
+func setgid(gid int) int32 {
+	return int32(call5(setgidABI0, uintptr(gid), 0, 0, 0, 0))
+}
+
+//go:nosplit
+//go:norace
+func setregid(rgid int, egid int) int32 {
+	return int32(call5(setregidABI0, uintptr(rgid), uintptr(egid), 0, 0, 0))
+}
+
+//go:nosplit
+//go:norace
+func setresgid(rgid int, egid int, sgid int) int32 {
+	return int32(call5(setresgidABI0, uintptr(rgid), uintptr(egid), uintptr(sgid), 0, 0))
+}
+
+//go:nosplit
+//go:norace
+func setresuid(ruid int, euid int, suid int) int32 {
+	return int32(call5(setresuidABI0, uintptr(ruid), uintptr(euid), uintptr(suid), 0, 0))
+}
+
+//go:nosplit
+//go:norace
+func setreuid(ruid int, euid int) int32 {
+	return int32(call5(setreuidABI0, uintptr(ruid), uintptr(euid), 0, 0, 0))
+}
+
+//go:nosplit
+//go:norace
+func setuid(uid int) int32 {
+	return int32(call5(setuidABI0, uintptr(uid), 0, 0, 0, 0))
+}
+
+//go:nosplit
+//go:norace
+func setgroups(ngid int, gidset *int) int32 {
+	return int32(call5(setgroupsABI0, uintptr(ngid), uintptr(unsafe.Pointer(gidset)), 0, 0, 0))
+}
+
+//go:linkname ___errno_location ___errno_location
+var ___errno_location uint8
+var __errno_locationABI0 = uintptr(unsafe.Pointer(&___errno_location))
+
+//go:linkname _setegid _setegid
+var _setegid uint8
+var setegidABI0 = uintptr(unsafe.Pointer(&_setegid))
+
+//go:linkname _seteuid _seteuid
+var _seteuid uint8
+var seteuidABI0 = uintptr(unsafe.Pointer(&_seteuid))
+
+//go:linkname _setgid _setgid
+var _setgid uint8
+var setgidABI0 = uintptr(unsafe.Pointer(&_setgid))
+
+//go:linkname _setregid _setregid
+var _setregid uint8
+var setregidABI0 = uintptr(unsafe.Pointer(&_setregid))
+
+//go:linkname _setresgid _setresgid
+var _setresgid uint8
+var setresgidABI0 = uintptr(unsafe.Pointer(&_setresgid))
+
+//go:linkname _setresuid _setresuid
+var _setresuid uint8
+var setresuidABI0 = uintptr(unsafe.Pointer(&_setresuid))
+
+//go:linkname _setreuid _setreuid
+var _setreuid uint8
+var setreuidABI0 = uintptr(unsafe.Pointer(&_setreuid))
+
+//go:linkname _setuid _setuid
+var _setuid uint8
+var setuidABI0 = uintptr(unsafe.Pointer(&_setuid))
+
+//go:linkname _setgroups _setgroups
+var _setgroups uint8
+var setgroupsABI0 = uintptr(unsafe.Pointer(&_setgroups))
+
+//go:linkname _cgo_purego_setegid_trampoline _cgo_purego_setegid_trampoline
+var _cgo_purego_setegid_trampoline byte
+var x_cgo_purego_setegid_call = x_cgo_purego_setegid
+
+//go:nosplit
+//go:norace
+func x_cgo_purego_setegid(c *argset) {
+	ret := setegid(int(c.arg(0)))
+	if ret == -1 {
+		c.retval = uintptr(errno())
+	} else {
+		c.retval = uintptr(ret)
+	}
+}
+
+//go:linkname _cgo_purego_seteuid_trampoline _cgo_purego_seteuid_trampoline
+var _cgo_purego_seteuid_trampoline byte
+var x_cgo_purego_seteuid_call = x_cgo_purego_seteuid
+
+//go:nosplit
+//go:norace
+func x_cgo_purego_seteuid(c *argset) {
+	ret := seteuid(int(c.arg(0)))
+	if ret == -1 {
+		c.retval = uintptr(errno())
+	} else {
+		c.retval = uintptr(ret)
+	}
+}
+
+//go:linkname _cgo_purego_setgid_trampoline _cgo_purego_setgid_trampoline
+var _cgo_purego_setgid_trampoline byte
+var x_cgo_purego_setgid_call = x_cgo_purego_setgid
+
+//go:nosplit
+//go:norace
+func x_cgo_purego_setgid(c *argset) {
+	ret := setgid(int(c.arg(0)))
+	if ret == -1 {
+		c.retval = uintptr(errno())
+	} else {
+		c.retval = uintptr(ret)
+	}
+}
+
+//go:linkname _cgo_purego_setregid_trampoline _cgo_purego_setregid_trampoline
+var _cgo_purego_setregid_trampoline byte
+var x_cgo_purego_setregid_call = x_cgo_purego_setregid
+
+//go:nosplit
+//go:norace
+func x_cgo_purego_setregid(c *argset) {
+	ret := setregid(int(c.arg(0)), int(c.arg(1)))
+	if ret == -1 {
+		c.retval = uintptr(errno())
+	} else {
+		c.retval = uintptr(ret)
+	}
+}
+
+//go:linkname _cgo_purego_setresgid_trampoline _cgo_purego_setresgid_trampoline
+var _cgo_purego_setresgid_trampoline byte
+var x_cgo_purego_setresgid_call = x_cgo_purego_setresgid
+
+//go:nosplit
+//go:norace
+func x_cgo_purego_setresgid(c *argset) {
+	ret := setresgid(int(c.arg(0)), int(c.arg(1)), int(c.arg(2)))
+	if ret == -1 {
+		c.retval = uintptr(errno())
+	} else {
+		c.retval = uintptr(ret)
+	}
+}
+
+//go:linkname _cgo_purego_setresuid_trampoline _cgo_purego_setresuid_trampoline
+var _cgo_purego_setresuid_trampoline byte
+var x_cgo_purego_setresuid_call = x_cgo_purego_setresuid
+
+//go:nosplit
+//go:norace
+func x_cgo_purego_setresuid(c *argset) {
+	ret := setresuid(int(c.arg(0)), int(c.arg(1)), int(c.arg(2)))
+	if ret == -1 {
+		c.retval = uintptr(errno())
+	} else {
+		c.retval = uintptr(ret)
+	}
+}
+
+//go:linkname _cgo_purego_setreuid_trampoline _cgo_purego_setreuid_trampoline
+var _cgo_purego_setreuid_trampoline byte
+var x_cgo_purego_setreuid_call = x_cgo_purego_setreuid
+
+//go:nosplit
+//go:norace
+func x_cgo_purego_setreuid(c *argset) {
+	ret := setreuid(int(c.arg(0)), int(c.arg(1)))
+	if ret == -1 {
+		c.retval = uintptr(errno())
+	} else {
+		c.retval = uintptr(ret)
+	}
+}
+
+//go:linkname _cgo_purego_setuid_trampoline _cgo_purego_setuid_trampoline
+var _cgo_purego_setuid_trampoline byte
+var x_cgo_purego_setuid_call = x_cgo_purego_setuid
+
+//go:nosplit
+//go:norace
+func x_cgo_purego_setuid(c *argset) {
+	ret := setuid(int(c.arg(0)))
+	if ret == -1 {
+		c.retval = uintptr(errno())
+	} else {
+		c.retval = uintptr(ret)
+	}
+}
+
+//go:linkname _cgo_purego_setgroups_trampoline _cgo_purego_setgroups_trampoline
+var _cgo_purego_setgroups_trampoline byte
+var x_cgo_purego_setgroups_call = x_cgo_purego_setgroups
+
+//go:nosplit
+//go:norace
+func x_cgo_purego_setgroups(c *argset) {
+	ret := setgroups(int(c.arg(0)), (*int)(unsafe.Pointer(c.arg(1))))
+	if ret == -1 {
+		c.retval = uintptr(errno())
+	} else {
+		c.retval = uintptr(ret)
+	}
+}
