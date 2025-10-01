@@ -105,22 +105,22 @@ jobs:
 
       - name: go test
         run: |
-          env CGO_ENABLED=0 sudo go test -shuffle=on -v -count=10 ./...
-          env CGO_ENABLED=1 sudo go test -shuffle=on -v -count=10 ./...
+          env CGO_ENABLED=0 go test -shuffle=on -v -count=10 ./...
+          env CGO_ENABLED=1 go test -shuffle=on -v -count=10 ./...
           # Compile without optimization to check potential stack overflow.
           # The option '-gcflags=all=-N -l' is often used at Visual Studio Code.
           # See also https://go.googlesource.com/vscode-go/+/HEAD/docs/debugging.md#launch.
-          env CGO_ENABLED=0 sudo go test "-gcflags=all=-N -l" -v ./...
-          env CGO_ENABLED=1 sudo go test "-gcflags=all=-N -l" -v ./...
+          env CGO_ENABLED=0 go test "-gcflags=all=-N -l" -v ./...
+          env CGO_ENABLED=1 go test "-gcflags=all=-N -l" -v ./...
 
       - name: go test (Linux arm64)
         if: runner.os == 'Linux'
         run: |
           go env -w CC=aarch64-linux-gnu-gcc
           go env -w CXX=aarch64-linux-gnu-g++
-          env GOOS=linux GOARCH=arm64 CGO_ENABLED=0 sudo go test -c -o=purego-test-nocgo .
+          env GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go test -c -o=purego-test-nocgo .
           env QEMU_LD_PREFIX=/usr/aarch64-linux-gnu qemu-aarch64 ./purego-test-nocgo -test.shuffle=on -test.v -test.count=10
-          env GOOS=linux GOARCH=arm64 CGO_ENABLED=1 sudo go test -c -o=purego-test-cgo .
+          env GOOS=linux GOARCH=arm64 CGO_ENABLED=1 go test -c -o=purego-test-cgo .
           env QEMU_LD_PREFIX=/usr/aarch64-linux-gnu qemu-aarch64 ./purego-test-cgo -test.shuffle=on -test.v -test.count=10
           
           echo "=> go build (plugin)"
@@ -135,9 +135,9 @@ jobs:
         run: |
           go env -w CC=loongarch64-linux-gnu-gcc-14
           go env -w CXX=loongarch64-linux-gnu-g++-14
-          env GOOS=linux GOARCH=loong64 CGO_ENABLED=0 sudo go test -c -o=purego-test-nocgo .
+          env GOOS=linux GOARCH=loong64 CGO_ENABLED=0 go test -c -o=purego-test-nocgo .
           env QEMU_LD_PREFIX=/usr/loongarch64-linux-gnu qemu-loongarch64 ./purego-test-nocgo -test.shuffle=on -test.v -test.count=10
-          env GOOS=linux GOARCH=loong64 CGO_ENABLED=1 sudo go test -c -o=purego-test-cgo .
+          env GOOS=linux GOARCH=loong64 CGO_ENABLED=1 go test -c -o=purego-test-cgo .
           env QEMU_LD_PREFIX=/usr/loongarch64-linux-gnu qemu-loongarch64 ./purego-test-cgo -test.shuffle=on -test.v -test.count=10
           go env -u CC
           go env -u CXX
@@ -153,18 +153,18 @@ jobs:
         run: |
            sudo apt-get install gcc-multilib
            sudo apt-get install g++-multilib
-           env CGO_ENABLED=1 GOARCH=386 sudo go test -shuffle=on -v -count=10 ./...
+           env CGO_ENABLED=1 GOARCH=386 go test -shuffle=on -v -count=10 ./...
 
       - name: go test race (no Cgo)
         if: ${{ runner.os == 'macOS' &&  !startsWith(matrix.go, '1.18.') && !startsWith(matrix.go, '1.19.') }}
         run: |
           # -race usually requires Cgo, but macOS is an exception. See https://go.dev/doc/articles/race_detector#Requirements
-          env CGO_ENABLED=0 sudo go test -race -shuffle=on -v -count=10 ./...
+          env CGO_ENABLED=0 go test -race -shuffle=on -v -count=10 ./...
 
       - name: go test race (Cgo)
         if: ${{ !startsWith(matrix.go, '1.18.') && !startsWith(matrix.go, '1.19.') }}
         run: |
-          env CGO_ENABLED=1 sudo go test -race -shuffle=on -v -count=10 ./...
+          env CGO_ENABLED=1 go test -race -shuffle=on -v -count=10 ./...
 
   bsd:
     strategy:
