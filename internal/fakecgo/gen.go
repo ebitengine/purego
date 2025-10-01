@@ -183,14 +183,14 @@ TEXT _cgo_purego_{{.Name}}_trampoline(SB), NOSPLIT, $0
 	MOVD	R0, 8(RSP)
 	MOVD	·x_cgo_purego_{{.Name}}_call(SB), R26
 	MOVD	(R26), R2
-	CALL	R2
+	CALL	(R2)
 	RET
 {{ else if eq $goarch "loong64" -}}
 TEXT _cgo_purego_{{.Name}}_trampoline(SB), NOSPLIT, $8
 	MOVV	R4, 8(R3)
 	MOVV	·x_cgo_purego_{{.Name}}_call(SB), R5
 	MOVV	(R5), R6
-	CALL	R6
+	CALL	(R6)
 	RET
 {{ end -}} 
 {{ end }}
