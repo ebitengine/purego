@@ -86,6 +86,16 @@ func main() {
 
 Then to run: `CGO_ENABLED=0 go run main.go`
 
+## Embedded Library Support Matrix
+
+| Platform              | Status        | Notes                                                                                           |
+|-----------------------|---------------|-------------------------------------------------------------------------------------------------|
+| macOS (amd64/arm64)   | Supported     | Uses the official raylib `libraylib.5.5.0.dylib` embedded in `examples/embedlib`.                |
+| Linux (amd64)         | Supported     | Loads the raylib `libraylib.so.5.5.0`; other architectures need prebuilt artifacts.             |
+| Windows (amd64)       | Supported     | Embeds the raylib `raylib.dll`; Windows ignores `mode` flags.                                    |
+| iOS (arm64)           | Not supported | iOS disallows loading unsigned binaries at runtime; use CGO and link at build time.             |
+| Android               | Not yet tested| Would require a prebuilt `.so` compiled for Android and executable temp storage.                |
+
 ## Questions
 
 If you have questions about how to incorporate purego in your project or want to discuss
