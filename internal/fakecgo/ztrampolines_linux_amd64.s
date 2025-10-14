@@ -11,7 +11,7 @@
 TEXT ___errno_location(SB), NOSPLIT, $0-0
 	JMP purego___errno_location(SB)
 
-TEXT _cgo_purego_setegid_trampoline(SB), NOSPLIT, $8
+TEXT _cgo_purego_setegid_trampoline(SB), NOSPLIT, $0
 	MOVQ	DI, AX
 	MOVQ	·x_cgo_purego_setegid_call(SB), DX
 	MOVQ	(DX), CX
@@ -21,7 +21,7 @@ TEXT _cgo_purego_setegid_trampoline(SB), NOSPLIT, $8
 TEXT _setegid(SB), NOSPLIT, $0-0
 	JMP purego_setegid(SB)
 
-TEXT _cgo_purego_seteuid_trampoline(SB), NOSPLIT, $8
+TEXT _cgo_purego_seteuid_trampoline(SB), NOSPLIT, $0
 	MOVQ	DI, AX
 	MOVQ	·x_cgo_purego_seteuid_call(SB), DX
 	MOVQ	(DX), CX
@@ -31,7 +31,7 @@ TEXT _cgo_purego_seteuid_trampoline(SB), NOSPLIT, $8
 TEXT _seteuid(SB), NOSPLIT, $0-0
 	JMP purego_seteuid(SB)
 
-TEXT _cgo_purego_setgid_trampoline(SB), NOSPLIT, $8
+TEXT _cgo_purego_setgid_trampoline(SB), NOSPLIT, $0
 	MOVQ	DI, AX
 	MOVQ	·x_cgo_purego_setgid_call(SB), DX
 	MOVQ	(DX), CX
@@ -41,7 +41,7 @@ TEXT _cgo_purego_setgid_trampoline(SB), NOSPLIT, $8
 TEXT _setgid(SB), NOSPLIT, $0-0
 	JMP purego_setgid(SB)
 
-TEXT _cgo_purego_setregid_trampoline(SB), NOSPLIT, $8
+TEXT _cgo_purego_setregid_trampoline(SB), NOSPLIT, $0
 	MOVQ	DI, AX
 	MOVQ	·x_cgo_purego_setregid_call(SB), DX
 	MOVQ	(DX), CX
@@ -51,7 +51,7 @@ TEXT _cgo_purego_setregid_trampoline(SB), NOSPLIT, $8
 TEXT _setregid(SB), NOSPLIT, $0-0
 	JMP purego_setregid(SB)
 
-TEXT _cgo_purego_setresgid_trampoline(SB), NOSPLIT, $8
+TEXT _cgo_purego_setresgid_trampoline(SB), NOSPLIT, $0
 	MOVQ	DI, AX
 	MOVQ	·x_cgo_purego_setresgid_call(SB), DX
 	MOVQ	(DX), CX
@@ -61,7 +61,7 @@ TEXT _cgo_purego_setresgid_trampoline(SB), NOSPLIT, $8
 TEXT _setresgid(SB), NOSPLIT, $0-0
 	JMP purego_setresgid(SB)
 
-TEXT _cgo_purego_setresuid_trampoline(SB), NOSPLIT, $8
+TEXT _cgo_purego_setresuid_trampoline(SB), NOSPLIT, $0
 	MOVQ	DI, AX
 	MOVQ	·x_cgo_purego_setresuid_call(SB), DX
 	MOVQ	(DX), CX
@@ -71,7 +71,7 @@ TEXT _cgo_purego_setresuid_trampoline(SB), NOSPLIT, $8
 TEXT _setresuid(SB), NOSPLIT, $0-0
 	JMP purego_setresuid(SB)
 
-TEXT _cgo_purego_setreuid_trampoline(SB), NOSPLIT, $8
+TEXT _cgo_purego_setreuid_trampoline(SB), NOSPLIT, $0
 	MOVQ	DI, AX
 	MOVQ	·x_cgo_purego_setreuid_call(SB), DX
 	MOVQ	(DX), CX
@@ -81,7 +81,7 @@ TEXT _cgo_purego_setreuid_trampoline(SB), NOSPLIT, $8
 TEXT _setreuid(SB), NOSPLIT, $0-0
 	JMP purego_setreuid(SB)
 
-TEXT _cgo_purego_setuid_trampoline(SB), NOSPLIT, $8
+TEXT _cgo_purego_setuid_trampoline(SB), NOSPLIT, $0
 	MOVQ	DI, AX
 	MOVQ	·x_cgo_purego_setuid_call(SB), DX
 	MOVQ	(DX), CX
@@ -91,7 +91,7 @@ TEXT _cgo_purego_setuid_trampoline(SB), NOSPLIT, $8
 TEXT _setuid(SB), NOSPLIT, $0-0
 	JMP purego_setuid(SB)
 
-TEXT _cgo_purego_setgroups_trampoline(SB), NOSPLIT, $8
+TEXT _cgo_purego_setgroups_trampoline(SB), NOSPLIT, $0
 	MOVQ	DI, AX
 	MOVQ	·x_cgo_purego_setgroups_call(SB), DX
 	MOVQ	(DX), CX
