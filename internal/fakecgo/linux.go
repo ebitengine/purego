@@ -5,6 +5,8 @@
 
 package fakecgo
 
+import _ "unsafe"
+
 //go:linkname _cgo_libc_setegid syscall.cgo_libc_setegid
 //go:linkname _cgo_libc_seteuid syscall.cgo_libc_seteuid
 //go:linkname _cgo_libc_setgid syscall.cgo_libc_setgid
