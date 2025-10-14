@@ -5,8 +5,6 @@
 
 package fakecgo
 
-import "unsafe"
-
 //go:linkname _cgo_libc_setegid syscall.cgo_libc_setegid
 //go:linkname _cgo_libc_seteuid syscall.cgo_libc_seteuid
 //go:linkname _cgo_libc_setgid syscall.cgo_libc_setgid
@@ -29,6 +27,7 @@ var _cgo_libc_setgroups = &_cgo_purego_setgroups_trampoline
 
 func errno() int32 {
 	// this indirection is to avoid go vet complaining about possible misuse of unsafe.Pointer
-	loc := __errno_location()
-	return **(**int32)(unsafe.Pointer(&loc))
+	// loc := __errno_location()
+	// return **(**int32)(unsafe.Pointer(&loc))
+	return 1
 }
