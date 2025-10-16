@@ -79,8 +79,7 @@ TEXT threadentry_trampoline(SB), NOSPLIT, $0
 	PUSH_REGS_HOST_TO_ABI0()
 
 	// X15 is designated by Go as a fixed zero register.
-	// We are calling directly into ABIInternal,
-	// so ensure it is zero.
+	// Calling directly into ABIInternal, ensure it is zero.
 	PXOR X15, X15
 
 	MOVQ DI, AX
