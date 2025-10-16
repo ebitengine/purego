@@ -150,7 +150,7 @@ jobs:
       - name: Set up the prerequisites
         run: |
           sudo apt-get update
-          sudo apt-get install gcc-14-loongarch64-linux-gnu g++-14-loongarch64-linux-gnu qemu-user
+          sudo apt-get install -y gcc-14-loongarch64-linux-gnu g++-14-loongarch64-linux-gnu qemu-user
       - name: go test (Linux loong64)
         run: |
           go env -w CC=loongarch64-linux-gnu-gcc-14
