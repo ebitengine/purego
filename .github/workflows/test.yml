@@ -137,7 +137,7 @@ jobs:
         # Loong64 support internal linking from go1.25.
         go: ['1.25.x']
     name: Test with Go ${{ matrix.go }} on Linux loong64
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     defaults:
       run:
         shell: bash
