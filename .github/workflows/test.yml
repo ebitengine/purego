@@ -116,6 +116,7 @@ jobs:
       - name: go test (Linux 386)
         if: ${{ runner.os == 'Linux' && !endsWith(matrix.os, '-arm') }}
         run: |
+           sudo apt-get update
            sudo apt-get install gcc-multilib
            sudo apt-get install g++-multilib
            env CGO_ENABLED=1 GOARCH=386 go test -shuffle=on -v -count=10 ./...
