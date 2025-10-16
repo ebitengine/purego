@@ -6,7 +6,7 @@ jobs:
   test:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, windows-latest]
         go: ['1.18.x', '1.19.x', '1.20.x', '1.21.x', '1.22.x', '1.23.x', '1.24.x', '1.25.x']
     name: Test with Go ${{ matrix.go }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
@@ -27,12 +27,6 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: ${{ matrix.go }}
-
-      - name: Set up the prerequisites
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu gcc-14-loongarch64-linux-gnu g++-14-loongarch64-linux-gnu qemu-user
 
       - name: Set up the prerequisites
         if: runner.os == 'Windows'
@@ -113,35 +107,6 @@ jobs:
           env CGO_ENABLED=0 go test "-gcflags=all=-N -l" -v ./...
           env CGO_ENABLED=1 go test "-gcflags=all=-N -l" -v ./...
 
-      - name: go test (Linux arm64)
-        if: runner.os == 'Linux'
-        run: |
-          go env -w CC=aarch64-linux-gnu-gcc
-          go env -w CXX=aarch64-linux-gnu-g++
-          env GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go test -c -o=purego-test-nocgo .
-          env QEMU_LD_PREFIX=/usr/aarch64-linux-gnu qemu-aarch64 ./purego-test-nocgo -test.shuffle=on -test.v -test.count=10
-          env GOOS=linux GOARCH=arm64 CGO_ENABLED=1 go test -c -o=purego-test-cgo .
-          env QEMU_LD_PREFIX=/usr/aarch64-linux-gnu qemu-aarch64 ./purego-test-cgo -test.shuffle=on -test.v -test.count=10
-          
-          echo "=> go build (plugin)"
-          # Make sure that plugin buildmode works since we save the R15 register (#254)
-          env GOOS=linux GOARCH=arm64 CGO_ENABLED=1 go build -buildmode=plugin ./examples/libc
-          
-          go env -u CC
-          go env -u CXX
-
-      - name: go test (Linux loong64)
-        if: ${{ runner.os == 'Linux' && !startsWith(matrix.go, '1.18.') && !startsWith(matrix.go, '1.19.') && !startsWith(matrix.go, '1.20.') && !startsWith(matrix.go, '1.21.') && !startsWith(matrix.go, '1.22.') && !startsWith(matrix.go, '1.23.') && !startsWith(matrix.go, '1.24.') }}
-        run: |
-          go env -w CC=loongarch64-linux-gnu-gcc-14
-          go env -w CXX=loongarch64-linux-gnu-g++-14
-          env GOOS=linux GOARCH=loong64 CGO_ENABLED=0 go test -c -o=purego-test-nocgo .
-          env QEMU_LD_PREFIX=/usr/loongarch64-linux-gnu qemu-loongarch64 ./purego-test-nocgo -test.shuffle=on -test.v -test.count=10
-          env GOOS=linux GOARCH=loong64 CGO_ENABLED=1 go test -c -o=purego-test-cgo .
-          env QEMU_LD_PREFIX=/usr/loongarch64-linux-gnu qemu-loongarch64 ./purego-test-cgo -test.shuffle=on -test.v -test.count=10
-          go env -u CC
-          go env -u CXX
-
       - name: go test (Windows 386)
         if: runner.os == 'Windows'
         run: |
@@ -149,7 +114,7 @@ jobs:
           env CGO_ENABLED=1 GOARCH=386 go test -shuffle=on -v -count=10 ./...
 
       - name: go test (Linux 386)
-        if: runner.os == 'Linux'
+        if: ${{ runner.os == 'Linux' && !endsWith(matrix.os, '-arm') }}
         run: |
            sudo apt-get install gcc-multilib
            sudo apt-get install g++-multilib
@@ -165,6 +130,37 @@ jobs:
         if: ${{ !startsWith(matrix.go, '1.18.') && !startsWith(matrix.go, '1.19.') }}
         run: |
           env CGO_ENABLED=1 go test -race -shuffle=on -v -count=10 ./...
+
+  loong:
+    strategy:
+      matrix:
+        # Loong64 support internal linking from go1.25.
+        go: ['1.25.x']
+    name: Test with Go ${{ matrix.go }} on Linux loong64
+    runs-on: ubuntu-22.04
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go }}
+      - name: Set up the prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install gcc-14-loongarch64-linux-gnu g++-14-loongarch64-linux-gnu qemu-user
+      - name: go test (Linux loong64)
+        run: |
+          go env -w CC=loongarch64-linux-gnu-gcc-14
+          go env -w CXX=loongarch64-linux-gnu-g++-14
+          env GOOS=linux GOARCH=loong64 CGO_ENABLED=0 go test -c -o=purego-test-nocgo .
+          env QEMU_LD_PREFIX=/usr/loongarch64-linux-gnu qemu-loongarch64 ./purego-test-nocgo -test.shuffle=on -test.v -test.count=10
+          env GOOS=linux GOARCH=loong64 CGO_ENABLED=1 go test -c -o=purego-test-cgo .
+          env QEMU_LD_PREFIX=/usr/loongarch64-linux-gnu qemu-loongarch64 ./purego-test-cgo -test.shuffle=on -test.v -test.count=10
+          go env -u CC
+          go env -u CXX
 
   bsd:
     strategy:
