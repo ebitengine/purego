@@ -25,6 +25,7 @@ return value will be in AX
 */
 #include "textflag.h"
 #include "go_asm.h"
+#include "abi_amd64.h"
 
 // these trampolines map the gcc ABI to Go ABI and then calls into the Go equivalent functions.
 
@@ -73,11 +74,20 @@ TEXT ·setg_trampoline(SB), NOSPLIT, $0-16
 	CALL BX
 	RET
 
-TEXT threadentry_trampoline(SB), NOSPLIT, $16
+TEXT threadentry_trampoline(SB), NOSPLIT, $0
+	// See crosscall2.
+	PUSH_REGS_HOST_TO_ABI0()
+
+	// X15 is designated by Go as a fixed zero register.
+	// Calling directly into ABIInternal, ensure it is zero.
+	PXOR X15, X15
+
 	MOVQ DI, AX
 	MOVQ ·threadentry_call(SB), DX
 	MOVQ (DX), CX
 	CALL CX
+
+	POP_REGS_HOST_TO_ABI0()
 	RET
 
 TEXT ·call5(SB), NOSPLIT, $0-56

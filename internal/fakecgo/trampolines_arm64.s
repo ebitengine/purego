@@ -5,6 +5,7 @@
 
 #include "textflag.h"
 #include "go_asm.h"
+#include "abi_arm64.h"
 
 // these trampolines map the gcc ABI to Go ABI and then calls into the Go equivalent functions.
 
@@ -53,11 +54,25 @@ TEXT ·setg_trampoline(SB), NOSPLIT, $0-16
 	RET
 
 TEXT threadentry_trampoline(SB), NOSPLIT, $0-0
-	MOVD R0, 8(RSP)
+	// See crosscall2.
+	SUB  $(8*24), RSP
+	STP  (R0, R1), (8*1)(RSP)
+	MOVD R3, (8*3)(RSP)
+
+	SAVE_R19_TO_R28(8*4)
+	SAVE_F8_TO_F15(8*14)
+	STP (R29, R30), (8*22)(RSP)
+
 	MOVD ·threadentry_call(SB), R26
 	MOVD (R26), R2
 	CALL (R2)
 	MOVD $0, R0                     // TODO: get the return value from threadentry
+
+	RESTORE_R19_TO_R28(8*4)
+	RESTORE_F8_TO_F15(8*14)
+	LDP (8*22)(RSP), (R29, R30)
+
+	ADD $(8*24), RSP
 	RET
 
 TEXT ·call5(SB), NOSPLIT, $0-0
