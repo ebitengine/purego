@@ -114,7 +114,7 @@ jobs:
           env CGO_ENABLED=1 GOARCH=386 go test -shuffle=on -v -count=10 ./...
 
       - name: go test (Linux 386)
-        if: ${{ runner.os == 'Linux' && !endsWith(matrix.os, '-arm') }}
+        if: ${{ runner.os == 'Linux' && runner.arch != 'ARM64' }}
         run: |
            sudo apt-get update
            sudo apt-get install gcc-multilib
