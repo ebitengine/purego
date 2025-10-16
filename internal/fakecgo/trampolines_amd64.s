@@ -80,8 +80,8 @@ TEXT threadentry_trampoline(SB), NOSPLIT, $0
 
 	// X15 is designated by Go as a fixed zero register.
 	// We are calling directly into ABIInternal,
-	// so we need to ensure it's zero.
-	PXOR	X15, X15
+	// so ensure it is zero.
+	PXOR X15, X15
 
 	MOVQ DI, AX
 	MOVQ ·threadentry_call(SB), DX
