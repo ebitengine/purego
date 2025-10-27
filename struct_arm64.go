@@ -123,7 +123,7 @@ func placeRegisters(v reflect.Value, addFloat func(uintptr), addInt func(uintptr
 				place(f)
 			case reflect.Bool:
 				if f.Bool() {
-					val |= 1
+					val |= 1 << shift
 				}
 				shift += 8
 				class |= _INT

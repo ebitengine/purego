@@ -352,3 +352,12 @@ GoUint GoUint4(struct GoUint4 g) {
 GoUint TakeGoUintAndReturn(GoUint a) {
     return a;
 }
+
+struct FloatAndBool {
+    float value;
+    _Bool has_value;
+};
+
+int FloatAndBool(struct FloatAndBool f) {
+    return f.has_value;
+}

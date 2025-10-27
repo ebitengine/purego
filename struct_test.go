@@ -472,6 +472,20 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 			t.Fatalf("TakeGoUintAndReturn returned %+v wanted %+v", ret, expected)
 		}
 	}
+	{
+		type FloatAndBool struct {
+			x float32
+			y bool
+		}
+		var FloatAndBoolFn func(FloatAndBool) int32
+		purego.RegisterLibFunc(&FloatAndBoolFn, lib, "FloatAndBool")
+		if ret := FloatAndBoolFn(FloatAndBool{x: 12345.0, y: true}); ret != 1 {
+			t.Fatalf("FloatAndBool(y: true) = %d, want 1", ret)
+		}
+		if ret := FloatAndBoolFn(FloatAndBool{x: 12345.0, y: false}); ret != 0 {
+			t.Fatalf("FloatAndBool(y: false) = %d, want 0", ret)
+		}
+	}
 }
 
 func TestRegisterFunc_structReturns(t *testing.T) {
