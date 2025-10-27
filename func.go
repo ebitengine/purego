@@ -10,7 +10,6 @@ import (
 	"math"
 	"reflect"
 	"runtime"
-	"strconv"
 	"sync"
 	"unsafe"
 
@@ -283,26 +282,149 @@ func RegisterFunc(fptr any, cfn uintptr) {
 			}
 			if runtime.GOARCH == "arm64" && runtime.GOOS == "darwin" &&
 				(numInts >= numOfIntegerRegisters() || numFloats >= numOfFloatRegisters) && v.Kind() != reflect.Struct { // hit the stack
-				fields := make([]reflect.StructField, len(args[i:]))
+				// On Darwin ARM64, stack parameters use minimal space packing with type-specific alignment:
+				// - int32/uint32/float32: 4-byte aligned, occupy 4 bytes each
+				// - int64/uint64/float64/pointers: 8-byte aligned, occupy 8 bytes each
+				// We pack multiple 4-byte values into 8-byte stack slots
+
+				// Track packing state: are we at the low or high 32 bits of current slot?
+				stackByteOffset := numStack * 8 // Convert from 8-byte slots to byte offset
 
 				for j, val := range args[i:] {
 					if val.Kind() == reflect.String {
-						ptr := strings.CString(v.String())
+						ptr := strings.CString(val.String())
 						keepAlive = append(keepAlive, ptr)
 						val = reflect.ValueOf(ptr)
 						args[i+j] = val
 					}
-					fields[j] = reflect.StructField{
-						Name: "X" + strconv.Itoa(j),
-						Type: val.Type(),
+
+					// Calculate current stack slot index (relative to start of stack args)
+					slotIndex := numOfIntegerRegisters() + stackByteOffset/8
+					isHighHalf := (stackByteOffset % 8) == 4
+
+					// Handle each argument based on its size and alignment
+					// Darwin ARM64 ABI: types are aligned to their natural alignment (1, 2, 4, 8 bytes)
+					switch val.Kind() {
+					case reflect.Bool, reflect.Int8, reflect.Uint8:
+						// 1-byte types: align to 1-byte boundary
+						bytePos := stackByteOffset % 8
+						shift := bytePos * 8
+						var byteVal uint64
+						if val.Kind() == reflect.Bool {
+							if val.Bool() {
+								byteVal = 1
+							}
+						} else if val.Kind() == reflect.Int8 {
+							byteVal = uint64(val.Int() & 0xFF)
+						} else {
+							byteVal = val.Uint() & 0xFF
+						}
+						if bytePos == 0 {
+							sysargs[slotIndex] = uintptr(byteVal)
+						} else {
+							sysargs[slotIndex] |= uintptr(byteVal) << shift
+						}
+						stackByteOffset += 1
+					case reflect.Int16, reflect.Uint16:
+						// 2-byte types: align to 2-byte boundary
+						if stackByteOffset%2 != 0 {
+							stackByteOffset += 1 // Align to 2-byte boundary
+						}
+						slotIndex = numOfIntegerRegisters() + stackByteOffset/8
+						bytePos := stackByteOffset % 8
+						shift := bytePos * 8
+						var shortVal uint64
+						if val.Kind() == reflect.Int16 {
+							shortVal = uint64(val.Int() & 0xFFFF)
+						} else {
+							shortVal = val.Uint() & 0xFFFF
+						}
+						if bytePos == 0 {
+							sysargs[slotIndex] = uintptr(shortVal)
+						} else {
+							sysargs[slotIndex] |= uintptr(shortVal) << shift
+						}
+						stackByteOffset += 2
+					case reflect.Int32, reflect.Uint32:
+						// 4-byte types: align to 4-byte boundary
+						if stackByteOffset%4 != 0 {
+							stackByteOffset = (stackByteOffset + 3) &^ 3 // Align to 4-byte boundary
+						}
+						slotIndex = numOfIntegerRegisters() + stackByteOffset/8
+						isHighHalf = (stackByteOffset % 8) == 4
+						var intVal uint64
+						if val.Kind() == reflect.Int32 {
+							intVal = uint64(val.Int() & 0xFFFF_FFFF)
+						} else {
+							intVal = val.Uint() & 0xFFFF_FFFF
+						}
+						if isHighHalf {
+							sysargs[slotIndex] |= uintptr(intVal) << 32
+						} else {
+							sysargs[slotIndex] = uintptr(intVal)
+						}
+						stackByteOffset += 4
+					case reflect.Float32:
+						// Float32 should go in float registers if available
+						if numFloats < numOfFloatRegisters {
+							// Use float register
+							bits := uint64(math.Float32bits(float32(val.Float())))
+							floats[numFloats] = uintptr(bits)
+							numFloats++
+						} else {
+							// Goes to stack: 4-byte aligned
+							if stackByteOffset%4 != 0 {
+								stackByteOffset = (stackByteOffset + 3) &^ 3
+							}
+							slotIndex = numOfIntegerRegisters() + stackByteOffset/8
+							isHighHalf = (stackByteOffset % 8) == 4
+							bits := uint64(math.Float32bits(float32(val.Float())))
+							if isHighHalf {
+								sysargs[slotIndex] |= uintptr(bits) << 32
+							} else {
+								sysargs[slotIndex] = uintptr(bits)
+							}
+							stackByteOffset += 4
+						}
+					default:
+						// For other types (int64, uint64, float64, pointers, etc.),
+						// align to 8-byte boundary and use full 8 bytes
+						if stackByteOffset%8 != 0 {
+							stackByteOffset = (stackByteOffset + 7) &^ 7 // Align to 8-byte boundary
+						}
+						slotIndex = numOfIntegerRegisters() + stackByteOffset/8
+
+						// Handle 8-byte types directly
+						switch val.Kind() {
+						case reflect.Int64, reflect.Int:
+							sysargs[slotIndex] = uintptr(val.Int())
+						case reflect.Uint64, reflect.Uint, reflect.Uintptr:
+							sysargs[slotIndex] = uintptr(val.Uint())
+						case reflect.Ptr, reflect.UnsafePointer:
+							sysargs[slotIndex] = val.Pointer()
+						case reflect.Float64:
+							// Float64 should go in float registers if available, else stack
+							// For simplicity, check if we have float registers available
+							if numFloats < numOfFloatRegisters {
+								floats[numFloats] = uintptr(math.Float64bits(val.Float()))
+								numFloats++
+								continue // Don't increment stackByteOffset
+							} else {
+								sysargs[slotIndex] = uintptr(math.Float64bits(val.Float()))
+							}
+						default:
+							// For complex types like structs, use addValue
+							// But we need to carefully manage numStack
+							numStack = stackByteOffset / 8
+							keepAlive = addValue(val, keepAlive, addInt, addFloat, addStack, &numInts, &numFloats, &numStack)
+							stackByteOffset = numStack * 8
+							continue
+						}
+						stackByteOffset += 8
 					}
 				}
-				structType := reflect.StructOf(fields)
-				structInstance := reflect.New(structType).Elem()
-				for j, val := range args[i:] {
-					structInstance.Field(j).Set(val)
-				}
-				placeRegisters(structInstance, addFloat, addInt)
+				// Update final numStack position
+				numStack = (stackByteOffset + 7) / 8 // Round up to next 8-byte slot
 				break
 			}
 			keepAlive = addValue(v, keepAlive, addInt, addFloat, addStack, &numInts, &numFloats, &numStack)

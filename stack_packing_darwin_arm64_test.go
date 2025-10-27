@@ -9,7 +9,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
-	"runtime"
+	"strings"
 	"testing"
 	"unsafe"
 
@@ -22,14 +22,21 @@ func loadTestLib(t *testing.T) uintptr {
 	t.Helper()
 
 	libFileName := "libcomprehensive_stack_test.so"
-	t.Logf("Build %v", libFileName)
 
-	if err := buildSharedLib("CC", libFileName, filepath.Join("testdata", "stacktest", "comprehensive_stack_test.c")); err != nil {
-		t.Fatal(err)
+	// When running on iOS simulator via xcrun simctl spawn, use absolute path
+	// Check if PWD points to our iOS test temp directory (contains "purego-ios-test")
+	if pwd := os.Getenv("PWD"); strings.Contains(pwd, "purego-ios-test") {
+		libFileName = filepath.Join(pwd, libFileName)
+		t.Logf("Using absolute library path for iOS: %v", libFileName)
+	} else {
+		t.Logf("Build %v", libFileName)
+		if err := buildSharedLib("CC", libFileName, filepath.Join("testdata", "stacktest", "comprehensive_stack_test.c")); err != nil {
+			t.Fatal(err)
+		}
+		t.Cleanup(func() {
+			os.Remove(libFileName)
+		})
 	}
-	t.Cleanup(func() {
-		os.Remove(libFileName)
-	})
 
 	lib, err := load.OpenLibrary(libFileName)
 	if err != nil {
@@ -44,45 +51,28 @@ func loadTestLib(t *testing.T) uintptr {
 }
 
 // testResult helps check expected vs actual with detailed output.
-// Some tests are known to fail on Darwin ARM64 due to int32/float32 stack packing bugs.
-// On other platforms, all tests should pass.
+// Tests should fail when results don't match expectations.
 func testResult(t *testing.T, name string, got, want interface{}, expectedFailOnDarwinARM64 bool) {
 	t.Helper()
-	isDarwinARM64 := runtime.GOOS == "darwin" && runtime.GOARCH == "arm64"
+	_ = expectedFailOnDarwinARM64 // Keep parameter for documentation
 
 	if got != want {
-		if isDarwinARM64 && expectedFailOnDarwinARM64 {
-			t.Logf("%s: got %v, want %v (KNOWN BUG on Darwin ARM64)", name, got, want)
-		} else {
-			t.Errorf("%s: got %v, want %v ❌ FAIL", name, got, want)
-		}
+		t.Errorf("%s: got %v, want %v ❌ FAIL", name, got, want)
 	} else {
-		if isDarwinARM64 && expectedFailOnDarwinARM64 {
-			t.Logf("%s: got %v ✓ PASS (bug appears to be fixed!)", name, got)
-		} else {
-			t.Logf("%s: got %v ✓ PASS", name, got)
-		}
+		t.Logf("%s: got %v ✓ PASS", name, got)
 	}
 }
 
 // testFloatResult checks float results with tolerance
 func testFloatResult(t *testing.T, name string, got, want float64, expectedFailOnDarwinARM64 bool) {
 	t.Helper()
-	isDarwinARM64 := runtime.GOOS == "darwin" && runtime.GOARCH == "arm64"
+	_ = expectedFailOnDarwinARM64 // Keep parameter for documentation
 
 	matches := math.Abs(got-want) < 0.01
 	if !matches {
-		if isDarwinARM64 && expectedFailOnDarwinARM64 {
-			t.Logf("%s: got %v, want %v (KNOWN BUG on Darwin ARM64)", name, got, want)
-		} else {
-			t.Errorf("%s: got %v, want %v ❌ FAIL", name, got, want)
-		}
+		t.Errorf("%s: got %v, want %v ❌ FAIL", name, got, want)
 	} else {
-		if isDarwinARM64 && expectedFailOnDarwinARM64 {
-			t.Logf("%s: got %v ✓ PASS (bug appears to be fixed!)", name, got)
-		} else {
-			t.Logf("%s: got %v ✓ PASS", name, got)
-		}
+		t.Logf("%s: got %v ✓ PASS", name, got)
 	}
 }
 
@@ -167,7 +157,7 @@ func TestDarwin_ARM64_RegisterFunc_Mixed_8i32_3i16(t *testing.T) {
 	purego.RegisterLibFunc(&fn, lib, "test_mixed_8i32_3i16")
 
 	result := fn(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
-	testResult(t, "test_mixed_8i32_3i16", result, int32(42), true)
+	testResult(t, "test_mixed_8i32_3i16", result, int32(66), false) // 1+2+...+11 = 66
 }
 
 func TestDarwin_ARM64_RegisterFunc_Mixed_Varied(t *testing.T) {
@@ -176,7 +166,7 @@ func TestDarwin_ARM64_RegisterFunc_Mixed_Varied(t *testing.T) {
 	purego.RegisterLibFunc(&fn, lib, "test_mixed_varied")
 
 	result := fn(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
-	testResult(t, "test_mixed_varied", result, int32(42), true)
+	testResult(t, "test_mixed_varied", result, int32(66), false) // 1+2+...+11 = 66
 }
 
 // ============================================================================
@@ -245,7 +235,7 @@ func TestDarwin_ARM64_RegisterFunc_Mixed_8i32_3f32(t *testing.T) {
 	purego.RegisterLibFunc(&fn, lib, "test_mixed_8i32_3f32")
 
 	result := fn(1, 2, 3, 4, 5, 6, 7, 8, 9.0, 10.0, 11.0)
-	testFloatResult(t, "test_mixed_8i32_3f32", float64(result), 42.0, true)
+	testFloatResult(t, "test_mixed_8i32_3f32", float64(result), 66.0, false) // 1+2+...+11 = 66
 }
 
 // ============================================================================
@@ -259,7 +249,7 @@ func TestDarwin_ARM64_RegisterFunc_KitchenSink(t *testing.T) {
 
 	dummy := 42
 	result := fn(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, true, uintptr(unsafe.Pointer(&dummy)))
-	testResult(t, "test_mixed_kitchen_sink", result, int32(43), true)
+	testResult(t, "test_mixed_kitchen_sink", result, int32(68), false) // 1+...+11 + 1(bool) + 1(ptr) = 68
 }
 
 func TestDarwin_ARM64_RegisterFunc_Alternating(t *testing.T) {
@@ -283,7 +273,7 @@ func TestDarwin_ARM64_RegisterFunc_Conv2D_Signature(t *testing.T) {
 	dummy := 42
 	p := uintptr(unsafe.Pointer(&dummy))
 	result := fn(p, p, p, 1, 1, 0, 0, 1, 1, 1, p)
-	testResult(t, "test_conv2d_signature", result, int32(7), true)
+	testResult(t, "test_conv2d_signature", result, int32(5), false) // 1+1+0+0+1+1+1 = 5
 }
 
 // ============================================================================
