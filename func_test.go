@@ -185,6 +185,16 @@ func TestABI(t *testing.T) {
 			t.Fatalf("%s: got %d, want %d", cName, res, expect)
 		}
 	}
+	{
+		const cName = "test_8i32_3strings"
+		var fn func(int32, int32, int32, int32, int32, int32, int32, int32, string, string, string) string
+		purego.RegisterLibFunc(&fn, lib, cName)
+		res := fn(1, 2, 3, 4, 5, 6, 7, 8, "foo", "bar", "baz")
+		const want = "1:2:3:4:5:6:7:8:foo:bar:baz"
+		if res != want {
+			t.Fatalf("%s: got %q, want %q", cName, res, want)
+		}
+	}
 }
 
 func buildSharedLib(compilerEnv, libFile string, sources ...string) error {

@@ -25,3 +25,13 @@ uint32_t stack_string(uint32_t a, uint32_t b, uint32_t c, uint32_t d, uint32_t e
     assert(strcmp(i, "test") == 0);
     return a | b | c | d | e | f | g | h;
 }
+
+// Test that multiple strings on stack get correct values (not duplicates)
+const char* test_8i32_3strings(int32_t a1, int32_t a2, int32_t a3, int32_t a4,
+                                int32_t a5, int32_t a6, int32_t a7, int32_t a8,
+                                const char* s1, const char* s2, const char* s3) {
+    static char result[256];
+    snprintf(result, sizeof(result), "%d:%d:%d:%d:%d:%d:%d:%d:%s:%s:%s",
+             a1, a2, a3, a4, a5, a6, a7, a8, s1, s2, s3);
+    return result;
+}
