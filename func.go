@@ -28,7 +28,7 @@ func RegisterLibFunc(fptr any, handle uintptr, name string) {
 	if err != nil {
 		panic(err)
 	}
-	RegisterFunc(fptr, sym)
+	registerFunc(fptr, sym, true) // true = is a C library function, can use packing
 }
 
 // RegisterFunc takes a pointer to a Go function representing the calling convention of the C function.
@@ -112,6 +112,10 @@ func RegisterLibFunc(fptr any, handle uintptr, name string) {
 //
 // [Cgo rules]: https://pkg.go.dev/cmd/cgo#hdr-Go_references_to_C
 func RegisterFunc(fptr any, cfn uintptr) {
+	registerFunc(fptr, cfn, false) // false = might be a callback, don't use packing
+}
+
+func registerFunc(fptr any, cfn uintptr, isLibraryFunction bool) {
 	fn := reflect.ValueOf(fptr).Elem()
 	ty := fn.Type()
 	if ty.Kind() != reflect.Func {
@@ -280,8 +284,18 @@ func RegisterFunc(fptr any, cfn uintptr) {
 				}
 				continue
 			}
-			if runtime.GOARCH == "arm64" && runtime.GOOS == "darwin" &&
-				(numInts >= numOfIntegerRegisters() || numFloats >= numOfFloatRegisters) && v.Kind() != reflect.Struct { // hit the stack
+			// Check if THIS parameter will go on stack, and if so, use Darwin ARM64 packing for remaining args
+			needsDarwinPacking := false
+			if runtime.GOARCH == "arm64" && runtime.GOOS == "darwin" && isLibraryFunction && v.Kind() != reflect.Struct {
+				// Determine if current parameter would go to stack
+				switch v.Kind() {
+				case reflect.Float32, reflect.Float64:
+					needsDarwinPacking = (numFloats >= numOfFloatRegisters)
+				default:
+					needsDarwinPacking = (numInts >= numOfIntegerRegisters())
+				}
+			}
+			if needsDarwinPacking { // hit the stack
 				// On Darwin ARM64, stack parameters use minimal space packing with type-specific alignment:
 				// - int32/uint32/float32: 4-byte aligned, occupy 4 bytes each
 				// - int64/uint64/float64/pointers: 8-byte aligned, occupy 8 bytes each
@@ -365,27 +379,21 @@ func RegisterFunc(fptr any, cfn uintptr) {
 						}
 						stackByteOffset += 4
 					case reflect.Float32:
-						// Float32 should go in float registers if available
-						if numFloats < numOfFloatRegisters {
-							// Use float register
-							bits := uint64(math.Float32bits(float32(val.Float())))
-							floats[numFloats] = uintptr(bits)
-							numFloats++
-						} else {
-							// Goes to stack: 4-byte aligned
-							if stackByteOffset%4 != 0 {
-								stackByteOffset = (stackByteOffset + 3) &^ 3
-							}
-							slotIndex = numOfIntegerRegisters() + stackByteOffset/8
-							isHighHalf = (stackByteOffset % 8) == 4
-							bits := uint64(math.Float32bits(float32(val.Float())))
-							if isHighHalf {
-								sysargs[slotIndex] |= uintptr(bits) << 32
-							} else {
-								sysargs[slotIndex] = uintptr(bits)
-							}
-							stackByteOffset += 4
+						// Goes to stack: 4-byte aligned
+						// Note: We're already in the stack packing path, so don't try to use float registers
+						if stackByteOffset%4 != 0 {
+							stackByteOffset = (stackByteOffset + 3) &^ 3
 						}
+						slotIndex = numOfIntegerRegisters() + stackByteOffset/8
+						isHighHalf = (stackByteOffset % 8) == 4
+						bits := uint64(math.Float32bits(float32(val.Float())))
+						//fmt.Fprintf(os.Stderr, "DEBUG f32: val=%.0f offset=%d slot=%d high=%v bits=%x\n", val.Float(), stackByteOffset, slotIndex, isHighHalf, bits)
+						if isHighHalf {
+							sysargs[slotIndex] |= uintptr(bits) << 32
+						} else {
+							sysargs[slotIndex] = uintptr(bits)
+						}
+						stackByteOffset += 4
 					default:
 						// For other types (int64, uint64, float64, pointers, etc.),
 						// align to 8-byte boundary and use full 8 bytes
@@ -403,15 +411,9 @@ func RegisterFunc(fptr any, cfn uintptr) {
 						case reflect.Ptr, reflect.UnsafePointer:
 							sysargs[slotIndex] = val.Pointer()
 						case reflect.Float64:
-							// Float64 should go in float registers if available, else stack
-							// For simplicity, check if we have float registers available
-							if numFloats < numOfFloatRegisters {
-								floats[numFloats] = uintptr(math.Float64bits(val.Float()))
-								numFloats++
-								continue // Don't increment stackByteOffset
-							} else {
-								sysargs[slotIndex] = uintptr(math.Float64bits(val.Float()))
-							}
+							// Goes to stack (we're already in the stack packing path)
+							//fmt.Fprintf(os.Stderr, "DEBUG f64: val=%.0f offset=%d slot=%d bits=%x\n", val.Float(), stackByteOffset, slotIndex, math.Float64bits(val.Float()))
+							sysargs[slotIndex] = uintptr(math.Float64bits(val.Float()))
 						default:
 							// For complex types like structs, use addValue
 							// But we need to carefully manage numStack
