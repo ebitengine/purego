@@ -111,6 +111,96 @@ func RegisterLibFunc(fptr any, handle uintptr, name string) {
 //	defer free(mustFree)
 //
 // [Cgo rules]: https://pkg.go.dev/cmd/cgo#hdr-Go_references_to_C
+
+// calculateStackBytesNeeded calculates how many bytes of stack space are needed
+// for the given function signature, respecting platform-specific alignment rules.
+// On Darwin ARM64, this respects Apple's ABI where arguments use their natural
+// size and alignment (1/2/4/8 bytes) rather than always using 8-byte slots.
+func calculateStackBytesNeeded(ty reflect.Type) (stackBytes int, ints int, floats int) {
+	isDarwinARM64 := runtime.GOOS == "darwin" && runtime.GOARCH == "arm64"
+	var stackOffset int
+
+	for i := 0; i < ty.NumIn(); i++ {
+		arg := ty.In(i)
+
+		if arg.Kind() == reflect.Struct {
+			// Structs are handled separately via addStruct
+			// For now, count them conservatively
+			if ints < numOfIntegerRegisters() {
+				ints++
+			} else {
+				stackOffset += 8 // Conservative estimate
+			}
+			continue
+		}
+
+		var argSize, argAlign int
+		var usesIntReg, usesFloatReg bool
+
+		switch arg.Kind() {
+		case reflect.Bool, reflect.Int8, reflect.Uint8:
+			argSize, argAlign = 1, 1
+			usesIntReg = true
+		case reflect.Int16, reflect.Uint16:
+			argSize, argAlign = 2, 2
+			usesIntReg = true
+		case reflect.Int32, reflect.Uint32:
+			argSize, argAlign = 4, 4
+			usesIntReg = true
+		case reflect.Int64, reflect.Int, reflect.Uint64, reflect.Uint, reflect.Uintptr:
+			argSize, argAlign = 8, 8
+			usesIntReg = true
+		case reflect.Ptr, reflect.UnsafePointer, reflect.String, reflect.Slice:
+			argSize, argAlign = 8, 8
+			usesIntReg = true
+		case reflect.Float32:
+			argSize, argAlign = 4, 4
+			usesFloatReg = true
+		case reflect.Float64:
+			argSize, argAlign = 8, 8
+			usesFloatReg = true
+		}
+
+		// Check if this argument goes to a register or stack
+		goesToStack := false
+		if usesIntReg {
+			if ints < numOfIntegerRegisters() {
+				ints++
+			} else {
+				goesToStack = true
+			}
+		} else if usesFloatReg {
+			if floats < numOfFloatRegisters {
+				floats++
+			} else {
+				goesToStack = true
+			}
+		}
+
+		if goesToStack {
+			if isDarwinARM64 {
+				// Apple ARM64 ABI: align to natural alignment
+				if stackOffset%argAlign != 0 {
+					stackOffset += argAlign - (stackOffset % argAlign)
+				}
+				stackOffset += argSize
+			} else {
+				// Other platforms: each stack arg uses 8 bytes
+				stackOffset += 8
+			}
+		}
+	}
+
+	if isDarwinARM64 && stackOffset > 0 {
+		// Apple ABI: pad to 8-byte boundary
+		if stackOffset%8 != 0 {
+			stackOffset = (stackOffset + 7) &^ 7
+		}
+	}
+
+	return stackOffset, ints, floats
+}
+
 func RegisterFunc(fptr any, cfn uintptr) {
 	registerFunc(fptr, cfn, false) // false = might be a callback, don't use packing
 }
@@ -204,9 +294,23 @@ func registerFunc(fptr any, cfn uintptr, isLibraryFunction bool) {
 				ints++
 			}
 		}
-		sizeOfStack := maxArgs - numOfIntegerRegisters()
-		if stack > sizeOfStack {
-			panic("purego: too many arguments")
+
+		// Use smart byte-based limit checking on Darwin ARM64
+		// to allow more parameters when they pack efficiently (int32, float32, etc)
+		if runtime.GOOS == "darwin" && runtime.GOARCH == "arm64" {
+			stackBytes, _, _ := calculateStackBytesNeeded(ty)
+			stackSlotsNeeded := (stackBytes + 7) / 8
+			maxStackSlots := maxArgs - numOfIntegerRegisters()
+			if stackSlotsNeeded > maxStackSlots {
+				panic(fmt.Sprintf("purego: too many stack arguments: need %d bytes (%d slots) but only %d bytes (%d slots) available",
+					stackBytes, stackSlotsNeeded, maxStackSlots*8, maxStackSlots))
+			}
+		} else {
+			// On other platforms, use simple argument counting
+			sizeOfStack := maxArgs - numOfIntegerRegisters()
+			if stack > sizeOfStack {
+				panic(fmt.Sprintf("purego: too many arguments: %d stack arguments exceed limit of %d", stack, sizeOfStack))
+			}
 		}
 	}
 	v := reflect.MakeFunc(ty, func(args []reflect.Value) (results []reflect.Value) {
