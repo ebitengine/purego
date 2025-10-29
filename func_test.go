@@ -186,7 +186,7 @@ func TestABI(t *testing.T) {
 		}
 	}
 	{
-		const cName = "test_8i32_3strings"
+		const cName = "stack_8i32_3strings"
 		var fn func(*byte, uintptr, int32, int32, int32, int32, int32, int32, int32, int32, string, string, string)
 		purego.RegisterLibFunc(&fn, lib, cName)
 		buf := make([]byte, 256)
