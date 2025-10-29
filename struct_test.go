@@ -486,6 +486,18 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 			t.Fatalf("FloatAndBool(y: false) = %d, want 0", ret)
 		}
 	}
+	{
+		type FourInt32s struct {
+			f0, f1, f2, f3 int32
+		}
+		var FourInt32sFn func(FourInt32s) string
+		purego.RegisterLibFunc(&FourInt32sFn, lib, "FourInt32s")
+		result := FourInt32sFn(FourInt32s{1, 2, 3, 4})
+		const want = "1:2:3:4"
+		if result != want {
+			t.Fatalf("FourInt32s returned %q wanted %q", result, want)
+		}
+	}
 }
 
 func TestRegisterFunc_structReturns(t *testing.T) {

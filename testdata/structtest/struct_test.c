@@ -361,3 +361,19 @@ struct FloatAndBool {
 int FloatAndBool(struct FloatAndBool f) {
     return f.has_value;
 }
+
+struct FourInt32s {
+    int32_t f0;
+    int32_t f1;
+    int32_t f2;
+    int32_t f3;
+};
+
+#include <stdio.h>
+#include <stdlib.h>
+
+char* FourInt32s(struct FourInt32s s) {
+    char* result = malloc(64);
+    snprintf(result, 64, "%d:%d:%d:%d", s.f0, s.f1, s.f2, s.f3);
+    return result;
+}
