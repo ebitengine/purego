@@ -190,7 +190,7 @@ func placeRegistersArm64(v reflect.Value, addFloat func(uintptr), addInt func(ui
 				shift = 0
 				flushed = true
 				class = _NO_CLASS
-			case reflect.Ptr:
+			case reflect.Ptr, reflect.UnsafePointer:
 				addInt(f.Pointer())
 				shift = 0
 				flushed = true

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2024 The Ebitengine Authors
 
-//go:build darwin && (arm64 || amd64)
+//go:build (darwin && (arm64 || amd64)) || (linux && (arm64 || amd64))
 
 package purego_test
 
@@ -498,6 +498,44 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 		if result != want {
 			t.Fatalf("FourInt32s returned %d wanted %d", result, want)
 		}
+	}
+	{
+		// Simple pointer wrapper struct - tests single pointer field
+		type PointerWrapper struct {
+			ctx unsafe.Pointer
+		}
+		var ExtractPointer func(wrapper PointerWrapper) uintptr
+		purego.RegisterLibFunc(&ExtractPointer, lib, "ExtractPointer")
+
+		// Use actual allocated memory to satisfy checkptr
+		testValue := new(int)
+		expectedPtr := uintptr(unsafe.Pointer(testValue))
+		result := ExtractPointer(PointerWrapper{ctx: unsafe.Pointer(testValue)})
+		if result != expectedPtr {
+			t.Fatalf("ExtractPointer returned %#x wanted %#x", result, expectedPtr)
+		}
+		runtime.KeepAlive(testValue)
+	}
+	{
+		// Two pointer struct - tests register allocation for multiple pointer fields
+		type TwoPointers struct {
+			ptr1, ptr2 unsafe.Pointer
+		}
+		var AddPointers func(wrapper TwoPointers) uintptr
+		purego.RegisterLibFunc(&AddPointers, lib, "AddPointers")
+
+		// Use actual allocated memory to satisfy checkptr
+		val1 := new(int)
+		val2 := new(int)
+		ptr1 := uintptr(unsafe.Pointer(val1))
+		ptr2 := uintptr(unsafe.Pointer(val2))
+		expected := ptr1 + ptr2
+		result := AddPointers(TwoPointers{unsafe.Pointer(val1), unsafe.Pointer(val2)})
+		if result != expected {
+			t.Fatalf("AddPointers returned %#x wanted %#x", result, expected)
+		}
+		runtime.KeepAlive(val1)
+		runtime.KeepAlive(val2)
 	}
 }
 

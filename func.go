@@ -64,7 +64,7 @@ func RegisterLibFunc(fptr any, handle uintptr, name string) {
 //	int64 <=> int64_t
 //	float32 <=> float
 //	float64 <=> double
-//	struct <=> struct (WIP - darwin only)
+//	struct <=> struct (darwin amd64/arm64, linux amd64/arm64)
 //	func <=> C function
 //	unsafe.Pointer, *T <=> void*
 //	[]T => void*
@@ -173,8 +173,16 @@ func RegisterFunc(fptr any, cfn uintptr) {
 					stack++
 				}
 			case reflect.Struct:
-				if runtime.GOOS != "darwin" || (runtime.GOARCH != "amd64" && runtime.GOARCH != "arm64") {
-					panic("purego: struct arguments are only supported on darwin amd64 & arm64")
+				// Struct arguments are supported on:
+				// - darwin amd64 & arm64
+				// - linux amd64 & arm64
+				switch runtime.GOARCH {
+				case "amd64", "arm64":
+					if runtime.GOOS != "darwin" && runtime.GOOS != "linux" {
+						panic("purego: struct arguments are only supported on darwin and linux")
+					}
+				default:
+					panic("purego: struct arguments are only supported on amd64 and arm64")
 				}
 				if arg.Size() == 0 {
 					continue
@@ -194,8 +202,16 @@ func RegisterFunc(fptr any, cfn uintptr) {
 			}
 		}
 		if ty.NumOut() == 1 && ty.Out(0).Kind() == reflect.Struct {
-			if runtime.GOOS != "darwin" {
-				panic("purego: struct return values only supported on darwin arm64 & amd64")
+			// Struct return values are supported on:
+			// - darwin amd64 & arm64
+			// - linux amd64 & arm64
+			switch runtime.GOARCH {
+			case "amd64", "arm64":
+				if runtime.GOOS != "darwin" && runtime.GOOS != "linux" {
+					panic("purego: struct return values are only supported on darwin and linux")
+				}
+			default:
+				panic("purego: struct return values are only supported on amd64 and arm64")
 			}
 			outType := ty.Out(0)
 			checkStructFieldsSupported(outType)
