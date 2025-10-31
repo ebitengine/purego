@@ -280,7 +280,7 @@ unsigned int Array2UnsignedShorts(struct Array2UnsignedShort a) {
 }
 
 struct Array4Chars {
-    char a[4];
+    signed char a[4];
 };
 
 int Array4Chars(struct Array4Chars a) {
