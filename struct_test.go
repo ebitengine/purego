@@ -506,13 +506,11 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 		var ExtractPointer func(wrapper PointerWrapper) uintptr
 		purego.RegisterLibFunc(&ExtractPointer, lib, "ExtractPointer")
 
-		testValue := new(int)
-		expectedPtr := uintptr(unsafe.Pointer(testValue))
-		result := ExtractPointer(PointerWrapper{ctx: unsafe.Pointer(testValue)})
+		const expectedPtr uintptr = 0x12345678
+		result := ExtractPointer(PointerWrapper{ctx: unsafe.Pointer(expectedPtr)})
 		if result != expectedPtr {
 			t.Fatalf("ExtractPointer returned %#x wanted %#x", result, expectedPtr)
 		}
-		runtime.KeepAlive(testValue)
 	}
 	{
 		type TwoPointers struct {
@@ -521,17 +519,13 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 		var AddPointers func(wrapper TwoPointers) uintptr
 		purego.RegisterLibFunc(&AddPointers, lib, "AddPointers")
 
-		val1 := new(int)
-		val2 := new(int)
-		ptr1 := uintptr(unsafe.Pointer(val1))
-		ptr2 := uintptr(unsafe.Pointer(val2))
-		expected := ptr1 + ptr2
-		result := AddPointers(TwoPointers{unsafe.Pointer(val1), unsafe.Pointer(val2)})
+		const ptr1 uintptr = 0x1000
+		const ptr2 uintptr = 0x2000
+		const expected = ptr1 + ptr2
+		result := AddPointers(TwoPointers{unsafe.Pointer(ptr1), unsafe.Pointer(ptr2)})
 		if result != expected {
 			t.Fatalf("AddPointers returned %#x wanted %#x", result, expected)
 		}
-		runtime.KeepAlive(val1)
-		runtime.KeepAlive(val2)
 	}
 }
 
