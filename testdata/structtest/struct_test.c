@@ -371,8 +371,6 @@ struct FourInt32s {
     int32_t f3;
 };
 
-char* FourInt32s(struct FourInt32s s) {
-    char* result = malloc(64);
-    snprintf(result, 64, "%d:%d:%d:%d", s.f0, s.f1, s.f2, s.f3);
-    return result;
+int32_t FourInt32s(struct FourInt32s s) {
+    return s.f0 + s.f1 + s.f2 + s.f3;
 }

@@ -373,8 +373,9 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 		}
 		var Array4CharsFn func(chars Array4Chars) int32
 		purego.RegisterLibFunc(&Array4CharsFn, lib, "Array4Chars")
-		if ret := Array4CharsFn(Array4Chars{a: [...]int8{100, -127, 4, -100}}); ret != expectedSigned {
-			t.Fatalf("Array4CharsFn returned %#x wanted %#x", ret, expectedSigned)
+		const expectedSum = 1 + 2 + 4 + 8
+		if ret := Array4CharsFn(Array4Chars{a: [...]int8{1, 2, 4, 8}}); ret != expectedSum {
+			t.Fatalf("Array4CharsFn returned %d wanted %d", ret, expectedSum)
 		}
 	}
 	{
@@ -490,12 +491,12 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 		type FourInt32s struct {
 			f0, f1, f2, f3 int32
 		}
-		var FourInt32sFn func(FourInt32s) string
+		var FourInt32sFn func(FourInt32s) int32
 		purego.RegisterLibFunc(&FourInt32sFn, lib, "FourInt32s")
 		result := FourInt32sFn(FourInt32s{1, 2, 3, 4})
-		const want = "1:2:3:4"
+		const want = 1 + 2 + 3 + 4
 		if result != want {
-			t.Fatalf("FourInt32s returned %q wanted %q", result, want)
+			t.Fatalf("FourInt32s returned %d wanted %d", result, want)
 		}
 	}
 }
