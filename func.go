@@ -173,17 +173,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 					stack++
 				}
 			case reflect.Struct:
-				// Struct arguments are supported on:
-				// - darwin amd64 & arm64
-				// - linux amd64 & arm64
-				switch runtime.GOARCH {
-				case "amd64", "arm64":
-					if runtime.GOOS != "darwin" && runtime.GOOS != "linux" {
-						panic("purego: struct arguments are only supported on darwin and linux")
-					}
-				default:
-					panic("purego: struct arguments are only supported on amd64 and arm64")
-				}
+				isStructSupportedForRegisterFunc()
 				if arg.Size() == 0 {
 					continue
 				}
@@ -202,17 +192,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 			}
 		}
 		if ty.NumOut() == 1 && ty.Out(0).Kind() == reflect.Struct {
-			// Struct return values are supported on:
-			// - darwin amd64 & arm64
-			// - linux amd64 & arm64
-			switch runtime.GOARCH {
-			case "amd64", "arm64":
-				if runtime.GOOS != "darwin" && runtime.GOOS != "linux" {
-					panic("purego: struct return values are only supported on darwin and linux")
-				}
-			default:
-				panic("purego: struct return values are only supported on amd64 and arm64")
-			}
+			isStructSupportedForRegisterFunc()
 			outType := ty.Out(0)
 			checkStructFieldsSupported(outType)
 			if runtime.GOARCH == "amd64" && outType.Size() > maxRegAllocStructSize {
@@ -493,6 +473,17 @@ func checkStructFieldsSupported(ty reflect.Type) {
 		default:
 			panic(fmt.Sprintf("purego: struct field type %s is not supported", f))
 		}
+	}
+}
+
+func isStructSupportedForRegisterFunc() {
+	switch runtime.GOARCH {
+	case "amd64", "arm64":
+		if runtime.GOOS != "darwin" && runtime.GOOS != "linux" {
+			panic("purego: struct arguments are only supported on darwin and linux")
+		}
+	default:
+		panic("purego: struct arguments are only supported on amd64 and arm64")
 	}
 }
 
