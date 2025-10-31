@@ -10,12 +10,16 @@ import (
 	"math"
 	"reflect"
 	"runtime"
-	"strconv"
 	"sync"
 	"unsafe"
 
 	"github.com/ebitengine/purego/internal/strings"
 	"github.com/ebitengine/purego/internal/xreflect"
+)
+
+const (
+	align8ByteMask = 7 // Mask for 8-byte alignment: (val + 7) &^ 7
+	align8ByteSize = 8 // 8-byte alignment boundary
 )
 
 var thePool = sync.Pool{New: func() any {
@@ -201,9 +205,19 @@ func RegisterFunc(fptr any, cfn uintptr) {
 				ints++
 			}
 		}
+
 		sizeOfStack := maxArgs - numOfIntegerRegisters()
-		if stack > sizeOfStack {
-			panic("purego: too many arguments")
+		// On Darwin ARM64, use byte-based validation since arguments pack efficiently
+		if runtime.GOOS == "darwin" && runtime.GOARCH == "arm64" {
+			stackBytes := estimateStackBytes(ty)
+			maxStackBytes := sizeOfStack * 8
+			if stackBytes > maxStackBytes {
+				panic("purego: too many stack arguments")
+			}
+		} else {
+			if stack > sizeOfStack {
+				panic("purego: too many stack arguments")
+			}
 		}
 	}
 	v := reflect.MakeFunc(ty, func(args []reflect.Value) (results []reflect.Value) {
@@ -281,28 +295,15 @@ func RegisterFunc(fptr any, cfn uintptr) {
 				}
 				continue
 			}
-			if runtime.GOARCH == "arm64" && runtime.GOOS == "darwin" &&
-				(numInts >= numOfIntegerRegisters() || numFloats >= numOfFloatRegisters) && v.Kind() != reflect.Struct { // hit the stack
-				fields := make([]reflect.StructField, len(args[i:]))
+			// Check if we need to start Darwin ARM64 C-style stack packing
+			if runtime.GOARCH == "arm64" && runtime.GOOS == "darwin" && shouldBundleStackArgs(v, numInts, numFloats) {
+				// Collect and separate remaining args into register vs stack
+				stackArgs, newKeepAlive := collectStackArgs(args, i, numInts, numFloats,
+					keepAlive, addInt, addFloat, addStack, &numInts, &numFloats, &numStack)
+				keepAlive = newKeepAlive
 
-				for j, val := range args[i:] {
-					if val.Kind() == reflect.String {
-						ptr := strings.CString(val.String())
-						keepAlive = append(keepAlive, ptr)
-						val = reflect.ValueOf(ptr)
-						args[i+j] = val
-					}
-					fields[j] = reflect.StructField{
-						Name: "X" + strconv.Itoa(j),
-						Type: val.Type(),
-					}
-				}
-				structType := reflect.StructOf(fields)
-				structInstance := reflect.New(structType).Elem()
-				for j, val := range args[i:] {
-					structInstance.Field(j).Set(val)
-				}
-				placeRegisters(structInstance, addFloat, addInt)
+				// Bundle stack arguments with C-style packing
+				bundleStackArgs(stackArgs, addStack)
 				break
 			}
 			keepAlive = addValue(v, keepAlive, addInt, addFloat, addStack, &numInts, &numFloats, &numStack)
@@ -473,7 +474,7 @@ func checkStructFieldsSupported(ty reflect.Type) {
 }
 
 func roundUpTo8(val uintptr) uintptr {
-	return (val + 7) &^ 7
+	return (val + align8ByteMask) &^ align8ByteMask
 }
 
 func numOfIntegerRegisters() int {
@@ -487,4 +488,32 @@ func numOfIntegerRegisters() int {
 		// integer registers it is fine to return the maxArgs
 		return maxArgs
 	}
+}
+
+// estimateStackBytes estimates stack bytes needed for Darwin ARM64 validation.
+// This is a conservative estimate used only for early error detection.
+func estimateStackBytes(ty reflect.Type) int {
+	numInts, numFloats := 0, 0
+	stackBytes := 0
+
+	for i := 0; i < ty.NumIn(); i++ {
+		arg := ty.In(i)
+		size := int(arg.Size())
+
+		// Check if this goes to register or stack
+		usesInt := arg.Kind() != reflect.Float32 && arg.Kind() != reflect.Float64
+		if usesInt && numInts < numOfIntegerRegisters() {
+			numInts++
+		} else if !usesInt && numFloats < numOfFloatRegisters {
+			numFloats++
+		} else {
+			// Goes to stack - accumulate total bytes
+			stackBytes += size
+		}
+	}
+	// Round total to 8-byte boundary
+	if stackBytes > 0 && stackBytes%align8ByteSize != 0 {
+		stackBytes = (stackBytes + align8ByteMask) &^ align8ByteMask
+	}
+	return stackBytes
 }

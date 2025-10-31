@@ -86,7 +86,7 @@ func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFl
 	return keepAlive // the struct was allocated so don't panic
 }
 
-func placeRegisters(v reflect.Value, addFloat func(uintptr), addInt func(uintptr)) {
+func placeRegistersArm64(v reflect.Value, addFloat func(uintptr), addInt func(uintptr)) {
 	var val uint64
 	var shift byte
 	var flushed bool
