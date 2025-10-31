@@ -117,6 +117,8 @@ func placeRegisters(v reflect.Value, addFloat func(uintptr), addInt func(uintptr
 				} else {
 					addInt(uintptr(val))
 				}
+				val = 0
+				class = _NO_CLASS
 			}
 			switch f.Type().Kind() {
 			case reflect.Struct:
