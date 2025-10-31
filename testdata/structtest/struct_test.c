@@ -375,7 +375,6 @@ int32_t FourInt32s(struct FourInt32s s) {
     return s.f0 + s.f1 + s.f2 + s.f3;
 }
 
-// Simple pointer wrapper struct - tests single pointer field
 struct PointerWrapper {
     void* ctx;
 };
@@ -384,7 +383,6 @@ uintptr_t ExtractPointer(struct PointerWrapper wrapper) {
     return (uintptr_t)wrapper.ctx;
 }
 
-// Two pointer struct - tests register allocation for multiple pointer fields
 struct TwoPointers {
     void* ptr1;
     void* ptr2;

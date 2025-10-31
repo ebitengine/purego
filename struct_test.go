@@ -500,14 +500,12 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 		}
 	}
 	{
-		// Simple pointer wrapper struct - tests single pointer field
 		type PointerWrapper struct {
 			ctx unsafe.Pointer
 		}
 		var ExtractPointer func(wrapper PointerWrapper) uintptr
 		purego.RegisterLibFunc(&ExtractPointer, lib, "ExtractPointer")
 
-		// Use actual allocated memory to satisfy checkptr
 		testValue := new(int)
 		expectedPtr := uintptr(unsafe.Pointer(testValue))
 		result := ExtractPointer(PointerWrapper{ctx: unsafe.Pointer(testValue)})
@@ -517,14 +515,12 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 		runtime.KeepAlive(testValue)
 	}
 	{
-		// Two pointer struct - tests register allocation for multiple pointer fields
 		type TwoPointers struct {
 			ptr1, ptr2 unsafe.Pointer
 		}
 		var AddPointers func(wrapper TwoPointers) uintptr
 		purego.RegisterLibFunc(&AddPointers, lib, "AddPointers")
 
-		// Use actual allocated memory to satisfy checkptr
 		val1 := new(int)
 		val2 := new(int)
 		ptr1 := uintptr(unsafe.Pointer(val1))
