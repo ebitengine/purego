@@ -2,6 +2,8 @@
 // SPDX-FileCopyrightText: 2024 The Ebitengine Authors
 
 #include "stdint.h"
+#include <stdio.h>
+#include <stdlib.h>
 
 #if defined(__x86_64__) || defined(__aarch64__)
 typedef int64_t GoInt;
@@ -368,9 +370,6 @@ struct FourInt32s {
     int32_t f2;
     int32_t f3;
 };
-
-#include <stdio.h>
-#include <stdlib.h>
 
 char* FourInt32s(struct FourInt32s s) {
     char* result = malloc(64);
