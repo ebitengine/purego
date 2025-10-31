@@ -477,13 +477,11 @@ func checkStructFieldsSupported(ty reflect.Type) {
 }
 
 func isStructSupportedForRegisterFunc() {
-	switch runtime.GOARCH {
-	case "amd64", "arm64":
-		if runtime.GOOS != "darwin" && runtime.GOOS != "linux" {
-			panic("purego: struct arguments are only supported on darwin and linux")
-		}
-	default:
+	if runtime.GOARCH != "amd64" && runtime.GOARCH != "arm64" {
 		panic("purego: struct arguments are only supported on amd64 and arm64")
+	}
+	if runtime.GOOS != "darwin" && runtime.GOOS != "linux" {
+		panic("purego: struct arguments are only supported on darwin and linux")
 	}
 }
 
