@@ -493,8 +493,8 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 		}
 		var FourInt32sFn func(FourInt32s) int32
 		purego.RegisterLibFunc(&FourInt32sFn, lib, "FourInt32s")
-		result := FourInt32sFn(FourInt32s{1, 2, 3, 4})
-		const want = 1 + 2 + 3 + 4
+		result := FourInt32sFn(FourInt32s{100, -50, 25, -75})
+		const want = 100 - 50 + 25 - 75
 		if result != want {
 			t.Fatalf("FourInt32s returned %d wanted %d", result, want)
 		}
