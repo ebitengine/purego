@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2024 The Ebitengine Authors
 
-//go:build (darwin && (arm64 || amd64)) || (linux && (arm64 || amd64))
+//go:build (darwin || linux) && (arm64 || amd64)
 
 package purego_test
 
@@ -373,8 +373,8 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 		}
 		var Array4CharsFn func(chars Array4Chars) int32
 		purego.RegisterLibFunc(&Array4CharsFn, lib, "Array4Chars")
-		const expectedSum = 1 + 2 + 4 + 8
-		if ret := Array4CharsFn(Array4Chars{a: [...]int8{1, 2, 4, 8}}); ret != expectedSum {
+		const expectedSum = 123
+		if ret := Array4CharsFn(Array4Chars{a: [...]int8{10, 20, 30, 63}}); ret != expectedSum {
 			t.Fatalf("Array4CharsFn returned %d wanted %d", ret, expectedSum)
 		}
 	}
