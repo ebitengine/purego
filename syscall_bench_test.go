@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/ebitengine/purego"
+	"github.com/ebitengine/purego/internal/load"
 )
 
 // BenchmarkCallingMethods compares RegisterFunc, SyscallN, and Callback methods
@@ -43,23 +44,27 @@ func BenchmarkCallingMethods(b *testing.B) {
 		os.Remove(libFileName)
 	})
 
-	libHandle, err := purego.Dlopen(libFileName, purego.RTLD_NOW|purego.RTLD_GLOBAL)
+	libHandle, err := load.OpenLibrary(libFileName)
 	if err != nil {
 		b.Fatalf("Failed to load C library: %v", err)
 	}
-	defer purego.Dlclose(libHandle)
+	defer func() {
+		if err := load.CloseLibrary(libHandle); err != nil {
+			b.Fatalf("Failed to close library: %s", err)
+		}
+	}()
 
 	// Create callbacks and load C functions
 	for i := range testCases {
 		testCases[i].fnPtr = purego.NewCallback(testCases[i].fn)
 
-		cFn, err := purego.Dlsym(libHandle, testCases[i].cFnName)
+		cFn, err := load.OpenSymbol(libHandle, testCases[i].cFnName)
 		if err != nil {
 			b.Fatalf("Failed to load C function %s: %v", testCases[i].cFnName, err)
 		}
 		testCases[i].cFnPtr = cFn
 
-		cCallbackFn, err := purego.Dlsym(libHandle, testCases[i].cCallbackName)
+		cCallbackFn, err := load.OpenSymbol(libHandle, testCases[i].cCallbackName)
 		if err != nil {
 			b.Fatalf("Failed to load C callback wrapper %s: %v", testCases[i].cCallbackName, err)
 		}
