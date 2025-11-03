@@ -10,7 +10,6 @@ import (
 	"math"
 	"reflect"
 	"runtime"
-	"strconv"
 	"sync"
 	"unsafe"
 
@@ -21,6 +20,15 @@ import (
 var thePool = sync.Pool{New: func() any {
 	return new(syscall15Args)
 }}
+
+var structTypeCache sync.Map
+var structInstancePool sync.Map // map[reflect.Type]*sync.Pool
+
+// Pre-computed field names to avoid allocations
+var fieldNames = [maxArgs]string{
+	"X0", "X1", "X2", "X3", "X4", "X5", "X6", "X7",
+	"X8", "X9", "X10", "X11", "X12", "X13", "X14",
+}
 
 // RegisterLibFunc is a wrapper around RegisterFunc that uses the C function returned from Dlsym(handle, name).
 // It panics if it can't find the name symbol.
@@ -283,8 +291,10 @@ func RegisterFunc(fptr any, cfn uintptr) {
 			}
 			if runtime.GOARCH == "arm64" && runtime.GOOS == "darwin" &&
 				(numInts >= numOfIntegerRegisters() || numFloats >= numOfFloatRegisters) && v.Kind() != reflect.Struct { // hit the stack
-				fields := make([]reflect.StructField, len(args[i:]))
+				fields := make([]reflect.StructField, 0, 8)
 
+				// Build type hash as we build fields (avoids string allocation)
+				var typeHash uintptr
 				for j, val := range args[i:] {
 					if val.Kind() == reflect.String {
 						ptr := strings.CString(val.String())
@@ -292,17 +302,28 @@ func RegisterFunc(fptr any, cfn uintptr) {
 						val = reflect.ValueOf(ptr)
 						args[i+j] = val
 					}
-					fields[j] = reflect.StructField{
-						Name: "X" + strconv.Itoa(j),
-						Type: val.Type(),
-					}
+					valType := val.Type()
+					fields = append(fields, reflect.StructField{
+						Name: fieldNames[j],
+						Type: valType,
+					})
+					// Hash the type pointer for cache key (use interface value directly)
+					typeHash = typeHash*31 ^ uintptr((*[2]uintptr)(unsafe.Pointer(&valType))[1])
 				}
-				structType := reflect.StructOf(fields)
-				structInstance := reflect.New(structType).Elem()
+
+				var structType reflect.Type
+				if cached, ok := structTypeCache.Load(typeHash); ok {
+					structType = cached.(reflect.Type)
+				} else {
+					structType = reflect.StructOf(fields)
+					structTypeCache.Store(typeHash, structType)
+				}
+				structInstance := getPooledStructInstance(structType)
 				for j, val := range args[i:] {
 					structInstance.Field(j).Set(val)
 				}
 				placeRegisters(structInstance, addFloat, addInt)
+				returnPooledStructInstance(structType, structInstance)
 				break
 			}
 			keepAlive = addValue(v, keepAlive, addInt, addFloat, addStack, &numInts, &numFloats, &numStack)
@@ -474,6 +495,40 @@ func checkStructFieldsSupported(ty reflect.Type) {
 
 func roundUpTo8(val uintptr) uintptr {
 	return (val + 7) &^ 7
+}
+
+func getPooledStructInstance(t reflect.Type) reflect.Value {
+	// Try to load existing pool first (fast path)
+	if poolInterface, ok := structInstancePool.Load(t); ok {
+		pool := poolInterface.(*sync.Pool)
+		ptr := pool.Get()
+		val := reflect.ValueOf(ptr).Elem()
+		return val
+	}
+
+	// Slow path: create new pool (only happens once per type)
+	newPool := &sync.Pool{
+		New: func() any {
+			return reflect.New(t).Interface()
+		},
+	}
+	poolInterface, _ := structInstancePool.LoadOrStore(t, newPool)
+	pool := poolInterface.(*sync.Pool)
+	ptr := pool.Get()
+	val := reflect.ValueOf(ptr).Elem()
+	return val
+}
+
+func returnPooledStructInstance(t reflect.Type, v reflect.Value) {
+	if poolInterface, ok := structInstancePool.Load(t); ok {
+		pool := poolInterface.(*sync.Pool)
+		// Zero all fields before returning to pool
+		for i := 0; i < v.NumField(); i++ {
+			v.Field(i).SetZero()
+		}
+		ptr := v.Addr().Interface()
+		pool.Put(ptr)
+	}
 }
 
 func numOfIntegerRegisters() int {
