@@ -789,6 +789,49 @@ func TestRegisterFunc_structReturns(t *testing.T) {
 		}
 	}
 	{
+		type Mixed5 struct {
+			a *int64
+			b int32
+			c float32
+			d int32
+		}
+		var ReturnMixed5 func(a *int64, b int32, c float32, d int32) Mixed5
+		purego.RegisterLibFunc(&ReturnMixed5, lib, "ReturnMixed5")
+		ptr := new(int64)
+		expected := Mixed5{ptr, 1, 7.2, 9}
+		if ret := ReturnMixed5(ptr, 1, 7.2, 9); ret != expected {
+			t.Fatalf("ReturnMixed5 returned %+v wanted %+v", ret, expected)
+		}
+		runtime.KeepAlive(ptr)
+	}
+	{
+		type SmallBool struct {
+			a bool
+			b int32
+			c int64
+		}
+		var ReturnSmallBool func(a bool, b int32, c int64) SmallBool
+		purego.RegisterLibFunc(&ReturnSmallBool, lib, "ReturnSmallBool")
+		expected := SmallBool{true, 42, 123456789}
+		if ret := ReturnSmallBool(true, 42, 123456789); ret != expected {
+			t.Fatalf("ReturnSmallBool returned %+v wanted %+v", ret, expected)
+		}
+	}
+	{
+		type LargeBool struct {
+			a bool
+			b int32
+			c int64
+			d int64
+		}
+		var ReturnLargeBool func(a bool, b int32, c int64, d int64) LargeBool
+		purego.RegisterLibFunc(&ReturnLargeBool, lib, "ReturnLargeBool")
+		expected := LargeBool{false, -99, 987654321, 111222333444}
+		if ret := ReturnLargeBool(false, -99, 987654321, 111222333444); ret != expected {
+			t.Fatalf("ReturnLargeBool returned %+v wanted %+v", ret, expected)
+		}
+	}
+	{
 		type Ptr1 struct {
 			a *int64
 			b unsafe.Pointer
