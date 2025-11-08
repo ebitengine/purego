@@ -169,9 +169,10 @@ func tryPlaceRegister(v reflect.Value, addFloat func(uintptr), addInt func(uintp
 				}
 				shift += 8
 				class |= _INTEGER
-			case reflect.Pointer:
-				ok = false
-				return
+			case reflect.Pointer, reflect.UnsafePointer:
+				val = uint64(f.Pointer())
+				shift = 64
+				class = _INTEGER
 			case reflect.Int8:
 				val |= uint64(f.Int()&0xFF) << shift
 				shift += 8
@@ -241,7 +242,7 @@ func placeStack(v reflect.Value, addStack func(uintptr)) {
 	for i := 0; i < v.Type().NumField(); i++ {
 		f := v.Field(i)
 		switch f.Kind() {
-		case reflect.Pointer:
+		case reflect.Pointer, reflect.UnsafePointer:
 			addStack(f.Pointer())
 		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 			addStack(uintptr(f.Int()))

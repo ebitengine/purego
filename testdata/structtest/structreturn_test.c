@@ -227,6 +227,41 @@ struct Mixed4 ReturnMixed4(double a, uint32_t b, float c) {
     return s;
 }
 
+struct Mixed5{
+     int64_t *a;
+     int32_t b;
+     float c;
+     int32_t d;
+};
+
+struct Mixed5 ReturnMixed5(int64_t *a, int32_t b, float c, int32_t d) {
+    struct Mixed5 s = {a, b, c, d};
+    return s;
+}
+
+struct SmallBool{
+     _Bool a;
+     int32_t b;
+     int64_t c;
+};
+
+struct SmallBool ReturnSmallBool(_Bool a, int32_t b, int64_t c) {
+    struct SmallBool s = {a, b, c};
+    return s;
+}
+
+struct LargeBool{
+     _Bool a;
+     int32_t b;
+     int64_t c;
+     int64_t d;
+};
+
+struct LargeBool ReturnLargeBool(_Bool a, int32_t b, int64_t c, int64_t d) {
+    struct LargeBool s = {a, b, c, d};
+    return s;
+}
+
 struct Ptr1{
      int64_t *a;
      void *b;
