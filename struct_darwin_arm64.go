@@ -13,6 +13,25 @@ import (
 	"github.com/ebitengine/purego/internal/strings"
 )
 
+// copyStruct8ByteChunks copies struct memory in 8-byte chunks to the provided callback.
+// This is used for Darwin ARM64's byte-level packing of non-HFA/HVA structs.
+func copyStruct8ByteChunks(ptr unsafe.Pointer, size uintptr, addChunk func(uintptr)) {
+	for offset := uintptr(0); offset < size; offset += 8 {
+		var chunk uintptr
+		remaining := size - offset
+		if remaining >= 8 {
+			chunk = *(*uintptr)(unsafe.Add(ptr, offset))
+		} else {
+			// For the last partial chunk, read only the remaining bytes
+			bytes := (*[8]byte)(unsafe.Add(ptr, offset))
+			for i := uintptr(0); i < remaining; i++ {
+				chunk |= uintptr(bytes[i]) << (i * 8)
+			}
+		}
+		addChunk(chunk)
+	}
+}
+
 // placeRegisters implements Darwin ARM64 calling convention for struct arguments.
 //
 // For HFA/HVA structs, each element must go in a separate register (or stack slot for elements
@@ -42,54 +61,44 @@ func placeRegisters(v reflect.Value, addFloat func(uintptr), addInt func(uintptr
 	size := v.Type().Size()
 
 	// Copy the struct memory in 8-byte chunks
-	for offset := uintptr(0); offset < size; offset += 8 {
-		// Read 8 bytes (or whatever remains) from the struct
-		var chunk uintptr
-		remaining := size - offset
-		if remaining >= 8 {
-			chunk = *(*uintptr)(unsafe.Add(ptr, offset))
-		} else {
-			// For the last partial chunk, read only the remaining bytes
-			bytes := (*[8]byte)(unsafe.Add(ptr, offset))
-			for i := uintptr(0); i < remaining; i++ {
-				chunk |= uintptr(bytes[i]) << (i * 8)
-			}
-		}
-		addInt(chunk)
-	}
+	copyStruct8ByteChunks(ptr, size, addInt)
 }
 
 // shouldBundleStackArgs determines if we need to start C-style packing for
 // Darwin ARM64 stack arguments. This happens when registers are exhausted.
 func shouldBundleStackArgs(v reflect.Value, numInts, numFloats int) bool {
-	// Check primitives first
-	isFloat := v.Kind() == reflect.Float32 || v.Kind() == reflect.Float64
-	isInt := !isFloat && v.Kind() != reflect.Struct
-	primitiveOnStack := (isInt && numInts >= numOfIntegerRegisters()) ||
-		(isFloat && numFloats >= numOfFloatRegisters)
-
-	// Check if struct would go on stack
-	structOnStack := false
-	if v.Kind() == reflect.Struct {
-		hfa := isHFA(v.Type())
-		hva := isHVA(v.Type())
-		size := v.Type().Size()
-
-		if hfa || hva || size <= 16 {
-			if hfa && numFloats+v.NumField() > numOfFloatRegisters {
-				structOnStack = true
-			} else if hva && numInts+v.NumField() > numOfIntegerRegisters() {
-				structOnStack = true
-			} else if size <= 16 {
-				slotsNeeded := int((size + align8ByteMask) / align8ByteSize)
-				if numInts+slotsNeeded > numOfIntegerRegisters() {
-					structOnStack = true
-				}
-			}
-		}
+	kind := v.Kind()
+	isFloat := kind == reflect.Float32 || kind == reflect.Float64
+	isInt := !isFloat && kind != reflect.Struct
+	primitiveOnStack :=
+		(isInt && numInts >= numOfIntegerRegisters()) ||
+			(isFloat && numFloats >= numOfFloatRegisters)
+	if primitiveOnStack {
+		return true
+	}
+	if kind != reflect.Struct {
+		return false
+	}
+	hfa := isHFA(v.Type())
+	hva := isHVA(v.Type())
+	size := v.Type().Size()
+	eligible := hfa || hva || size <= 16
+	if !eligible {
+		return false
 	}
 
-	return primitiveOnStack || structOnStack
+	if hfa {
+		need := v.NumField()
+		return numFloats+need > numOfFloatRegisters
+	}
+
+	if hva {
+		need := v.NumField()
+		return numInts+need > numOfIntegerRegisters()
+	}
+
+	slotsNeeded := int((size + align8ByteMask) / align8ByteSize)
+	return numInts+slotsNeeded > numOfIntegerRegisters()
 }
 
 // structFitsInRegisters determines if a struct can still fit in remaining
@@ -235,18 +244,5 @@ func bundleStackArgs(stackArgs []reflect.Value, addStack func(uintptr)) {
 	// Copy struct memory to stack in 8-byte chunks
 	ptr := unsafe.Pointer(structInstance.Addr().Pointer())
 	size := structType.Size()
-	for offset := uintptr(0); offset < size; offset += 8 {
-		var chunk uintptr
-		remaining := size - offset
-		if remaining >= 8 {
-			chunk = *(*uintptr)(unsafe.Add(ptr, offset))
-		} else {
-			// Handle partial chunk at the end
-			bytes := (*[8]byte)(unsafe.Add(ptr, offset))
-			for k := uintptr(0); k < remaining; k++ {
-				chunk |= uintptr(bytes[k]) << (k * 8)
-			}
-		}
-		addStack(chunk)
-	}
+	copyStruct8ByteChunks(ptr, size, addStack)
 }
