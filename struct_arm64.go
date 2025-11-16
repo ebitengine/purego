@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2024 The Ebitengine Authors
 
+//go:build arm64
+
 package purego
 
 import (
@@ -86,7 +88,7 @@ func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFl
 	return keepAlive // the struct was allocated so don't panic
 }
 
-func placeRegisters(v reflect.Value, addFloat func(uintptr), addInt func(uintptr)) {
+func placeRegistersArm64(v reflect.Value, addFloat func(uintptr), addInt func(uintptr)) {
 	var val uint64
 	var shift byte
 	var flushed bool
