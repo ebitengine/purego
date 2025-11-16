@@ -1,17 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2025 The Ebitengine Authors
 
-//go:build !darwin && arm64
+//go:build !darwin && loong64
 
 package purego
 
 import (
 	"reflect"
 )
-
-func placeRegisters(v reflect.Value, addFloat func(uintptr), addInt func(uintptr)) {
-	placeRegistersArm64(v, addFloat, addInt)
-}
 
 // shouldBundleStackArgs always returns false on non-Darwin platforms
 // since C-style stack argument bundling is only needed on Darwin ARM64.

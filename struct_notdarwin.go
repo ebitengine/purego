@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2024 The Ebitengine Authors
 
-//go:build !darwin
+//go:build !darwin && !arm64 && !amd64 && !loong64
 
 package purego
 
@@ -43,10 +43,4 @@ func collectStackArgs(args []reflect.Value, startIdx int, numInts, numFloats int
 // This stub exists for compilation but should never be called.
 func bundleStackArgs(stackArgs []reflect.Value, addStack func(uintptr)) {
 	panic("purego: bundleStackArgs should not be called on non-Darwin platforms")
-}
-
-// estimateStackBytes is not used on non-Darwin platforms.
-// This stub exists for compilation but should never be called.
-func estimateStackBytes(ty reflect.Type) int {
-	panic("purego: estimateStackBytes should not be called on non-Darwin platforms")
 }
