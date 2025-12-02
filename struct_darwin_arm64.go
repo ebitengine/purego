@@ -22,9 +22,11 @@ func copyStruct8ByteChunks(ptr unsafe.Pointer, size uintptr, addChunk func(uintp
 		if remaining >= 8 {
 			chunk = *(*uintptr)(unsafe.Add(ptr, offset))
 		} else {
-			// For the last partial chunk, mask off the extra bytes
-			mask := uintptr((1 << (remaining * 8)) - 1)
-			chunk = *(*uintptr)(unsafe.Add(ptr, offset)) & mask
+			// Read byte-by-byte to avoid reading beyond allocation
+			for i := uintptr(0); i < remaining; i++ {
+				b := *(*byte)(unsafe.Add(ptr, offset+i))
+				chunk |= uintptr(b) << (i * 8)
+			}
 		}
 		addChunk(chunk)
 	}
