@@ -99,6 +99,9 @@ func RegisterLibFunc(fptr any, handle uintptr, name string) {
 // it does not support aligning fields properly. It is therefore the responsibility of the caller to ensure
 // that all padding is added to the Go struct to match the C one. See `BoolStructFn` in struct_test.go for an example.
 //
+// On Darwin ARM64, purego handles proper alignment of struct arguments when passing them on the stack,
+// following the C ABI's byte-level packing rules.
+//
 // # Example
 //
 // All functions below call this C function:
