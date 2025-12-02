@@ -239,7 +239,6 @@ func bundleStackArgs(stackArgs []reflect.Value, addStack func(uintptr)) {
 		argIndex++
 	}
 
-	// Copy struct memory to stack in 8-byte chunks
 	ptr := unsafe.Pointer(structInstance.Addr().Pointer())
 	size := structType.Size()
 	copyStruct8ByteChunks(ptr, size, addStack)
