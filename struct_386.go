@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2024 The Ebitengine Authors
 
-//go:build !darwin && !arm64 && !amd64 && !loong64
-
 package purego
 
 import "reflect"
@@ -16,31 +14,28 @@ func getStruct(outType reflect.Type, syscall syscall15Args) (v reflect.Value) {
 }
 
 func placeRegisters(v reflect.Value, addFloat func(uintptr), addInt func(uintptr)) {
-	panic("purego: not needed on other platforms")
+	panic("purego: not needed on 386")
 }
 
-// shouldBundleStackArgs always returns false on non-Darwin platforms
+// shouldBundleStackArgs always returns false on 386
 // since C-style stack argument bundling is only needed on Darwin ARM64.
 func shouldBundleStackArgs(v reflect.Value, numInts, numFloats int) bool {
 	return false
 }
 
-// structFitsInRegisters is not used on non-Darwin platforms.
-// This stub exists for compilation but should never be called.
+// structFitsInRegisters is not used on 386.
 func structFitsInRegisters(val reflect.Value, tempNumInts, tempNumFloats int) (bool, int, int) {
-	panic("purego: structFitsInRegisters should not be called on non-Darwin platforms")
+	panic("purego: structFitsInRegisters should not be called on 386")
 }
 
-// collectStackArgs is not used on non-Darwin platforms.
-// This stub exists for compilation but should never be called.
+// collectStackArgs is not used on 386.
 func collectStackArgs(args []reflect.Value, startIdx int, numInts, numFloats int,
 	keepAlive []any, addInt, addFloat, addStack func(uintptr),
 	pNumInts, pNumFloats, pNumStack *int) ([]reflect.Value, []any) {
-	panic("purego: collectStackArgs should not be called on non-Darwin platforms")
+	panic("purego: collectStackArgs should not be called on 386")
 }
 
-// bundleStackArgs is not used on non-Darwin platforms.
-// This stub exists for compilation but should never be called.
+// bundleStackArgs is not used on 386.
 func bundleStackArgs(stackArgs []reflect.Value, addStack func(uintptr)) {
-	panic("purego: bundleStackArgs should not be called on non-Darwin platforms")
+	panic("purego: bundleStackArgs should not be called on 386")
 }

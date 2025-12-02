@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2025 The Ebitengine Authors
 
-//go:build darwin && arm64
-
 package purego
 
 import (
@@ -24,11 +22,9 @@ func copyStruct8ByteChunks(ptr unsafe.Pointer, size uintptr, addChunk func(uintp
 		if remaining >= 8 {
 			chunk = *(*uintptr)(unsafe.Add(ptr, offset))
 		} else {
-			// For the last partial chunk, read only the remaining bytes
-			bytes := (*[8]byte)(unsafe.Add(ptr, offset))
-			for i := uintptr(0); i < remaining; i++ {
-				chunk |= uintptr(bytes[i]) << (i * 8)
-			}
+			// For the last partial chunk, mask off the extra bytes
+			mask := uintptr((1 << (remaining * 8)) - 1)
+			chunk = *(*uintptr)(unsafe.Add(ptr, offset)) & mask
 		}
 		addChunk(chunk)
 	}
@@ -61,8 +57,6 @@ func placeRegisters(v reflect.Value, addFloat func(uintptr), addInt func(uintptr
 	}
 	ptr := unsafe.Pointer(v.Addr().Pointer())
 	size := v.Type().Size()
-
-	// Copy the struct memory in 8-byte chunks
 	copyStruct8ByteChunks(ptr, size, addInt)
 }
 

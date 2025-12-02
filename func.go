@@ -521,7 +521,7 @@ func estimateStackBytes(ty reflect.Type) int {
 	}
 	// Round total to 8-byte boundary
 	if stackBytes > 0 && stackBytes%align8ByteSize != 0 {
-		stackBytes = (stackBytes + align8ByteMask) &^ align8ByteMask
+		stackBytes = int(roundUpTo8(uintptr(stackBytes)))
 	}
 	return stackBytes
 }

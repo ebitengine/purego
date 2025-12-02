@@ -4,6 +4,7 @@
 package purego_test
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"os/exec"
@@ -191,7 +192,7 @@ func TestABI(t *testing.T) {
 		purego.RegisterLibFunc(&fn, lib, cName)
 		buf := make([]byte, 256)
 		fn(&buf[0], uintptr(len(buf)), 1, 2, 3, 4, 5, 6, 7, 8, "foo", "bar", "baz")
-		res := string(buf[:strings.IndexByte(string(buf), 0)])
+		res := string(buf[:bytes.IndexByte(buf, 0)])
 		const want = "1:2:3:4:5:6:7:8:foo:bar:baz"
 		if res != want {
 			t.Fatalf("%s: got %q, want %q", cName, res, want)
@@ -209,7 +210,7 @@ func TestABI_ArgumentPassing(t *testing.T) {
 	}
 	lib, err := load.OpenLibrary(libFileName)
 	if err != nil {
-		t.Fatalf("Dlopen(%q) failed: %v", libFileName, err)
+		t.Fatalf("Failed to open library %q: %v", libFileName, err)
 	}
 	t.Cleanup(func() {
 		if err := load.CloseLibrary(lib); err != nil {
@@ -219,19 +220,19 @@ func TestABI_ArgumentPassing(t *testing.T) {
 
 	tests := []struct {
 		name string
-		fn   interface{}
+		fn   any
 		cFn  string
-		call func(interface{}) string
+		call func(any) string
 		want string
 	}{
 		{
 			name: "10_int32_baseline",
 			fn:   new(func(*byte, uintptr, int32, int32, int32, int32, int32, int32, int32, int32, int32, int32)),
 			cFn:  "stack_10_int32",
-			call: func(f interface{}) string {
+			call: func(f any) string {
 				buf := make([]byte, 256)
 				(*f.(*func(*byte, uintptr, int32, int32, int32, int32, int32, int32, int32, int32, int32, int32)))(&buf[0], 256, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-				return string(buf[:strings.IndexByte(string(buf), 0)])
+				return string(buf[:bytes.IndexByte(buf, 0)])
 			},
 			want: "1:2:3:4:5:6:7:8:9:10",
 		},
@@ -239,10 +240,10 @@ func TestABI_ArgumentPassing(t *testing.T) {
 			name: "11_int32",
 			fn:   new(func(*byte, uintptr, int32, int32, int32, int32, int32, int32, int32, int32, int32, int32, int32)),
 			cFn:  "stack_11_int32",
-			call: func(f interface{}) string {
+			call: func(f any) string {
 				buf := make([]byte, 256)
 				(*f.(*func(*byte, uintptr, int32, int32, int32, int32, int32, int32, int32, int32, int32, int32, int32)))(&buf[0], 256, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
-				return string(buf[:strings.IndexByte(string(buf), 0)])
+				return string(buf[:bytes.IndexByte(buf, 0)])
 			},
 			want: "1:2:3:4:5:6:7:8:9:10:11",
 		},
@@ -250,10 +251,10 @@ func TestABI_ArgumentPassing(t *testing.T) {
 			name: "10_float32",
 			fn:   new(func(*byte, uintptr, float32, float32, float32, float32, float32, float32, float32, float32, float32, float32)),
 			cFn:  "stack_10_float32",
-			call: func(f interface{}) string {
+			call: func(f any) string {
 				buf := make([]byte, 256)
 				(*f.(*func(*byte, uintptr, float32, float32, float32, float32, float32, float32, float32, float32, float32, float32)))(&buf[0], 256, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0)
-				return string(buf[:strings.IndexByte(string(buf), 0)])
+				return string(buf[:bytes.IndexByte(buf, 0)])
 			},
 			want: "1.0:2.0:3.0:4.0:5.0:6.0:7.0:8.0:9.0:10.0",
 		},
@@ -261,10 +262,10 @@ func TestABI_ArgumentPassing(t *testing.T) {
 			name: "mixed_stack_strings",
 			fn:   new(func(*byte, uintptr, int32, int32, int32, int32, int32, int32, int32, int32, string, bool, int32, string)),
 			cFn:  "stack_mixed_stack_4args",
-			call: func(f interface{}) string {
+			call: func(f any) string {
 				buf := make([]byte, 256)
 				(*f.(*func(*byte, uintptr, int32, int32, int32, int32, int32, int32, int32, int32, string, bool, int32, string)))(&buf[0], 256, 1, 2, 3, 4, 5, 6, 7, 8, "foo", false, 99, "bar")
-				return string(buf[:strings.IndexByte(string(buf), 0)])
+				return string(buf[:bytes.IndexByte(buf, 0)])
 			},
 			want: "1:2:3:4:5:6:7:8:foo:0:99:bar",
 		},
@@ -272,10 +273,10 @@ func TestABI_ArgumentPassing(t *testing.T) {
 			name: "20_int32",
 			fn:   new(func(*byte, uintptr, int32, int32, int32, int32, int32, int32, int32, int32, int32, int32, int32, int32, int32, int32, int32, int32, int32, int32, int32, int32)),
 			cFn:  "stack_20_int32",
-			call: func(f interface{}) string {
+			call: func(f any) string {
 				buf := make([]byte, 512)
 				(*f.(*func(*byte, uintptr, int32, int32, int32, int32, int32, int32, int32, int32, int32, int32, int32, int32, int32, int32, int32, int32, int32, int32, int32, int32)))(&buf[0], 512, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20)
-				return string(buf[:strings.IndexByte(string(buf), 0)])
+				return string(buf[:bytes.IndexByte(buf, 0)])
 			},
 			want: "1:2:3:4:5:6:7:8:9:10:11:12:13:14:15:16:17:18:19:20",
 		},
@@ -283,10 +284,10 @@ func TestABI_ArgumentPassing(t *testing.T) {
 			name: "8int_hfa2_stack",
 			fn:   new(func(*byte, uintptr, int32, int32, int32, int32, int32, int32, int32, int32, struct{ x, y float32 })),
 			cFn:  "stack_8int_hfa2_stack",
-			call: func(f interface{}) string {
+			call: func(f any) string {
 				buf := make([]byte, 256)
 				(*f.(*func(*byte, uintptr, int32, int32, int32, int32, int32, int32, int32, int32, struct{ x, y float32 })))(&buf[0], 256, 1, 2, 3, 4, 5, 6, 7, 8, struct{ x, y float32 }{10.0, 20.0})
-				return string(buf[:strings.IndexByte(string(buf), 0)])
+				return string(buf[:bytes.IndexByte(buf, 0)])
 			},
 			want: "1:2:3:4:5:6:7:8:10.0:20.0",
 		},
@@ -294,10 +295,10 @@ func TestABI_ArgumentPassing(t *testing.T) {
 			name: "8int_2structs_stack",
 			fn:   new(func(*byte, uintptr, int32, int32, int32, int32, int32, int32, int32, int32, struct{ x, y int32 }, struct{ x, y int32 })),
 			cFn:  "stack_8int_2structs_stack",
-			call: func(f interface{}) string {
+			call: func(f any) string {
 				buf := make([]byte, 256)
 				(*f.(*func(*byte, uintptr, int32, int32, int32, int32, int32, int32, int32, int32, struct{ x, y int32 }, struct{ x, y int32 })))(&buf[0], 256, 1, 2, 3, 4, 5, 6, 7, 8, struct{ x, y int32 }{9, 10}, struct{ x, y int32 }{11, 12})
-				return string(buf[:strings.IndexByte(string(buf), 0)])
+				return string(buf[:bytes.IndexByte(buf, 0)])
 			},
 			want: "1:2:3:4:5:6:7:8:9:10:11:12",
 		},
@@ -305,10 +306,10 @@ func TestABI_ArgumentPassing(t *testing.T) {
 			name: "8float_hfa2_stack",
 			fn:   new(func(*byte, uintptr, float32, float32, float32, float32, float32, float32, float32, float32, struct{ x, y float32 })),
 			cFn:  "stack_8float_hfa2_stack",
-			call: func(f interface{}) string {
+			call: func(f any) string {
 				buf := make([]byte, 256)
 				(*f.(*func(*byte, uintptr, float32, float32, float32, float32, float32, float32, float32, float32, struct{ x, y float32 })))(&buf[0], 256, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, struct{ x, y float32 }{9.0, 10.0})
-				return string(buf[:strings.IndexByte(string(buf), 0)])
+				return string(buf[:bytes.IndexByte(buf, 0)])
 			},
 			want: "1.0:2.0:3.0:4.0:5.0:6.0:7.0:8.0:9.0:10.0",
 		},
@@ -316,10 +317,10 @@ func TestABI_ArgumentPassing(t *testing.T) {
 			name: "8int_hfa2_floatregs",
 			fn:   new(func(*byte, uintptr, int32, int32, int32, int32, int32, int32, int32, int32, struct{ x, y float32 })),
 			cFn:  "stack_8int_hfa2_floatregs",
-			call: func(f interface{}) string {
+			call: func(f any) string {
 				buf := make([]byte, 256)
 				(*f.(*func(*byte, uintptr, int32, int32, int32, int32, int32, int32, int32, int32, struct{ x, y float32 })))(&buf[0], 256, 1, 2, 3, 4, 5, 6, 7, 8, struct{ x, y float32 }{10.0, 20.0})
-				return string(buf[:strings.IndexByte(string(buf), 0)])
+				return string(buf[:bytes.IndexByte(buf, 0)])
 			},
 			want: "1:2:3:4:5:6:7:8:10.0:20.0",
 		},
@@ -327,10 +328,10 @@ func TestABI_ArgumentPassing(t *testing.T) {
 			name: "8int_int_struct_int",
 			fn:   new(func(*byte, uintptr, int32, int32, int32, int32, int32, int32, int32, int32, int32, struct{ x, y int32 }, int32)),
 			cFn:  "stack_8int_int_struct_int",
-			call: func(f interface{}) string {
+			call: func(f any) string {
 				buf := make([]byte, 256)
 				(*f.(*func(*byte, uintptr, int32, int32, int32, int32, int32, int32, int32, int32, int32, struct{ x, y int32 }, int32)))(&buf[0], 256, 1, 2, 3, 4, 5, 6, 7, 8, 9, struct{ x, y int32 }{10, 11}, 12)
-				return string(buf[:strings.IndexByte(string(buf), 0)])
+				return string(buf[:bytes.IndexByte(buf, 0)])
 			},
 			want: "1:2:3:4:5:6:7:8:9:10:11:12",
 		},
@@ -338,10 +339,10 @@ func TestABI_ArgumentPassing(t *testing.T) {
 			name: "8int_hfa4_stack",
 			fn:   new(func(*byte, uintptr, int32, int32, int32, int32, int32, int32, int32, int32, struct{ x, y, z, w float32 })),
 			cFn:  "stack_8int_hfa4_stack",
-			call: func(f interface{}) string {
+			call: func(f any) string {
 				buf := make([]byte, 256)
 				(*f.(*func(*byte, uintptr, int32, int32, int32, int32, int32, int32, int32, int32, struct{ x, y, z, w float32 })))(&buf[0], 256, 1, 2, 3, 4, 5, 6, 7, 8, struct{ x, y, z, w float32 }{10.0, 20.0, 30.0, 40.0})
-				return string(buf[:strings.IndexByte(string(buf), 0)])
+				return string(buf[:bytes.IndexByte(buf, 0)])
 			},
 			want: "1:2:3:4:5:6:7:8:10.0:20.0:30.0:40.0",
 		},
@@ -352,7 +353,7 @@ func TestABI_ArgumentPassing(t *testing.T) {
 				b float32
 			})),
 			cFn: "stack_8int_mixed_struct",
-			call: func(f interface{}) string {
+			call: func(f any) string {
 				buf := make([]byte, 256)
 				(*f.(*func(*byte, uintptr, int32, int32, int32, int32, int32, int32, int32, int32, struct {
 					a int32
@@ -361,7 +362,7 @@ func TestABI_ArgumentPassing(t *testing.T) {
 					a int32
 					b float32
 				}{9, 10.0})
-				return string(buf[:strings.IndexByte(string(buf), 0)])
+				return string(buf[:bytes.IndexByte(buf, 0)])
 			},
 			want: "1:2:3:4:5:6:7:8:9:10.0",
 		},
@@ -403,7 +404,7 @@ func TestABI_TooManyArguments(t *testing.T) {
 	}
 	lib, err := load.OpenLibrary(libFileName)
 	if err != nil {
-		t.Fatalf("Dlopen(%q) failed: %v", libFileName, err)
+		t.Fatalf("Failed to open library %q: %v", libFileName, err)
 	}
 	t.Cleanup(func() {
 		if err := load.CloseLibrary(lib); err != nil {
