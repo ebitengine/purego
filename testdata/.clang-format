@@ -1,0 +1,14 @@
+BasedOnStyle: LLVM
+IndentWidth: 4
+ColumnLimit: 0
+SortIncludes: Never
+SpaceAfterCStyleCast: true
+AllowShortBlocksOnASingleLine: Always
+AllowShortFunctionsOnASingleLine: None
+AlignConsecutiveDeclarations:
+  Enabled: true
+  AcrossEmptyLines: false
+  AcrossComments: false
+  AlignCompound: true
+  AlignFunctionPointers: true
+  PadOperators: true
