@@ -21,16 +21,16 @@ jobs:
           git config --global core.eol lf
 
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
       - name: Setup Go
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
         with:
           go-version: ${{ matrix.go }}
 
       - name: Set up the prerequisites
         if: runner.os == 'Windows'
-        uses: msys2/setup-msys2@v2
+        uses: msys2/setup-msys2@fb197b72ce45fb24f17bf3f807a388985654d1f2 # v2.29.0
 
       - name: go vet
         run: |
@@ -143,9 +143,9 @@ jobs:
       run:
         shell: bash
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - name: Setup Go
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
         with:
           go-version: ${{ matrix.go }}
       - name: Set up the prerequisites
@@ -182,10 +182,10 @@ jobs:
       run:
         shell: bash
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - name: Run in FreeBSD
         if: matrix.os == 'FreeBSD'
-        uses: vmactions/freebsd-vm@v1
+        uses: vmactions/freebsd-vm@0cd283ca698d48b59cda444a9948f48a30709627 # v1.2.8
         with:
           usesh: true
           prepare: |
@@ -195,7 +195,7 @@ jobs:
           run: $GITHUB_WORKSPACE/.github/scripts/bsd_tests.sh
       - name: Run in NetBSD
         if: matrix.os == 'NetBSD'
-        uses: vmactions/netbsd-vm@v1
+        uses: vmactions/netbsd-vm@b24ed5f7a605362ab1226e73df291c8b01990c85 # v1.2.3
         with:
           usesh: true
           prepare: |
