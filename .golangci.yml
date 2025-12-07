@@ -1,0 +1,39 @@
+formatters:
+  enable:
+    - gci
+    - gofumpt
+  settings:
+    gci:
+      # Section configuration to compare against.
+      # Section names are case-insensitive and may contain parameters in ().
+      # The default order of sections is `standard > default > custom > blank > dot > alias > localmodule`.
+      # If `custom-order` is `true`, it follows the order of `sections` option.
+      # Default: ["standard", "default"]
+      sections:
+        - standard # Standard section: captures all standard packages.
+        - default # Default section: contains all imports that could not be matched to another section type.
+        - prefix(github.com/ebitengine/purego) # Custom section: groups all imports with the specified Prefix.
+
+issues:
+  # Show all issues
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+linters:
+  # Use standard set of linters as default
+  default: standard
+  
+  # Disable linters that are not suitable for this low-level library
+  disable:
+    - errcheck
+    - gosec         # Reports "unsafe" operations which are intentional in this library
+    - ineffassign
+    - staticcheck
+    - unconvert     # Removes unnecessary type conversions
+    - unused
+
+run:  
+  # Minimum Go version to support
+  go: "1.18"
+
+version: "2"

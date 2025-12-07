@@ -17,7 +17,7 @@ func ExampleNewBlock() {
 		panic(err)
 	}
 
-	var count = 0
+	count := 0
 	block := objc.NewBlock(
 		func(block objc.Block, line objc.ID, stop *bool) {
 			count++
