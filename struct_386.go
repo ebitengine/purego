@@ -14,7 +14,7 @@ func getStruct(outType reflect.Type, syscall syscall15Args) (v reflect.Value) {
 }
 
 func placeRegisters(v reflect.Value, addFloat func(uintptr), addInt func(uintptr)) {
-	panic("purego: not needed on 386")
+	panic("purego: placeRegisters not implemented on 386")
 }
 
 // shouldBundleStackArgs always returns false on 386
