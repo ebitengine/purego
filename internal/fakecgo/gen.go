@@ -164,11 +164,11 @@ var funcs = map[string]any{
 }
 
 func run() error {
-	t, err := template.New("symbol.go").Funcs(funcs).Parse(templateSymbols)
+	t, err := template.New("zsymbol.go").Funcs(funcs).Parse(templateSymbols)
 	if err != nil {
 		return err
 	}
-	f, err := os.Create("symbols.go")
+	f, err := os.Create("zsymbols.go")
 	defer f.Close()
 	if err != nil {
 		return err
@@ -185,11 +185,11 @@ func run() error {
 	if _, err = f.Write(source); err != nil {
 		return err
 	}
-	t, err = template.New("trampolines_stubs.s").Funcs(funcs).Parse(templateTrampolinesStubs)
+	t, err = template.New("ztrampolines_stubs.s").Funcs(funcs).Parse(templateTrampolinesStubs)
 	if err != nil {
 		return err
 	}
-	f, err = os.Create("trampolines_stubs.s")
+	f, err = os.Create("ztrampolines_stubs.s")
 	defer f.Close()
 	if err != nil {
 		return err
@@ -197,12 +197,12 @@ func run() error {
 	if err := t.Execute(f, allSymbols); err != nil {
 		return err
 	}
-	t, err = template.New("symbols_goos.go").Parse(templateSymbolsGoos)
+	t, err = template.New("zsymbols_goos.go").Parse(templateSymbolsGoos)
 	if err != nil {
 		return err
 	}
 	for _, goos := range []string{"darwin", "freebsd", "linux", "netbsd"} {
-		f, err = os.Create(fmt.Sprintf("symbols_%s.go", goos))
+		f, err = os.Create(fmt.Sprintf("zsymbols_%s.go", goos))
 		defer f.Close()
 		if err != nil {
 			return err
