@@ -9,65 +9,65 @@
 
 // these stubs are here because it is not possible to go:linkname directly the C functions on darwin arm64
 
-TEXT _malloc(SB), NOSPLIT, $0-0
+TEXT _malloc(SB), NOSPLIT|NOFRAME, $0-0
 	JMP purego_malloc(SB)
 
-TEXT _free(SB), NOSPLIT, $0-0
+TEXT _free(SB), NOSPLIT|NOFRAME, $0-0
 	JMP purego_free(SB)
 
-TEXT _setenv(SB), NOSPLIT, $0-0
+TEXT _setenv(SB), NOSPLIT|NOFRAME, $0-0
 	JMP purego_setenv(SB)
 
-TEXT _unsetenv(SB), NOSPLIT, $0-0
+TEXT _unsetenv(SB), NOSPLIT|NOFRAME, $0-0
 	JMP purego_unsetenv(SB)
 
-TEXT _sigfillset(SB), NOSPLIT, $0-0
+TEXT _sigfillset(SB), NOSPLIT|NOFRAME, $0-0
 	JMP purego_sigfillset(SB)
 
-TEXT _nanosleep(SB), NOSPLIT, $0-0
+TEXT _nanosleep(SB), NOSPLIT|NOFRAME, $0-0
 	JMP purego_nanosleep(SB)
 
-TEXT _abort(SB), NOSPLIT, $0-0
+TEXT _abort(SB), NOSPLIT|NOFRAME, $0-0
 	JMP purego_abort(SB)
 
-TEXT _sigaltstack(SB), NOSPLIT, $0-0
+TEXT _sigaltstack(SB), NOSPLIT|NOFRAME, $0-0
 	JMP purego_sigaltstack(SB)
 
-TEXT _pthread_attr_init(SB), NOSPLIT, $0-0
+TEXT _pthread_attr_init(SB), NOSPLIT|NOFRAME, $0-0
 	JMP purego_pthread_attr_init(SB)
 
-TEXT _pthread_create(SB), NOSPLIT, $0-0
+TEXT _pthread_create(SB), NOSPLIT|NOFRAME, $0-0
 	JMP purego_pthread_create(SB)
 
-TEXT _pthread_detach(SB), NOSPLIT, $0-0
+TEXT _pthread_detach(SB), NOSPLIT|NOFRAME, $0-0
 	JMP purego_pthread_detach(SB)
 
-TEXT _pthread_sigmask(SB), NOSPLIT, $0-0
+TEXT _pthread_sigmask(SB), NOSPLIT|NOFRAME, $0-0
 	JMP purego_pthread_sigmask(SB)
 
-TEXT _pthread_self(SB), NOSPLIT, $0-0
+TEXT _pthread_self(SB), NOSPLIT|NOFRAME, $0-0
 	JMP purego_pthread_self(SB)
 
-TEXT _pthread_get_stacksize_np(SB), NOSPLIT, $0-0
+TEXT _pthread_get_stacksize_np(SB), NOSPLIT|NOFRAME, $0-0
 	JMP purego_pthread_get_stacksize_np(SB)
 
-TEXT _pthread_attr_getstacksize(SB), NOSPLIT, $0-0
+TEXT _pthread_attr_getstacksize(SB), NOSPLIT|NOFRAME, $0-0
 	JMP purego_pthread_attr_getstacksize(SB)
 
-TEXT _pthread_attr_setstacksize(SB), NOSPLIT, $0-0
+TEXT _pthread_attr_setstacksize(SB), NOSPLIT|NOFRAME, $0-0
 	JMP purego_pthread_attr_setstacksize(SB)
 
-TEXT _pthread_attr_destroy(SB), NOSPLIT, $0-0
+TEXT _pthread_attr_destroy(SB), NOSPLIT|NOFRAME, $0-0
 	JMP purego_pthread_attr_destroy(SB)
 
-TEXT _pthread_mutex_lock(SB), NOSPLIT, $0-0
+TEXT _pthread_mutex_lock(SB), NOSPLIT|NOFRAME, $0-0
 	JMP purego_pthread_mutex_lock(SB)
 
-TEXT _pthread_mutex_unlock(SB), NOSPLIT, $0-0
+TEXT _pthread_mutex_unlock(SB), NOSPLIT|NOFRAME, $0-0
 	JMP purego_pthread_mutex_unlock(SB)
 
-TEXT _pthread_cond_broadcast(SB), NOSPLIT, $0-0
+TEXT _pthread_cond_broadcast(SB), NOSPLIT|NOFRAME, $0-0
 	JMP purego_pthread_cond_broadcast(SB)
 
-TEXT _pthread_setspecific(SB), NOSPLIT, $0-0
+TEXT _pthread_setspecific(SB), NOSPLIT|NOFRAME, $0-0
 	JMP purego_pthread_setspecific(SB)
