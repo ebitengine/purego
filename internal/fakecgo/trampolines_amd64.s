@@ -29,7 +29,7 @@ return value will be in AX
 
 // these trampolines map the gcc ABI to Go ABI and then calls into the Go equivalent functions.
 
-TEXT x_cgo_init_trampoline(SB), NOSPLIT, $0
+TEXT x_cgo_init_trampoline(SB), NOSPLIT, $16
 	MOVQ DI, AX
 	MOVQ SI, BX
 	MOVQ ·x_cgo_init_call(SB), DX
@@ -37,21 +37,21 @@ TEXT x_cgo_init_trampoline(SB), NOSPLIT, $0
 	CALL CX
 	RET
 
-TEXT x_cgo_thread_start_trampoline(SB), NOSPLIT, $0
+TEXT x_cgo_thread_start_trampoline(SB), NOSPLIT, $8
 	MOVQ DI, AX
 	MOVQ ·x_cgo_thread_start_call(SB), DX
 	MOVQ (DX), CX
 	CALL CX
 	RET
 
-TEXT x_cgo_setenv_trampoline(SB), NOSPLIT, $0
+TEXT x_cgo_setenv_trampoline(SB), NOSPLIT, $8
 	MOVQ DI, AX
 	MOVQ ·x_cgo_setenv_call(SB), DX
 	MOVQ (DX), CX
 	CALL CX
 	RET
 
-TEXT x_cgo_unsetenv_trampoline(SB), NOSPLIT, $0
+TEXT x_cgo_unsetenv_trampoline(SB), NOSPLIT, $8
 	MOVQ DI, AX
 	MOVQ ·x_cgo_unsetenv_call(SB), DX
 	MOVQ (DX), CX
