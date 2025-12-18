@@ -173,3 +173,151 @@ func ExampleNewCallback_cdecl() {
 
 	// Output: 83
 }
+
+func TestNewCallbackInt32Packing(t *testing.T) {
+	var result int32
+	cb := purego.NewCallback(func(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12 int32) int32 {
+		result = a1 + a2 + a3 + a4 + a5 + a6 + a7 + a8 + a9 + a10 + a11 + a12
+		return result
+	})
+
+	var fn func(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12 int32) int32
+	purego.RegisterFunc(&fn, cb)
+
+	got := fn(2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37)
+	want := int32(197)
+
+	if got != want {
+		t.Errorf("callback returned %d, want %d", got, want)
+	}
+}
+
+func TestNewCallbackMixedPacking(t *testing.T) {
+	var gotI32_1, gotI32_2 int32
+	var gotI64 int64
+	cb := purego.NewCallback(func(r1, r2, r3, r4, r5, r6, r7, r8 int64, s1 int32, s2 int64, s3 int32) {
+		gotI32_1 = s1
+		gotI64 = s2
+		gotI32_2 = s3
+	})
+
+	var fn func(r1, r2, r3, r4, r5, r6, r7, r8 int64, s1 int32, s2 int64, s3 int32)
+	purego.RegisterFunc(&fn, cb)
+
+	fn(1, 2, 3, 4, 5, 6, 7, 8, 100, 200, 300)
+
+	if gotI32_1 != 100 || gotI64 != 200 || gotI32_2 != 300 {
+		t.Errorf("got (%d, %d, %d), want (100, 200, 300)", gotI32_1, gotI64, gotI32_2)
+	}
+}
+
+func TestNewCallbackSmallTypes(t *testing.T) {
+	var gotBool bool
+	var gotI8 int8
+	var gotU8 uint8
+	var gotI16 int16
+	var gotU16 uint16
+	var gotI32 int32
+	cb := purego.NewCallback(func(r1, r2, r3, r4, r5, r6, r7, r8 int64, b bool, i8 int8, u8 uint8, i16 int16, u16 uint16, i32 int32) {
+		gotBool = b
+		gotI8 = i8
+		gotU8 = u8
+		gotI16 = i16
+		gotU16 = u16
+		gotI32 = i32
+	})
+
+	var fn func(r1, r2, r3, r4, r5, r6, r7, r8 int64, b bool, i8 int8, u8 uint8, i16 int16, u16 uint16, i32 int32)
+	purego.RegisterFunc(&fn, cb)
+
+	fn(1, 2, 3, 4, 5, 6, 7, 8, true, -42, 200, -1000, 50000, 123456)
+
+	if !gotBool || gotI8 != -42 || gotU8 != 200 || gotI16 != -1000 || gotU16 != 50000 || gotI32 != 123456 {
+		t.Errorf("got (bool=%v, i8=%d, u8=%d, i16=%d, u16=%d, i32=%d), want (true, -42, 200, -1000, 50000, 123456)",
+			gotBool, gotI8, gotU8, gotI16, gotU16, gotI32)
+	}
+}
+
+func TestCallbackFromC(t *testing.T) {
+	libFileName := filepath.Join(t.TempDir(), "libcbpackingtest.so")
+
+	if err := buildSharedLib("CC", libFileName, filepath.Join("testdata", "libcbtest", "callback_packing_test.c")); err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove(libFileName)
+
+	lib, err := purego.Dlopen(libFileName, purego.RTLD_NOW|purego.RTLD_GLOBAL)
+	if err != nil {
+		t.Fatalf("Dlopen(%q) failed: %v", libFileName, err)
+	}
+
+	t.Run("int32_packing", func(t *testing.T) {
+		var result int32
+		goCallback := func(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12 int32) int32 {
+			result = a1 + a2 + a3 + a4 + a5 + a6 + a7 + a8 + a9 + a10 + a11 + a12
+			return result
+		}
+
+		var callCallbackInt32Packing func(uintptr) int32
+		purego.RegisterLibFunc(&callCallbackInt32Packing, lib, "callCallbackInt32Packing")
+
+		cb := purego.NewCallback(goCallback)
+		got := callCallbackInt32Packing(cb)
+		want := int32(197) // sum of primes: 2+3+5+7+11+13+17+19+23+29+31+37
+
+		if got != want {
+			t.Errorf("C called callback returned %d, want %d", got, want)
+		}
+		if result != want {
+			t.Errorf("callback received wrong args, sum=%d, want %d", result, want)
+		}
+	})
+
+	t.Run("mixed_packing", func(t *testing.T) {
+		var gotI32_1, gotI32_2 int32
+		var gotI64 int64
+		goCallback := func(r1, r2, r3, r4, r5, r6, r7, r8 int64, s1 int32, s2 int64, s3 int32) {
+			gotI32_1 = s1
+			gotI64 = s2
+			gotI32_2 = s3
+		}
+
+		var callCallbackMixedPacking func(uintptr)
+		purego.RegisterLibFunc(&callCallbackMixedPacking, lib, "callCallbackMixedPacking")
+
+		cb := purego.NewCallback(goCallback)
+		callCallbackMixedPacking(cb)
+
+		if gotI32_1 != 100 || gotI64 != 200 || gotI32_2 != 300 {
+			t.Errorf("callback received (%d, %d, %d), want (100, 200, 300)", gotI32_1, gotI64, gotI32_2)
+		}
+	})
+
+	t.Run("small_types", func(t *testing.T) {
+		var gotBool bool
+		var gotI8 int8
+		var gotU8 uint8
+		var gotI16 int16
+		var gotU16 uint16
+		var gotI32 int32
+		goCallback := func(r1, r2, r3, r4, r5, r6, r7, r8 int64, b bool, i8 int8, u8 uint8, i16 int16, u16 uint16, i32 int32) {
+			gotBool = b
+			gotI8 = i8
+			gotU8 = u8
+			gotI16 = i16
+			gotU16 = u16
+			gotI32 = i32
+		}
+
+		var callCallbackSmallTypes func(uintptr)
+		purego.RegisterLibFunc(&callCallbackSmallTypes, lib, "callCallbackSmallTypes")
+
+		cb := purego.NewCallback(goCallback)
+		callCallbackSmallTypes(cb)
+
+		if !gotBool || gotI8 != -42 || gotU8 != 200 || gotI16 != -1000 || gotU16 != 50000 || gotI32 != 123456 {
+			t.Errorf("callback received (bool=%v, i8=%d, u8=%d, i16=%d, u16=%d, i32=%d), want (true, -42, 200, -1000, 50000, 123456)",
+				gotBool, gotI8, gotU8, gotI16, gotU16, gotI32)
+		}
+	})
+}
