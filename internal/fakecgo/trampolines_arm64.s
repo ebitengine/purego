@@ -7,32 +7,28 @@
 #include "go_asm.h"
 #include "abi_arm64.h"
 
-// these trampolines map the gcc ABI to Go ABI and then calls into the Go equivalent functions.
+// These trampolines map the gcc ABI to Go ABIInternal and then calls into the Go equivalent functions.
+// Note that C arguments are passed in R0-R7, which matches Go ABIInternal for the first eight arguments.
 
 TEXT x_cgo_init_trampoline(SB), NOSPLIT, $0-0
-	MOVD R0, 8(RSP)
-	MOVD R1, 16(RSP)
 	MOVD ·x_cgo_init_call(SB), R26
 	MOVD (R26), R2
 	CALL (R2)
 	RET
 
 TEXT x_cgo_thread_start_trampoline(SB), NOSPLIT, $0-0
-	MOVD R0, 8(RSP)
 	MOVD ·x_cgo_thread_start_call(SB), R26
 	MOVD (R26), R2
 	CALL (R2)
 	RET
 
 TEXT x_cgo_setenv_trampoline(SB), NOSPLIT, $0-0
-	MOVD R0, 8(RSP)
 	MOVD ·x_cgo_setenv_call(SB), R26
 	MOVD (R26), R2
 	CALL (R2)
 	RET
 
 TEXT x_cgo_unsetenv_trampoline(SB), NOSPLIT, $0-0
-	MOVD R0, 8(RSP)
 	MOVD ·x_cgo_unsetenv_call(SB), R26
 	MOVD (R26), R2
 	CALL (R2)
