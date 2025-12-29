@@ -144,6 +144,38 @@ func callbackWrap(a *callbackArgs) {
 	cbs.lock.Unlock()
 	fnType := fn.Type()
 	args := make([]reflect.Value, fnType.NumIn())
+
+	if runtime.GOARCH == "arm64" && runtime.GOOS == "darwin" {
+		callbackWrapDarwinARM64(a, fn, fnType, args)
+	} else {
+		callbackWrapGeneric(a, fn, fnType, args)
+	}
+
+	ret := fn.Call(args)
+	if len(ret) > 0 {
+		switch k := ret[0].Kind(); k {
+		case reflect.Uint, reflect.Uint64, reflect.Uint32, reflect.Uint16, reflect.Uint8, reflect.Uintptr:
+			a.result = uintptr(ret[0].Uint())
+		case reflect.Int, reflect.Int64, reflect.Int32, reflect.Int16, reflect.Int8:
+			a.result = uintptr(ret[0].Int())
+		case reflect.Bool:
+			if ret[0].Bool() {
+				a.result = 1
+			} else {
+				a.result = 0
+			}
+		case reflect.Pointer:
+			a.result = ret[0].Pointer()
+		case reflect.UnsafePointer:
+			a.result = ret[0].Pointer()
+		default:
+			panic("purego: unsupported kind: " + k.String())
+		}
+	}
+}
+
+// callbackWrapGeneric handles callbacks with unpacked (8-byte slot) argument layout.
+func callbackWrapGeneric(a *callbackArgs, fn reflect.Value, fnType reflect.Type, args []reflect.Value) {
 	frame := (*[callbackMaxFrame]uintptr)(a.args)
 	var floatsN int // floatsN represents the number of float arguments processed
 	var intsN int   // intsN represents the number of integer arguments processed
@@ -166,7 +198,6 @@ func callbackWrap(a *callbackArgs) {
 			args[i] = reflect.Zero(fnType.In(i))
 			continue
 		default:
-
 			if intsN >= numOfIntegerRegisters() {
 				pos = stack
 				stack++
@@ -178,25 +209,54 @@ func callbackWrap(a *callbackArgs) {
 		}
 		args[i] = reflect.NewAt(fnType.In(i), unsafe.Pointer(&frame[pos])).Elem()
 	}
-	ret := fn.Call(args)
-	if len(ret) > 0 {
-		switch k := ret[0].Kind(); k {
-		case reflect.Uint, reflect.Uint64, reflect.Uint32, reflect.Uint16, reflect.Uint8, reflect.Uintptr:
-			a.result = uintptr(ret[0].Uint())
-		case reflect.Int, reflect.Int64, reflect.Int32, reflect.Int16, reflect.Int8:
-			a.result = uintptr(ret[0].Int())
-		case reflect.Bool:
-			if ret[0].Bool() {
-				a.result = 1
+}
+
+// callbackWrapDarwinARM64 handles callbacks with C-packed stack argument layout on Darwin ARM64.
+func callbackWrapDarwinARM64(a *callbackArgs, fn reflect.Value, fnType reflect.Type, args []reflect.Value) {
+	frameBytes := (*[callbackMaxFrame * 8]byte)(a.args)
+	var floatsN int
+	var intsN int
+	// stackOffset tracks byte offset into the stack portion (after registers)
+	stackOffset := (numOfIntegerRegisters() + numOfFloatRegisters) * 8
+
+	for i := range args {
+		argType := fnType.In(i)
+		argSize := int(argType.Size())
+		// Natural alignment: align to the argument's size (min 1, max 8)
+		alignment := argSize
+		if alignment > 8 {
+			alignment = 8
+		}
+
+		switch argType.Kind() {
+		case reflect.Float32, reflect.Float64:
+			if floatsN >= numOfFloatRegisters {
+				// Stack argument - align and use C packing
+				stackOffset = (stackOffset + alignment - 1) & ^(alignment - 1)
+				args[i] = reflect.NewAt(argType, unsafe.Pointer(&frameBytes[stackOffset])).Elem()
+				stackOffset += argSize
 			} else {
-				a.result = 0
+				// Register argument
+				pos := floatsN * 8
+				args[i] = reflect.NewAt(argType, unsafe.Pointer(&frameBytes[pos])).Elem()
 			}
-		case reflect.Pointer:
-			a.result = ret[0].Pointer()
-		case reflect.UnsafePointer:
-			a.result = ret[0].Pointer()
+			floatsN++
+		case reflect.Struct:
+			// This is the CDecl field
+			args[i] = reflect.Zero(argType)
+			continue
 		default:
-			panic("purego: unsupported kind: " + k.String())
+			if intsN >= numOfIntegerRegisters() {
+				// Stack argument - align and use C packing
+				stackOffset = (stackOffset + alignment - 1) & ^(alignment - 1)
+				args[i] = reflect.NewAt(argType, unsafe.Pointer(&frameBytes[stackOffset])).Elem()
+				stackOffset += argSize
+			} else {
+				// Register argument - integers start after floats
+				pos := (numOfFloatRegisters + intsN) * 8
+				args[i] = reflect.NewAt(argType, unsafe.Pointer(&frameBytes[pos])).Elem()
+			}
+			intsN++
 		}
 	}
 }

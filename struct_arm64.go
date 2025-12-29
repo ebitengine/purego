@@ -9,6 +9,15 @@ import (
 	"unsafe"
 )
 
+const (
+	align8ByteMask = 7 // Mask for 8-byte alignment: (val + 7) &^ 7
+	align8ByteSize = 8 // 8-byte alignment boundary
+)
+
+func roundUpTo8(val uintptr) uintptr {
+	return (val + align8ByteMask) &^ align8ByteMask
+}
+
 func getStruct(outType reflect.Type, syscall syscall15Args) (v reflect.Value) {
 	outSize := outType.Size()
 	switch {
@@ -86,7 +95,7 @@ func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFl
 	return keepAlive // the struct was allocated so don't panic
 }
 
-func placeRegisters(v reflect.Value, addFloat func(uintptr), addInt func(uintptr)) {
+func placeRegistersArm64(v reflect.Value, addFloat func(uintptr), addInt func(uintptr)) {
 	var val uint64
 	var shift byte
 	var flushed bool
