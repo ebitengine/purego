@@ -4,6 +4,7 @@
 package purego_test
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"os/exec"
@@ -191,12 +192,239 @@ func TestABI(t *testing.T) {
 		purego.RegisterLibFunc(&fn, lib, cName)
 		buf := make([]byte, 256)
 		fn(&buf[0], uintptr(len(buf)), 1, 2, 3, 4, 5, 6, 7, 8, "foo", "bar", "baz")
-		res := string(buf[:strings.IndexByte(string(buf), 0)])
+		res := string(buf[:bytes.IndexByte(buf, 0)])
 		const want = "1:2:3:4:5:6:7:8:foo:bar:baz"
 		if res != want {
 			t.Fatalf("%s: got %q, want %q", cName, res, want)
 		}
 	}
+}
+
+func TestABI_ArgumentPassing(t *testing.T) {
+	if runtime.GOOS == "windows" && runtime.GOARCH == "386" {
+		t.Skip("need a 32bit gcc to run this test") // TODO: find 32bit gcc for test
+	}
+	libFileName := filepath.Join(t.TempDir(), "abitest.so")
+	if err := buildSharedLib("CC", libFileName, filepath.Join("testdata", "abitest", "abi_test.c")); err != nil {
+		t.Fatal(err)
+	}
+	lib, err := load.OpenLibrary(libFileName)
+	if err != nil {
+		t.Fatalf("Failed to open library %q: %v", libFileName, err)
+	}
+	t.Cleanup(func() {
+		if err := load.CloseLibrary(lib); err != nil {
+			t.Errorf("Failed to close library: %v", err)
+		}
+	})
+
+	tests := []struct {
+		name string
+		fn   any
+		cFn  string
+		call func(any) string
+		want string
+	}{
+		{
+			name: "10_int32_baseline",
+			fn:   new(func(*byte, uintptr, int32, int32, int32, int32, int32, int32, int32, int32, int32, int32)),
+			cFn:  "stack_10_int32",
+			call: func(f any) string {
+				buf := make([]byte, 256)
+				(*f.(*func(*byte, uintptr, int32, int32, int32, int32, int32, int32, int32, int32, int32, int32)))(&buf[0], 256, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+				return string(buf[:bytes.IndexByte(buf, 0)])
+			},
+			want: "1:2:3:4:5:6:7:8:9:10",
+		},
+		{
+			name: "11_int32",
+			fn:   new(func(*byte, uintptr, int32, int32, int32, int32, int32, int32, int32, int32, int32, int32, int32)),
+			cFn:  "stack_11_int32",
+			call: func(f any) string {
+				buf := make([]byte, 256)
+				(*f.(*func(*byte, uintptr, int32, int32, int32, int32, int32, int32, int32, int32, int32, int32, int32)))(&buf[0], 256, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
+				return string(buf[:bytes.IndexByte(buf, 0)])
+			},
+			want: "1:2:3:4:5:6:7:8:9:10:11",
+		},
+		{
+			name: "10_float32",
+			fn:   new(func(*byte, uintptr, float32, float32, float32, float32, float32, float32, float32, float32, float32, float32)),
+			cFn:  "stack_10_float32",
+			call: func(f any) string {
+				buf := make([]byte, 256)
+				(*f.(*func(*byte, uintptr, float32, float32, float32, float32, float32, float32, float32, float32, float32, float32)))(&buf[0], 256, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0)
+				return string(buf[:bytes.IndexByte(buf, 0)])
+			},
+			want: "1.0:2.0:3.0:4.0:5.0:6.0:7.0:8.0:9.0:10.0",
+		},
+		{
+			name: "mixed_stack_strings",
+			fn:   new(func(*byte, uintptr, int32, int32, int32, int32, int32, int32, int32, int32, string, bool, int32, string)),
+			cFn:  "stack_mixed_stack_4args",
+			call: func(f any) string {
+				buf := make([]byte, 256)
+				(*f.(*func(*byte, uintptr, int32, int32, int32, int32, int32, int32, int32, int32, string, bool, int32, string)))(&buf[0], 256, 1, 2, 3, 4, 5, 6, 7, 8, "foo", false, 99, "bar")
+				return string(buf[:bytes.IndexByte(buf, 0)])
+			},
+			want: "1:2:3:4:5:6:7:8:foo:0:99:bar",
+		},
+		{
+			name: "20_int32",
+			fn:   new(func(*byte, uintptr, int32, int32, int32, int32, int32, int32, int32, int32, int32, int32, int32, int32, int32, int32, int32, int32, int32, int32, int32, int32)),
+			cFn:  "stack_20_int32",
+			call: func(f any) string {
+				buf := make([]byte, 512)
+				(*f.(*func(*byte, uintptr, int32, int32, int32, int32, int32, int32, int32, int32, int32, int32, int32, int32, int32, int32, int32, int32, int32, int32, int32, int32)))(&buf[0], 512, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20)
+				return string(buf[:bytes.IndexByte(buf, 0)])
+			},
+			want: "1:2:3:4:5:6:7:8:9:10:11:12:13:14:15:16:17:18:19:20",
+		},
+		{
+			name: "8int_hfa2_stack",
+			fn:   new(func(*byte, uintptr, int32, int32, int32, int32, int32, int32, int32, int32, struct{ x, y float32 })),
+			cFn:  "stack_8int_hfa2_stack",
+			call: func(f any) string {
+				buf := make([]byte, 256)
+				(*f.(*func(*byte, uintptr, int32, int32, int32, int32, int32, int32, int32, int32, struct{ x, y float32 })))(&buf[0], 256, 1, 2, 3, 4, 5, 6, 7, 8, struct{ x, y float32 }{10.0, 20.0})
+				return string(buf[:bytes.IndexByte(buf, 0)])
+			},
+			want: "1:2:3:4:5:6:7:8:10.0:20.0",
+		},
+		{
+			name: "8int_2structs_stack",
+			fn:   new(func(*byte, uintptr, int32, int32, int32, int32, int32, int32, int32, int32, struct{ x, y int32 }, struct{ x, y int32 })),
+			cFn:  "stack_8int_2structs_stack",
+			call: func(f any) string {
+				buf := make([]byte, 256)
+				(*f.(*func(*byte, uintptr, int32, int32, int32, int32, int32, int32, int32, int32, struct{ x, y int32 }, struct{ x, y int32 })))(&buf[0], 256, 1, 2, 3, 4, 5, 6, 7, 8, struct{ x, y int32 }{9, 10}, struct{ x, y int32 }{11, 12})
+				return string(buf[:bytes.IndexByte(buf, 0)])
+			},
+			want: "1:2:3:4:5:6:7:8:9:10:11:12",
+		},
+		{
+			name: "8float_hfa2_stack",
+			fn:   new(func(*byte, uintptr, float32, float32, float32, float32, float32, float32, float32, float32, struct{ x, y float32 })),
+			cFn:  "stack_8float_hfa2_stack",
+			call: func(f any) string {
+				buf := make([]byte, 256)
+				(*f.(*func(*byte, uintptr, float32, float32, float32, float32, float32, float32, float32, float32, struct{ x, y float32 })))(&buf[0], 256, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, struct{ x, y float32 }{9.0, 10.0})
+				return string(buf[:bytes.IndexByte(buf, 0)])
+			},
+			want: "1.0:2.0:3.0:4.0:5.0:6.0:7.0:8.0:9.0:10.0",
+		},
+		{
+			name: "8int_hfa2_floatregs",
+			fn:   new(func(*byte, uintptr, int32, int32, int32, int32, int32, int32, int32, int32, struct{ x, y float32 })),
+			cFn:  "stack_8int_hfa2_floatregs",
+			call: func(f any) string {
+				buf := make([]byte, 256)
+				(*f.(*func(*byte, uintptr, int32, int32, int32, int32, int32, int32, int32, int32, struct{ x, y float32 })))(&buf[0], 256, 1, 2, 3, 4, 5, 6, 7, 8, struct{ x, y float32 }{10.0, 20.0})
+				return string(buf[:bytes.IndexByte(buf, 0)])
+			},
+			want: "1:2:3:4:5:6:7:8:10.0:20.0",
+		},
+		{
+			name: "8int_int_struct_int",
+			fn:   new(func(*byte, uintptr, int32, int32, int32, int32, int32, int32, int32, int32, int32, struct{ x, y int32 }, int32)),
+			cFn:  "stack_8int_int_struct_int",
+			call: func(f any) string {
+				buf := make([]byte, 256)
+				(*f.(*func(*byte, uintptr, int32, int32, int32, int32, int32, int32, int32, int32, int32, struct{ x, y int32 }, int32)))(&buf[0], 256, 1, 2, 3, 4, 5, 6, 7, 8, 9, struct{ x, y int32 }{10, 11}, 12)
+				return string(buf[:bytes.IndexByte(buf, 0)])
+			},
+			want: "1:2:3:4:5:6:7:8:9:10:11:12",
+		},
+		{
+			name: "8int_hfa4_stack",
+			fn:   new(func(*byte, uintptr, int32, int32, int32, int32, int32, int32, int32, int32, struct{ x, y, z, w float32 })),
+			cFn:  "stack_8int_hfa4_stack",
+			call: func(f any) string {
+				buf := make([]byte, 256)
+				(*f.(*func(*byte, uintptr, int32, int32, int32, int32, int32, int32, int32, int32, struct{ x, y, z, w float32 })))(&buf[0], 256, 1, 2, 3, 4, 5, 6, 7, 8, struct{ x, y, z, w float32 }{10.0, 20.0, 30.0, 40.0})
+				return string(buf[:bytes.IndexByte(buf, 0)])
+			},
+			want: "1:2:3:4:5:6:7:8:10.0:20.0:30.0:40.0",
+		},
+		{
+			name: "8int_mixed_struct",
+			fn: new(func(*byte, uintptr, int32, int32, int32, int32, int32, int32, int32, int32, struct {
+				a int32
+				b float32
+			})),
+			cFn: "stack_8int_mixed_struct",
+			call: func(f any) string {
+				buf := make([]byte, 256)
+				(*f.(*func(*byte, uintptr, int32, int32, int32, int32, int32, int32, int32, int32, struct {
+					a int32
+					b float32
+				})))(&buf[0], 256, 1, 2, 3, 4, 5, 6, 7, 8, struct {
+					a int32
+					b float32
+				}{9, 10.0})
+				return string(buf[:bytes.IndexByte(buf, 0)])
+			},
+			want: "1:2:3:4:5:6:7:8:9:10.0",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.name == "20_int32" && (runtime.GOOS != "darwin" || runtime.GOARCH != "arm64") {
+				t.Skip("20 int32 arguments only supported on Darwin ARM64 with smart stack checking")
+			}
+			if tt.name == "10_float32" && (runtime.GOARCH == "386" || runtime.GOARCH == "arm" || runtime.GOARCH == "loong64") {
+				t.Skip("float32 stack arguments not yet supported on this platform")
+			}
+			// Struct tests require Darwin ARM64 or AMD64
+			if strings.HasPrefix(tt.name, "8int_") && (runtime.GOOS != "darwin" || (runtime.GOARCH != "arm64" && runtime.GOARCH != "amd64")) {
+				t.Skip("struct argument tests only supported on Darwin ARM64/AMD64")
+			}
+			if strings.HasPrefix(tt.name, "8float_") && (runtime.GOOS != "darwin" || (runtime.GOARCH != "arm64" && runtime.GOARCH != "amd64")) {
+				t.Skip("struct argument tests only supported on Darwin ARM64/AMD64")
+			}
+
+			purego.RegisterLibFunc(tt.fn, lib, tt.cFn)
+			got := tt.call(tt.fn)
+			if got != tt.want {
+				t.Errorf("%s\n  got:  %q\n  want: %q", tt.cFn, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestABI_TooManyArguments(t *testing.T) {
+	if runtime.GOOS != "darwin" || runtime.GOARCH != "arm64" {
+		t.Skip("This test is specific to Darwin ARM64")
+	}
+
+	libFileName := filepath.Join(t.TempDir(), "abitest.so")
+	if err := buildSharedLib("CC", libFileName, filepath.Join("testdata", "abitest", "abi_test.c")); err != nil {
+		t.Fatal(err)
+	}
+	lib, err := load.OpenLibrary(libFileName)
+	if err != nil {
+		t.Fatalf("Failed to open library %q: %v", libFileName, err)
+	}
+	t.Cleanup(func() {
+		if err := load.CloseLibrary(lib); err != nil {
+			t.Errorf("Failed to close library: %v", err)
+		}
+	})
+
+	// Test that 25 int64 arguments (17 slots needed) exceeds the limit
+	t.Run("25_int64_exceeds_limit", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r != nil {
+				t.Logf("Got expected panic: %v", r)
+			} else {
+				t.Errorf("Expected panic but didn't get one")
+			}
+		}()
+
+		var fn func(*byte, uintptr, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64)
+		purego.RegisterLibFunc(&fn, lib, "stack_25_int64_exceeds")
+	})
 }
 
 func buildSharedLib(compilerEnv, libFile string, sources ...string) error {

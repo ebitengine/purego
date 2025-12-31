@@ -10,12 +10,16 @@ import (
 	"math"
 	"reflect"
 	"runtime"
-	"strconv"
 	"sync"
 	"unsafe"
 
 	"github.com/ebitengine/purego/internal/strings"
 	"github.com/ebitengine/purego/internal/xreflect"
+)
+
+const (
+	align8ByteMask = 7 // Mask for 8-byte alignment: (val + 7) &^ 7
+	align8ByteSize = 8 // 8-byte alignment boundary
 )
 
 var thePool = sync.Pool{New: func() any {
@@ -94,6 +98,9 @@ func RegisterLibFunc(fptr any, handle uintptr, name string) {
 // Purego can handle the most common structs that have fields of builtin types like int8, uint16, float32, etc. However,
 // it does not support aligning fields properly. It is therefore the responsibility of the caller to ensure
 // that all padding is added to the Go struct to match the C one. See `BoolStructFn` in struct_test.go for an example.
+//
+// On Darwin ARM64, purego handles proper alignment of struct arguments when passing them on the stack,
+// following the C ABI's byte-level packing rules.
 //
 // # Example
 //
@@ -201,11 +208,27 @@ func RegisterFunc(fptr any, cfn uintptr) {
 				ints++
 			}
 		}
+
 		sizeOfStack := maxArgs - numOfIntegerRegisters()
-		if stack > sizeOfStack {
-			panic("purego: too many arguments")
+		// On Darwin ARM64, use byte-based validation since arguments pack efficiently
+		if runtime.GOOS == "darwin" && runtime.GOARCH == "arm64" {
+			stackBytes := estimateStackBytes(ty)
+			maxStackBytes := sizeOfStack * 8
+			if stackBytes > maxStackBytes {
+				panic("purego: too many stack arguments")
+			}
+		} else {
+			if stack > sizeOfStack {
+				panic("purego: too many stack arguments")
+			}
 		}
 	}
+
+	// Detect if cfn is a callback (to avoid tight packing for callbacks which still use 8-byte slots)
+	// TODO: Remove this check once Darwin ARM64 callback unpacking is updated to handle C-style tight packing.
+	// When callbacks can unpack tightly-packed arguments, this workaround can be removed.
+	isCallback := isCallbackFunction(cfn)
+
 	v := reflect.MakeFunc(ty, func(args []reflect.Value) (results []reflect.Value) {
 		var sysargs [maxArgs]uintptr
 		var floats [numOfFloatRegisters]uintptr
@@ -281,28 +304,17 @@ func RegisterFunc(fptr any, cfn uintptr) {
 				}
 				continue
 			}
-			if runtime.GOARCH == "arm64" && runtime.GOOS == "darwin" &&
-				(numInts >= numOfIntegerRegisters() || numFloats >= numOfFloatRegisters) && v.Kind() != reflect.Struct { // hit the stack
-				fields := make([]reflect.StructField, len(args[i:]))
+			// Check if we need to start Darwin ARM64 C-style stack packing
+			// Skip tight packing for callbacks since they still use 8-byte slot unpacking
+			// TODO: Remove !isCallback condition once callback unpacking supports tight packing
+			if runtime.GOARCH == "arm64" && runtime.GOOS == "darwin" && !isCallback && shouldBundleStackArgs(v, numInts, numFloats) {
+				// Collect and separate remaining args into register vs stack
+				stackArgs, newKeepAlive := collectStackArgs(args, i, numInts, numFloats,
+					keepAlive, addInt, addFloat, addStack, &numInts, &numFloats, &numStack)
+				keepAlive = newKeepAlive
 
-				for j, val := range args[i:] {
-					if val.Kind() == reflect.String {
-						ptr := strings.CString(val.String())
-						keepAlive = append(keepAlive, ptr)
-						val = reflect.ValueOf(ptr)
-						args[i+j] = val
-					}
-					fields[j] = reflect.StructField{
-						Name: "X" + strconv.Itoa(j),
-						Type: val.Type(),
-					}
-				}
-				structType := reflect.StructOf(fields)
-				structInstance := reflect.New(structType).Elem()
-				for j, val := range args[i:] {
-					structInstance.Field(j).Set(val)
-				}
-				placeRegisters(structInstance, addFloat, addInt)
+				// Bundle stack arguments with C-style packing
+				bundleStackArgs(stackArgs, addStack)
 				break
 			}
 			keepAlive = addValue(v, keepAlive, addInt, addFloat, addStack, &numInts, &numFloats, &numStack)
@@ -473,7 +485,7 @@ func checkStructFieldsSupported(ty reflect.Type) {
 }
 
 func roundUpTo8(val uintptr) uintptr {
-	return (val + 7) &^ 7
+	return (val + align8ByteMask) &^ align8ByteMask
 }
 
 func numOfIntegerRegisters() int {
@@ -487,4 +499,64 @@ func numOfIntegerRegisters() int {
 		// integer registers it is fine to return the maxArgs
 		return maxArgs
 	}
+}
+
+// estimateStackBytes estimates stack bytes needed for Darwin ARM64 validation.
+// This is a conservative estimate used only for early error detection.
+func estimateStackBytes(ty reflect.Type) int {
+	numInts, numFloats := 0, 0
+	stackBytes := 0
+
+	for i := 0; i < ty.NumIn(); i++ {
+		arg := ty.In(i)
+		size := int(arg.Size())
+
+		// Check if this goes to register or stack
+		usesInt := arg.Kind() != reflect.Float32 && arg.Kind() != reflect.Float64
+		if usesInt && numInts < numOfIntegerRegisters() {
+			numInts++
+		} else if !usesInt && numFloats < numOfFloatRegisters {
+			numFloats++
+		} else {
+			// Goes to stack - accumulate total bytes
+			stackBytes += size
+		}
+	}
+	// Round total to 8-byte boundary
+	if stackBytes > 0 && stackBytes%align8ByteSize != 0 {
+		stackBytes = int(roundUpTo8(uintptr(stackBytes)))
+	}
+	return stackBytes
+}
+
+// isCallbackFunction checks if the given function pointer is a purego callback.
+// We need to detect this to avoid using tight packing for callbacks, since callback
+// unpacking still uses the 8-byte slot convention.
+// TODO: This function can be removed once Darwin ARM64 callbacks support tight packing.
+// Once callbackWrap is updated to unpack C-style arguments, callbacks can use the same
+// tight packing as normal C function calls.
+func isCallbackFunction(cfn uintptr) bool {
+	// Only platforms with syscall_sysv.go have callback detection.
+	// Match the build constraint: darwin || freebsd || (linux && (amd64 || arm64 || loong64)) || netbsd
+	hasSyscallSysv := runtime.GOOS == "darwin" || runtime.GOOS == "freebsd" || runtime.GOOS == "netbsd" ||
+		(runtime.GOOS == "linux" && (runtime.GOARCH == "amd64" || runtime.GOARCH == "arm64" || runtime.GOARCH == "loong64"))
+	if !hasSyscallSysv {
+		return false
+	}
+
+	// Determine callback entry size based on architecture
+	var entrySize int
+	switch runtime.GOARCH {
+	case "386", "amd64":
+		entrySize = 5
+	case "arm", "arm64", "loong64":
+		entrySize = 8
+	default:
+		return false
+	}
+
+	// Check if cfn is in the callback address range
+	callbackStart := getCallbackStart()
+	callbackEnd := callbackStart + uintptr(getMaxCB()*entrySize)
+	return cfn >= callbackStart && cfn < callbackEnd
 }
