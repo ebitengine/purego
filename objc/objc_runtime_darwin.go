@@ -210,7 +210,7 @@ func SendSuper[T any](id ID, sel SEL, args ...any) T {
 type SEL uintptr
 
 // RegisterName registers a method with the Objective-C runtime system, maps the method name to a selector,
-// and returns the selector value. This function grabs the global Objective-c lock. It is best the cache the
+// and returns the selector value. This function grabs the global Objective-c lock. It is best to cache the
 // result of this function.
 func RegisterName(name string) SEL {
 	return sel_registerName(name)
@@ -238,7 +238,7 @@ type MethodDef struct {
 //
 //	@property (readwrite) float value;
 //
-// In Go, the functions can be accessed as followed:
+// In Go, the functions can be accessed as follows:
 //
 //	var value = purego.Send[float32](id, purego.RegisterName("value"))
 //	id.Send(purego.RegisterName("setValue:"), 3.46)
