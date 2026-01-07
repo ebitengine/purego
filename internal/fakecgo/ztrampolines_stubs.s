@@ -7,7 +7,7 @@
 
 #include "textflag.h"
 
-// these stubs are here because it is not possible to go:linkname directly the C functions on darwin arm64
+// these stubs are here because it is not possible to go:linkname directly the C functions
 
 TEXT _malloc(SB), NOSPLIT|NOFRAME, $0-0
 	JMP purego_malloc(SB)
@@ -44,21 +44,6 @@ TEXT _pthread_detach(SB), NOSPLIT|NOFRAME, $0-0
 
 TEXT _pthread_sigmask(SB), NOSPLIT|NOFRAME, $0-0
 	JMP purego_pthread_sigmask(SB)
-
-TEXT _pthread_self(SB), NOSPLIT|NOFRAME, $0-0
-	JMP purego_pthread_self(SB)
-
-TEXT _pthread_get_stacksize_np(SB), NOSPLIT|NOFRAME, $0-0
-	JMP purego_pthread_get_stacksize_np(SB)
-
-TEXT _pthread_attr_getstacksize(SB), NOSPLIT|NOFRAME, $0-0
-	JMP purego_pthread_attr_getstacksize(SB)
-
-TEXT _pthread_attr_setstacksize(SB), NOSPLIT|NOFRAME, $0-0
-	JMP purego_pthread_attr_setstacksize(SB)
-
-TEXT _pthread_attr_destroy(SB), NOSPLIT|NOFRAME, $0-0
-	JMP purego_pthread_attr_destroy(SB)
 
 TEXT _pthread_mutex_lock(SB), NOSPLIT|NOFRAME, $0-0
 	JMP purego_pthread_mutex_lock(SB)
