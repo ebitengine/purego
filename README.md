@@ -42,7 +42,7 @@ Tier 2 platforms are supported by PureGo on a best-effort basis. Critical bugs o
 
 - **Android**: 386, arm
 - **FreeBSD**: amd64, arm64
-- **Linux**: 386, arm, loong64
+- **Linux**: 386, arm, loong64, riscv64
 - **Windows**: 386*, arm*
 
 `*` These architectures only support `SyscallN` and `NewCallback`
