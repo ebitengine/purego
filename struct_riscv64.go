@@ -123,8 +123,8 @@ func placeStack(v reflect.Value, keepAlive []any, addInt func(uintptr)) []any {
 	return append(keepAlive, ptr.Interface())
 }
 
-// RISCV64 does not bundle stack args
 func shouldBundleStackArgs(v reflect.Value, numInts, numFloats int) bool {
+	// RISCV64 does not bundle stack args
 	return false
 }
 
