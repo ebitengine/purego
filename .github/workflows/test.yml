@@ -124,9 +124,17 @@ jobs:
         if: ${{ runner.os == 'Linux' && runner.arch == 'ARM64' }}
         run: |
            sudo apt-get update
-           sudo apt-get install gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
-           env CC=arm-linux-gnueabihf-gcc CXX=arm-linux-gnueabihf-g++ CGO_ENABLED=1 GOARCH=arm go test -shuffle=on -v -count=10 ./...
-           env CC=arm-linux-gnueabihf-gcc CXX=arm-linux-gnueabihf-g++ CGO_ENABLED=0 GOARCH=arm go test -shuffle=on -v -count=10 ./...
+           sudo apt-get install -y qemu-user gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf libc6-armhf-cross
+           # Create symlink for the dynamic linker that QEMU expects
+           sudo ln -sf /usr/arm-linux-gnueabihf/lib/ld-linux-armhf.so.3 /lib/ld-linux.so.3
+           go env -w CC=arm-linux-gnueabihf-gcc
+           go env -w CXX=arm-linux-gnueabihf-g++
+           env GOOS=linux GOARCH=arm CGO_ENABLED=0 go test -c -o=purego-test-nocgo .
+           env QEMU_LD_PREFIX=/usr/arm-linux-gnueabihf qemu-arm ./purego-test-nocgo -test.shuffle=on -test.v -test.count=10
+           env GOOS=linux GOARCH=arm CGO_ENABLED=1 go test -c -o=purego-test-cgo .
+           env QEMU_LD_PREFIX=/usr/arm-linux-gnueabihf qemu-arm ./purego-test-cgo -test.shuffle=on -test.v -test.count=10
+           go env -u CC
+           go env -u CXX
 
       - name: go test race (no Cgo)
         if: ${{ runner.os == 'macOS' &&  !startsWith(matrix.go, '1.18.') && !startsWith(matrix.go, '1.19.') }}
