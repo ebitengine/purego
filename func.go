@@ -132,7 +132,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 		panic("purego: cfn is nil")
 	}
 	if ty.NumOut() == 1 && (ty.Out(0).Kind() == reflect.Float32 || ty.Out(0).Kind() == reflect.Float64) &&
-		runtime.GOARCH != "arm64" && runtime.GOARCH != "amd64" && runtime.GOARCH != "loong64" {
+		runtime.GOARCH != "arm64" && runtime.GOARCH != "amd64" && runtime.GOARCH != "loong64" && runtime.GOARCH != "riscv64" {
 		panic("purego: float returns are not supported")
 	}
 	{
@@ -281,7 +281,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 		var arm64_r8 uintptr
 		if ty.NumOut() == 1 && ty.Out(0).Kind() == reflect.Struct {
 			outType := ty.Out(0)
-			if (runtime.GOARCH == "amd64" || runtime.GOARCH == "loong64") && outType.Size() > maxRegAllocStructSize {
+			if (runtime.GOARCH == "amd64" || runtime.GOARCH == "loong64" || runtime.GOARCH == "riscv64") && outType.Size() > maxRegAllocStructSize {
 				val := reflect.New(outType)
 				keepAlive = append(keepAlive, val)
 				addInt(val.Pointer())
@@ -323,7 +323,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 		syscall := thePool.Get().(*syscall15Args)
 		defer thePool.Put(syscall)
 
-		if runtime.GOARCH == "loong64" {
+		if runtime.GOARCH == "loong64" || runtime.GOARCH == "riscv64" {
 			*syscall = syscall15Args{
 				cfn,
 				sysargs[0], sysargs[1], sysargs[2], sysargs[3], sysargs[4], sysargs[5],
@@ -490,20 +490,20 @@ func roundUpTo8(val uintptr) uintptr {
 
 func numOfFloatRegisters() int {
 	switch runtime.GOARCH {
-	case "arm64", "amd64", "loong64":
+	case "arm64", "amd64", "loong64", "riscv64":
 		return 8
 	case "arm":
 		return 16
 	default:
 		// since this platform isn't supported and can therefore only access
-		// integer registers it is fine to return 0
+		// integer registers it is safest to return 8
 		return 8
 	}
 }
 
 func numOfIntegerRegisters() int {
 	switch runtime.GOARCH {
-	case "arm64", "loong64":
+	case "arm64", "loong64", "riscv64":
 		return 8
 	case "amd64":
 		return 6
@@ -550,9 +550,9 @@ func estimateStackBytes(ty reflect.Type) int {
 // tight packing as normal C function calls.
 func isCallbackFunction(cfn uintptr) bool {
 	// Only platforms with syscall_sysv.go have callback detection.
-	// Match the build constraint: darwin || freebsd || (linux && (amd64 || arm64 || arm || loong64)) || netbsd
+	// Match the build constraint: darwin || freebsd || (linux && (amd64 || arm64 || arm || loong64 || riscv64)) || netbsd
 	hasSyscallSysv := runtime.GOOS == "darwin" || runtime.GOOS == "freebsd" || runtime.GOOS == "netbsd" ||
-		(runtime.GOOS == "linux" && (runtime.GOARCH == "amd64" || runtime.GOARCH == "arm64" || runtime.GOARCH == "arm" || runtime.GOARCH == "loong64"))
+		(runtime.GOOS == "linux" && (runtime.GOARCH == "amd64" || runtime.GOARCH == "arm64" || runtime.GOARCH == "arm" || runtime.GOARCH == "loong64" || runtime.GOARCH == "riscv64"))
 	if !hasSyscallSysv {
 		return false
 	}
@@ -562,7 +562,7 @@ func isCallbackFunction(cfn uintptr) bool {
 	switch runtime.GOARCH {
 	case "386", "amd64":
 		entrySize = 5
-	case "arm", "arm64", "loong64":
+	case "arm", "arm64", "loong64", "riscv64":
 		entrySize = 8
 	default:
 		return false
