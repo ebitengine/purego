@@ -170,7 +170,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 				if is32bit {
 					panic("purego: floats only supported on 64bit platforms")
 				}
-				if floats < numOfFloatRegisters {
+				if floats < numOfFloatRegisters() {
 					floats++
 				} else {
 					stack++
@@ -231,7 +231,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 
 	v := reflect.MakeFunc(ty, func(args []reflect.Value) (results []reflect.Value) {
 		var sysargs [maxArgs]uintptr
-		var floats [numOfFloatRegisters]uintptr
+		var floats [maxArgs]uintptr
 		var numInts int
 		var numFloats int
 		var numStack int
@@ -488,6 +488,19 @@ func roundUpTo8(val uintptr) uintptr {
 	return (val + align8ByteMask) &^ align8ByteMask
 }
 
+func numOfFloatRegisters() int {
+	switch runtime.GOARCH {
+	case "arm64", "amd64", "loong64":
+		return 8
+	case "arm":
+		return 16
+	default:
+		// since this platform isn't supported and can therefore only access
+		// integer registers it is fine to return 0
+		return 8
+	}
+}
+
 func numOfIntegerRegisters() int {
 	switch runtime.GOARCH {
 	case "arm64", "loong64":
@@ -515,7 +528,7 @@ func estimateStackBytes(ty reflect.Type) int {
 		usesInt := arg.Kind() != reflect.Float32 && arg.Kind() != reflect.Float64
 		if usesInt && numInts < numOfIntegerRegisters() {
 			numInts++
-		} else if !usesInt && numFloats < numOfFloatRegisters {
+		} else if !usesInt && numFloats < numOfFloatRegisters() {
 			numFloats++
 		} else {
 			// Goes to stack - accumulate total bytes
@@ -537,9 +550,9 @@ func estimateStackBytes(ty reflect.Type) int {
 // tight packing as normal C function calls.
 func isCallbackFunction(cfn uintptr) bool {
 	// Only platforms with syscall_sysv.go have callback detection.
-	// Match the build constraint: darwin || freebsd || (linux && (amd64 || arm64 || loong64)) || netbsd
+	// Match the build constraint: darwin || freebsd || (linux && (amd64 || arm64 || arm || loong64)) || netbsd
 	hasSyscallSysv := runtime.GOOS == "darwin" || runtime.GOOS == "freebsd" || runtime.GOOS == "netbsd" ||
-		(runtime.GOOS == "linux" && (runtime.GOARCH == "amd64" || runtime.GOARCH == "arm64" || runtime.GOARCH == "loong64"))
+		(runtime.GOOS == "linux" && (runtime.GOARCH == "amd64" || runtime.GOARCH == "arm64" || runtime.GOARCH == "arm" || runtime.GOARCH == "loong64"))
 	if !hasSyscallSysv {
 		return false
 	}

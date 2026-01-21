@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023 The Ebitengine Authors
 
-//go:build darwin || (linux && (amd64 || arm64 || loong64))
+//go:build darwin || (linux && (amd64 || arm64 || arm || loong64))
 
 package purego_test
 
@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 	"unsafe"
 
@@ -51,6 +52,9 @@ func TestCallGoFromSharedLib(t *testing.T) {
 }
 
 func TestNewCallbackFloat64(t *testing.T) {
+	if runtime.GOARCH == "arm" || runtime.GOARCH == "386" {
+		t.Skip("float callbacks not supported on 32-bit platforms")
+	}
 	// This tests the maximum number of arguments a function to NewCallback can take
 	const (
 		expectCbTotal    = -3
@@ -79,6 +83,9 @@ func TestNewCallbackFloat64(t *testing.T) {
 }
 
 func TestNewCallbackFloat64AndIntMix(t *testing.T) {
+	if runtime.GOARCH == "arm" || runtime.GOARCH == "386" {
+		t.Skip("float callbacks not supported on 32-bit platforms")
+	}
 	// This tests interleaving float and integer arguments to NewCallback
 	const (
 		expectCbTotal = 54.75
@@ -97,6 +104,9 @@ func TestNewCallbackFloat64AndIntMix(t *testing.T) {
 }
 
 func TestNewCallbackFloat32(t *testing.T) {
+	if runtime.GOARCH == "arm" || runtime.GOARCH == "386" {
+		t.Skip("float callbacks not supported on 32-bit platforms")
+	}
 	// This tests the maximum number of float32 arguments a function to NewCallback can take
 	const (
 		expectCbTotal    = 6
@@ -125,6 +135,9 @@ func TestNewCallbackFloat32(t *testing.T) {
 }
 
 func TestNewCallbackFloat32AndFloat64(t *testing.T) {
+	if runtime.GOARCH == "arm" || runtime.GOARCH == "386" {
+		t.Skip("float callbacks not supported on 32-bit platforms")
+	}
 	// This tests that calling a function with a mix of float32 and float64 arguments works
 	const (
 		expectedCbTotalF32 = float32(72)

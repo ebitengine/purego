@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2022 The Ebitengine Authors
 
-//go:build darwin || freebsd || (linux && (amd64 || arm64 || loong64)) || netbsd
+//go:build darwin || freebsd || (linux && (amd64 || arm64 || arm || loong64)) || netbsd
 
 package purego
 
@@ -149,12 +149,12 @@ func callbackWrap(a *callbackArgs) {
 	var intsN int   // intsN represents the number of integer arguments processed
 	// stack points to the index into frame of the current stack element.
 	// The stack begins after the float and integer registers.
-	stack := numOfIntegerRegisters() + numOfFloatRegisters
+	stack := numOfIntegerRegisters() + numOfFloatRegisters()
 	for i := range args {
 		var pos int
 		switch fnType.In(i).Kind() {
 		case reflect.Float32, reflect.Float64:
-			if floatsN >= numOfFloatRegisters {
+			if floatsN >= numOfFloatRegisters() {
 				pos = stack
 				stack++
 			} else {
@@ -172,7 +172,7 @@ func callbackWrap(a *callbackArgs) {
 				stack++
 			} else {
 				// the integers begin after the floats in frame
-				pos = intsN + numOfFloatRegisters
+				pos = intsN + numOfFloatRegisters()
 			}
 			intsN++
 		}
