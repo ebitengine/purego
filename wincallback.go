@@ -91,7 +91,7 @@ func genasmLoong64() {
 TEXT callbackasm(SB),NOSPLIT|NOFRAME,$0
 `)
 	for i := 0; i < maxCallback; i++ {
-		fmt.Fprintf(&buf, "\tMOVV\t$%d, R13\n", i)
+		fmt.Fprintf(&buf, "\tMOVV\t$%d, R12\n", i)
 		buf.WriteString("\tJMP\tcallbackasm1(SB)\n")
 	}
 	if err := os.WriteFile("zcallback_loong64.s", buf.Bytes(), 0644); err != nil {

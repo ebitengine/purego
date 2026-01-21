@@ -7,7 +7,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, windows-latest]
-        go: ['1.18.x', '1.19.x', '1.20.x', '1.21.x', '1.22.x', '1.23.x', '1.24.x', '1.25.x', '1.26.0-rc.1']
+        go: ['1.18.x', '1.19.x', '1.20.x', '1.21.x', '1.22.x', '1.23.x', '1.24.x', '1.25.x', '1.26.0-rc.2']
     name: Test with Go ${{ matrix.go }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     defaults:
@@ -121,7 +121,7 @@ jobs:
            env CGO_ENABLED=1 GOARCH=386 go test -shuffle=on -v -count=10 ./...
 
       - name: go test (Linux riscv64)
-        if: ${{ runner.os == 'Linux' && runner.arch != 'ARM64' && !startsWith(matrix.go, '1.18.') && !startsWith(matrix.go, '1.19.') && !startsWith(matrix.go, '1.20.') }}
+        if: ${{ runner.os == 'Linux' && runner.arch != 'ARM64' && !startsWith(matrix.go, '1.18.') && !startsWith(matrix.go, '1.19.') && !startsWith(matrix.go, '1.20.') && !startsWith(matrix.go, '1.21.') }}
         run: |
           sudo apt-get update
           sudo apt-get install -y gcc-riscv64-linux-gnu g++-riscv64-linux-gnu qemu-user
@@ -182,7 +182,7 @@ jobs:
     strategy:
       matrix:
         os: ['FreeBSD'] # TODO: Add 'NetBSD' again (#304)
-        go: ['1.18.10', '1.19.13', '1.20.14', '1.21.13', '1.22.12', '1.23.12', '1.24.8', '1.25.2', '1.26rc1']
+        go: ['1.18.10', '1.19.13', '1.20.14', '1.21.13', '1.22.12', '1.23.12', '1.24.8', '1.25.2', '1.26rc2']
         exclude:
           # there are no prebuilt download links for these versions of Go for NetBSD
           - os: NetBSD
