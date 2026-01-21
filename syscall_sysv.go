@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2022 The Ebitengine Authors
 
-//go:build darwin || freebsd || (linux && (amd64 || arm64 || loong64)) || netbsd
+//go:build darwin || freebsd || (linux && (amd64 || arm64 || loong64 || riscv64)) || netbsd
 
 package purego
 
@@ -217,8 +217,8 @@ func callbackasmAddr(i int) uintptr {
 		panic("purego: unsupported architecture")
 	case "386", "amd64":
 		entrySize = 5
-	case "arm", "arm64", "loong64":
-		// On ARM and ARM64, each entry is a MOV instruction
+	case "arm", "arm64", "loong64", "riscv64":
+		// On ARM, ARM64, Loong64, and RISCV64, each entry is a MOV instruction
 		// followed by a branch instruction
 		entrySize = 8
 	}
