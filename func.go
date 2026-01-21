@@ -251,7 +251,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 				}
 			}
 			addFloat = func(x uintptr) {
-				if numFloats < len(floats) {
+				if numFloats < numOfFloatRegisters() {
 					floats[numFloats] = x
 					numFloats++
 				} else {

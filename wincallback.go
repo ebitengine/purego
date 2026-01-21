@@ -130,7 +130,7 @@ TEXT callbackasm(SB),NOSPLIT|NOFRAME,$0
 
 func main() {
 	genasmAmd64()
-	genasmArm64()
 	genasmArm()
+	genasmArm64()
 	genasmLoong64()
 }
