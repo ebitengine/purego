@@ -78,11 +78,11 @@ func placeSmallAggregateRISCV64(
 
 	var ptr unsafe.Pointer
 	if v.CanAddr() {
-		ptr = unsafe.Pointer(v.UnsafeAddr())
+		ptr = v.Addr().UnsafePointer()
 	} else {
 		tmp := reflect.New(v.Type())
 		tmp.Elem().Set(v)
-		ptr = unsafe.Pointer(tmp.Pointer())
+		ptr = tmp.UnsafePointer()
 		keepAlive = append(keepAlive, tmp.Interface())
 	}
 
@@ -138,4 +138,6 @@ func collectStackArgs(
 	return nil, keepAlive
 }
 
-func bundleStackArgs(stackArgs []reflect.Value, addStack func(uintptr)) {}
+func bundleStackArgs(stackArgs []reflect.Value, addStack func(uintptr)) {
+	panic("bundleStackArgs not supported on RISCV64")
+}
