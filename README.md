@@ -48,7 +48,7 @@ Tier 2 platforms are supported by PureGo on a best-effort basis. Critical bugs o
 #### Support Notes
 
 1. These architectures require CGO_ENABLED=1 to compile
-2. These architectures require special flags to compile with CGO_ENABLED=0
+2. These architectures require the special flag `-gcflags="github.com/ebitengine/purego/internal/fakecgo=-std"` to compile with CGO_ENABLED=0
 3. These architectures only support `SyscallN` and `NewCallback`
 4. These architectures are no longer supported as of Go 1.26
 
