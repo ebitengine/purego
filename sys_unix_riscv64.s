@@ -11,7 +11,7 @@ TEXT callbackasm1(SB), NOFRAME, $0
 	NO_LOCAL_POINTERS
 
 	// On entry, the trampoline in zcallback_riscv64.s left
-	// the callback index in X5.
+	// the callback index in X7.
 
 	// Save callback register arguments X10-X17 and F10-F17.
 	// Stack args (if any) are at 0(SP), 8(SP), etc.
@@ -53,7 +53,7 @@ TEXT callbackasm1(SB), NOFRAME, $0
 	// callbackArgs struct: index(0), args(8), result(16)
 	// Place it at 16(SP) to avoid overlap
 	ADD	$16, SP, X9
-	MOV	X5, 0(X9)     // callback index
+	MOV	X7, 0(X9)     // callback index
 	MOV	X6, 8(X9)     // address of args vector
 	MOV	X0, 16(X9)    // result = 0
 
