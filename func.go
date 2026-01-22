@@ -231,6 +231,8 @@ func RegisterFunc(fptr any, cfn uintptr) {
 
 	v := reflect.MakeFunc(ty, func(args []reflect.Value) (results []reflect.Value) {
 		var sysargs [maxArgs]uintptr
+		// Use maxArgs instead of numOfFloatRegisters() to keep this code path allocation-free,
+		// since numOfFloatRegisters() is a function call, not a constant.
 		var floats [maxArgs]uintptr
 		var numInts int
 		var numFloats int
