@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"runtime"
 	"testing"
 	"unsafe"
 
@@ -126,9 +125,6 @@ func TestNewCallbackFloat32(t *testing.T) {
 }
 
 func TestNewCallbackFloat32AndFloat64(t *testing.T) {
-	if runtime.GOARCH == "arm" {
-		t.Skip("too many arguments for 32-bit purego (max 16 slots)")
-	}
 	// This tests that calling a function with a mix of float32 and float64 arguments works
 	const (
 		expectedCbTotalF32 = float32(72)

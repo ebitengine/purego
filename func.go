@@ -329,6 +329,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 				sysargs[0], sysargs[1], sysargs[2], sysargs[3], sysargs[4], sysargs[5],
 				sysargs[6], sysargs[7], sysargs[8], sysargs[9], sysargs[10], sysargs[11],
 				sysargs[12], sysargs[13], sysargs[14],
+				sysargs[15], sysargs[16], sysargs[17], sysargs[18], sysargs[19], sysargs[20], sysargs[21], sysargs[22], sysargs[23], sysargs[24], sysargs[25], sysargs[26], sysargs[27], sysargs[28], sysargs[29], sysargs[30], sysargs[31],
 				floats[0], floats[1], floats[2], floats[3], floats[4], floats[5], floats[6], floats[7],
 				floats[8], floats[9], floats[10], floats[11], floats[12], floats[13], floats[14], floats[15],
 				0,
@@ -341,6 +342,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 				sysargs[0], sysargs[1], sysargs[2], sysargs[3], sysargs[4], sysargs[5],
 				sysargs[6], sysargs[7], sysargs[8], sysargs[9], sysargs[10], sysargs[11],
 				sysargs[12], sysargs[13], sysargs[14],
+				sysargs[15], sysargs[16], sysargs[17], sysargs[18], sysargs[19], sysargs[20], sysargs[21], sysargs[22], sysargs[23], sysargs[24], sysargs[25], sysargs[26], sysargs[27], sysargs[28], sysargs[29], sysargs[30], sysargs[31],
 				floats[0], floats[1], floats[2], floats[3], floats[4], floats[5], floats[6], floats[7],
 				floats[8], floats[9], floats[10], floats[11], floats[12], floats[13], floats[14], floats[15],
 				arm64_r8,
@@ -519,6 +521,8 @@ func numOfIntegerRegisters() int {
 		return 8
 	case "amd64":
 		return 6
+	case "arm":
+		return 4
 	default:
 		// since this platform isn't supported and can therefore only access
 		// integer registers it is fine to return the maxArgs

@@ -7,7 +7,7 @@
 #include "go_asm.h"
 #include "funcdata.h"
 
-#define STACK_SIZE 64
+#define STACK_SIZE 128
 #define PTR_ADDRESS (STACK_SIZE - 4)
 
 // syscall15X calls a function in libc on behalf of the syscall package.
@@ -15,23 +15,12 @@
 // struct {
 //	fn    uintptr
 //	a1    uintptr
-//	a2    uintptr
-//	a3    uintptr
-//	a4    uintptr
-//	a5    uintptr
-//	a6    uintptr
-//	a7    uintptr
-//	a8    uintptr
-//	a9    uintptr
-//	a10    uintptr
-//	a11    uintptr
-//	a12    uintptr
-//	a13    uintptr
-//	a14    uintptr
-//	a15    uintptr
-//	r1    uintptr
-//	r2    uintptr
-//	err   uintptr
+//  ...
+//	a32   uintptr
+//	f1    uintptr
+//	...
+//	f16   uintptr
+//	arm64_r8 uintptr
 // }
 // syscall15X must be called on the g0 stack with the
 // C calling convention (use libcCall).
@@ -68,7 +57,7 @@ TEXT syscall15X(SB), NOSPLIT|NOFRAME, $0-0
 	MOVW	syscall15Args_a3(R8), R2	// a3
 	MOVW	syscall15Args_a4(R8), R3	// a4
 
-	// push a5-a15 onto stack
+	// push a5-a32 onto stack
 	MOVW	syscall15Args_a5(R8), R4
 	MOVW	R4, 0(R13)
 	MOVW	syscall15Args_a6(R8), R4
@@ -91,6 +80,40 @@ TEXT syscall15X(SB), NOSPLIT|NOFRAME, $0-0
 	MOVW	R4, 36(R13)
 	MOVW	syscall15Args_a15(R8), R4
 	MOVW	R4, 40(R13)
+	MOVW	syscall15Args_a16(R8), R4
+	MOVW	R4, 44(R13)
+	MOVW	syscall15Args_a17(R8), R4
+	MOVW	R4, 48(R13)
+	MOVW	syscall15Args_a18(R8), R4
+	MOVW	R4, 52(R13)
+	MOVW	syscall15Args_a19(R8), R4
+	MOVW	R4, 56(R13)
+	MOVW	syscall15Args_a20(R8), R4
+	MOVW	R4, 60(R13)
+	MOVW	syscall15Args_a21(R8), R4
+	MOVW	R4, 64(R13)
+	MOVW	syscall15Args_a22(R8), R4
+	MOVW	R4, 68(R13)
+	MOVW	syscall15Args_a23(R8), R4
+	MOVW	R4, 72(R13)
+	MOVW	syscall15Args_a24(R8), R4
+	MOVW	R4, 76(R13)
+	MOVW	syscall15Args_a25(R8), R4
+	MOVW	R4, 80(R13)
+	MOVW	syscall15Args_a26(R8), R4
+	MOVW	R4, 84(R13)
+	MOVW	syscall15Args_a27(R8), R4
+	MOVW	R4, 88(R13)
+	MOVW	syscall15Args_a28(R8), R4
+	MOVW	R4, 92(R13)
+	MOVW	syscall15Args_a29(R8), R4
+	MOVW	R4, 96(R13)
+	MOVW	syscall15Args_a30(R8), R4
+	MOVW	R4, 100(R13)
+	MOVW	syscall15Args_a31(R8), R4
+	MOVW	R4, 104(R13)
+	MOVW	syscall15Args_a32(R8), R4
+	MOVW	R4, 108(R13)
 
 	// Load saved function pointer and call
 	MOVW	(PTR_ADDRESS-4)(R13), R4
