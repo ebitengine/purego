@@ -8,13 +8,13 @@ import "github.com/ebitengine/purego/internal/cgo"
 // Source for constants: https://android.googlesource.com/platform/bionic/+/refs/heads/main/libc/include/dlfcn.h
 
 const (
-	is64bits     = 1 << (^uintptr(0) >> 63) / 2
-	is32bits     = 1 - is64bits
-	RTLD_DEFAULT = is32bits * 0xffffffff
+	is64bit      = 1 << (^uintptr(0) >> 63) / 2
+	is32bit      = 1 - is64bit
+	RTLD_DEFAULT = is32bit * 0xffffffff
 	RTLD_LAZY    = 0x00000001
-	RTLD_NOW     = is64bits * 0x00000002
+	RTLD_NOW     = is64bit * 0x00000002
 	RTLD_LOCAL   = 0x00000000
-	RTLD_GLOBAL  = is64bits*0x00100 | is32bits*0x00000002
+	RTLD_GLOBAL  = is64bit*0x00100 | is32bit*0x00000002
 )
 
 func Dlopen(path string, mode int) (uintptr, error) {

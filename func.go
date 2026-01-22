@@ -18,9 +18,8 @@ import (
 )
 
 const (
-	align8ByteMask = 7                              // Mask for 8-byte alignment: (val + 7) &^ 7
-	align8ByteSize = 8                              // 8-byte alignment boundary
-	is32bit        = unsafe.Sizeof(uintptr(0)) == 4 // Is this a 32-bit architecture
+	align8ByteMask = 7 // Mask for 8-byte alignment: (val + 7) &^ 7
+	align8ByteSize = 8 // 8-byte alignment boundary
 )
 
 var thePool = sync.Pool{New: func() any {
@@ -121,6 +120,7 @@ func RegisterLibFunc(fptr any, handle uintptr, name string) {
 //
 // [Cgo rules]: https://pkg.go.dev/cmd/cgo#hdr-Go_references_to_C
 func RegisterFunc(fptr any, cfn uintptr) {
+	const is32bit = unsafe.Sizeof(uintptr(0)) == 4
 	fn := reflect.ValueOf(fptr).Elem()
 	ty := fn.Type()
 	if ty.Kind() != reflect.Func {
@@ -411,6 +411,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 }
 
 func addValue(v reflect.Value, keepAlive []any, addInt func(x uintptr), addFloat func(x uintptr), addStack func(x uintptr), numInts *int, numFloats *int, numStack *int) []any {
+	const is32bit = unsafe.Sizeof(uintptr(0)) == 4
 	switch v.Kind() {
 	case reflect.String:
 		ptr := strings.CString(v.String())
