@@ -18,8 +18,9 @@ import (
 )
 
 const (
-	align8ByteMask = 7 // Mask for 8-byte alignment: (val + 7) &^ 7
-	align8ByteSize = 8 // 8-byte alignment boundary
+	align8ByteMask = 7                              // Mask for 8-byte alignment: (val + 7) &^ 7
+	align8ByteSize = 8                              // 8-byte alignment boundary
+	is32bit        = unsafe.Sizeof(uintptr(0)) == 4 // Is this a 32-bit architecture
 )
 
 var thePool = sync.Pool{New: func() any {
@@ -166,7 +167,6 @@ func RegisterFunc(fptr any, cfn uintptr) {
 					stack++
 				}
 			case reflect.Float32, reflect.Float64:
-				const is32bit = unsafe.Sizeof(uintptr(0)) == 4
 				if is32bit && runtime.GOARCH != "arm" {
 					panic("purego: floats only supported on 64bit platforms")
 				}
@@ -389,7 +389,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 		case reflect.Float64:
 			// NOTE: syscall.r2 is only the floating return value on 64bit platforms.
 			// On 32bit platforms syscall.r2 is the upper part of a 64bit return.
-			if unsafe.Sizeof(uintptr(0)) == 4 {
+			if is32bit {
 				v.SetFloat(math.Float64frombits(uint64(syscall.f1) | (uint64(syscall.f2) << 32)))
 			} else {
 				v.SetFloat(math.Float64frombits(uint64(syscall.f1)))
@@ -434,7 +434,7 @@ func addValue(v reflect.Value, keepAlive []any, addInt func(x uintptr), addFloat
 	case reflect.Float32:
 		addFloat(uintptr(math.Float32bits(float32(v.Float()))))
 	case reflect.Float64:
-		if unsafe.Sizeof(uintptr(0)) == 4 {
+		if is32bit {
 			bits := math.Float64bits(v.Float())
 			addFloat(uintptr(bits))
 			addFloat(uintptr(bits >> 32))
