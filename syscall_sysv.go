@@ -21,6 +21,7 @@ func syscall_syscall15X(fn, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a
 	*args = syscall15Args{
 		fn, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15,
 		a1, a2, a3, a4, a5, a6, a7, a8,
+		0, 0, 0, 0, 0, 0, 0, 0,
 		0,
 	}
 
@@ -152,29 +153,32 @@ func callbackWrap(a *callbackArgs) {
 	stack := numOfIntegerRegisters() + numOfFloatRegisters()
 	for i := range args {
 		var pos int
+		// slots is the number of pointer-sized slots the argument takes
+		var slots int
 		switch fnType.In(i).Kind() {
 		case reflect.Float32, reflect.Float64:
-			if floatsN >= numOfFloatRegisters() {
+			slots = int((fnType.In(i).Size() + ptrSize - 1) / ptrSize)
+			if floatsN+slots > numOfFloatRegisters() {
 				pos = stack
-				stack++
+				stack += slots
 			} else {
 				pos = floatsN
 			}
-			floatsN++
+			floatsN += slots
 		case reflect.Struct:
 			// This is the CDecl field
 			args[i] = reflect.Zero(fnType.In(i))
 			continue
 		default:
-
-			if intsN >= numOfIntegerRegisters() {
+			slots = int((fnType.In(i).Size() + ptrSize - 1) / ptrSize)
+			if intsN+slots > numOfIntegerRegisters() {
 				pos = stack
-				stack++
+				stack += slots
 			} else {
 				// the integers begin after the floats in frame
 				pos = intsN + numOfFloatRegisters()
 			}
-			intsN++
+			intsN += slots
 		}
 		args[i] = reflect.NewAt(fnType.In(i), unsafe.Pointer(&frame[pos])).Elem()
 	}

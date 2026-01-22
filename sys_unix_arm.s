@@ -24,6 +24,9 @@ TEXT callbackasm1(SB), NOSPLIT|NOFRAME, $0
 	MOVW  R11, 28(R13)
 	MOVW  R14, 32(R13)
 
+	// Save callback index (passed in R12) at SP+36
+	MOVW  R12, 36(R13)
+
 	// Save integer arguments R0-R3 at SP+128 (frame[16..19])
 	MOVW  R0, 128(R13)
 	MOVW  R1, 132(R13)
@@ -42,7 +45,7 @@ TEXT callbackasm1(SB), NOSPLIT|NOFRAME, $0
 	MOVD  F7, 120(R13)
 
 	// Set up callbackArgs at SP+48
-	MOVW  16(R13), R4
+	MOVW  36(R13), R4
 	MOVW  R4, 48(R13)
 	ADD   $64, R13, R4
 	MOVW  R4, 52(R13)
@@ -76,6 +79,7 @@ TEXT callbackasm1(SB), NOSPLIT|NOFRAME, $0
 	MOVW  4(R13), R5
 	MOVW  8(R13), R6
 	MOVW  12(R13), R7
+	MOVW  16(R13), R8
 	MOVW  20(R13), R9
 	MOVW  24(R13), g
 	MOVW  28(R13), R11

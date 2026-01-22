@@ -53,9 +53,9 @@ func genasmArm() {
 
 // External code calls into callbackasm at an offset corresponding
 // to the callback index. Callbackasm is a table of MOVW and B instructions.
-// The MOVW instruction loads R8 with the callback index, and the
+// The MOVW instruction loads R12 with the callback index, and the
 // B instruction branches to callbackasm1.
-// callbackasm1 takes the callback index from R8 and
+// callbackasm1 takes the callback index from R12 and
 // indexes into an array that stores information about each callback.
 // It then calls the Go implementation for that callback.
 #include "textflag.h"
@@ -63,7 +63,7 @@ func genasmArm() {
 TEXT callbackasm(SB),NOSPLIT|NOFRAME,$0
 `)
 	for i := 0; i < maxCallback; i++ {
-		fmt.Fprintf(&buf, "\tMOVW\t$%d, R8\n", i)
+		fmt.Fprintf(&buf, "\tMOVW\t$%d, R12\n", i)
 		buf.WriteString("\tB\tcallbackasm1(SB)\n")
 	}
 	if err := os.WriteFile("zcallback_arm.s", buf.Bytes(), 0644); err != nil {

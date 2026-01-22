@@ -52,9 +52,6 @@ func TestCallGoFromSharedLib(t *testing.T) {
 }
 
 func TestNewCallbackFloat64(t *testing.T) {
-	if runtime.GOARCH == "arm" || runtime.GOARCH == "386" {
-		t.Skip("float callbacks not supported on 32-bit platforms")
-	}
 	// This tests the maximum number of arguments a function to NewCallback can take
 	const (
 		expectCbTotal    = -3
@@ -83,9 +80,6 @@ func TestNewCallbackFloat64(t *testing.T) {
 }
 
 func TestNewCallbackFloat64AndIntMix(t *testing.T) {
-	if runtime.GOARCH == "arm" || runtime.GOARCH == "386" {
-		t.Skip("float callbacks not supported on 32-bit platforms")
-	}
 	// This tests interleaving float and integer arguments to NewCallback
 	const (
 		expectCbTotal = 54.75
@@ -104,9 +98,6 @@ func TestNewCallbackFloat64AndIntMix(t *testing.T) {
 }
 
 func TestNewCallbackFloat32(t *testing.T) {
-	if runtime.GOARCH == "arm" || runtime.GOARCH == "386" {
-		t.Skip("float callbacks not supported on 32-bit platforms")
-	}
 	// This tests the maximum number of float32 arguments a function to NewCallback can take
 	const (
 		expectCbTotal    = 6
@@ -135,8 +126,8 @@ func TestNewCallbackFloat32(t *testing.T) {
 }
 
 func TestNewCallbackFloat32AndFloat64(t *testing.T) {
-	if runtime.GOARCH == "arm" || runtime.GOARCH == "386" {
-		t.Skip("float callbacks not supported on 32-bit platforms")
+	if runtime.GOARCH == "arm" {
+		t.Skip("too many arguments for 32-bit purego (max 16 slots)")
 	}
 	// This tests that calling a function with a mix of float32 and float64 arguments works
 	const (

@@ -13,13 +13,13 @@ package purego
 type CDecl struct{}
 
 const (
-	maxArgs = 15
+	maxArgs = 16
 )
 
 type syscall15Args struct {
-	fn, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15 uintptr
-	f1, f2, f3, f4, f5, f6, f7, f8                                       uintptr
-	arm64_r8                                                             uintptr
+	fn, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15  uintptr
+	f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16 uintptr
+	arm64_r8                                                              uintptr
 }
 
 // SyscallN takes fn, a C function pointer and a list of arguments as uintptr.
