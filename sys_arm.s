@@ -42,14 +42,15 @@ TEXT syscall15X(SB), NOSPLIT|NOFRAME, $0-0
 	MOVW	R5, (PTR_ADDRESS-4)(R13)	// save fn at offset 56
 
 	// Load floating point arguments
-	MOVD	syscall15Args_f1(R8), F0	// f1
-	MOVD	syscall15Args_f3(R8), F1	// f2
-	MOVD	syscall15Args_f5(R8), F2	// f3
-	MOVD	syscall15Args_f7(R8), F3	// f4
-	MOVD	syscall15Args_f9(R8), F4	// f5
-	MOVD	syscall15Args_f11(R8), F5	// f6
-	MOVD	syscall15Args_f13(R8), F6	// f7
-	MOVD	syscall15Args_f15(R8), F7	// f8
+	// Each float64 spans 2 uintptr slots (8 bytes) on ARM32, so we skip by 2
+	MOVD	syscall15Args_f1(R8), F0	// f1+f2 -> D0
+	MOVD	syscall15Args_f3(R8), F1	// f3+f4 -> D1
+	MOVD	syscall15Args_f5(R8), F2	// f5+f6 -> D2
+	MOVD	syscall15Args_f7(R8), F3	// f7+f8 -> D3
+	MOVD	syscall15Args_f9(R8), F4	// f9+f10 -> D4
+	MOVD	syscall15Args_f11(R8), F5	// f11+f12 -> D5
+	MOVD	syscall15Args_f13(R8), F6	// f13+f14 -> D6
+	MOVD	syscall15Args_f15(R8), F7	// f15+f16 -> D7
 
 	// Load integer arguments into registers (R0-R3 for ARM EABI)
 	MOVW	syscall15Args_a1(R8), R0	// a1
@@ -129,7 +130,7 @@ TEXT syscall15X(SB), NOSPLIT|NOFRAME, $0-0
 	MOVW	R0, syscall15Args_a1(R8)
 	MOVW	R1, syscall15Args_a2(R8)
 
-	// save f0-f3
+	// save f0-f3 (each float64 spans 2 uintptr slots on ARM32)
 	MOVD	F0, syscall15Args_f1(R8)
 	MOVD	F1, syscall15Args_f3(R8)
 	MOVD	F2, syscall15Args_f5(R8)

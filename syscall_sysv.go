@@ -147,8 +147,10 @@ func callbackWrap(a *callbackArgs) {
 	fnType := fn.Type()
 	args := make([]reflect.Value, fnType.NumIn())
 	frame := (*[callbackMaxFrame]uintptr)(a.args)
-	var floatsN int // floatsN represents the number of float arguments processed
-	var intsN int   // intsN represents the number of integer arguments processed
+	// floatsN and intsN track the number of register slots used, not argument count.
+	// This distinction matters on ARM32 where float64 uses 2 slots (32-bit registers).
+	var floatsN int
+	var intsN int
 	// stack points to the index into frame of the current stack element.
 	// The stack begins after the float and integer registers.
 	stack := numOfIntegerRegisters() + numOfFloatRegisters()
