@@ -112,7 +112,7 @@ func genasmRiscv64() {
 // Since Go 1.26, MOV instructions with immediate values lower than or equal to 32
 // are encoded in 2 bytes rather than 4 bytes, which breaks the assumption that each
 // callback entry is 8 bytes long. Therefore, for callback indices less than or equal to 32,
-// we add a PCALIGN directive to align the next instruction to an 8-byte boundary.
+// add a PCALIGN directive to align the next instruction to an 8-byte boundary.
 // The MOV instruction loads X7 with the callback index, and the
 // JMP instruction branches to callbackasm1.
 // callbackasm1 takes the callback index from X7 and
