@@ -4,6 +4,10 @@
 
 // External code calls into callbackasm at an offset corresponding
 // to the callback index. Callbackasm is a table of MOV and JMP instructions.
+// Since Go 1.26, MOV instructions with immediate values lower than or equal to 32
+// are encoded in 2 bytes rather than 4 bytes, which breaks the assumption that each
+// callback entry is 8 bytes long. Therefore, for callback indices less than or equal to 32,
+// we add a PCALIGN directive to align the next instruction to an 8-byte boundary.
 // The MOV instruction loads X7 with the callback index, and the
 // JMP instruction branches to callbackasm1.
 // callbackasm1 takes the callback index from X7 and
@@ -111,5904 +115,3937 @@ TEXT callbackasm(SB),NOSPLIT|NOFRAME,$0
 	PCALIGN	$8
 	MOV	$32, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$33, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$34, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$35, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$36, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$37, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$38, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$39, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$40, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$41, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$42, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$43, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$44, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$45, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$46, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$47, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$48, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$49, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$50, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$51, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$52, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$53, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$54, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$55, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$56, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$57, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$58, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$59, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$60, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$61, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$62, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$63, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$64, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$65, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$66, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$67, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$68, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$69, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$70, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$71, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$72, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$73, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$74, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$75, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$76, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$77, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$78, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$79, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$80, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$81, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$82, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$83, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$84, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$85, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$86, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$87, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$88, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$89, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$90, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$91, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$92, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$93, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$94, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$95, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$96, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$97, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$98, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$99, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$100, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$101, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$102, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$103, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$104, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$105, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$106, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$107, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$108, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$109, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$110, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$111, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$112, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$113, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$114, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$115, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$116, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$117, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$118, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$119, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$120, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$121, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$122, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$123, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$124, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$125, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$126, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$127, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$128, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$129, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$130, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$131, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$132, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$133, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$134, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$135, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$136, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$137, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$138, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$139, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$140, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$141, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$142, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$143, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$144, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$145, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$146, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$147, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$148, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$149, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$150, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$151, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$152, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$153, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$154, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$155, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$156, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$157, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$158, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$159, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$160, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$161, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$162, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$163, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$164, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$165, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$166, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$167, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$168, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$169, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$170, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$171, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$172, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$173, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$174, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$175, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$176, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$177, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$178, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$179, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$180, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$181, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$182, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$183, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$184, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$185, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$186, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$187, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$188, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$189, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$190, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$191, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$192, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$193, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$194, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$195, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$196, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$197, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$198, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$199, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$200, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$201, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$202, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$203, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$204, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$205, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$206, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$207, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$208, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$209, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$210, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$211, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$212, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$213, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$214, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$215, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$216, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$217, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$218, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$219, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$220, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$221, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$222, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$223, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$224, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$225, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$226, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$227, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$228, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$229, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$230, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$231, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$232, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$233, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$234, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$235, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$236, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$237, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$238, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$239, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$240, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$241, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$242, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$243, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$244, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$245, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$246, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$247, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$248, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$249, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$250, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$251, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$252, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$253, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$254, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$255, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$256, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$257, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$258, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$259, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$260, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$261, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$262, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$263, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$264, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$265, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$266, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$267, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$268, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$269, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$270, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$271, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$272, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$273, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$274, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$275, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$276, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$277, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$278, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$279, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$280, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$281, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$282, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$283, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$284, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$285, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$286, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$287, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$288, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$289, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$290, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$291, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$292, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$293, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$294, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$295, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$296, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$297, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$298, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$299, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$300, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$301, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$302, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$303, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$304, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$305, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$306, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$307, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$308, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$309, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$310, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$311, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$312, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$313, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$314, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$315, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$316, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$317, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$318, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$319, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$320, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$321, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$322, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$323, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$324, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$325, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$326, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$327, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$328, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$329, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$330, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$331, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$332, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$333, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$334, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$335, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$336, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$337, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$338, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$339, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$340, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$341, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$342, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$343, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$344, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$345, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$346, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$347, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$348, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$349, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$350, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$351, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$352, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$353, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$354, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$355, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$356, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$357, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$358, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$359, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$360, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$361, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$362, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$363, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$364, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$365, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$366, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$367, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$368, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$369, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$370, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$371, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$372, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$373, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$374, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$375, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$376, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$377, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$378, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$379, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$380, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$381, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$382, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$383, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$384, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$385, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$386, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$387, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$388, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$389, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$390, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$391, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$392, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$393, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$394, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$395, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$396, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$397, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$398, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$399, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$400, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$401, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$402, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$403, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$404, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$405, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$406, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$407, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$408, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$409, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$410, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$411, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$412, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$413, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$414, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$415, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$416, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$417, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$418, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$419, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$420, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$421, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$422, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$423, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$424, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$425, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$426, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$427, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$428, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$429, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$430, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$431, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$432, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$433, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$434, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$435, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$436, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$437, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$438, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$439, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$440, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$441, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$442, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$443, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$444, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$445, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$446, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$447, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$448, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$449, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$450, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$451, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$452, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$453, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$454, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$455, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$456, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$457, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$458, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$459, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$460, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$461, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$462, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$463, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$464, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$465, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$466, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$467, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$468, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$469, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$470, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$471, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$472, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$473, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$474, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$475, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$476, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$477, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$478, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$479, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$480, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$481, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$482, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$483, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$484, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$485, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$486, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$487, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$488, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$489, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$490, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$491, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$492, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$493, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$494, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$495, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$496, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$497, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$498, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$499, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$500, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$501, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$502, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$503, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$504, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$505, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$506, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$507, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$508, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$509, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$510, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$511, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$512, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$513, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$514, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$515, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$516, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$517, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$518, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$519, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$520, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$521, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$522, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$523, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$524, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$525, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$526, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$527, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$528, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$529, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$530, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$531, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$532, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$533, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$534, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$535, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$536, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$537, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$538, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$539, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$540, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$541, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$542, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$543, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$544, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$545, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$546, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$547, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$548, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$549, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$550, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$551, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$552, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$553, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$554, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$555, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$556, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$557, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$558, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$559, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$560, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$561, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$562, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$563, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$564, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$565, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$566, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$567, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$568, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$569, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$570, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$571, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$572, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$573, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$574, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$575, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$576, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$577, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$578, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$579, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$580, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$581, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$582, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$583, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$584, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$585, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$586, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$587, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$588, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$589, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$590, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$591, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$592, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$593, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$594, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$595, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$596, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$597, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$598, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$599, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$600, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$601, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$602, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$603, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$604, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$605, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$606, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$607, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$608, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$609, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$610, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$611, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$612, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$613, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$614, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$615, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$616, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$617, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$618, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$619, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$620, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$621, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$622, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$623, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$624, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$625, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$626, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$627, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$628, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$629, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$630, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$631, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$632, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$633, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$634, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$635, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$636, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$637, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$638, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$639, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$640, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$641, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$642, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$643, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$644, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$645, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$646, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$647, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$648, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$649, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$650, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$651, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$652, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$653, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$654, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$655, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$656, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$657, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$658, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$659, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$660, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$661, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$662, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$663, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$664, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$665, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$666, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$667, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$668, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$669, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$670, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$671, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$672, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$673, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$674, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$675, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$676, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$677, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$678, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$679, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$680, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$681, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$682, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$683, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$684, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$685, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$686, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$687, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$688, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$689, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$690, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$691, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$692, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$693, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$694, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$695, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$696, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$697, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$698, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$699, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$700, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$701, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$702, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$703, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$704, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$705, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$706, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$707, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$708, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$709, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$710, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$711, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$712, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$713, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$714, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$715, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$716, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$717, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$718, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$719, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$720, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$721, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$722, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$723, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$724, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$725, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$726, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$727, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$728, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$729, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$730, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$731, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$732, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$733, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$734, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$735, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$736, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$737, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$738, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$739, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$740, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$741, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$742, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$743, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$744, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$745, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$746, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$747, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$748, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$749, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$750, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$751, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$752, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$753, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$754, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$755, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$756, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$757, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$758, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$759, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$760, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$761, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$762, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$763, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$764, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$765, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$766, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$767, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$768, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$769, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$770, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$771, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$772, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$773, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$774, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$775, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$776, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$777, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$778, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$779, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$780, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$781, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$782, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$783, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$784, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$785, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$786, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$787, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$788, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$789, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$790, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$791, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$792, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$793, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$794, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$795, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$796, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$797, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$798, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$799, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$800, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$801, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$802, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$803, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$804, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$805, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$806, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$807, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$808, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$809, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$810, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$811, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$812, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$813, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$814, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$815, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$816, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$817, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$818, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$819, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$820, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$821, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$822, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$823, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$824, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$825, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$826, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$827, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$828, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$829, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$830, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$831, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$832, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$833, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$834, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$835, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$836, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$837, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$838, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$839, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$840, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$841, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$842, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$843, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$844, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$845, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$846, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$847, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$848, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$849, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$850, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$851, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$852, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$853, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$854, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$855, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$856, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$857, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$858, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$859, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$860, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$861, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$862, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$863, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$864, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$865, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$866, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$867, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$868, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$869, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$870, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$871, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$872, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$873, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$874, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$875, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$876, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$877, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$878, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$879, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$880, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$881, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$882, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$883, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$884, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$885, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$886, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$887, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$888, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$889, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$890, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$891, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$892, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$893, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$894, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$895, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$896, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$897, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$898, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$899, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$900, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$901, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$902, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$903, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$904, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$905, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$906, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$907, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$908, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$909, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$910, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$911, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$912, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$913, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$914, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$915, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$916, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$917, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$918, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$919, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$920, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$921, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$922, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$923, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$924, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$925, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$926, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$927, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$928, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$929, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$930, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$931, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$932, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$933, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$934, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$935, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$936, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$937, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$938, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$939, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$940, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$941, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$942, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$943, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$944, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$945, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$946, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$947, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$948, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$949, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$950, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$951, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$952, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$953, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$954, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$955, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$956, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$957, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$958, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$959, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$960, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$961, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$962, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$963, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$964, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$965, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$966, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$967, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$968, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$969, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$970, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$971, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$972, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$973, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$974, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$975, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$976, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$977, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$978, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$979, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$980, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$981, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$982, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$983, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$984, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$985, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$986, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$987, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$988, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$989, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$990, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$991, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$992, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$993, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$994, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$995, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$996, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$997, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$998, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$999, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1000, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1001, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1002, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1003, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1004, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1005, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1006, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1007, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1008, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1009, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1010, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1011, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1012, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1013, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1014, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1015, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1016, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1017, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1018, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1019, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1020, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1021, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1022, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1023, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1024, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1025, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1026, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1027, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1028, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1029, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1030, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1031, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1032, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1033, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1034, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1035, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1036, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1037, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1038, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1039, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1040, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1041, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1042, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1043, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1044, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1045, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1046, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1047, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1048, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1049, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1050, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1051, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1052, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1053, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1054, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1055, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1056, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1057, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1058, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1059, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1060, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1061, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1062, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1063, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1064, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1065, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1066, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1067, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1068, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1069, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1070, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1071, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1072, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1073, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1074, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1075, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1076, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1077, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1078, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1079, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1080, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1081, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1082, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1083, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1084, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1085, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1086, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1087, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1088, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1089, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1090, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1091, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1092, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1093, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1094, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1095, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1096, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1097, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1098, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1099, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1100, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1101, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1102, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1103, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1104, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1105, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1106, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1107, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1108, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1109, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1110, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1111, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1112, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1113, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1114, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1115, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1116, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1117, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1118, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1119, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1120, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1121, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1122, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1123, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1124, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1125, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1126, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1127, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1128, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1129, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1130, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1131, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1132, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1133, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1134, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1135, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1136, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1137, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1138, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1139, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1140, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1141, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1142, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1143, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1144, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1145, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1146, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1147, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1148, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1149, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1150, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1151, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1152, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1153, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1154, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1155, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1156, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1157, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1158, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1159, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1160, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1161, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1162, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1163, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1164, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1165, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1166, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1167, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1168, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1169, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1170, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1171, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1172, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1173, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1174, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1175, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1176, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1177, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1178, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1179, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1180, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1181, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1182, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1183, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1184, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1185, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1186, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1187, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1188, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1189, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1190, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1191, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1192, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1193, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1194, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1195, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1196, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1197, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1198, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1199, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1200, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1201, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1202, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1203, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1204, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1205, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1206, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1207, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1208, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1209, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1210, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1211, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1212, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1213, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1214, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1215, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1216, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1217, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1218, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1219, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1220, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1221, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1222, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1223, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1224, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1225, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1226, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1227, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1228, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1229, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1230, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1231, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1232, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1233, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1234, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1235, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1236, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1237, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1238, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1239, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1240, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1241, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1242, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1243, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1244, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1245, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1246, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1247, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1248, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1249, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1250, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1251, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1252, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1253, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1254, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1255, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1256, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1257, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1258, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1259, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1260, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1261, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1262, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1263, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1264, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1265, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1266, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1267, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1268, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1269, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1270, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1271, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1272, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1273, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1274, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1275, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1276, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1277, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1278, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1279, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1280, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1281, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1282, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1283, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1284, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1285, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1286, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1287, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1288, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1289, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1290, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1291, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1292, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1293, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1294, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1295, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1296, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1297, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1298, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1299, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1300, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1301, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1302, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1303, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1304, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1305, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1306, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1307, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1308, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1309, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1310, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1311, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1312, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1313, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1314, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1315, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1316, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1317, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1318, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1319, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1320, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1321, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1322, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1323, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1324, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1325, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1326, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1327, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1328, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1329, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1330, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1331, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1332, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1333, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1334, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1335, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1336, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1337, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1338, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1339, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1340, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1341, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1342, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1343, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1344, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1345, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1346, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1347, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1348, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1349, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1350, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1351, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1352, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1353, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1354, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1355, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1356, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1357, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1358, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1359, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1360, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1361, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1362, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1363, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1364, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1365, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1366, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1367, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1368, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1369, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1370, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1371, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1372, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1373, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1374, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1375, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1376, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1377, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1378, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1379, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1380, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1381, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1382, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1383, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1384, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1385, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1386, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1387, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1388, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1389, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1390, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1391, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1392, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1393, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1394, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1395, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1396, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1397, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1398, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1399, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1400, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1401, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1402, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1403, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1404, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1405, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1406, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1407, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1408, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1409, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1410, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1411, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1412, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1413, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1414, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1415, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1416, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1417, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1418, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1419, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1420, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1421, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1422, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1423, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1424, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1425, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1426, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1427, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1428, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1429, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1430, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1431, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1432, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1433, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1434, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1435, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1436, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1437, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1438, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1439, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1440, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1441, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1442, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1443, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1444, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1445, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1446, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1447, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1448, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1449, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1450, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1451, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1452, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1453, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1454, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1455, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1456, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1457, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1458, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1459, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1460, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1461, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1462, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1463, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1464, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1465, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1466, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1467, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1468, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1469, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1470, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1471, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1472, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1473, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1474, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1475, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1476, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1477, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1478, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1479, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1480, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1481, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1482, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1483, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1484, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1485, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1486, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1487, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1488, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1489, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1490, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1491, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1492, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1493, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1494, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1495, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1496, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1497, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1498, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1499, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1500, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1501, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1502, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1503, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1504, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1505, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1506, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1507, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1508, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1509, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1510, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1511, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1512, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1513, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1514, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1515, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1516, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1517, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1518, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1519, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1520, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1521, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1522, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1523, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1524, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1525, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1526, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1527, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1528, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1529, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1530, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1531, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1532, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1533, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1534, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1535, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1536, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1537, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1538, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1539, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1540, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1541, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1542, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1543, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1544, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1545, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1546, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1547, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1548, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1549, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1550, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1551, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1552, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1553, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1554, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1555, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1556, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1557, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1558, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1559, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1560, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1561, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1562, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1563, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1564, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1565, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1566, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1567, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1568, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1569, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1570, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1571, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1572, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1573, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1574, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1575, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1576, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1577, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1578, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1579, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1580, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1581, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1582, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1583, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1584, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1585, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1586, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1587, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1588, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1589, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1590, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1591, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1592, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1593, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1594, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1595, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1596, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1597, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1598, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1599, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1600, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1601, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1602, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1603, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1604, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1605, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1606, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1607, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1608, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1609, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1610, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1611, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1612, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1613, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1614, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1615, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1616, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1617, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1618, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1619, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1620, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1621, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1622, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1623, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1624, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1625, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1626, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1627, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1628, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1629, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1630, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1631, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1632, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1633, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1634, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1635, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1636, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1637, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1638, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1639, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1640, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1641, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1642, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1643, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1644, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1645, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1646, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1647, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1648, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1649, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1650, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1651, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1652, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1653, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1654, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1655, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1656, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1657, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1658, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1659, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1660, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1661, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1662, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1663, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1664, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1665, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1666, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1667, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1668, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1669, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1670, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1671, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1672, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1673, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1674, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1675, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1676, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1677, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1678, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1679, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1680, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1681, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1682, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1683, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1684, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1685, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1686, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1687, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1688, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1689, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1690, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1691, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1692, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1693, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1694, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1695, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1696, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1697, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1698, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1699, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1700, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1701, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1702, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1703, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1704, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1705, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1706, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1707, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1708, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1709, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1710, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1711, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1712, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1713, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1714, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1715, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1716, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1717, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1718, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1719, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1720, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1721, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1722, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1723, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1724, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1725, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1726, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1727, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1728, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1729, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1730, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1731, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1732, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1733, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1734, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1735, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1736, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1737, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1738, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1739, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1740, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1741, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1742, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1743, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1744, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1745, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1746, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1747, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1748, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1749, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1750, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1751, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1752, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1753, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1754, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1755, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1756, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1757, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1758, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1759, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1760, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1761, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1762, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1763, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1764, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1765, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1766, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1767, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1768, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1769, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1770, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1771, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1772, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1773, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1774, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1775, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1776, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1777, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1778, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1779, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1780, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1781, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1782, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1783, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1784, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1785, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1786, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1787, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1788, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1789, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1790, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1791, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1792, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1793, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1794, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1795, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1796, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1797, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1798, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1799, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1800, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1801, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1802, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1803, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1804, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1805, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1806, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1807, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1808, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1809, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1810, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1811, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1812, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1813, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1814, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1815, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1816, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1817, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1818, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1819, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1820, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1821, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1822, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1823, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1824, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1825, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1826, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1827, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1828, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1829, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1830, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1831, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1832, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1833, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1834, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1835, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1836, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1837, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1838, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1839, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1840, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1841, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1842, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1843, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1844, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1845, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1846, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1847, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1848, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1849, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1850, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1851, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1852, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1853, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1854, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1855, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1856, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1857, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1858, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1859, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1860, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1861, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1862, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1863, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1864, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1865, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1866, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1867, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1868, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1869, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1870, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1871, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1872, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1873, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1874, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1875, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1876, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1877, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1878, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1879, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1880, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1881, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1882, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1883, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1884, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1885, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1886, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1887, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1888, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1889, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1890, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1891, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1892, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1893, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1894, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1895, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1896, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1897, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1898, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1899, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1900, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1901, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1902, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1903, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1904, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1905, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1906, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1907, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1908, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1909, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1910, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1911, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1912, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1913, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1914, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1915, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1916, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1917, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1918, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1919, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1920, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1921, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1922, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1923, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1924, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1925, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1926, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1927, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1928, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1929, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1930, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1931, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1932, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1933, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1934, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1935, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1936, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1937, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1938, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1939, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1940, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1941, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1942, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1943, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1944, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1945, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1946, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1947, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1948, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1949, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1950, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1951, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1952, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1953, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1954, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1955, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1956, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1957, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1958, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1959, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1960, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1961, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1962, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1963, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1964, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1965, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1966, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1967, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1968, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1969, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1970, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1971, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1972, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1973, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1974, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1975, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1976, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1977, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1978, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1979, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1980, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1981, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1982, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1983, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1984, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1985, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1986, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1987, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1988, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1989, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1990, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1991, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1992, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1993, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1994, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1995, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1996, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1997, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1998, X7
 	JMP	callbackasm1(SB)
-	PCALIGN	$8
 	MOV	$1999, X7
 	JMP	callbackasm1(SB)
