@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2022 The Ebitengine Authors
 
-//go:build cgo && !(amd64 || arm64 || arm || loong64 || riscv64)
+//go:build cgo && !(amd64 || arm || arm64 || loong64 || riscv64)
 
 package purego
 

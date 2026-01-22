@@ -28,7 +28,6 @@ func x_cgo_thread_start(arg *ThreadStart) {
 		abort()
 	}
 	// *ts = *arg would cause a writebarrier so copy using slices
-	// Use unsafe.Sizeof(uintptr(0)) to work on both 32-bit and 64-bit
 	ptrSize := unsafe.Sizeof(uintptr(0))
 	s1 := unsafe.Slice((*uintptr)(unsafe.Pointer(ts)), unsafe.Sizeof(*ts)/ptrSize)
 	s2 := unsafe.Slice((*uintptr)(unsafe.Pointer(arg)), unsafe.Sizeof(*arg)/ptrSize)

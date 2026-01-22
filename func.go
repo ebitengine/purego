@@ -550,9 +550,9 @@ func estimateStackBytes(ty reflect.Type) int {
 // tight packing as normal C function calls.
 func isCallbackFunction(cfn uintptr) bool {
 	// Only platforms with syscall_sysv.go have callback detection.
-	// Match the build constraint: darwin || freebsd || (linux && (amd64 || arm64 || arm || loong64 || riscv64)) || netbsd
+	// Match the build constraint: darwin || freebsd || (linux && (amd64 || arm || arm64 || loong64 || riscv64)) || netbsd
 	hasSyscallSysv := runtime.GOOS == "darwin" || runtime.GOOS == "freebsd" || runtime.GOOS == "netbsd" ||
-		(runtime.GOOS == "linux" && (runtime.GOARCH == "amd64" || runtime.GOARCH == "arm64" || runtime.GOARCH == "arm" || runtime.GOARCH == "loong64" || runtime.GOARCH == "riscv64"))
+		(runtime.GOOS == "linux" && (runtime.GOARCH == "amd64" || runtime.GOARCH == "arm" || runtime.GOARCH == "arm64" || runtime.GOARCH == "loong64" || runtime.GOARCH == "riscv64"))
 	if !hasSyscallSysv {
 		return false
 	}
