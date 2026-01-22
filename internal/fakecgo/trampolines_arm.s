@@ -14,29 +14,29 @@ TEXT x_cgo_init_trampoline(SB), NOSPLIT, $8-0
 	MOVW R0, 4(R13)
 	MOVW R1, 8(R13)
 	MOVW    ·x_cgo_init_call(SB), R12
-	MOVW    (R12), R2
-	CALL    (R2)
+	MOVW    (R12), R12
+	CALL    (R12)
 	RET
 
 TEXT x_cgo_thread_start_trampoline(SB), NOSPLIT, $8-0
 	MOVW R0, 4(R13)
 	MOVW    ·x_cgo_thread_start_call(SB), R12
-	MOVW    (R12), R2
-	CALL    (R2)
+	MOVW    (R12), R12
+	CALL    (R12)
 	RET
 
 TEXT x_cgo_setenv_trampoline(SB), NOSPLIT, $8-0
 	MOVW R0, 4(R13)
 	MOVW    ·x_cgo_setenv_call(SB), R12
-	MOVW    (R12), R2
-	CALL    (R2)
+	MOVW    (R12), R12
+	CALL    (R12)
 	RET
 
 TEXT x_cgo_unsetenv_trampoline(SB), NOSPLIT, $8-0
 	MOVW R0, 4(R13)
 	MOVW    ·x_cgo_unsetenv_call(SB), R12
-	MOVW    (R12), R2
-	CALL    (R2)
+	MOVW    (R12), R12
+	CALL    (R12)
 	RET
 
 TEXT x_cgo_notify_runtime_init_done_trampoline(SB), NOSPLIT, $0-0
@@ -58,8 +58,8 @@ TEXT threadentry_trampoline(SB), NOSPLIT, $8-0
 	// See crosscall2.
 	MOVW R0, 4(R13)
 	MOVW    ·threadentry_call(SB), R12
-	MOVW    (R12), R2
-	CALL    (R2)
+	MOVW    (R12), R12
+	CALL    (R12)
 	RET
 
 TEXT ·call5(SB), NOSPLIT, $8-28
