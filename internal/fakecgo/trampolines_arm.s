@@ -50,8 +50,8 @@ TEXT x_cgo_bindm_trampoline(SB), NOSPLIT, $0
 // func setg_trampoline(setg uintptr, g uintptr)
 TEXT ·setg_trampoline(SB), NOSPLIT, $0-8
 	MOVW G+4(FP), R0
-	MOVW setg+0(FP), R1
-	BL (R1)
+	MOVW setg+0(FP), R12
+	BL (R12)
 	RET
 
 TEXT threadentry_trampoline(SB), NOSPLIT, $8-0
@@ -63,7 +63,7 @@ TEXT threadentry_trampoline(SB), NOSPLIT, $8-0
 	RET
 
 TEXT ·call5(SB), NOSPLIT, $8-28
-    MOVW    fn+0(FP), R5
+    MOVW    fn+0(FP), R12
     MOVW    a1+4(FP), R0
     MOVW    a2+8(FP), R1
     MOVW    a3+12(FP), R2
@@ -73,7 +73,7 @@ TEXT ·call5(SB), NOSPLIT, $8-28
     MOVW    R4, arg5-8(SP)
     // Align SP to 8 bytes for call (required by ARM AAPCS)
     SUB     $8, R13
-	CALL   	(R5)
+	CALL   	(R12)
     ADD     $8, R13
     MOVW    R0, r1+24(FP)
     RET
