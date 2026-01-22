@@ -412,8 +412,8 @@ func TestABI_TooManyArguments(t *testing.T) {
 		}
 	})
 
-	// Test that 25 int64 arguments (17 slots needed) exceeds the limit
-	t.Run("25_int64_exceeds_limit", func(t *testing.T) {
+	// Test that 35 int64 arguments (27 slots needed) exceeds the limit
+	t.Run("35_int64_exceeds_limit", func(t *testing.T) {
 		defer func() {
 			if r := recover(); r != nil {
 				t.Logf("Got expected panic: %v", r)
@@ -422,8 +422,8 @@ func TestABI_TooManyArguments(t *testing.T) {
 			}
 		}()
 
-		var fn func(*byte, uintptr, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64)
-		purego.RegisterLibFunc(&fn, lib, "stack_25_int64_exceeds")
+		var fn func(*byte, uintptr, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64)
+		purego.RegisterLibFunc(&fn, lib, "stack_35_int64_exceeds")
 	})
 }
 
