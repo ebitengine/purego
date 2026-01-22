@@ -133,7 +133,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 		panic("purego: cfn is nil")
 	}
 	if ty.NumOut() == 1 && (ty.Out(0).Kind() == reflect.Float32 || ty.Out(0).Kind() == reflect.Float64) &&
-		runtime.GOARCH != "arm" && runtime.GOARCH != "arm64" && runtime.GOARCH != "amd64" && runtime.GOARCH != "loong64" && runtime.GOARCH != "riscv64" {
+		runtime.GOARCH != "arm" && runtime.GOARCH != "arm64" && runtime.GOARCH != "386" && runtime.GOARCH != "amd64" && runtime.GOARCH != "loong64" && runtime.GOARCH != "riscv64" {
 		panic("purego: float returns are not supported")
 	}
 	{
@@ -167,10 +167,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 					stack++
 				}
 			case reflect.Float32, reflect.Float64:
-				if is32bit && runtime.GOARCH != "arm" {
-					panic("purego: floats only supported on 64bit platforms")
-				}
-				if floats < numOfFloatRegisters {
+				if floats < numOfFloatRegisters() {
 					floats++
 				} else {
 					stack++
@@ -227,7 +224,10 @@ func RegisterFunc(fptr any, cfn uintptr) {
 
 	v := reflect.MakeFunc(ty, func(args []reflect.Value) (results []reflect.Value) {
 		var sysargs [maxArgs]uintptr
-		var floats [numOfFloatRegisters]uintptr
+		// Use maxArgs instead of numOfFloatRegisters() to keep this code path allocation-free,
+		// since numOfFloatRegisters() is a function call, not a constant.
+		// maxArgs is always greater than or equal to numOfFloatRegisters() so this is safe.
+		var floats [maxArgs]uintptr
 		var numInts int
 		var numFloats int
 		var numStack int
@@ -247,7 +247,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 				}
 			}
 			addFloat = func(x uintptr) {
-				if numFloats < numOfFloatRegisters {
+				if numFloats < numOfFloatRegisters() {
 					floats[numFloats] = x
 					numFloats++
 				} else {
@@ -358,7 +358,12 @@ func RegisterFunc(fptr any, cfn uintptr) {
 		case reflect.Float32:
 			// NOTE: syscall.r2 is only the floating return value on 64bit platforms.
 			// On 32bit platforms syscall.r2 is the upper part of a 64bit return.
-			v.SetFloat(float64(math.Float32frombits(uint32(syscall.f1))))
+			// On 386, x87 FPU returns floats as float64 in ST(0), so we read as float64 and convert.
+			if runtime.GOARCH == "386" {
+				v.SetFloat(math.Float64frombits(uint64(syscall.f1) | (uint64(syscall.f2) << 32)))
+			} else {
+				v.SetFloat(float64(math.Float32frombits(uint32(syscall.f1))))
+			}
 		case reflect.Float64:
 			// NOTE: syscall.r2 is only the floating return value on 64bit platforms.
 			// On 32bit platforms syscall.r2 is the upper part of a 64bit return.
@@ -479,6 +484,22 @@ func roundUpTo8(val uintptr) uintptr {
 	return (val + align8ByteMask) &^ align8ByteMask
 }
 
+func numOfFloatRegisters() int {
+	switch runtime.GOARCH {
+	case "arm64", "amd64", "loong64", "riscv64":
+		return 8
+	case "arm":
+		return 16
+	case "386":
+		// i386 SysV ABI passes all arguments on the stack, including floats
+		return 0
+	default:
+		// since this platform isn't supported and can therefore only access
+		// integer registers it is safest to return 8
+		return 8
+	}
+}
+
 func numOfIntegerRegisters() int {
 	switch runtime.GOARCH {
 	case "arm64", "loong64", "riscv64":
@@ -487,6 +508,9 @@ func numOfIntegerRegisters() int {
 		return 6
 	case "arm":
 		return 4
+	case "386":
+		// i386 SysV ABI passes all arguments on the stack
+		return 0
 	default:
 		// since this platform isn't supported and can therefore only access
 		// integer registers it is fine to return the maxArgs
@@ -508,7 +532,7 @@ func estimateStackBytes(ty reflect.Type) int {
 		usesInt := arg.Kind() != reflect.Float32 && arg.Kind() != reflect.Float64
 		if usesInt && numInts < numOfIntegerRegisters() {
 			numInts++
-		} else if !usesInt && numFloats < numOfFloatRegisters {
+		} else if !usesInt && numFloats < numOfFloatRegisters() {
 			numFloats++
 		} else {
 			// Goes to stack - accumulate total bytes

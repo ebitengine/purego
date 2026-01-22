@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2022 The Ebitengine Authors
 
-//go:build darwin || freebsd || (linux && (amd64 || arm || arm64 || loong64 || riscv64)) || netbsd
+//go:build darwin || freebsd || (linux && (386 || amd64 || arm || arm64 || loong64 || riscv64)) || netbsd
 
 package purego
 
@@ -152,7 +152,7 @@ func callbackWrap(a *callbackArgs) {
 	var intsN int
 	// stackSlot points to the index into frame of the current stack element.
 	// The stack begins after the float and integer registers.
-	stackSlot := numOfIntegerRegisters() + numOfFloatRegisters
+	stackSlot := numOfIntegerRegisters() + numOfFloatRegisters()
 	// stackByteOffset tracks the byte offset within the stack area for Darwin ARM64
 	// tight packing. On Darwin ARM64, C passes small types packed on the stack.
 	stackByteOffset := uintptr(0)
@@ -163,7 +163,7 @@ func callbackWrap(a *callbackArgs) {
 		switch inType.Kind() {
 		case reflect.Float32, reflect.Float64:
 			slots = int((fnType.In(i).Size() + ptrSize - 1) / ptrSize)
-			if floatsN+slots > numOfFloatRegisters {
+			if floatsN+slots > numOfFloatRegisters() {
 				if runtime.GOOS == "darwin" && runtime.GOARCH == "arm64" {
 					// Darwin ARM64: read from packed stack with proper alignment
 					args[i] = callbackArgFromStack(a.args, stackSlot, &stackByteOffset, inType)
@@ -190,7 +190,7 @@ func callbackWrap(a *callbackArgs) {
 				}
 			} else {
 				// the integers begin after the floats in frame
-				pos := intsN + numOfFloatRegisters
+				pos := intsN + numOfFloatRegisters()
 				args[i] = reflect.NewAt(inType, unsafe.Pointer(&frame[pos])).Elem()
 			}
 			intsN += slots
@@ -256,8 +256,12 @@ func callbackasmAddr(i int) uintptr {
 	switch runtime.GOARCH {
 	default:
 		panic("purego: unsupported architecture")
-	case "386", "amd64":
+	case "amd64":
+		// On amd64, each callback entry is just a CALL instruction (5 bytes)
 		entrySize = 5
+	case "386":
+		// On 386, each callback entry is MOVL $imm, CX (5 bytes) + JMP (5 bytes)
+		entrySize = 10
 	case "arm", "arm64", "loong64", "riscv64":
 		// On ARM, ARM64, Loong64, and RISCV64, each entry is a MOV instruction
 		// followed by a branch instruction

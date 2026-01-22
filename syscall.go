@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2022 The Ebitengine Authors
 
-//go:build !arm && (darwin || freebsd || linux || netbsd || windows)
+//go:build !arm && !386 && (darwin || freebsd || linux || netbsd || windows)
 
 package purego
 
@@ -13,8 +13,7 @@ package purego
 type CDecl struct{}
 
 const (
-	maxArgs             = 15
-	numOfFloatRegisters = 8 // arm64 and amd64 both have 8 float registers
+	maxArgs = 15
 )
 
 type syscall15Args struct {
