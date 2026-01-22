@@ -16,7 +16,7 @@ C Calling convention cdecl used here (we only need integer args):
 6. arg: R9
 We don't need floats with these functions -> AX=0
 return value will be in AX
-temporary registers are R10 and R11
+temporary register is R11
 */
 #include "textflag.h"
 #include "go_asm.h"
