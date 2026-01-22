@@ -233,6 +233,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 		var sysargs [maxArgs]uintptr
 		// Use maxArgs instead of numOfFloatRegisters() to keep this code path allocation-free,
 		// since numOfFloatRegisters() is a function call, not a constant.
+		// maxArgs is always greater than or equal to numOfFloatRegisters() so this is safe.
 		var floats [maxArgs]uintptr
 		var numInts int
 		var numFloats int
