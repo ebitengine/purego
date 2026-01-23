@@ -11,25 +11,25 @@
 
 // func setg_trampoline(setg uintptr, g uintptr)
 TEXT ·setg_trampoline(SB), NOSPLIT, $0
-	MOV	gp+8(FP), X10
-	MOV	setg+0(FP), X5
+	MOV  gp+8(FP), X10
+	MOV  setg+0(FP), X5
 	CALL X5
 	RET
 
 TEXT threadentry_trampoline(SB), NOSPLIT, $16
-	MOV	X10, 8(SP)
-	MOV	·threadentry_call(SB), X5
-	MOV	(X5), X5
+	MOV  X10, 8(SP)
+	MOV  ·threadentry_call(SB), X5
+	MOV  (X5), X5
 	CALL X5
 	RET
 
 TEXT ·call5(SB), NOSPLIT, $0-48
-	MOV	fn+0(FP), X5
-	MOV	a1+8(FP), X10
-	MOV	a2+16(FP), X11
-	MOV	a3+24(FP), X12
-	MOV	a4+32(FP), X13
-	MOV	a5+40(FP), X14
+	MOV  fn+0(FP), X5
+	MOV  a1+8(FP), X10
+	MOV  a2+16(FP), X11
+	MOV  a3+24(FP), X12
+	MOV  a4+32(FP), X13
+	MOV  a5+40(FP), X14
 	CALL X5
-	MOV	X10, ret+48(FP)
+	MOV  X10, ret+48(FP)
 	RET
