@@ -10,38 +10,38 @@
  
 // these trampolines map the gcc ABI to Go ABI and then calls into the Go equivalent functions.
 
-TEXT x_cgo_init_trampoline(SB), NOSPLIT, $16
-    MOVD ·x_cgo_init_call(SB), R9
+TEXT _x_cgo_init_trampoline(SB), NOSPLIT, $16
+    MOVD ·_cgo_init_call(SB), R9
     MOVD (R9), R9
     CALL R9
     RET
 
-TEXT x_cgo_thread_start_trampoline(SB), NOSPLIT, $8
-    MOVD ·x_cgo_thread_start_call(SB), R9
+TEXT _x_cgo_thread_start_trampoline(SB), NOSPLIT, $8
+    MOVD ·_cgo_thread_start_call(SB), R9
     MOVD (R9), R9
     CALL R9
     RET
 
-TEXT x_cgo_setenv_trampoline(SB), NOSPLIT, $8
-    MOVD ·x_cgo_setenv_call(SB), R9
+TEXT _x_cgo_setenv_trampoline(SB), NOSPLIT, $8
+    MOVD ·_cgo_setenv_call(SB), R9
     MOVD (R9), R9
     CALL R9
     RET
 
-TEXT x_cgo_unsetenv_trampoline(SB), NOSPLIT, $8
-    MOVD ·x_cgo_unsetenv_call(SB), R9
+TEXT _x_cgo_unsetenv_trampoline(SB), NOSPLIT, $8
+    MOVD ·_cgo_unsetenv_call(SB), R9
     MOVD (R9), R9
     CALL R9
     RET
 
-TEXT x_cgo_notify_runtime_init_done_trampoline(SB), NOSPLIT, $0
-    MOVD ·x_cgo_notify_runtime_init_done_call(SB), R9
+TEXT _x_cgo_notify_runtime_init_done_trampoline(SB), NOSPLIT, $0
+    MOVD ·_cgo_notify_runtime_init_done_call(SB), R9
     MOVD (R9), R9
     CALL R9
     RET
 
-TEXT x_cgo_bindm_trampoline(SB), NOSPLIT, $8
-    MOVD ·x_cgo_bindm_call(SB), R9
+TEXT _x_cgo_bindm_trampoline(SB), NOSPLIT, $8
+    MOVD ·_cgo_bindm_call(SB), R9
     MOVD (R9), R9
     CALL R9
     RET

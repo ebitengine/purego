@@ -30,19 +30,17 @@ var templateArchTrampolines = template.Must(template.New("arch_trampolines").Fun
  
 // these trampolines map the gcc ABI to Go ABI and then calls into the Go equivalent functions.
 {{ range .Symbols }}
-TEXT {{.Name}}_trampoline(SB), NOSPLIT, ${{argCount .Args | mul $.Arch.WordSize}}
-{{- range $i, $arg := .Args }}
-{{- if $arg.Name }}
+TEXT _x_cgo_{{.Name}}_trampoline(SB), NOSPLIT, ${{mul .ArgsCount $.Arch.WordSize}}
+{{- range $i := .ArgsCount }}
 	{{- $src := index $.Arch.C.IntRegArgs $i }}
 	{{- $dst := index $.Arch.GoABI0.IntRegArgs $i }}
 	{{- if ne $src $dst }}
     {{$.Arch.MOV}} {{$src}}, {{$dst}}
 	{{- end }}
 {{- end }}
-{{- end }}
-    {{$.Arch.MOV}} ·{{.Name}}_call(SB), {{$.Arch.VolatileReg}}
+    {{$.Arch.MOV}} ·_cgo_{{.Name}}_call(SB), {{$.Arch.VolatileReg}}
     {{$.Arch.MOV}} ({{$.Arch.VolatileReg}}), {{$.Arch.VolatileReg}}
-{{- if eq $.Arch.Name "loong64" }}
+{{- if $.Arch.CallNeedsParens }}
     CALL ({{$.Arch.VolatileReg}})
 {{- else }}
     CALL {{$.Arch.VolatileReg}}
@@ -147,19 +145,16 @@ import (
 )
 
 {{ range .Symbols }}
-{{- $cgoName := getCgoName .Name }}
-{{- if $cgoName }}
-//go:linkname {{.Name}}_trampoline {{.Name}}_trampoline
-//go:linkname {{$cgoName}} {{$cgoName}}
-var {{.Name}}_trampoline byte
-var {{$cgoName}} = &{{.Name}}_trampoline
-{{- end }}
+//go:linkname _x_cgo_{{.Name}}_trampoline _x_cgo_{{.Name}}_trampoline
+//go:linkname _cgo_{{.Name}} {{if .Package}}{{.Package}}.{{end}}_cgo_{{.Name}}
+var _x_cgo_{{.Name}}_trampoline byte
+var _cgo_{{.Name}} = &_x_cgo_{{.Name}}_trampoline
 {{- end }}
 
 var (
 	threadentry_call = threadentry
 {{- range .Symbols }}
-	{{.Name}}_call = {{.Name}}
+	_cgo_{{.Name}}_call = x_cgo_{{.Name}}
 {{- end }}
 )
 `))
@@ -205,35 +200,9 @@ var (
 )
 
 var funcs = map[string]any{
-	"hasPrefix":  strings.HasPrefix,
-	"imports":    imports,
-	"argCount":   argCount,
-	"mul":        func(a, b int) int { return a * b },
-	"getCgoName": getCgoName,
-}
-
-func getCgoName(name string) string {
-	switch name {
-	case "x_cgo_init":
-		return "_cgo_init"
-	case "x_cgo_thread_start":
-		return "_cgo_thread_start"
-	case "x_cgo_notify_runtime_init_done":
-		return "_cgo_notify_runtime_init_done"
-	case "x_cgo_bindm":
-		return "_cgo_bindm"
-	}
-	return ""
-}
-
-func argCount(args [5]Arg) int {
-	count := 0
-	for _, arg := range args {
-		if arg.Name != "" {
-			count++
-		}
-	}
-	return count
+	"hasPrefix": strings.HasPrefix,
+	"imports":   imports,
+	"mul":       func(a, b int) int { return a * b },
 }
 
 var GOOSes = []string{"darwin", "freebsd", "linux", "netbsd"}
@@ -382,20 +351,20 @@ func run() error {
 			return err
 		}
 	}
-	if err := execute(templateCallbacks, "zcallbacks.go", struct{ Symbols []Symbol }{Symbols: archTrampolines}); err != nil {
+	if err := execute(templateCallbacks, "zcallbacks.go", struct{ Symbols []AsmGoSymbol }{Symbols: asmGoSymbols}); err != nil {
 		return err
 	}
 	return nil
 }
 
 type Arch struct {
-	Name          string // as in runtime.GOARCH
-	GoABIInternal ABI    // if empty, same as GoABI0
-	GoABI0        ABI
-	C             ABI
-	WordSize      int    // 4 on 32-bit systems, 8 on 64-bit systems
-	MOV           string // MOV instruction, e.g., "MOVL" or "MOVQ"
-	VolatileReg   string // Scratch register for intermediate values
+	Name            string // as in runtime.GOARCH
+	GoABI0          ABI
+	C               ABI
+	WordSize        int    // 4 on 32-bit systems, 8 on 64-bit systems
+	MOV             string // MOV instruction, e.g., "MOVL" or "MOVQ"
+	VolatileReg     string // Scratch register for intermediate values
+	CallNeedsParens bool
 }
 
 type ABI struct {
@@ -403,52 +372,56 @@ type ABI struct {
 	OutRegArg  string    // Name of the register for the single return value. If empty, stack-based calling convention is used.
 }
 
+// AsmGoSymbols are symbols that called from Go Assembly.
+type AsmGoSymbol struct {
+	Name      string
+	ArgsCount int
+	Package   string
+}
+
 var (
 	archs = []Arch{
 		{
-			Name:          "amd64",
-			WordSize:      8,
-			GoABIInternal: ABI{IntRegArgs: [5]string{"AX", "BX", "CX", "DX", "SI"}, OutRegArg: "AX"},
-			GoABI0:        ABI{IntRegArgs: [5]string{"AX", "BX", "CX", "DX", "SI"}, OutRegArg: "AX"},
-			C:             ABI{IntRegArgs: [5]string{"DI", "SI", "DX", "CX", "R8"}, OutRegArg: "AX"},
-			MOV:           "MOVQ",
-			VolatileReg:   "R11",
+			Name:        "amd64",
+			WordSize:    8,
+			GoABI0:      ABI{IntRegArgs: [5]string{"AX", "BX", "CX", "DX", "SI"}, OutRegArg: "AX"},
+			C:           ABI{IntRegArgs: [5]string{"DI", "SI", "DX", "CX", "R8"}, OutRegArg: "AX"},
+			MOV:         "MOVQ",
+			VolatileReg: "R11",
 		},
 		{
-			Name:          "arm64",
-			WordSize:      8,
-			GoABIInternal: ABI{IntRegArgs: [5]string{"R0", "R1", "R2", "R3", "R4"}, OutRegArg: "R0"},
-			GoABI0:        ABI{IntRegArgs: [5]string{"R0", "R1", "R2", "R3", "R4"}, OutRegArg: "R0"},
-			C:             ABI{IntRegArgs: [5]string{"R0", "R1", "R2", "R3", "R4"}, OutRegArg: "R0"},
-			MOV:           "MOVD",
-			VolatileReg:   "R9",
+			Name:        "arm64",
+			WordSize:    8,
+			GoABI0:      ABI{IntRegArgs: [5]string{"R0", "R1", "R2", "R3", "R4"}, OutRegArg: "R0"},
+			C:           ABI{IntRegArgs: [5]string{"R0", "R1", "R2", "R3", "R4"}, OutRegArg: "R0"},
+			MOV:         "MOVD",
+			VolatileReg: "R9",
 		},
 		{
-			Name:          "loong64",
-			WordSize:      8,
-			GoABIInternal: ABI{IntRegArgs: [5]string{"R4", "R5", "R6", "R7", "R8"}, OutRegArg: "R4"},
-			GoABI0:        ABI{IntRegArgs: [5]string{"R4", "R5", "R6", "R7", "R8"}, OutRegArg: "R4"},
-			C:             ABI{IntRegArgs: [5]string{"R4", "R5", "R6", "R7", "R8"}, OutRegArg: "R4"},
-			MOV:           "MOVV",
-			VolatileReg:   "R23",
+			Name:            "loong64",
+			WordSize:        8,
+			GoABI0:          ABI{IntRegArgs: [5]string{"R4", "R5", "R6", "R7", "R8"}, OutRegArg: "R4"},
+			C:               ABI{IntRegArgs: [5]string{"R4", "R5", "R6", "R7", "R8"}, OutRegArg: "R4"},
+			MOV:             "MOVV",
+			VolatileReg:     "R23",
+			CallNeedsParens: true,
 		},
 		{
-			Name:          "riscv64",
-			WordSize:      8,
-			GoABIInternal: ABI{IntRegArgs: [5]string{"X10", "X11", "X12", "X13", "X14"}, OutRegArg: "X10"},
-			GoABI0:        ABI{IntRegArgs: [5]string{"X10", "X11", "X12", "X13", "X14"}, OutRegArg: "X10"},
-			C:             ABI{IntRegArgs: [5]string{"X10", "X11", "X12", "X13", "X14"}, OutRegArg: "X10"},
-			MOV:           "MOV",
-			VolatileReg:   "X5",
+			Name:        "riscv64",
+			WordSize:    8,
+			GoABI0:      ABI{IntRegArgs: [5]string{"X10", "X11", "X12", "X13", "X14"}, OutRegArg: "X10"},
+			C:           ABI{IntRegArgs: [5]string{"X10", "X11", "X12", "X13", "X14"}, OutRegArg: "X10"},
+			MOV:         "MOV",
+			VolatileReg: "X5",
 		},
 	}
-	archTrampolines = []Symbol{
-		{"x_cgo_init", [5]Arg{{"G", "*g"}, {"setg", "uintptr"}}, "", nil},
-		{"x_cgo_thread_start", [5]Arg{{"ts", "*ThreadStart"}}, "", nil},
-		{"x_cgo_setenv", [5]Arg{{"arg", "*uintptr"}}, "", nil},
-		{"x_cgo_unsetenv", [5]Arg{{"arg", "*uintptr"}}, "", nil},
-		{"x_cgo_notify_runtime_init_done", [5]Arg{}, "", nil},
-		{"x_cgo_bindm", [5]Arg{{"g", "unsafe.Pointer"}}, "", nil},
+	asmGoSymbols = []AsmGoSymbol{
+		{"init", 2, ""},
+		{"thread_start", 1, ""},
+		{"setenv", 1, "runtime"},
+		{"unsetenv", 1, "runtime"},
+		{"notify_runtime_init_done", 0, ""},
+		{"bindm", 1, ""},
 	}
 )
 
@@ -468,11 +441,11 @@ func writeArchTrampolines(arch Arch) error {
 	}
 	data := struct {
 		Tag     string
-		Symbols []Symbol
+		Symbols []AsmGoSymbol
 		Arch    Arch
 	}{
 		Tag:     tag,
-		Symbols: archTrampolines,
+		Symbols: asmGoSymbols,
 		Arch:    arch,
 	}
 	return execute(templateArchTrampolines, fmt.Sprintf("ztrampolines_%s.s", arch.Name), data)

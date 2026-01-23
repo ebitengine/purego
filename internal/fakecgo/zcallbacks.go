@@ -11,32 +11,42 @@ import (
 	_ "unsafe"
 )
 
-//go:linkname x_cgo_init_trampoline x_cgo_init_trampoline
+//go:linkname _x_cgo_init_trampoline _x_cgo_init_trampoline
 //go:linkname _cgo_init _cgo_init
-var x_cgo_init_trampoline byte
-var _cgo_init = &x_cgo_init_trampoline
+var _x_cgo_init_trampoline byte
+var _cgo_init = &_x_cgo_init_trampoline
 
-//go:linkname x_cgo_thread_start_trampoline x_cgo_thread_start_trampoline
+//go:linkname _x_cgo_thread_start_trampoline _x_cgo_thread_start_trampoline
 //go:linkname _cgo_thread_start _cgo_thread_start
-var x_cgo_thread_start_trampoline byte
-var _cgo_thread_start = &x_cgo_thread_start_trampoline
+var _x_cgo_thread_start_trampoline byte
+var _cgo_thread_start = &_x_cgo_thread_start_trampoline
 
-//go:linkname x_cgo_notify_runtime_init_done_trampoline x_cgo_notify_runtime_init_done_trampoline
+//go:linkname _x_cgo_setenv_trampoline _x_cgo_setenv_trampoline
+//go:linkname _cgo_setenv runtime._cgo_setenv
+var _x_cgo_setenv_trampoline byte
+var _cgo_setenv = &_x_cgo_setenv_trampoline
+
+//go:linkname _x_cgo_unsetenv_trampoline _x_cgo_unsetenv_trampoline
+//go:linkname _cgo_unsetenv runtime._cgo_unsetenv
+var _x_cgo_unsetenv_trampoline byte
+var _cgo_unsetenv = &_x_cgo_unsetenv_trampoline
+
+//go:linkname _x_cgo_notify_runtime_init_done_trampoline _x_cgo_notify_runtime_init_done_trampoline
 //go:linkname _cgo_notify_runtime_init_done _cgo_notify_runtime_init_done
-var x_cgo_notify_runtime_init_done_trampoline byte
-var _cgo_notify_runtime_init_done = &x_cgo_notify_runtime_init_done_trampoline
+var _x_cgo_notify_runtime_init_done_trampoline byte
+var _cgo_notify_runtime_init_done = &_x_cgo_notify_runtime_init_done_trampoline
 
-//go:linkname x_cgo_bindm_trampoline x_cgo_bindm_trampoline
+//go:linkname _x_cgo_bindm_trampoline _x_cgo_bindm_trampoline
 //go:linkname _cgo_bindm _cgo_bindm
-var x_cgo_bindm_trampoline byte
-var _cgo_bindm = &x_cgo_bindm_trampoline
+var _x_cgo_bindm_trampoline byte
+var _cgo_bindm = &_x_cgo_bindm_trampoline
 
 var (
-	threadentry_call                    = threadentry
-	x_cgo_init_call                     = x_cgo_init
-	x_cgo_thread_start_call             = x_cgo_thread_start
-	x_cgo_setenv_call                   = x_cgo_setenv
-	x_cgo_unsetenv_call                 = x_cgo_unsetenv
-	x_cgo_notify_runtime_init_done_call = x_cgo_notify_runtime_init_done
-	x_cgo_bindm_call                    = x_cgo_bindm
+	threadentry_call                   = threadentry
+	_cgo_init_call                     = x_cgo_init
+	_cgo_thread_start_call             = x_cgo_thread_start
+	_cgo_setenv_call                   = x_cgo_setenv
+	_cgo_unsetenv_call                 = x_cgo_unsetenv
+	_cgo_notify_runtime_init_done_call = x_cgo_notify_runtime_init_done
+	_cgo_bindm_call                    = x_cgo_bindm
 )
