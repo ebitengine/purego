@@ -120,7 +120,7 @@ var (
 		{"sigfillset", [5]Arg{{"set", "*sigset_t"}}, "int32", nil},
 		{"nanosleep", [5]Arg{{"ts", "*syscall.Timespec"}, {"rem", "*syscall.Timespec"}}, "int32", nil},
 		{"abort", [5]Arg{}, "", nil},
-		{"sigaltstack", [5]Arg{{"ss", "*stack_t"}, {"old_ss", "*stack_t"}}, "int32", nil},
+		{"sigaltstack", [5]Arg{{"ss", "*stack_t"}, {"old_ss", "*stack_t"}}, "int32", []string{"netbsd"}},
 	}
 	pthreadSymbols = []Symbol{
 		{"pthread_attr_init", [5]Arg{{"attr", "*pthread_attr_t"}}, "int32", nil},
