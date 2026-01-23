@@ -24,41 +24,6 @@ temporary register is R11
 
 // these trampolines map the gcc ABI to Go ABI and then calls into the Go equivalent functions.
 
-TEXT x_cgo_init_trampoline(SB), NOSPLIT, $16
-	MOVQ DI, AX
-	MOVQ SI, BX
-	MOVQ ·x_cgo_init_call(SB), R11
-	MOVQ (R11), R11
-	CALL R11
-	RET
-
-TEXT x_cgo_thread_start_trampoline(SB), NOSPLIT, $8
-	MOVQ DI, AX
-	MOVQ ·x_cgo_thread_start_call(SB), R11
-	MOVQ (R11), R11
-	CALL R11
-	RET
-
-TEXT x_cgo_setenv_trampoline(SB), NOSPLIT, $8
-	MOVQ DI, AX
-	MOVQ ·x_cgo_setenv_call(SB), R11
-	MOVQ (R11), R11
-	CALL R11
-	RET
-
-TEXT x_cgo_unsetenv_trampoline(SB), NOSPLIT, $8
-	MOVQ DI, AX
-	MOVQ ·x_cgo_unsetenv_call(SB), R11
-	MOVQ (R11), R11
-	CALL R11
-	RET
-
-TEXT x_cgo_notify_runtime_init_done_trampoline(SB), NOSPLIT, $0
-	JMP ·x_cgo_notify_runtime_init_done(SB)
-
-TEXT x_cgo_bindm_trampoline(SB), NOSPLIT, $0
-	JMP ·x_cgo_bindm(SB)
-
 // func setg_trampoline(setg uintptr, g uintptr)
 TEXT ·setg_trampoline(SB), NOSPLIT, $0-16
 	MOVQ G+8(FP), DI
