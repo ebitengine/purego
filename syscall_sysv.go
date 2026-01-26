@@ -224,15 +224,3 @@ func callbackasmAddr(i int) uintptr {
 	}
 	return callbackasmABI0 + uintptr(i*entrySize)
 }
-
-// getCallbackStart returns the start address of the callback region.
-// TODO: Remove this function once callback tight packing is implemented.
-func getCallbackStart() uintptr {
-	return callbackasmABI0
-}
-
-// getMaxCB returns the maximum number of callbacks.
-// TODO: Remove this function once callback tight packing is implemented.
-func getMaxCB() int {
-	return maxCB
-}
