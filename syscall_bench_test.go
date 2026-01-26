@@ -24,7 +24,7 @@ func BenchmarkCallingMethods(b *testing.B) {
 		cCallbackPtr  uintptr
 		cCallbackName string
 		args          []uintptr
-		expectedSum   int
+		expectedSum   int64
 	}{
 		{1, sum1, 0, 0, "sum1_c", 0, "call_callback1", []uintptr{1}, 1},
 		{2, sum2, 0, 0, "sum2_c", 0, "call_callback2", []uintptr{1, 2}, 3},
@@ -82,7 +82,7 @@ func BenchmarkCallingMethods(b *testing.B) {
 				result := callRegisterFunc(registerFn, tc.n, tc.args, b.N)
 				b.StopTimer()
 
-				if int(result) != tc.expectedSum {
+				if result != tc.expectedSum {
 					b.Fatalf("RegisterFunc/Callback: expected sum %d, got %d", tc.expectedSum, result)
 				}
 			})
@@ -101,7 +101,7 @@ func BenchmarkCallingMethods(b *testing.B) {
 				result := callRegisterFunc(registerFn, tc.n, tc.args, b.N)
 				b.StopTimer()
 
-				if int(result) != tc.expectedSum {
+				if result != tc.expectedSum {
 					b.Fatalf("RegisterFunc/CFunc: expected sum %d, got %d", tc.expectedSum, result)
 				}
 			})
@@ -119,7 +119,7 @@ func BenchmarkCallingMethods(b *testing.B) {
 					result, _, _ = purego.SyscallN(tc.fnPtr, tc.args...)
 				}
 				b.StopTimer()
-				if int(result) != tc.expectedSum {
+				if int64(result) != tc.expectedSum {
 					b.Fatalf("SyscallN/Callback: expected sum %d, got %d", tc.expectedSum, result)
 				}
 			})
@@ -137,7 +137,7 @@ func BenchmarkCallingMethods(b *testing.B) {
 					result, _, _ = purego.SyscallN(tc.cFnPtr, tc.args...)
 				}
 				b.StopTimer()
-				if int(result) != tc.expectedSum {
+				if int64(result) != tc.expectedSum {
 					b.Fatalf("SyscallN/CFunc: expected sum %d, got %d", tc.expectedSum, result)
 				}
 			})
@@ -166,7 +166,7 @@ func BenchmarkCallingMethods(b *testing.B) {
 					result, _, _ = purego.SyscallN(tc.cCallbackPtr, callbackArgs...)
 				}
 				b.StopTimer()
-				if int(result) != tc.expectedSum {
+				if int64(result) != tc.expectedSum {
 					b.Fatalf("RoundTrip: expected sum %d, got %d", tc.expectedSum, result)
 				}
 			})
@@ -178,90 +178,90 @@ func BenchmarkCallingMethods(b *testing.B) {
 func makeRegisterFunc(n int) any {
 	switch n {
 	case 1:
-		return new(func(uintptr) uintptr)
+		return new(func(int64) int64)
 	case 2:
-		return new(func(uintptr, uintptr) uintptr)
+		return new(func(int64, int64) int64)
 	case 3:
-		return new(func(uintptr, uintptr, uintptr) uintptr)
+		return new(func(int64, int64, int64) int64)
 	case 5:
-		return new(func(uintptr, uintptr, uintptr, uintptr, uintptr) uintptr)
+		return new(func(int64, int64, int64, int64, int64) int64)
 	case 10:
-		return new(func(uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr) uintptr)
+		return new(func(int64, int64, int64, int64, int64, int64, int64, int64, int64, int64) int64)
 	case 14:
-		return new(func(uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr) uintptr)
+		return new(func(int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64) int64)
 	case 15:
-		return new(func(uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr) uintptr)
+		return new(func(int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64) int64)
 	default:
 		return nil
 	}
 }
 
 // callRegisterFunc calls the registered function with the appropriate number of arguments
-func callRegisterFunc(registerFn any, n int, args []uintptr, iterations int) uintptr {
-	var result uintptr
+func callRegisterFunc(registerFn any, n int, args []uintptr, iterations int) int64 {
+	var result int64
 	switch n {
 	case 1:
-		f := registerFn.(*func(uintptr) uintptr)
+		f := registerFn.(*func(int64) int64)
 		for i := 0; i < iterations; i++ {
-			result = (*f)(args[0])
+			result = (*f)(int64(args[0]))
 		}
 	case 2:
-		f := registerFn.(*func(uintptr, uintptr) uintptr)
+		f := registerFn.(*func(int64, int64) int64)
 		for i := 0; i < iterations; i++ {
-			result = (*f)(args[0], args[1])
+			result = (*f)(int64(args[0]), int64(args[1]))
 		}
 	case 3:
-		f := registerFn.(*func(uintptr, uintptr, uintptr) uintptr)
+		f := registerFn.(*func(int64, int64, int64) int64)
 		for i := 0; i < iterations; i++ {
-			result = (*f)(args[0], args[1], args[2])
+			result = (*f)(int64(args[0]), int64(args[1]), int64(args[2]))
 		}
 	case 5:
-		f := registerFn.(*func(uintptr, uintptr, uintptr, uintptr, uintptr) uintptr)
+		f := registerFn.(*func(int64, int64, int64, int64, int64) int64)
 		for i := 0; i < iterations; i++ {
-			result = (*f)(args[0], args[1], args[2], args[3], args[4])
+			result = (*f)(int64(args[0]), int64(args[1]), int64(args[2]), int64(args[3]), int64(args[4]))
 		}
 	case 10:
-		f := registerFn.(*func(uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr) uintptr)
+		f := registerFn.(*func(int64, int64, int64, int64, int64, int64, int64, int64, int64, int64) int64)
 		for i := 0; i < iterations; i++ {
-			result = (*f)(args[0], args[1], args[2], args[3], args[4],
-				args[5], args[6], args[7], args[8], args[9])
+			result = (*f)(int64(args[0]), int64(args[1]), int64(args[2]), int64(args[3]), int64(args[4]),
+				int64(args[5]), int64(args[6]), int64(args[7]), int64(args[8]), int64(args[9]))
 		}
 	case 14:
-		f := registerFn.(*func(uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr) uintptr)
+		f := registerFn.(*func(int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64) int64)
 		for i := 0; i < iterations; i++ {
-			result = (*f)(args[0], args[1], args[2], args[3], args[4],
-				args[5], args[6], args[7], args[8], args[9],
-				args[10], args[11], args[12], args[13])
+			result = (*f)(int64(args[0]), int64(args[1]), int64(args[2]), int64(args[3]), int64(args[4]),
+				int64(args[5]), int64(args[6]), int64(args[7]), int64(args[8]), int64(args[9]),
+				int64(args[10]), int64(args[11]), int64(args[12]), int64(args[13]))
 		}
 	case 15:
-		f := registerFn.(*func(uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr) uintptr)
+		f := registerFn.(*func(int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64) int64)
 		for i := 0; i < iterations; i++ {
-			result = (*f)(args[0], args[1], args[2], args[3], args[4],
-				args[5], args[6], args[7], args[8], args[9],
-				args[10], args[11], args[12], args[13], args[14])
+			result = (*f)(int64(args[0]), int64(args[1]), int64(args[2]), int64(args[3]), int64(args[4]),
+				int64(args[5]), int64(args[6]), int64(args[7]), int64(args[8]), int64(args[9]),
+				int64(args[10]), int64(args[11]), int64(args[12]), int64(args[13]), int64(args[14]))
 		}
 	}
 	return result
 }
 
 //go:noinline
-func sum1(a1 uintptr) uintptr { return a1 }
+func sum1(a1 int64) int64 { return a1 }
 
 //go:noinline
-func sum2(a1, a2 uintptr) uintptr { return a1 + a2 }
+func sum2(a1, a2 int64) int64 { return a1 + a2 }
 
 //go:noinline
-func sum3(a1, a2, a3 uintptr) uintptr { return a1 + a2 + a3 }
+func sum3(a1, a2, a3 int64) int64 { return a1 + a2 + a3 }
 
 //go:noinline
-func sum5(a1, a2, a3, a4, a5 uintptr) uintptr { return a1 + a2 + a3 + a4 + a5 }
+func sum5(a1, a2, a3, a4, a5 int64) int64 { return a1 + a2 + a3 + a4 + a5 }
 
 //go:noinline
-func sum10(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10 uintptr) uintptr {
+func sum10(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10 int64) int64 {
 	return a1 + a2 + a3 + a4 + a5 + a6 + a7 + a8 + a9 + a10
 }
 
 //go:noinline
-func sum15(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15 uintptr) uintptr {
+func sum15(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15 int64) int64 {
 	return a1 + a2 + a3 + a4 + a5 + a6 + a7 + a8 + a9 + a10 + a11 + a12 + a13 + a14 + a15
 }
