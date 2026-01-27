@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-FileCopyrightText: 2025 The Ebitengine Authors
+// SPDX-FileCopyrightText: 2026 The Ebitengine Authors
 
 // go:generate sh -c "if [ $(uname -s) = 'Darwin' ]; then cc -dynamiclib -O2 -o
 // libnoop.dylib noop.c; else cc -shared -fPIC -O2 -o libnoop.so noop.c; fi"
