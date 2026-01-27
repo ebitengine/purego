@@ -120,6 +120,7 @@ func RegisterLibFunc(fptr any, handle uintptr, name string) {
 //
 // [Cgo rules]: https://pkg.go.dev/cmd/cgo#hdr-Go_references_to_C
 func RegisterFunc(fptr any, cfn uintptr) {
+	const is32bit = unsafe.Sizeof(uintptr(0)) == 4
 	fn := reflect.ValueOf(fptr).Elem()
 	ty := fn.Type()
 	if ty.Kind() != reflect.Func {
@@ -132,7 +133,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 		panic("purego: cfn is nil")
 	}
 	if ty.NumOut() == 1 && (ty.Out(0).Kind() == reflect.Float32 || ty.Out(0).Kind() == reflect.Float64) &&
-		runtime.GOARCH != "arm64" && runtime.GOARCH != "amd64" && runtime.GOARCH != "loong64" && runtime.GOARCH != "riscv64" {
+		runtime.GOARCH != "arm" && runtime.GOARCH != "arm64" && runtime.GOARCH != "amd64" && runtime.GOARCH != "loong64" && runtime.GOARCH != "riscv64" {
 		panic("purego: float returns are not supported")
 	}
 	{
@@ -166,11 +167,10 @@ func RegisterFunc(fptr any, cfn uintptr) {
 					stack++
 				}
 			case reflect.Float32, reflect.Float64:
-				const is32bit = unsafe.Sizeof(uintptr(0)) == 4
-				if is32bit {
+				if is32bit && runtime.GOARCH != "arm" {
 					panic("purego: floats only supported on 64bit platforms")
 				}
-				if floats < numOfFloatRegisters {
+				if floats < numOfFloatRegisters() {
 					floats++
 				} else {
 					stack++
@@ -227,7 +227,10 @@ func RegisterFunc(fptr any, cfn uintptr) {
 
 	v := reflect.MakeFunc(ty, func(args []reflect.Value) (results []reflect.Value) {
 		var sysargs [maxArgs]uintptr
-		var floats [numOfFloatRegisters]uintptr
+		// Use maxArgs instead of numOfFloatRegisters() to keep this code path allocation-free,
+		// since numOfFloatRegisters() is a function call, not a constant.
+		// maxArgs is always greater than or equal to numOfFloatRegisters() so this is safe.
+		var floats [maxArgs]uintptr
 		var numInts int
 		var numFloats int
 		var numStack int
@@ -247,7 +250,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 				}
 			}
 			addFloat = func(x uintptr) {
-				if numFloats < len(floats) {
+				if numFloats < numOfFloatRegisters() {
 					floats[numFloats] = x
 					numFloats++
 				} else {
@@ -323,7 +326,9 @@ func RegisterFunc(fptr any, cfn uintptr) {
 				sysargs[0], sysargs[1], sysargs[2], sysargs[3], sysargs[4], sysargs[5],
 				sysargs[6], sysargs[7], sysargs[8], sysargs[9], sysargs[10], sysargs[11],
 				sysargs[12], sysargs[13], sysargs[14],
+				sysargs[15], sysargs[16], sysargs[17], sysargs[18], sysargs[19], sysargs[20], sysargs[21], sysargs[22], sysargs[23], sysargs[24], sysargs[25], sysargs[26], sysargs[27], sysargs[28], sysargs[29], sysargs[30], sysargs[31],
 				floats[0], floats[1], floats[2], floats[3], floats[4], floats[5], floats[6], floats[7],
+				floats[8], floats[9], floats[10], floats[11], floats[12], floats[13], floats[14], floats[15],
 				0,
 			}
 			runtime_cgocall(syscall15XABI0, unsafe.Pointer(syscall))
@@ -334,7 +339,9 @@ func RegisterFunc(fptr any, cfn uintptr) {
 				sysargs[0], sysargs[1], sysargs[2], sysargs[3], sysargs[4], sysargs[5],
 				sysargs[6], sysargs[7], sysargs[8], sysargs[9], sysargs[10], sysargs[11],
 				sysargs[12], sysargs[13], sysargs[14],
+				sysargs[15], sysargs[16], sysargs[17], sysargs[18], sysargs[19], sysargs[20], sysargs[21], sysargs[22], sysargs[23], sysargs[24], sysargs[25], sysargs[26], sysargs[27], sysargs[28], sysargs[29], sysargs[30], sysargs[31],
 				floats[0], floats[1], floats[2], floats[3], floats[4], floats[5], floats[6], floats[7],
+				floats[8], floats[9], floats[10], floats[11], floats[12], floats[13], floats[14], floats[15],
 				arm64_r8,
 			}
 			runtime_cgocall(syscall15XABI0, unsafe.Pointer(syscall))
@@ -376,7 +383,11 @@ func RegisterFunc(fptr any, cfn uintptr) {
 		case reflect.Float64:
 			// NOTE: syscall.r2 is only the floating return value on 64bit platforms.
 			// On 32bit platforms syscall.r2 is the upper part of a 64bit return.
-			v.SetFloat(math.Float64frombits(uint64(syscall.f1)))
+			if is32bit {
+				v.SetFloat(math.Float64frombits(uint64(syscall.f1) | (uint64(syscall.f2) << 32)))
+			} else {
+				v.SetFloat(math.Float64frombits(uint64(syscall.f1)))
+			}
 		case reflect.Struct:
 			v = getStruct(outType, *syscall)
 		default:
@@ -394,6 +405,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 }
 
 func addValue(v reflect.Value, keepAlive []any, addInt func(x uintptr), addFloat func(x uintptr), addStack func(x uintptr), numInts *int, numFloats *int, numStack *int) []any {
+	const is32bit = unsafe.Sizeof(uintptr(0)) == 4
 	switch v.Kind() {
 	case reflect.String:
 		ptr := strings.CString(v.String())
@@ -417,7 +429,13 @@ func addValue(v reflect.Value, keepAlive []any, addInt func(x uintptr), addFloat
 	case reflect.Float32:
 		addFloat(uintptr(math.Float32bits(float32(v.Float()))))
 	case reflect.Float64:
-		addFloat(uintptr(math.Float64bits(v.Float())))
+		if is32bit {
+			bits := math.Float64bits(v.Float())
+			addFloat(uintptr(bits))
+			addFloat(uintptr(bits >> 32))
+		} else {
+			addFloat(uintptr(math.Float64bits(v.Float())))
+		}
 	case reflect.Struct:
 		keepAlive = addStruct(v, numInts, numFloats, numStack, addInt, addFloat, addStack, keepAlive)
 	default:
@@ -482,12 +500,27 @@ func roundUpTo8(val uintptr) uintptr {
 	return (val + align8ByteMask) &^ align8ByteMask
 }
 
+func numOfFloatRegisters() int {
+	switch runtime.GOARCH {
+	case "arm64", "amd64", "loong64", "riscv64":
+		return 8
+	case "arm":
+		return 16
+	default:
+		// since this platform isn't supported and can therefore only access
+		// integer registers it is safest to return 8
+		return 8
+	}
+}
+
 func numOfIntegerRegisters() int {
 	switch runtime.GOARCH {
 	case "arm64", "loong64", "riscv64":
 		return 8
 	case "amd64":
 		return 6
+	case "arm":
+		return 4
 	default:
 		// since this platform isn't supported and can therefore only access
 		// integer registers it is fine to return the maxArgs
@@ -509,7 +542,7 @@ func estimateStackBytes(ty reflect.Type) int {
 		usesInt := arg.Kind() != reflect.Float32 && arg.Kind() != reflect.Float64
 		if usesInt && numInts < numOfIntegerRegisters() {
 			numInts++
-		} else if !usesInt && numFloats < numOfFloatRegisters {
+		} else if !usesInt && numFloats < numOfFloatRegisters() {
 			numFloats++
 		} else {
 			// Goes to stack - accumulate total bytes
