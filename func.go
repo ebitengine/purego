@@ -210,7 +210,8 @@ func RegisterFunc(fptr any, cfn uintptr) {
 		}
 
 		sizeOfStack := maxArgs - numOfIntegerRegisters()
-		// On Darwin ARM64, use byte-based validation since arguments pack efficiently
+		// On Darwin ARM64, use byte-based validation since arguments pack efficiently.
+		// See https://developer.apple.com/documentation/xcode/writing-arm64-code-for-apple-platforms
 		if runtime.GOOS == "darwin" && runtime.GOARCH == "arm64" {
 			stackBytes := estimateStackBytes(ty)
 			maxStackBytes := sizeOfStack * 8
@@ -497,8 +498,8 @@ func numOfIntegerRegisters() int {
 // estimateStackBytes estimates stack bytes needed for Darwin ARM64 validation.
 // This is a conservative estimate used only for early error detection.
 func estimateStackBytes(ty reflect.Type) int {
-	numInts, numFloats := 0, 0
-	stackBytes := 0
+	var numInts, numFloats int
+	var stackBytes int
 
 	for i := 0; i < ty.NumIn(); i++ {
 		arg := ty.In(i)
