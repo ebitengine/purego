@@ -30,6 +30,12 @@ import "unsafe"
 
 //go:nosplit
 //go:norace
+func sigaltstack(ss *stack_t, old_ss *stack_t) int32 {
+	return int32(call5(sigaltstackABI0, uintptr(unsafe.Pointer(ss)), uintptr(unsafe.Pointer(old_ss)), 0, 0, 0))
+}
+
+//go:nosplit
+//go:norace
 func pthread_attr_getstacksize(attr *pthread_attr_t, stacksize *size_t) int32 {
 	return int32(call5(pthread_attr_getstacksizeABI0, uintptr(unsafe.Pointer(attr)), uintptr(unsafe.Pointer(stacksize)), 0, 0, 0))
 }
@@ -39,6 +45,10 @@ func pthread_attr_getstacksize(attr *pthread_attr_t, stacksize *size_t) int32 {
 func pthread_attr_destroy(attr *pthread_attr_t) int32 {
 	return int32(call5(pthread_attr_destroyABI0, uintptr(unsafe.Pointer(attr)), 0, 0, 0, 0))
 }
+
+//go:linkname _sigaltstack _sigaltstack
+var _sigaltstack uint8
+var sigaltstackABI0 = uintptr(unsafe.Pointer(&_sigaltstack))
 
 //go:linkname _pthread_attr_getstacksize _pthread_attr_getstacksize
 var _pthread_attr_getstacksize uint8

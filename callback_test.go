@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 	"unsafe"
 
@@ -172,4 +173,236 @@ func ExampleNewCallback_cdecl() {
 	purego.SyscallN(cb, 83)
 
 	// Output: 83
+}
+
+func TestCallbackInt32Packing(t *testing.T) {
+	if runtime.GOOS != "darwin" || runtime.GOARCH != "arm64" {
+		t.Skip("callback tight packing only applies to darwin/arm64")
+	}
+
+	libFileName := filepath.Join(t.TempDir(), "libcbtest_packing.so")
+	if err := buildSharedLib("CC", libFileName, filepath.Join("testdata", "libcbtest", "callback_packing_test.c")); err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove(libFileName)
+
+	lib, err := purego.Dlopen(libFileName, purego.RTLD_NOW|purego.RTLD_GLOBAL)
+	if err != nil {
+		t.Fatalf("Dlopen(%q) failed: %v", libFileName, err)
+	}
+
+	var callCallback12Int32 func(cb uintptr) int32
+	purego.RegisterLibFunc(&callCallback12Int32, lib, "callCallback12Int32")
+
+	// Go callback that sums the 12 int32 arguments (prime numbers: 2,3,5,7,11,13,17,19,23,29,31,37)
+	goFunc := func(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12 int32) int32 {
+		return a1 + a2 + a3 + a4 + a5 + a6 + a7 + a8 + a9 + a10 + a11 + a12
+	}
+
+	cb := purego.NewCallback(goFunc)
+	got := callCallback12Int32(cb)
+	want := int32(2 + 3 + 5 + 7 + 11 + 13 + 17 + 19 + 23 + 29 + 31 + 37) // 197
+	if got != want {
+		t.Errorf("callCallback12Int32() = %d, want %d", got, want)
+	}
+}
+
+func TestCallbackMixedStackPacking(t *testing.T) {
+	if runtime.GOOS != "darwin" || runtime.GOARCH != "arm64" {
+		t.Skip("callback tight packing only applies to darwin/arm64")
+	}
+
+	libFileName := filepath.Join(t.TempDir(), "libcbtest_packing.so")
+	if err := buildSharedLib("CC", libFileName, filepath.Join("testdata", "libcbtest", "callback_packing_test.c")); err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove(libFileName)
+
+	lib, err := purego.Dlopen(libFileName, purego.RTLD_NOW|purego.RTLD_GLOBAL)
+	if err != nil {
+		t.Fatalf("Dlopen(%q) failed: %v", libFileName, err)
+	}
+
+	var callCallbackMixedStack func(cb uintptr) int64
+	purego.RegisterLibFunc(&callCallbackMixedStack, lib, "callCallbackMixedStack")
+
+	// Go callback: 8 int64s in regs, then int32(100), int64(200), int32(300) on stack
+	goFunc := func(a1, a2, a3, a4, a5, a6, a7, a8 int64, s1 int32, s2 int64, s3 int32) int64 {
+		// Return sum to verify all args received correctly
+		return a1 + a2 + a3 + a4 + a5 + a6 + a7 + a8 + int64(s1) + s2 + int64(s3)
+	}
+
+	cb := purego.NewCallback(goFunc)
+	got := callCallbackMixedStack(cb)
+	want := int64(1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 + 100 + 200 + 300) // 636
+	if got != want {
+		t.Errorf("callCallbackMixedStack() = %d, want %d", got, want)
+	}
+}
+
+func TestCallbackSmallTypesPacking(t *testing.T) {
+	if runtime.GOOS != "darwin" || runtime.GOARCH != "arm64" {
+		t.Skip("callback tight packing only applies to darwin/arm64")
+	}
+
+	libFileName := filepath.Join(t.TempDir(), "libcbtest_packing.so")
+	if err := buildSharedLib("CC", libFileName, filepath.Join("testdata", "libcbtest", "callback_packing_test.c")); err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove(libFileName)
+
+	lib, err := purego.Dlopen(libFileName, purego.RTLD_NOW|purego.RTLD_GLOBAL)
+	if err != nil {
+		t.Fatalf("Dlopen(%q) failed: %v", libFileName, err)
+	}
+
+	var callCallbackSmallTypes func(cb uintptr) int64
+	purego.RegisterLibFunc(&callCallbackSmallTypes, lib, "callCallbackSmallTypes")
+
+	// Values: 1,2,3,4,5,6,7,8 (regs), true, -42, 200, -1000, 50000, 123456 (stack)
+	var gotBool bool
+	var gotI8 int8
+	var gotU8 uint8
+	var gotI16 int16
+	var gotU16 uint16
+	var gotI32 int32
+
+	goFunc := func(a1, a2, a3, a4, a5, a6, a7, a8 int64,
+		b bool, i8 int8, u8 uint8, i16 int16, u16 uint16, i32 int32) int64 {
+		gotBool = b
+		gotI8 = i8
+		gotU8 = u8
+		gotI16 = i16
+		gotU16 = u16
+		gotI32 = i32
+		return a1 + a2 + a3 + a4 + a5 + a6 + a7 + a8
+	}
+
+	cb := purego.NewCallback(goFunc)
+	got := callCallbackSmallTypes(cb)
+
+	// Check register args sum
+	want := int64(1 + 2 + 3 + 4 + 5 + 6 + 7 + 8) // 36
+	if got != want {
+		t.Errorf("register args sum = %d, want %d", got, want)
+	}
+
+	// Check stack args
+	if gotBool != true {
+		t.Errorf("bool = %v, want true", gotBool)
+	}
+	if gotI8 != -42 {
+		t.Errorf("int8 = %d, want -42", gotI8)
+	}
+	if gotU8 != 200 {
+		t.Errorf("uint8 = %d, want 200", gotU8)
+	}
+	if gotI16 != -1000 {
+		t.Errorf("int16 = %d, want -1000", gotI16)
+	}
+	if gotU16 != 50000 {
+		t.Errorf("uint16 = %d, want 50000", gotU16)
+	}
+	if gotI32 != 123456 {
+		t.Errorf("int32 = %d, want 123456", gotI32)
+	}
+}
+
+func TestCallback10Int32Packing(t *testing.T) {
+	if runtime.GOOS != "darwin" || runtime.GOARCH != "arm64" {
+		t.Skip("callback tight packing only applies to darwin/arm64")
+	}
+
+	libFileName := filepath.Join(t.TempDir(), "libcbtest_packing.so")
+	if err := buildSharedLib("CC", libFileName, filepath.Join("testdata", "libcbtest", "callback_packing_test.c")); err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove(libFileName)
+
+	lib, err := purego.Dlopen(libFileName, purego.RTLD_NOW|purego.RTLD_GLOBAL)
+	if err != nil {
+		t.Fatalf("Dlopen(%q) failed: %v", libFileName, err)
+	}
+
+	var callCallback10Int32 func(cb uintptr) int32
+	purego.RegisterLibFunc(&callCallback10Int32, lib, "callCallback10Int32")
+
+	goFunc := func(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10 int32) int32 {
+		return a1 + a2 + a3 + a4 + a5 + a6 + a7 + a8 + a9 + a10
+	}
+
+	cb := purego.NewCallback(goFunc)
+	got := callCallback10Int32(cb)
+	want := int32(1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9 + 10) // 55
+	if got != want {
+		t.Errorf("callCallback10Int32() = %d, want %d", got, want)
+	}
+}
+
+func TestCallbackFloat64StackPacking(t *testing.T) {
+	if runtime.GOOS != "darwin" || runtime.GOARCH != "arm64" {
+		t.Skip("callback tight packing only applies to darwin/arm64")
+	}
+
+	libFileName := filepath.Join(t.TempDir(), "libcbtest_packing.so")
+	if err := buildSharedLib("CC", libFileName, filepath.Join("testdata", "libcbtest", "callback_packing_test.c")); err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove(libFileName)
+
+	lib, err := purego.Dlopen(libFileName, purego.RTLD_NOW|purego.RTLD_GLOBAL)
+	if err != nil {
+		t.Fatalf("Dlopen(%q) failed: %v", libFileName, err)
+	}
+
+	var callCallback10Float64 func(cb uintptr) int64
+	purego.RegisterLibFunc(&callCallback10Float64, lib, "callCallback10Float64")
+
+	// 10 float64s: 8 in registers, 2 on stack
+	// Return int64 since callbacks don't support float returns
+	goFunc := func(f1, f2, f3, f4, f5, f6, f7, f8, f9, f10 float64) int64 {
+		sum := f1 + f2 + f3 + f4 + f5 + f6 + f7 + f8 + f9 + f10
+		return int64(sum * 10) // 60.0 * 10 = 600
+	}
+
+	cb := purego.NewCallback(goFunc)
+	got := callCallback10Float64(cb)
+	want := int64(600)
+	if got != want {
+		t.Errorf("callCallback10Float64() = %d, want %d", got, want)
+	}
+}
+
+func TestCallbackFloat32StackPacking(t *testing.T) {
+	if runtime.GOOS != "darwin" || runtime.GOARCH != "arm64" {
+		t.Skip("callback tight packing only applies to darwin/arm64")
+	}
+
+	libFileName := filepath.Join(t.TempDir(), "libcbtest_packing.so")
+	if err := buildSharedLib("CC", libFileName, filepath.Join("testdata", "libcbtest", "callback_packing_test.c")); err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove(libFileName)
+
+	lib, err := purego.Dlopen(libFileName, purego.RTLD_NOW|purego.RTLD_GLOBAL)
+	if err != nil {
+		t.Fatalf("Dlopen(%q) failed: %v", libFileName, err)
+	}
+
+	var callCallback12Float32 func(cb uintptr) int64
+	purego.RegisterLibFunc(&callCallback12Float32, lib, "callCallback12Float32")
+
+	// 12 float32s: 8 in registers, 4 on stack
+	// Return int64 since callbacks don't support float returns
+	goFunc := func(f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12 float32) int64 {
+		sum := f1 + f2 + f3 + f4 + f5 + f6 + f7 + f8 + f9 + f10 + f11 + f12
+		return int64(sum) // 78
+	}
+
+	cb := purego.NewCallback(goFunc)
+	got := callCallback12Float32(cb)
+	want := int64(78)
+	if got != want {
+		t.Errorf("callCallback12Float32() = %d, want %d", got, want)
+	}
 }

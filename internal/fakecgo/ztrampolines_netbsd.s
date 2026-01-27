@@ -9,6 +9,9 @@
 
 // these stubs are here because it is not possible to go:linkname directly the C functions
 
+TEXT _sigaltstack(SB), NOSPLIT|NOFRAME, $0-0
+	JMP purego_sigaltstack(SB)
+
 TEXT _pthread_attr_getstacksize(SB), NOSPLIT|NOFRAME, $0-0
 	JMP purego_pthread_attr_getstacksize(SB)
 

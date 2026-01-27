@@ -30,9 +30,6 @@ TEXT _nanosleep(SB), NOSPLIT|NOFRAME, $0-0
 TEXT _abort(SB), NOSPLIT|NOFRAME, $0-0
 	JMP purego_abort(SB)
 
-TEXT _sigaltstack(SB), NOSPLIT|NOFRAME, $0-0
-	JMP purego_sigaltstack(SB)
-
 TEXT _pthread_attr_init(SB), NOSPLIT|NOFRAME, $0-0
 	JMP purego_pthread_attr_init(SB)
 
