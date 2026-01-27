@@ -44,17 +44,3 @@ func NewCallback(fn any) uintptr {
 func loadSymbol(handle uintptr, name string) (uintptr, error) {
 	return syscall.GetProcAddress(syscall.Handle(handle), name)
 }
-
-// getCallbackStart returns the start address of the callback region.
-// On Windows, this should never be called as tight packing is not used.
-// TODO: Remove this function once callback tight packing is implemented.
-func getCallbackStart() uintptr {
-	panic("purego: getCallbackStart should not be called on Windows")
-}
-
-// getMaxCB returns the maximum number of callbacks.
-// On Windows, this should never be called as tight packing is not used.
-// TODO: Remove this function once callback tight packing is implemented.
-func getMaxCB() int {
-	panic("purego: getMaxCB should not be called on Windows")
-}

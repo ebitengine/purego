@@ -210,7 +210,8 @@ func RegisterFunc(fptr any, cfn uintptr) {
 		}
 
 		sizeOfStack := maxArgs - numOfIntegerRegisters()
-		// On Darwin ARM64, use byte-based validation since arguments pack efficiently
+		// On Darwin ARM64, use byte-based validation since arguments pack efficiently.
+		// See https://developer.apple.com/documentation/xcode/writing-arm64-code-for-apple-platforms
 		if runtime.GOOS == "darwin" && runtime.GOARCH == "arm64" {
 			stackBytes := estimateStackBytes(ty)
 			maxStackBytes := sizeOfStack * 8
@@ -223,11 +224,6 @@ func RegisterFunc(fptr any, cfn uintptr) {
 			}
 		}
 	}
-
-	// Detect if cfn is a callback (to avoid tight packing for callbacks which still use 8-byte slots)
-	// TODO: Remove this check once Darwin ARM64 callback unpacking is updated to handle C-style tight packing.
-	// When callbacks can unpack tightly-packed arguments, this workaround can be removed.
-	isCallback := isCallbackFunction(cfn)
 
 	v := reflect.MakeFunc(ty, func(args []reflect.Value) (results []reflect.Value) {
 		var sysargs [maxArgs]uintptr
@@ -305,9 +301,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 				continue
 			}
 			// Check if we need to start Darwin ARM64 C-style stack packing
-			// Skip tight packing for callbacks since they still use 8-byte slot unpacking
-			// TODO: Remove !isCallback condition once callback unpacking supports tight packing
-			if runtime.GOARCH == "arm64" && runtime.GOOS == "darwin" && !isCallback && shouldBundleStackArgs(v, numInts, numFloats) {
+			if runtime.GOARCH == "arm64" && runtime.GOOS == "darwin" && shouldBundleStackArgs(v, numInts, numFloats) {
 				// Collect and separate remaining args into register vs stack
 				stackArgs, newKeepAlive := collectStackArgs(args, i, numInts, numFloats,
 					keepAlive, addInt, addFloat, addStack, &numInts, &numFloats, &numStack)
@@ -504,8 +498,8 @@ func numOfIntegerRegisters() int {
 // estimateStackBytes estimates stack bytes needed for Darwin ARM64 validation.
 // This is a conservative estimate used only for early error detection.
 func estimateStackBytes(ty reflect.Type) int {
-	numInts, numFloats := 0, 0
-	stackBytes := 0
+	var numInts, numFloats int
+	var stackBytes int
 
 	for i := 0; i < ty.NumIn(); i++ {
 		arg := ty.In(i)
@@ -527,36 +521,4 @@ func estimateStackBytes(ty reflect.Type) int {
 		stackBytes = int(roundUpTo8(uintptr(stackBytes)))
 	}
 	return stackBytes
-}
-
-// isCallbackFunction checks if the given function pointer is a purego callback.
-// We need to detect this to avoid using tight packing for callbacks, since callback
-// unpacking still uses the 8-byte slot convention.
-// TODO: This function can be removed once Darwin ARM64 callbacks support tight packing.
-// Once callbackWrap is updated to unpack C-style arguments, callbacks can use the same
-// tight packing as normal C function calls.
-func isCallbackFunction(cfn uintptr) bool {
-	// Only platforms with syscall_sysv.go have callback detection.
-	// Match the build constraint: darwin || freebsd || (linux && (amd64 || arm64 || loong64 || riscv64)) || netbsd
-	hasSyscallSysv := runtime.GOOS == "darwin" || runtime.GOOS == "freebsd" || runtime.GOOS == "netbsd" ||
-		(runtime.GOOS == "linux" && (runtime.GOARCH == "amd64" || runtime.GOARCH == "arm64" || runtime.GOARCH == "loong64" || runtime.GOARCH == "riscv64"))
-	if !hasSyscallSysv {
-		return false
-	}
-
-	// Determine callback entry size based on architecture
-	var entrySize int
-	switch runtime.GOARCH {
-	case "386", "amd64":
-		entrySize = 5
-	case "arm", "arm64", "loong64", "riscv64":
-		entrySize = 8
-	default:
-		return false
-	}
-
-	// Check if cfn is in the callback address range
-	callbackStart := getCallbackStart()
-	callbackEnd := callbackStart + uintptr(getMaxCB()*entrySize)
-	return cfn >= callbackStart && cfn < callbackEnd
 }

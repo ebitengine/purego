@@ -147,36 +147,47 @@ func callbackWrap(a *callbackArgs) {
 	frame := (*[callbackMaxFrame]uintptr)(a.args)
 	var floatsN int // floatsN represents the number of float arguments processed
 	var intsN int   // intsN represents the number of integer arguments processed
-	// stack points to the index into frame of the current stack element.
+	// stackSlot points to the index into frame of the current stack element.
 	// The stack begins after the float and integer registers.
-	stack := numOfIntegerRegisters() + numOfFloatRegisters
+	stackSlot := numOfIntegerRegisters() + numOfFloatRegisters
+	// stackByteOffset tracks the byte offset within the stack area for Darwin ARM64
+	// tight packing. On Darwin ARM64, C passes small types packed on the stack.
+	stackByteOffset := uintptr(0)
 	for i := range args {
-		var pos int
-		switch fnType.In(i).Kind() {
+		inType := fnType.In(i)
+		switch inType.Kind() {
 		case reflect.Float32, reflect.Float64:
 			if floatsN >= numOfFloatRegisters {
-				pos = stack
-				stack++
+				if runtime.GOOS == "darwin" && runtime.GOARCH == "arm64" {
+					// Darwin ARM64: read from packed stack with proper alignment
+					args[i] = callbackArgFromStack(a.args, stackSlot, &stackByteOffset, inType)
+				} else {
+					args[i] = reflect.NewAt(inType, unsafe.Pointer(&frame[stackSlot])).Elem()
+					stackSlot++
+				}
 			} else {
-				pos = floatsN
+				args[i] = reflect.NewAt(inType, unsafe.Pointer(&frame[floatsN])).Elem()
 			}
 			floatsN++
 		case reflect.Struct:
 			// This is the CDecl field
-			args[i] = reflect.Zero(fnType.In(i))
-			continue
+			args[i] = reflect.Zero(inType)
 		default:
-
 			if intsN >= numOfIntegerRegisters() {
-				pos = stack
-				stack++
+				if runtime.GOOS == "darwin" && runtime.GOARCH == "arm64" {
+					// Darwin ARM64: read from packed stack with proper alignment
+					args[i] = callbackArgFromStack(a.args, stackSlot, &stackByteOffset, inType)
+				} else {
+					args[i] = reflect.NewAt(inType, unsafe.Pointer(&frame[stackSlot])).Elem()
+					stackSlot++
+				}
 			} else {
 				// the integers begin after the floats in frame
-				pos = intsN + numOfFloatRegisters
+				pos := intsN + numOfFloatRegisters
+				args[i] = reflect.NewAt(inType, unsafe.Pointer(&frame[pos])).Elem()
 			}
 			intsN++
 		}
-		args[i] = reflect.NewAt(fnType.In(i), unsafe.Pointer(&frame[pos])).Elem()
 	}
 	ret := fn.Call(args)
 	if len(ret) > 0 {
@@ -201,6 +212,29 @@ func callbackWrap(a *callbackArgs) {
 	}
 }
 
+// callbackArgFromStack reads an argument from the tightly-packed stack area on Darwin ARM64.
+// The C ABI on Darwin ARM64 packs small types on the stack without padding to 8 bytes.
+// This function handles proper alignment and advances stackByteOffset accordingly.
+func callbackArgFromStack(argsBase unsafe.Pointer, stackSlot int, stackByteOffset *uintptr, inType reflect.Type) reflect.Value {
+	// Calculate base address of stack area (after float and int registers)
+	stackBase := unsafe.Add(argsBase, stackSlot*int(ptrSize))
+
+	// Get type's natural alignment
+	align := uintptr(inType.Align())
+	size := inType.Size()
+
+	// Align the offset
+	if *stackByteOffset%align != 0 {
+		*stackByteOffset = (*stackByteOffset + align - 1) &^ (align - 1)
+	}
+
+	// Read value at aligned offset
+	ptr := unsafe.Add(stackBase, *stackByteOffset)
+	*stackByteOffset += size
+
+	return reflect.NewAt(inType, ptr).Elem()
+}
+
 // callbackasmAddr returns address of runtime.callbackasm
 // function adjusted by i.
 // On x86 and amd64, runtime.callbackasm is a series of CALL instructions,
@@ -223,16 +257,4 @@ func callbackasmAddr(i int) uintptr {
 		entrySize = 8
 	}
 	return callbackasmABI0 + uintptr(i*entrySize)
-}
-
-// getCallbackStart returns the start address of the callback region.
-// TODO: Remove this function once callback tight packing is implemented.
-func getCallbackStart() uintptr {
-	return callbackasmABI0
-}
-
-// getMaxCB returns the maximum number of callbacks.
-// TODO: Remove this function once callback tight packing is implemented.
-func getMaxCB() int {
-	return maxCB
 }
