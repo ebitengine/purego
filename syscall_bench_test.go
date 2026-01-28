@@ -26,13 +26,13 @@ func BenchmarkCallingMethods(b *testing.B) {
 		args          []uintptr
 		expectedSum   int64
 	}{
-		{1, sum1, 0, 0, "sum1_c", 0, "call_callback1", []uintptr{1}, 1},
-		{2, sum2, 0, 0, "sum2_c", 0, "call_callback2", []uintptr{1, 2}, 3},
-		{3, sum3, 0, 0, "sum3_c", 0, "call_callback3", []uintptr{1, 2, 3}, 6},
-		{5, sum5, 0, 0, "sum5_c", 0, "call_callback5", []uintptr{1, 2, 3, 4, 5}, 15},
-		{10, sum10, 0, 0, "sum10_c", 0, "call_callback10", []uintptr{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}, 55},
-		{14, sum15, 0, 0, "sum14_c", 0, "call_callback14", []uintptr{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14}, 105},
-		{15, sum15, 0, 0, "sum15_c", 0, "call_callback15", []uintptr{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}, 120},
+		{1, goSum1, 0, 0, "sum1_c", 0, "call_callback1", []uintptr{1}, 1},
+		{2, goSum2, 0, 0, "sum2_c", 0, "call_callback2", []uintptr{1, 2}, 3},
+		{3, goSum3, 0, 0, "sum3_c", 0, "call_callback3", []uintptr{1, 2, 3}, 6},
+		{5, goSum5, 0, 0, "sum5_c", 0, "call_callback5", []uintptr{1, 2, 3, 4, 5}, 15},
+		{10, goSum10, 0, 0, "sum10_c", 0, "call_callback10", []uintptr{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}, 55},
+		{14, goSum15, 0, 0, "sum14_c", 0, "call_callback14", []uintptr{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14}, 105},
+		{15, goSum15, 0, 0, "sum15_c", 0, "call_callback15", []uintptr{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}, 120},
 	}
 
 	// Build C library for benchmarking
@@ -48,11 +48,11 @@ func BenchmarkCallingMethods(b *testing.B) {
 	if err != nil {
 		b.Fatalf("Failed to load C library: %v", err)
 	}
-	defer func() {
+	b.Cleanup(func() {
 		if err := load.CloseLibrary(libHandle); err != nil {
 			b.Fatalf("Failed to close library: %s", err)
 		}
-	}()
+	})
 
 	// Create callbacks and load C functions
 	for i := range testCases {
@@ -244,24 +244,18 @@ func callRegisterFunc(registerFn any, n int, args []uintptr, iterations int) int
 	return result
 }
 
-//go:noinline
-func sum1(a1 int64) int64 { return a1 }
+func goSum1(a1 int64) int64 { return a1 }
 
-//go:noinline
-func sum2(a1, a2 int64) int64 { return a1 + a2 }
+func goSum2(a1, a2 int64) int64 { return a1 + a2 }
 
-//go:noinline
-func sum3(a1, a2, a3 int64) int64 { return a1 + a2 + a3 }
+func goSum3(a1, a2, a3 int64) int64 { return a1 + a2 + a3 }
 
-//go:noinline
-func sum5(a1, a2, a3, a4, a5 int64) int64 { return a1 + a2 + a3 + a4 + a5 }
+func goSum5(a1, a2, a3, a4, a5 int64) int64 { return a1 + a2 + a3 + a4 + a5 }
 
-//go:noinline
-func sum10(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10 int64) int64 {
+func goSum10(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10 int64) int64 {
 	return a1 + a2 + a3 + a4 + a5 + a6 + a7 + a8 + a9 + a10
 }
 
-//go:noinline
-func sum15(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15 int64) int64 {
+func goSum15(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15 int64) int64 {
 	return a1 + a2 + a3 + a4 + a5 + a6 + a7 + a8 + a9 + a10 + a11 + a12 + a13 + a14 + a15
 }
