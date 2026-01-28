@@ -18,11 +18,6 @@ import (
 // a string built from the constituent arg types.
 var structTypeCache sync.Map // map[string]cachedStructInfo
 
-// cachedStructInfo holds a cached struct type and the indices of non-padding fields.
-type cachedStructInfo struct {
-	typ          reflect.Type
-	valueIndices []int // indices of non-padding fields in the struct
-}
 
 // structInstancePool pools reflect.Value instances for each cached struct type.
 var structInstancePool sync.Map // map[string]*sync.Pool
@@ -449,15 +444,16 @@ func structFitsInRegisters(val reflect.Value, tempNumInts, tempNumFloats int) (b
 }
 
 // collectStackArgs separates remaining arguments into those that fit in registers vs those that go on stack.
-// It returns the stack arguments and processes register arguments through addValue.
+// It returns the stack arguments (using the provided buffer to avoid allocation) and processes
+// register arguments through addValue.
 func collectStackArgs(args []reflect.Value, startIdx int, numInts, numFloats int,
 	keepAlive []any, addInt, addFloat, addStack func(uintptr),
-	pNumInts, pNumFloats, pNumStack *int) ([]reflect.Value, []any) {
+	pNumInts, pNumFloats, pNumStack *int, stackBuf []reflect.Value) ([]reflect.Value, []any) {
 	if runtime.GOOS != "darwin" {
 		panic("purego: collectStackArgs should only be called on darwin")
 	}
 
-	var stackArgs []reflect.Value
+	stackArgs := stackBuf[:0]
 	tempNumInts := numInts
 	tempNumFloats := numFloats
 
@@ -589,8 +585,14 @@ func returnPooledStructInstance(key string, v reflect.Value) {
 
 // bundleStackArgs bundles remaining arguments for Darwin ARM64 C-style stack packing.
 // It creates a packed struct with proper alignment and copies it to the stack in 8-byte chunks.
-// Struct types and instances are cached/pooled to avoid per-call reflection overhead.
+// When pre-computed bundle info is provided (non-nil), it skips cache key construction and lookup.
 func bundleStackArgs(stackArgs []reflect.Value, addStack func(uintptr)) {
+	bundleStackArgsWithInfo(stackArgs, addStack, nil)
+}
+
+// bundleStackArgsWithInfo is the implementation of bundleStackArgs that optionally accepts
+// pre-computed bundle info to skip per-call cache key construction and sync.Map lookups.
+func bundleStackArgsWithInfo(stackArgs []reflect.Value, addStack func(uintptr), pre *preBundleInfo) {
 	if runtime.GOOS != "darwin" {
 		panic("purego: bundleStackArgs should only be called on darwin")
 	}
@@ -598,8 +600,15 @@ func bundleStackArgs(stackArgs []reflect.Value, addStack func(uintptr)) {
 		return
 	}
 
-	key := buildStructCacheKey(stackArgs)
-	info := getOrCreateStructInfo(stackArgs, key)
+	var info cachedStructInfo
+	var key string
+	if pre != nil {
+		info = pre.info
+		key = pre.key
+	} else {
+		key = buildStructCacheKey(stackArgs)
+		info = getOrCreateStructInfo(stackArgs, key)
+	}
 	structInstance := getPooledStructInstance(key, info)
 
 	// Set values using pre-computed indices
@@ -612,4 +621,91 @@ func bundleStackArgs(stackArgs []reflect.Value, addStack func(uintptr)) {
 	copyStruct8ByteChunks(ptr, size, addStack)
 
 	returnPooledStructInstance(key, structInstance)
+}
+
+
+// precomputeBundleInfo simulates register assignment for the given function type
+// and pre-computes the struct cache key and info for stack arguments.
+// Returns nil if no args spill to stack.
+func precomputeBundleInfo(ty reflect.Type) *preBundleInfo {
+	if runtime.GOOS != "darwin" || runtime.GOARCH != "arm64" {
+		return nil
+	}
+
+	// Simulate register assignment to find which args spill.
+	// String args are converted to *byte by collectStackArgs before bundling,
+	// so we must use the post-conversion type here.
+	numInts, numFloats := 0, 0
+	var spillTypes []reflect.Type
+	ptrByteType := reflect.TypeOf((*byte)(nil))
+	for i := 0; i < ty.NumIn(); i++ {
+		arg := ty.In(i)
+		switch arg.Kind() {
+		case reflect.Float32, reflect.Float64:
+			if numFloats < numOfFloatRegisters {
+				numFloats++
+			} else {
+				spillTypes = append(spillTypes, arg)
+			}
+		case reflect.Struct:
+			// Structs are complex; skip pre-computation for now
+			// (they go through structFitsInRegisters at runtime)
+			return nil
+		case reflect.Slice:
+			// Variadic []any — can't pre-compute
+			if arg.Elem().Kind() == reflect.Interface {
+				return nil
+			}
+			if numInts < numOfIntegerRegisters() {
+				numInts++
+			} else {
+				spillTypes = append(spillTypes, arg)
+			}
+		default:
+			if numInts < numOfIntegerRegisters() {
+				numInts++
+			} else {
+				// Strings become *byte after CString conversion
+				if arg.Kind() == reflect.String {
+					spillTypes = append(spillTypes, ptrByteType)
+				} else {
+					spillTypes = append(spillTypes, arg)
+				}
+			}
+		}
+	}
+
+	if len(spillTypes) == 0 {
+		return nil
+	}
+
+	// Build cache key from spill types
+	var buf []byte
+	for i, t := range spillTypes {
+		if i > 0 {
+			buf = append(buf, ',')
+		}
+		buf = append(buf, t.String()...)
+	}
+	key := string(buf)
+
+	// Build dummy values to compute struct info
+	dummyArgs := make([]reflect.Value, len(spillTypes))
+	for i, t := range spillTypes {
+		dummyArgs[i] = reflect.New(t).Elem()
+	}
+	info := getOrCreateStructInfo(dummyArgs, key)
+
+	// Warm the pool
+	pool, _ := structInstancePool.LoadOrStore(key, &sync.Pool{
+		New: func() any {
+			return reflect.New(info.typ)
+		},
+	})
+
+	return &preBundleInfo{
+		key:  key,
+		info: info,
+		pool: pool.(*sync.Pool),
+	}
 }

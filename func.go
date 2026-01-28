@@ -25,6 +25,21 @@ var thePool = sync.Pool{New: func() any {
 	return new(syscall15Args)
 }}
 
+// cachedStructInfo holds a cached struct type and the indices of non-padding fields.
+type cachedStructInfo struct {
+	typ          reflect.Type
+	valueIndices []int // indices of non-padding fields in the struct
+}
+
+// preBundleInfo holds pre-computed bundling information created at registration time
+// to avoid per-call cache key construction and sync.Map lookups for Darwin ARM64
+// stack argument packing.
+type preBundleInfo struct {
+	key  string
+	info cachedStructInfo
+	pool *sync.Pool
+}
+
 // RegisterLibFunc is a wrapper around RegisterFunc that uses the C function returned from Dlsym(handle, name).
 // It panics if it can't find the name symbol.
 func RegisterLibFunc(fptr any, handle uintptr, name string) {
@@ -274,6 +289,10 @@ func RegisterFunc(fptr any, cfn uintptr) {
 		}
 	}
 
+	// Pre-compute bundle info for Darwin ARM64 stack argument packing.
+	// This avoids per-call cache key construction and sync.Map lookups.
+	preBundleInfoVal := precomputeBundleInfo(ty)
+
 	v := reflect.MakeFunc(ty, func(args []reflect.Value) (results []reflect.Value) {
 		var sysargs [maxArgs]uintptr
 		var floats [numOfFloatRegisters]uintptr
@@ -350,10 +369,11 @@ func RegisterFunc(fptr any, cfn uintptr) {
 			}
 			// Check if we need to start Darwin ARM64 C-style stack packing
 			if runtime.GOARCH == "arm64" && runtime.GOOS == "darwin" && !isCallback && shouldBundleStackArgs(v, numInts, numFloats) {
+				var stackArgsBuf [maxArgs]reflect.Value
 				stackArgs, newKeepAlive := collectStackArgs(args, i, numInts, numFloats,
-					keepAlive, addInt, addFloat, addStack, &numInts, &numFloats, &numStack)
+					keepAlive, addInt, addFloat, addStack, &numInts, &numFloats, &numStack, stackArgsBuf[:])
 				keepAlive = newKeepAlive
-				bundleStackArgs(stackArgs, addStack)
+				bundleStackArgsWithInfo(stackArgs, addStack, preBundleInfoVal)
 				break
 			}
 			// Fast dispatch using pre-computed arg kind

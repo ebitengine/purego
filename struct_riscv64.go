@@ -134,6 +134,7 @@ func collectStackArgs(
 	keepAlive []any,
 	addInt, addFloat, addStack func(uintptr),
 	numIntsPtr, numFloatsPtr, numStackPtr *int,
+	stackBuf []reflect.Value,
 ) ([]reflect.Value, []any) {
 	return nil, keepAlive
 }
@@ -141,3 +142,9 @@ func collectStackArgs(
 func bundleStackArgs(stackArgs []reflect.Value, addStack func(uintptr)) {
 	panic("bundleStackArgs not supported on RISCV64")
 }
+
+func bundleStackArgsWithInfo(stackArgs []reflect.Value, addStack func(uintptr), pre *preBundleInfo) {
+	panic("purego: bundleStackArgsWithInfo should not be called on riscv64")
+}
+
+func precomputeBundleInfo(ty reflect.Type) *preBundleInfo { return nil }

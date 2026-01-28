@@ -31,11 +31,17 @@ func structFitsInRegisters(val reflect.Value, tempNumInts, tempNumFloats int) (b
 // collectStackArgs is not used on 386.
 func collectStackArgs(args []reflect.Value, startIdx int, numInts, numFloats int,
 	keepAlive []any, addInt, addFloat, addStack func(uintptr),
-	pNumInts, pNumFloats, pNumStack *int) ([]reflect.Value, []any) {
+	pNumInts, pNumFloats, pNumStack *int, stackBuf []reflect.Value) ([]reflect.Value, []any) {
 	panic("purego: collectStackArgs should not be called on 386")
 }
+
+func precomputeBundleInfo(ty reflect.Type) *preBundleInfo { return nil }
 
 // bundleStackArgs is not used on 386.
 func bundleStackArgs(stackArgs []reflect.Value, addStack func(uintptr)) {
 	panic("purego: bundleStackArgs should not be called on 386")
+}
+
+func bundleStackArgsWithInfo(stackArgs []reflect.Value, addStack func(uintptr), pre *preBundleInfo) {
+	panic("purego: bundleStackArgsWithInfo should not be called on 386")
 }
