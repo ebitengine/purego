@@ -8,11 +8,33 @@ import (
 	"reflect"
 	"runtime"
 	"strconv"
-	stdstrings "strings"
+	"sync"
 	"unsafe"
 
 	"github.com/ebitengine/purego/internal/strings"
 )
+
+// structTypeCache caches reflect.Type for bundled stack arg structs, keyed by
+// a string built from the constituent arg types.
+var structTypeCache sync.Map // map[string]cachedStructInfo
+
+// cachedStructInfo holds a cached struct type and the indices of non-padding fields.
+type cachedStructInfo struct {
+	typ          reflect.Type
+	valueIndices []int // indices of non-padding fields in the struct
+}
+
+// structInstancePool pools reflect.Value instances for each cached struct type.
+var structInstancePool sync.Map // map[string]*sync.Pool
+
+// fieldNames are pre-computed field name strings to avoid per-call strconv.Itoa.
+var fieldNames [maxArgs * 2]string
+
+func init() {
+	for i := range fieldNames {
+		fieldNames[i] = strconv.Itoa(i)
+	}
+}
 
 func getStruct(outType reflect.Type, syscall syscall15Args) (v reflect.Value) {
 	outSize := outType.Size()
@@ -485,18 +507,29 @@ const (
 	paddingFieldPrefix = "Pad"
 )
 
-// bundleStackArgs bundles remaining arguments for Darwin ARM64 C-style stack packing.
-// It creates a packed struct with proper alignment and copies it to the stack in 8-byte chunks.
-func bundleStackArgs(stackArgs []reflect.Value, addStack func(uintptr)) {
-	if runtime.GOOS != "darwin" {
-		panic("purego: bundleStackArgs should only be called on darwin")
+// buildStructCacheKey builds a cache key string from the types of stack arguments.
+func buildStructCacheKey(stackArgs []reflect.Value) string {
+	// Use a simple concatenation of type strings
+	var buf []byte
+	for i, val := range stackArgs {
+		if i > 0 {
+			buf = append(buf, ',')
+		}
+		buf = append(buf, val.Type().String()...)
 	}
-	if len(stackArgs) == 0 {
-		return
+	return string(buf)
+}
+
+// getOrCreateStructInfo returns a cached struct type and field indices for the
+// given stack argument types, creating and caching them if necessary.
+func getOrCreateStructInfo(stackArgs []reflect.Value, key string) cachedStructInfo {
+	if v, ok := structTypeCache.Load(key); ok {
+		return v.(cachedStructInfo)
 	}
 
 	// Build struct fields with proper C alignment and padding
 	var fields []reflect.StructField
+	var valueIndices []int
 	currentOffset := uintptr(0)
 	fieldIndex := 0
 
@@ -513,7 +546,7 @@ func bundleStackArgs(stackArgs []reflect.Value, addStack func(uintptr)) {
 		if currentOffset%uintptr(valAlign) != 0 {
 			paddingNeeded := uintptr(valAlign) - (currentOffset % uintptr(valAlign))
 			fields = append(fields, reflect.StructField{
-				Name: paddingFieldPrefix + strconv.Itoa(fieldIndex),
+				Name: paddingFieldPrefix + fieldNames[fieldIndex],
 				Type: reflect.ArrayOf(int(paddingNeeded), reflect.TypeOf(byte(0))),
 			})
 			currentOffset += paddingNeeded
@@ -521,29 +554,62 @@ func bundleStackArgs(stackArgs []reflect.Value, addStack func(uintptr)) {
 		}
 
 		fields = append(fields, reflect.StructField{
-			Name: "X" + strconv.Itoa(j),
+			Name: "X" + fieldNames[j],
 			Type: val.Type(),
 		})
+		valueIndices = append(valueIndices, fieldIndex)
 		currentOffset += valSize
 		fieldIndex++
 	}
 
-	// Create and populate the packed struct
-	structType := reflect.StructOf(fields)
-	structInstance := reflect.New(structType).Elem()
+	info := cachedStructInfo{
+		typ:          reflect.StructOf(fields),
+		valueIndices: valueIndices,
+	}
+	structTypeCache.Store(key, info)
+	return info
+}
 
-	// Set values (skip padding fields)
-	argIndex := 0
-	for j := 0; j < structInstance.NumField(); j++ {
-		fieldName := structType.Field(j).Name
-		if stdstrings.HasPrefix(fieldName, paddingFieldPrefix) {
-			continue
-		}
-		structInstance.Field(j).Set(stackArgs[argIndex])
-		argIndex++
+// getPooledStructInstance returns a pooled struct instance for the given cache key and type.
+func getPooledStructInstance(key string, info cachedStructInfo) reflect.Value {
+	pool, _ := structInstancePool.LoadOrStore(key, &sync.Pool{
+		New: func() any {
+			return reflect.New(info.typ)
+		},
+	})
+	return pool.(*sync.Pool).Get().(reflect.Value).Elem()
+}
+
+// returnPooledStructInstance returns a struct instance to the pool.
+func returnPooledStructInstance(key string, v reflect.Value) {
+	if pool, ok := structInstancePool.Load(key); ok {
+		pool.(*sync.Pool).Put(v.Addr())
+	}
+}
+
+// bundleStackArgs bundles remaining arguments for Darwin ARM64 C-style stack packing.
+// It creates a packed struct with proper alignment and copies it to the stack in 8-byte chunks.
+// Struct types and instances are cached/pooled to avoid per-call reflection overhead.
+func bundleStackArgs(stackArgs []reflect.Value, addStack func(uintptr)) {
+	if runtime.GOOS != "darwin" {
+		panic("purego: bundleStackArgs should only be called on darwin")
+	}
+	if len(stackArgs) == 0 {
+		return
+	}
+
+	key := buildStructCacheKey(stackArgs)
+	info := getOrCreateStructInfo(stackArgs, key)
+	structInstance := getPooledStructInstance(key, info)
+
+	// Set values using pre-computed indices
+	for i, idx := range info.valueIndices {
+		structInstance.Field(idx).Set(stackArgs[i])
 	}
 
 	ptr := unsafe.Pointer(structInstance.Addr().Pointer())
-	size := structType.Size()
+	size := info.typ.Size()
 	copyStruct8ByteChunks(ptr, size, addStack)
+
+	returnPooledStructInstance(key, structInstance)
 }
