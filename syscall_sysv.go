@@ -143,7 +143,9 @@ func callbackWrap(a *callbackArgs) {
 	fn := cbs.funcs[a.index]
 	cbs.lock.Unlock()
 	fnType := fn.Type()
-	args := make([]reflect.Value, fnType.NumIn())
+	// numOfIntegerRegisters() + numOfFloatRegisters covers the max callback inputs
+	var argsBuf [maxArgs + numOfFloatRegisters]reflect.Value
+	args := argsBuf[:fnType.NumIn()]
 	frame := (*[callbackMaxFrame]uintptr)(a.args)
 	var floatsN int // floatsN represents the number of float arguments processed
 	var intsN int   // intsN represents the number of integer arguments processed
