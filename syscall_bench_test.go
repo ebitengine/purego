@@ -17,22 +17,22 @@ import (
 func BenchmarkCallingMethods(b *testing.B) {
 	testCases := []struct {
 		n             int
-		fn            any
-		fnPtr         uintptr
+		goFn          any
+		goFnPtr       uintptr
 		cFnPtr        uintptr
 		cFnName       string
 		cCallbackPtr  uintptr
 		cCallbackName string
-		args          []uintptr
+		args          []int64
 		expectedSum   int64
 	}{
-		{1, goSum1, 0, 0, "sum1_c", 0, "call_callback1", []uintptr{1}, 1},
-		{2, goSum2, 0, 0, "sum2_c", 0, "call_callback2", []uintptr{1, 2}, 3},
-		{3, goSum3, 0, 0, "sum3_c", 0, "call_callback3", []uintptr{1, 2, 3}, 6},
-		{5, goSum5, 0, 0, "sum5_c", 0, "call_callback5", []uintptr{1, 2, 3, 4, 5}, 15},
-		{10, goSum10, 0, 0, "sum10_c", 0, "call_callback10", []uintptr{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}, 55},
-		{14, goSum15, 0, 0, "sum14_c", 0, "call_callback14", []uintptr{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14}, 105},
-		{15, goSum15, 0, 0, "sum15_c", 0, "call_callback15", []uintptr{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}, 120},
+		{1, goSum1, 0, 0, "sum1_c", 0, "call_callback1", []int64{1}, 1},
+		{2, goSum2, 0, 0, "sum2_c", 0, "call_callback2", []int64{1, 2}, 3},
+		{3, goSum3, 0, 0, "sum3_c", 0, "call_callback3", []int64{1, 2, 3}, 6},
+		{5, goSum5, 0, 0, "sum5_c", 0, "call_callback5", []int64{1, 2, 3, 4, 5}, 15},
+		{10, goSum10, 0, 0, "sum10_c", 0, "call_callback10", []int64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}, 55},
+		{14, goSum15, 0, 0, "sum14_c", 0, "call_callback14", []int64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14}, 105},
+		{15, goSum15, 0, 0, "sum15_c", 0, "call_callback15", []int64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}, 120},
 	}
 
 	// Build C library for benchmarking
@@ -56,7 +56,7 @@ func BenchmarkCallingMethods(b *testing.B) {
 
 	// Create callbacks and load C functions
 	for i := range testCases {
-		testCases[i].fnPtr = purego.NewCallback(testCases[i].fn)
+		testCases[i].goFnPtr = purego.NewCallback(testCases[i].goFn)
 
 		cFn, err := load.OpenSymbol(libHandle, testCases[i].cFnName)
 		if err != nil {
@@ -76,7 +76,7 @@ func BenchmarkCallingMethods(b *testing.B) {
 			b.Run(fmt.Sprintf("%dargs", tc.n), func(b *testing.B) {
 				b.ReportAllocs()
 				registerFn := makeRegisterFunc(tc.n)
-				purego.RegisterFunc(registerFn, tc.fnPtr)
+				purego.RegisterFunc(registerFn, tc.goFnPtr)
 
 				b.ResetTimer()
 				result := callRegisterFunc(registerFn, tc.n, tc.args, b.N)
@@ -113,10 +113,11 @@ func BenchmarkCallingMethods(b *testing.B) {
 		for _, tc := range testCases {
 			b.Run(fmt.Sprintf("%dargs", tc.n), func(b *testing.B) {
 				b.ReportAllocs()
+				args := int64sToUintptrs(tc.args)
 				var result uintptr
 				b.ResetTimer()
 				for i := 0; i < b.N; i++ {
-					result, _, _ = purego.SyscallN(tc.fnPtr, tc.args...)
+					result, _, _ = purego.SyscallN(tc.goFnPtr, args...)
 				}
 				b.StopTimer()
 				if int64(result) != tc.expectedSum {
@@ -131,10 +132,11 @@ func BenchmarkCallingMethods(b *testing.B) {
 		for _, tc := range testCases {
 			b.Run(fmt.Sprintf("%dargs", tc.n), func(b *testing.B) {
 				b.ReportAllocs()
+				args := int64sToUintptrs(tc.args)
 				var result uintptr
 				b.ResetTimer()
 				for i := 0; i < b.N; i++ {
-					result, _, _ = purego.SyscallN(tc.cFnPtr, tc.args...)
+					result, _, _ = purego.SyscallN(tc.cFnPtr, args...)
 				}
 				b.StopTimer()
 				if int64(result) != tc.expectedSum {
@@ -150,9 +152,10 @@ func BenchmarkCallingMethods(b *testing.B) {
 			b.Run(fmt.Sprintf("%dargs", tc.n), func(b *testing.B) {
 				b.ReportAllocs()
 				// Build args: first arg is callback pointer, rest are the arguments
-				callbackArgs := make([]uintptr, len(tc.args)+1)
-				callbackArgs[0] = tc.fnPtr
-				copy(callbackArgs[1:], tc.args)
+				args := int64sToUintptrs(tc.args)
+				callbackArgs := make([]uintptr, len(args)+1)
+				callbackArgs[0] = tc.goFnPtr
+				copy(callbackArgs[1:], args)
 
 				// Skip if total args (callback + args) exceeds or meets limit
 				// SyscallN has issues with exactly 15 or more arguments
@@ -197,49 +200,58 @@ func makeRegisterFunc(n int) any {
 }
 
 // callRegisterFunc calls the registered function with the appropriate number of arguments
-func callRegisterFunc(registerFn any, n int, args []uintptr, iterations int) int64 {
+func callRegisterFunc(registerFn any, n int, args []int64, iterations int) int64 {
 	var result int64
 	switch n {
 	case 1:
 		f := registerFn.(*func(int64) int64)
 		for i := 0; i < iterations; i++ {
-			result = (*f)(int64(args[0]))
+			result = (*f)(args[0])
 		}
 	case 2:
 		f := registerFn.(*func(int64, int64) int64)
 		for i := 0; i < iterations; i++ {
-			result = (*f)(int64(args[0]), int64(args[1]))
+			result = (*f)(args[0], args[1])
 		}
 	case 3:
 		f := registerFn.(*func(int64, int64, int64) int64)
 		for i := 0; i < iterations; i++ {
-			result = (*f)(int64(args[0]), int64(args[1]), int64(args[2]))
+			result = (*f)(args[0], args[1], args[2])
 		}
 	case 5:
 		f := registerFn.(*func(int64, int64, int64, int64, int64) int64)
 		for i := 0; i < iterations; i++ {
-			result = (*f)(int64(args[0]), int64(args[1]), int64(args[2]), int64(args[3]), int64(args[4]))
+			result = (*f)(args[0], args[1], args[2], args[3], args[4])
 		}
 	case 10:
 		f := registerFn.(*func(int64, int64, int64, int64, int64, int64, int64, int64, int64, int64) int64)
 		for i := 0; i < iterations; i++ {
-			result = (*f)(int64(args[0]), int64(args[1]), int64(args[2]), int64(args[3]), int64(args[4]),
-				int64(args[5]), int64(args[6]), int64(args[7]), int64(args[8]), int64(args[9]))
+			result = (*f)(args[0], args[1], args[2], args[3], args[4],
+				args[5], args[6], args[7], args[8], args[9])
 		}
 	case 14:
 		f := registerFn.(*func(int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64) int64)
 		for i := 0; i < iterations; i++ {
-			result = (*f)(int64(args[0]), int64(args[1]), int64(args[2]), int64(args[3]), int64(args[4]),
-				int64(args[5]), int64(args[6]), int64(args[7]), int64(args[8]), int64(args[9]),
-				int64(args[10]), int64(args[11]), int64(args[12]), int64(args[13]))
+			result = (*f)(args[0], args[1], args[2], args[3], args[4],
+				args[5], args[6], args[7], args[8], args[9],
+				args[10], args[11], args[12], args[13])
 		}
 	case 15:
 		f := registerFn.(*func(int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64) int64)
 		for i := 0; i < iterations; i++ {
-			result = (*f)(int64(args[0]), int64(args[1]), int64(args[2]), int64(args[3]), int64(args[4]),
-				int64(args[5]), int64(args[6]), int64(args[7]), int64(args[8]), int64(args[9]),
-				int64(args[10]), int64(args[11]), int64(args[12]), int64(args[13]), int64(args[14]))
+			result = (*f)(args[0], args[1], args[2], args[3], args[4],
+				args[5], args[6], args[7], args[8], args[9],
+				args[10], args[11], args[12], args[13], args[14])
 		}
+	}
+	return result
+}
+
+// int64sToUintptrs converts []int64 to []uintptr for SyscallN
+func int64sToUintptrs(args []int64) []uintptr {
+	result := make([]uintptr, len(args))
+	for i, v := range args {
+		result[i] = uintptr(v)
 	}
 	return result
 }
