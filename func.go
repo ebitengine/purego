@@ -14,7 +14,6 @@ import (
 	"unsafe"
 
 	"github.com/ebitengine/purego/internal/strings"
-	"github.com/ebitengine/purego/internal/xreflect"
 )
 
 const (
@@ -229,6 +228,52 @@ func RegisterFunc(fptr any, cfn uintptr) {
 	// When callbacks can unpack tightly-packed arguments, this workaround can be removed.
 	isCallback := isCallbackFunction(cfn)
 
+	// Pre-compute arg kinds at registration time to avoid per-call reflect overhead.
+	type argKind uint8
+	const (
+		akUint argKind = iota
+		akInt
+		akFloat32
+		akFloat64
+		akString
+		akBool
+		akPtr
+		akFunc
+		akStruct
+		akVariadic // last arg is []any
+	)
+	numIn := ty.NumIn()
+	argKinds := make([]argKind, numIn)
+	for i := 0; i < numIn; i++ {
+		switch ty.In(i).Kind() {
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			argKinds[i] = akInt
+		case reflect.Uintptr, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+			argKinds[i] = akUint
+		case reflect.Float32:
+			argKinds[i] = akFloat32
+		case reflect.Float64:
+			argKinds[i] = akFloat64
+		case reflect.String:
+			argKinds[i] = akString
+		case reflect.Bool:
+			argKinds[i] = akBool
+		case reflect.Func:
+			argKinds[i] = akFunc
+		case reflect.Struct:
+			argKinds[i] = akStruct
+		case reflect.Ptr, reflect.UnsafePointer, reflect.Slice:
+			argKinds[i] = akPtr
+		}
+	}
+	// Check if the last arg is variadic []any
+	if numIn > 0 {
+		lastIn := ty.In(numIn - 1)
+		if lastIn.Kind() == reflect.Slice && lastIn.Elem().Kind() == reflect.Interface {
+			argKinds[numIn-1] = akVariadic
+		}
+	}
+
 	v := reflect.MakeFunc(ty, func(args []reflect.Value) (results []reflect.Value) {
 		var sysargs [maxArgs]uintptr
 		var floats [numOfFloatRegisters]uintptr
@@ -291,29 +336,53 @@ func RegisterFunc(fptr any, cfn uintptr) {
 			}
 		}
 		for i, v := range args {
-			if variadic, ok := xreflect.TypeAssert[[]any](args[i]); ok {
+			ak := argKinds[i]
+			// Handle variadic expansion
+			if ak == akVariadic {
 				if i != len(args)-1 {
 					panic("purego: can only expand last parameter")
 				}
+				variadic := v.Interface().([]any)
 				for _, x := range variadic {
 					keepAlive = addValue(reflect.ValueOf(x), keepAlive, addInt, addFloat, addStack, &numInts, &numFloats, &numStack)
 				}
 				continue
 			}
 			// Check if we need to start Darwin ARM64 C-style stack packing
-			// Skip tight packing for callbacks since they still use 8-byte slot unpacking
-			// TODO: Remove !isCallback condition once callback unpacking supports tight packing
 			if runtime.GOARCH == "arm64" && runtime.GOOS == "darwin" && !isCallback && shouldBundleStackArgs(v, numInts, numFloats) {
-				// Collect and separate remaining args into register vs stack
 				stackArgs, newKeepAlive := collectStackArgs(args, i, numInts, numFloats,
 					keepAlive, addInt, addFloat, addStack, &numInts, &numFloats, &numStack)
 				keepAlive = newKeepAlive
-
-				// Bundle stack arguments with C-style packing
 				bundleStackArgs(stackArgs, addStack)
 				break
 			}
-			keepAlive = addValue(v, keepAlive, addInt, addFloat, addStack, &numInts, &numFloats, &numStack)
+			// Fast dispatch using pre-computed arg kind
+			switch ak {
+			case akUint:
+				addInt(uintptr(v.Uint()))
+			case akInt:
+				addInt(uintptr(v.Int()))
+			case akFloat32:
+				addFloat(uintptr(math.Float32bits(float32(v.Float()))))
+			case akFloat64:
+				addFloat(uintptr(math.Float64bits(v.Float())))
+			case akString:
+				ptr := strings.CString(v.String())
+				keepAlive = append(keepAlive, ptr)
+				addInt(uintptr(unsafe.Pointer(ptr)))
+			case akBool:
+				if v.Bool() {
+					addInt(1)
+				} else {
+					addInt(0)
+				}
+			case akPtr:
+				addInt(v.Pointer())
+			case akFunc:
+				addInt(NewCallback(v.Interface()))
+			case akStruct:
+				keepAlive = addStruct(v, &numInts, &numFloats, &numStack, addInt, addFloat, addStack, keepAlive)
+			}
 		}
 
 		syscall := thePool.Get().(*syscall15Args)
