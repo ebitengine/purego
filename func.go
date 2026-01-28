@@ -273,10 +273,6 @@ func RegisterFunc(fptr any, cfn uintptr) {
 		}
 
 		var keepAlive []any
-		defer func() {
-			runtime.KeepAlive(keepAlive)
-			runtime.KeepAlive(args)
-		}()
 
 		var arm64_r8 uintptr
 		if ty.NumOut() == 1 && ty.Out(0).Kind() == reflect.Struct {
@@ -321,7 +317,6 @@ func RegisterFunc(fptr any, cfn uintptr) {
 		}
 
 		syscall := thePool.Get().(*syscall15Args)
-		defer thePool.Put(syscall)
 
 		if runtime.GOARCH == "loong64" || runtime.GOARCH == "riscv64" {
 			*syscall = syscall15Args{
@@ -353,6 +348,9 @@ func RegisterFunc(fptr any, cfn uintptr) {
 			syscall.f1 = syscall.a2 // on amd64 a2 stores the float return. On 32bit platforms floats aren't support
 		}
 		if ty.NumOut() == 0 {
+			thePool.Put(syscall)
+			runtime.KeepAlive(keepAlive)
+			runtime.KeepAlive(args)
 			return nil
 		}
 		outType := ty.Out(0)
@@ -388,13 +386,15 @@ func RegisterFunc(fptr any, cfn uintptr) {
 		default:
 			panic("purego: unsupported return kind: " + outType.Kind().String())
 		}
+		thePool.Put(syscall)
+		runtime.KeepAlive(keepAlive)
+		runtime.KeepAlive(args)
 		if len(args) > 0 {
 			// reuse args slice instead of allocating one when possible
 			args[0] = v
 			return args[:1]
-		} else {
-			return []reflect.Value{v}
 		}
+		return []reflect.Value{v}
 	})
 	fn.Set(v)
 }
