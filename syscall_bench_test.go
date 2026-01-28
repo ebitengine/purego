@@ -147,7 +147,7 @@ func BenchmarkCallingMethods(b *testing.B) {
 	})
 
 	// Benchmark round-trip: Go → C → Go callback (realistic use case)
-	b.Run("RoundTrip", func(b *testing.B) {
+	b.Run("RoundTrip/GoC", func(b *testing.B) {
 		for _, tc := range testCases {
 			b.Run(fmt.Sprintf("%dargs", tc.n), func(b *testing.B) {
 				b.ReportAllocs()
