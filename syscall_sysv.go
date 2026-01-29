@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2022 The Ebitengine Authors
 
-//go:build darwin || freebsd || (linux && (amd64 || arm64 || loong64 || riscv64)) || netbsd
+//go:build darwin || freebsd || (linux && (amd64 || arm || arm64 || loong64 || riscv64)) || netbsd
 
 package purego
 
@@ -19,9 +19,10 @@ func syscall_syscall15X(fn, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a
 	defer thePool.Put(args)
 
 	*args = syscall15Args{
-		fn, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15,
-		a1, a2, a3, a4, a5, a6, a7, a8,
-		0,
+		fn: fn,
+		a1: a1, a2: a2, a3: a3, a4: a4, a5: a5, a6: a6, a7: a7, a8: a8,
+		a9: a9, a10: a10, a11: a11, a12: a12, a13: a13, a14: a14, a15: a15,
+		f1: a1, f2: a2, f3: a3, f4: a4, f5: a5, f6: a6, f7: a7, f8: a8,
 	}
 
 	runtime_cgocall(syscall15XABI0, unsafe.Pointer(args))
@@ -145,8 +146,10 @@ func callbackWrap(a *callbackArgs) {
 	fnType := fn.Type()
 	args := make([]reflect.Value, fnType.NumIn())
 	frame := (*[callbackMaxFrame]uintptr)(a.args)
-	var floatsN int // floatsN represents the number of float arguments processed
-	var intsN int   // intsN represents the number of integer arguments processed
+	// floatsN and intsN track the number of register slots used, not argument count.
+	// This distinction matters on ARM32 where float64 uses 2 slots (32-bit registers).
+	var floatsN int
+	var intsN int
 	// stackSlot points to the index into frame of the current stack element.
 	// The stack begins after the float and integer registers.
 	stackSlot := numOfIntegerRegisters() + numOfFloatRegisters
@@ -154,39 +157,43 @@ func callbackWrap(a *callbackArgs) {
 	// tight packing. On Darwin ARM64, C passes small types packed on the stack.
 	stackByteOffset := uintptr(0)
 	for i := range args {
+		// slots is the number of pointer-sized slots the argument takes
+		var slots int
 		inType := fnType.In(i)
 		switch inType.Kind() {
 		case reflect.Float32, reflect.Float64:
-			if floatsN >= numOfFloatRegisters {
+			slots = int((fnType.In(i).Size() + ptrSize - 1) / ptrSize)
+			if floatsN+slots > numOfFloatRegisters {
 				if runtime.GOOS == "darwin" && runtime.GOARCH == "arm64" {
 					// Darwin ARM64: read from packed stack with proper alignment
 					args[i] = callbackArgFromStack(a.args, stackSlot, &stackByteOffset, inType)
 				} else {
 					args[i] = reflect.NewAt(inType, unsafe.Pointer(&frame[stackSlot])).Elem()
-					stackSlot++
+					stackSlot += slots
 				}
 			} else {
 				args[i] = reflect.NewAt(inType, unsafe.Pointer(&frame[floatsN])).Elem()
 			}
-			floatsN++
+			floatsN += slots
 		case reflect.Struct:
 			// This is the CDecl field
 			args[i] = reflect.Zero(inType)
 		default:
-			if intsN >= numOfIntegerRegisters() {
+			slots = int((inType.Size() + ptrSize - 1) / ptrSize)
+			if intsN+slots > numOfIntegerRegisters() {
 				if runtime.GOOS == "darwin" && runtime.GOARCH == "arm64" {
 					// Darwin ARM64: read from packed stack with proper alignment
 					args[i] = callbackArgFromStack(a.args, stackSlot, &stackByteOffset, inType)
 				} else {
 					args[i] = reflect.NewAt(inType, unsafe.Pointer(&frame[stackSlot])).Elem()
-					stackSlot++
+					stackSlot += slots
 				}
 			} else {
 				// the integers begin after the floats in frame
 				pos := intsN + numOfFloatRegisters
 				args[i] = reflect.NewAt(inType, unsafe.Pointer(&frame[pos])).Elem()
 			}
-			intsN++
+			intsN += slots
 		}
 	}
 	ret := fn.Call(args)

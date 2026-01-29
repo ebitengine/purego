@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2022 The Ebitengine Authors
 
-//go:build !arm && (darwin || freebsd || linux || netbsd || windows)
+//go:build arm && (freebsd || linux || netbsd || windows)
 
 package purego
 
@@ -13,14 +13,15 @@ package purego
 type CDecl struct{}
 
 const (
-	maxArgs             = 15
-	numOfFloatRegisters = 8 // arm64 and amd64 both have 8 float registers
+	maxArgs             = 32
+	numOfFloatRegisters = 16
 )
 
 type syscall15Args struct {
-	fn, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15 uintptr
-	f1, f2, f3, f4, f5, f6, f7, f8                                       uintptr
-	arm64_r8                                                             uintptr
+	fn, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15                uintptr
+	a16, a17, a18, a19, a20, a21, a22, a23, a24, a25, a26, a27, a28, a29, a30, a31, a32 uintptr
+	f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16               uintptr
+	arm64_r8                                                                            uintptr
 }
 
 func (s *syscall15Args) Set(fn uintptr, ints []uintptr, floats []uintptr, r8 uintptr) {
@@ -40,6 +41,23 @@ func (s *syscall15Args) Set(fn uintptr, ints []uintptr, floats []uintptr, r8 uin
 	s.a13 = ints[12]
 	s.a14 = ints[13]
 	s.a15 = ints[14]
+	s.a16 = ints[15]
+	s.a17 = ints[16]
+	s.a18 = ints[17]
+	s.a19 = ints[18]
+	s.a20 = ints[19]
+	s.a21 = ints[20]
+	s.a22 = ints[21]
+	s.a23 = ints[22]
+	s.a24 = ints[23]
+	s.a25 = ints[24]
+	s.a26 = ints[25]
+	s.a27 = ints[26]
+	s.a28 = ints[27]
+	s.a29 = ints[28]
+	s.a30 = ints[29]
+	s.a31 = ints[30]
+	s.a32 = ints[31]
 	s.f1 = floats[0]
 	s.f2 = floats[1]
 	s.f3 = floats[2]
@@ -48,6 +66,14 @@ func (s *syscall15Args) Set(fn uintptr, ints []uintptr, floats []uintptr, r8 uin
 	s.f6 = floats[5]
 	s.f7 = floats[6]
 	s.f8 = floats[7]
+	s.f9 = floats[8]
+	s.f10 = floats[9]
+	s.f11 = floats[10]
+	s.f12 = floats[11]
+	s.f13 = floats[12]
+	s.f14 = floats[13]
+	s.f15 = floats[14]
+	s.f16 = floats[15]
 	s.arm64_r8 = r8
 }
 
