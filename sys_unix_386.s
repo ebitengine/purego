@@ -18,7 +18,9 @@
 // - Return value in EAX (and EDX for 64-bit)
 // - Caller cleans the stack
 // - Callee must preserve: EBX, ESI, EDI, EBP
-TEXT callbackasm1(SB), NOSPLIT, $0
+TEXT callbackasm1(SB), NOSPLIT|NOFRAME, $0
+	NO_LOCAL_POINTERS
+
 	// Save the return address
 	MOVL 0(SP), AX
 
@@ -28,9 +30,9 @@ TEXT callbackasm1(SB), NOSPLIT, $0
 	//   16-19: saved callback index
 	//   20-23: saved return address
 	//   24-35: callbackArgs struct (12 bytes)
-	//   36-163: copy of C arguments (128 bytes for 32 args)
-	// Total: 164 bytes, round up to 176 for alignment
-	SUBL $176, SP
+	//   36-291: copy of C arguments (256 bytes for 64 args, matching callbackMaxFrame)
+	// Total: 292 bytes, round up to 304 for alignment
+	SUBL $304, SP
 
 	// Save callee-saved registers
 	MOVL BX, 0(SP)
@@ -43,71 +45,137 @@ TEXT callbackasm1(SB), NOSPLIT, $0
 	MOVL AX, 20(SP)
 
 	// Copy C arguments from original stack location to our frame
-	// Original args start at 176+4(SP) = 180(SP) (past our frame + original return addr)
+	// Original args start at 304+4(SP) = 308(SP) (past our frame + original return addr)
 	// Copy to our frame at 36(SP)
-	// Copy 32 arguments (128 bytes)
-	MOVL 180(SP), AX
+	// Copy 64 arguments (256 bytes, matching callbackMaxFrame = 64 * ptrSize)
+	MOVL 308(SP), AX
 	MOVL AX, 36(SP)
-	MOVL 184(SP), AX
+	MOVL 312(SP), AX
 	MOVL AX, 40(SP)
-	MOVL 188(SP), AX
+	MOVL 316(SP), AX
 	MOVL AX, 44(SP)
-	MOVL 192(SP), AX
+	MOVL 320(SP), AX
 	MOVL AX, 48(SP)
-	MOVL 196(SP), AX
+	MOVL 324(SP), AX
 	MOVL AX, 52(SP)
-	MOVL 200(SP), AX
+	MOVL 328(SP), AX
 	MOVL AX, 56(SP)
-	MOVL 204(SP), AX
+	MOVL 332(SP), AX
 	MOVL AX, 60(SP)
-	MOVL 208(SP), AX
+	MOVL 336(SP), AX
 	MOVL AX, 64(SP)
-	MOVL 212(SP), AX
+	MOVL 340(SP), AX
 	MOVL AX, 68(SP)
-	MOVL 216(SP), AX
+	MOVL 344(SP), AX
 	MOVL AX, 72(SP)
-	MOVL 220(SP), AX
+	MOVL 348(SP), AX
 	MOVL AX, 76(SP)
-	MOVL 224(SP), AX
+	MOVL 352(SP), AX
 	MOVL AX, 80(SP)
-	MOVL 228(SP), AX
+	MOVL 356(SP), AX
 	MOVL AX, 84(SP)
-	MOVL 232(SP), AX
+	MOVL 360(SP), AX
 	MOVL AX, 88(SP)
-	MOVL 236(SP), AX
+	MOVL 364(SP), AX
 	MOVL AX, 92(SP)
-	MOVL 240(SP), AX
+	MOVL 368(SP), AX
 	MOVL AX, 96(SP)
-	MOVL 244(SP), AX
+	MOVL 372(SP), AX
 	MOVL AX, 100(SP)
-	MOVL 248(SP), AX
+	MOVL 376(SP), AX
 	MOVL AX, 104(SP)
-	MOVL 252(SP), AX
+	MOVL 380(SP), AX
 	MOVL AX, 108(SP)
-	MOVL 256(SP), AX
+	MOVL 384(SP), AX
 	MOVL AX, 112(SP)
-	MOVL 260(SP), AX
+	MOVL 388(SP), AX
 	MOVL AX, 116(SP)
-	MOVL 264(SP), AX
+	MOVL 392(SP), AX
 	MOVL AX, 120(SP)
-	MOVL 268(SP), AX
+	MOVL 396(SP), AX
 	MOVL AX, 124(SP)
-	MOVL 272(SP), AX
+	MOVL 400(SP), AX
 	MOVL AX, 128(SP)
-	MOVL 276(SP), AX
+	MOVL 404(SP), AX
 	MOVL AX, 132(SP)
-	MOVL 280(SP), AX
+	MOVL 408(SP), AX
 	MOVL AX, 136(SP)
-	MOVL 284(SP), AX
+	MOVL 412(SP), AX
 	MOVL AX, 140(SP)
-	MOVL 288(SP), AX
+	MOVL 416(SP), AX
 	MOVL AX, 144(SP)
-	MOVL 292(SP), AX
+	MOVL 420(SP), AX
 	MOVL AX, 148(SP)
-	MOVL 296(SP), AX
+	MOVL 424(SP), AX
 	MOVL AX, 152(SP)
-	MOVL 300(SP), AX
+	MOVL 428(SP), AX
 	MOVL AX, 156(SP)
+	MOVL 432(SP), AX
+	MOVL AX, 160(SP)
+	MOVL 436(SP), AX
+	MOVL AX, 164(SP)
+	MOVL 440(SP), AX
+	MOVL AX, 168(SP)
+	MOVL 444(SP), AX
+	MOVL AX, 172(SP)
+	MOVL 448(SP), AX
+	MOVL AX, 176(SP)
+	MOVL 452(SP), AX
+	MOVL AX, 180(SP)
+	MOVL 456(SP), AX
+	MOVL AX, 184(SP)
+	MOVL 460(SP), AX
+	MOVL AX, 188(SP)
+	MOVL 464(SP), AX
+	MOVL AX, 192(SP)
+	MOVL 468(SP), AX
+	MOVL AX, 196(SP)
+	MOVL 472(SP), AX
+	MOVL AX, 200(SP)
+	MOVL 476(SP), AX
+	MOVL AX, 204(SP)
+	MOVL 480(SP), AX
+	MOVL AX, 208(SP)
+	MOVL 484(SP), AX
+	MOVL AX, 212(SP)
+	MOVL 488(SP), AX
+	MOVL AX, 216(SP)
+	MOVL 492(SP), AX
+	MOVL AX, 220(SP)
+	MOVL 496(SP), AX
+	MOVL AX, 224(SP)
+	MOVL 500(SP), AX
+	MOVL AX, 228(SP)
+	MOVL 504(SP), AX
+	MOVL AX, 232(SP)
+	MOVL 508(SP), AX
+	MOVL AX, 236(SP)
+	MOVL 512(SP), AX
+	MOVL AX, 240(SP)
+	MOVL 516(SP), AX
+	MOVL AX, 244(SP)
+	MOVL 520(SP), AX
+	MOVL AX, 248(SP)
+	MOVL 524(SP), AX
+	MOVL AX, 252(SP)
+	MOVL 528(SP), AX
+	MOVL AX, 256(SP)
+	MOVL 532(SP), AX
+	MOVL AX, 260(SP)
+	MOVL 536(SP), AX
+	MOVL AX, 264(SP)
+	MOVL 540(SP), AX
+	MOVL AX, 268(SP)
+	MOVL 544(SP), AX
+	MOVL AX, 272(SP)
+	MOVL 548(SP), AX
+	MOVL AX, 276(SP)
+	MOVL 552(SP), AX
+	MOVL AX, 280(SP)
+	MOVL 556(SP), AX
+	MOVL AX, 284(SP)
+	MOVL 560(SP), AX
+	MOVL AX, 288(SP)
 
 	// Set up callbackArgs struct at 24(SP)
 	// struct callbackArgs {
@@ -152,7 +220,7 @@ TEXT callbackasm1(SB), NOSPLIT, $0
 
 	// Restore return address and clean up
 	MOVL 20(SP), CX // get return address
-	ADDL $176, SP   // remove our frame
+	ADDL $304, SP   // remove our frame
 	MOVL CX, 0(SP)  // put return address back
 
 	RET
