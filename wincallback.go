@@ -150,13 +150,11 @@ func genasmRiscv64() {
 
 TEXT callbackasm(SB), NOSPLIT|NOFRAME, $0
 `)
-	var space string
 	for i := 0; i < maxCallback; i++ {
+		space := " "
 		if i <= 32 {
 			fmt.Fprintf(&buf, "\tPCALIGN $8\n")
 			space = "     "
-		} else {
-			space = " "
 		}
 		fmt.Fprintf(&buf, "\tMOV%s$%d, X7\n", space, i)
 		fmt.Fprintf(&buf, "\tJMP%scallbackasm1(SB)\n", space)
