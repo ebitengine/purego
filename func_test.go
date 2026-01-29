@@ -83,6 +83,9 @@ func TestRegisterFunc_Floats(t *testing.T) {
 		t.Skip("Platform doesn't support Floats")
 		return
 	}
+	if runtime.GOOS == "windows" && runtime.GOARCH == "386" {
+		t.Skip("need a 32bit gcc to run this test") // TODO: find 32bit gcc for test
+	}
 	library, err := getSystemLibrary()
 	if err != nil {
 		t.Fatalf("couldn't get system library: %s", err)
