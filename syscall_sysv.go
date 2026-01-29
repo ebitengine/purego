@@ -19,11 +19,10 @@ func syscall_syscall15X(fn, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a
 	defer thePool.Put(args)
 
 	*args = syscall15Args{
-		fn, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15,
-		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-		a1, a2, a3, a4, a5, a6, a7, a8,
-		0, 0, 0, 0, 0, 0, 0, 0,
-		0,
+		fn: fn,
+		a1: a1, a2: a2, a3: a3, a4: a4, a5: a5, a6: a6, a7: a7, a8: a8,
+		a9: a9, a10: a10, a11: a11, a12: a12, a13: a13, a14: a14, a15: a15,
+		f1: a1, f2: a2, f3: a3, f4: a4, f5: a5, f6: a6, f7: a7, f8: a8,
 	}
 
 	runtime_cgocall(syscall15XABI0, unsafe.Pointer(args))
@@ -153,7 +152,7 @@ func callbackWrap(a *callbackArgs) {
 	var intsN int
 	// stackSlot points to the index into frame of the current stack element.
 	// The stack begins after the float and integer registers.
-	stackSlot := numOfIntegerRegisters() + numOfFloatRegisters()
+	stackSlot := numOfIntegerRegisters() + numOfFloatRegisters
 	// stackByteOffset tracks the byte offset within the stack area for Darwin ARM64
 	// tight packing. On Darwin ARM64, C passes small types packed on the stack.
 	stackByteOffset := uintptr(0)
@@ -164,7 +163,7 @@ func callbackWrap(a *callbackArgs) {
 		switch inType.Kind() {
 		case reflect.Float32, reflect.Float64:
 			slots = int((fnType.In(i).Size() + ptrSize - 1) / ptrSize)
-			if floatsN+slots > numOfFloatRegisters() {
+			if floatsN+slots > numOfFloatRegisters {
 				if runtime.GOOS == "darwin" && runtime.GOARCH == "arm64" {
 					// Darwin ARM64: read from packed stack with proper alignment
 					args[i] = callbackArgFromStack(a.args, stackSlot, &stackByteOffset, inType)
@@ -191,7 +190,7 @@ func callbackWrap(a *callbackArgs) {
 				}
 			} else {
 				// the integers begin after the floats in frame
-				pos := intsN + numOfFloatRegisters()
+				pos := intsN + numOfFloatRegisters
 				args[i] = reflect.NewAt(inType, unsafe.Pointer(&frame[pos])).Elem()
 			}
 			intsN += slots

@@ -170,7 +170,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 				if is32bit && runtime.GOARCH != "arm" {
 					panic("purego: floats only supported on 64bit platforms")
 				}
-				if floats < numOfFloatRegisters() {
+				if floats < numOfFloatRegisters {
 					floats++
 				} else {
 					stack++
@@ -227,10 +227,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 
 	v := reflect.MakeFunc(ty, func(args []reflect.Value) (results []reflect.Value) {
 		var sysargs [maxArgs]uintptr
-		// Use maxArgs instead of numOfFloatRegisters() to keep this code path allocation-free,
-		// since numOfFloatRegisters() is a function call, not a constant.
-		// maxArgs is always greater than or equal to numOfFloatRegisters() so this is safe.
-		var floats [maxArgs]uintptr
+		var floats [numOfFloatRegisters]uintptr
 		var numInts int
 		var numFloats int
 		var numStack int
@@ -250,7 +247,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 				}
 			}
 			addFloat = func(x uintptr) {
-				if numFloats < numOfFloatRegisters() {
+				if numFloats < numOfFloatRegisters {
 					floats[numFloats] = x
 					numFloats++
 				} else {
@@ -321,29 +318,11 @@ func RegisterFunc(fptr any, cfn uintptr) {
 		defer thePool.Put(syscall)
 
 		if runtime.GOARCH == "loong64" || runtime.GOARCH == "riscv64" {
-			*syscall = syscall15Args{
-				cfn,
-				sysargs[0], sysargs[1], sysargs[2], sysargs[3], sysargs[4], sysargs[5],
-				sysargs[6], sysargs[7], sysargs[8], sysargs[9], sysargs[10], sysargs[11],
-				sysargs[12], sysargs[13], sysargs[14],
-				sysargs[15], sysargs[16], sysargs[17], sysargs[18], sysargs[19], sysargs[20], sysargs[21], sysargs[22], sysargs[23], sysargs[24], sysargs[25], sysargs[26], sysargs[27], sysargs[28], sysargs[29], sysargs[30], sysargs[31],
-				floats[0], floats[1], floats[2], floats[3], floats[4], floats[5], floats[6], floats[7],
-				floats[8], floats[9], floats[10], floats[11], floats[12], floats[13], floats[14], floats[15],
-				0,
-			}
+			syscall.Set(cfn, sysargs[:], floats[:], 0)
 			runtime_cgocall(syscall15XABI0, unsafe.Pointer(syscall))
 		} else if runtime.GOARCH == "arm64" || runtime.GOOS != "windows" {
 			// Use the normal arm64 calling convention even on Windows
-			*syscall = syscall15Args{
-				cfn,
-				sysargs[0], sysargs[1], sysargs[2], sysargs[3], sysargs[4], sysargs[5],
-				sysargs[6], sysargs[7], sysargs[8], sysargs[9], sysargs[10], sysargs[11],
-				sysargs[12], sysargs[13], sysargs[14],
-				sysargs[15], sysargs[16], sysargs[17], sysargs[18], sysargs[19], sysargs[20], sysargs[21], sysargs[22], sysargs[23], sysargs[24], sysargs[25], sysargs[26], sysargs[27], sysargs[28], sysargs[29], sysargs[30], sysargs[31],
-				floats[0], floats[1], floats[2], floats[3], floats[4], floats[5], floats[6], floats[7],
-				floats[8], floats[9], floats[10], floats[11], floats[12], floats[13], floats[14], floats[15],
-				arm64_r8,
-			}
+			syscall.Set(cfn, sysargs[:], floats[:], arm64_r8)
 			runtime_cgocall(syscall15XABI0, unsafe.Pointer(syscall))
 		} else {
 			*syscall = syscall15Args{}
@@ -500,19 +479,6 @@ func roundUpTo8(val uintptr) uintptr {
 	return (val + align8ByteMask) &^ align8ByteMask
 }
 
-func numOfFloatRegisters() int {
-	switch runtime.GOARCH {
-	case "arm64", "amd64", "loong64", "riscv64":
-		return 8
-	case "arm":
-		return 16
-	default:
-		// since this platform isn't supported and can therefore only access
-		// integer registers it is safest to return 8
-		return 8
-	}
-}
-
 func numOfIntegerRegisters() int {
 	switch runtime.GOARCH {
 	case "arm64", "loong64", "riscv64":
@@ -542,7 +508,7 @@ func estimateStackBytes(ty reflect.Type) int {
 		usesInt := arg.Kind() != reflect.Float32 && arg.Kind() != reflect.Float64
 		if usesInt && numInts < numOfIntegerRegisters() {
 			numInts++
-		} else if !usesInt && numFloats < numOfFloatRegisters() {
+		} else if !usesInt && numFloats < numOfFloatRegisters {
 			numFloats++
 		} else {
 			// Goes to stack - accumulate total bytes

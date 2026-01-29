@@ -78,8 +78,8 @@ func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFl
 	if hva, hfa, size := isHVA(v.Type()), isHFA(v.Type()), v.Type().Size(); hva || hfa || size <= 16 {
 		// if this doesn't fit entirely in registers then
 		// each element goes onto the stack
-		if hfa && *numFloats+v.NumField() > numOfFloatRegisters() {
-			*numFloats = numOfFloatRegisters()
+		if hfa && *numFloats+v.NumField() > numOfFloatRegisters {
+			*numFloats = numOfFloatRegisters
 		} else if hva && *numInts+v.NumField() > numOfIntegerRegisters() {
 			*numInts = numOfIntegerRegisters()
 		}
@@ -365,7 +365,7 @@ func shouldBundleStackArgs(v reflect.Value, numInts, numFloats int) bool {
 	isInt := !isFloat && kind != reflect.Struct
 	primitiveOnStack :=
 		(isInt && numInts >= numOfIntegerRegisters()) ||
-			(isFloat && numFloats >= numOfFloatRegisters())
+			(isFloat && numFloats >= numOfFloatRegisters)
 	if primitiveOnStack {
 		return true
 	}
@@ -382,7 +382,7 @@ func shouldBundleStackArgs(v reflect.Value, numInts, numFloats int) bool {
 
 	if hfa {
 		need := v.NumField()
-		return numFloats+need > numOfFloatRegisters()
+		return numFloats+need > numOfFloatRegisters
 	}
 
 	if hva {
@@ -407,7 +407,7 @@ func structFitsInRegisters(val reflect.Value, tempNumInts, tempNumFloats int) (b
 
 	if hfa {
 		// HFA: check if elements fit in float registers
-		if tempNumFloats+val.NumField() <= numOfFloatRegisters() {
+		if tempNumFloats+val.NumField() <= numOfFloatRegisters {
 			return true, tempNumInts, tempNumFloats + val.NumField()
 		}
 	} else if hva {
@@ -451,7 +451,7 @@ func collectStackArgs(args []reflect.Value, startIdx int, numInts, numFloats int
 			// Primitive argument
 			isFloat := val.Kind() == reflect.Float32 || val.Kind() == reflect.Float64
 			if isFloat {
-				fitsInRegister = tempNumFloats < numOfFloatRegisters()
+				fitsInRegister = tempNumFloats < numOfFloatRegisters
 				newNumFloats = tempNumFloats + 1
 				newNumInts = tempNumInts
 			} else {

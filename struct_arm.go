@@ -14,7 +14,7 @@ func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFl
 		return keepAlive
 	}
 
-	// ARM EABI: small structs are passed in registers or on stack
+	// TODO: ARM EABI: small structs are passed in registers or on stack
 	// For simplicity, pass by pointer for now
 	ptr := v.Addr().UnsafePointer()
 	keepAlive = append(keepAlive, ptr)
@@ -46,7 +46,7 @@ func getStruct(outType reflect.Type, syscall syscall15Args) (v reflect.Value) {
 }
 
 func placeRegisters(v reflect.Value, addFloat func(uintptr), addInt func(uintptr)) {
-	// For ARM32, just pass the struct data directly
+	// TODO: For ARM32, just pass the struct data directly
 	// This is a simplified implementation
 	size := v.Type().Size()
 	if size == 0 {
