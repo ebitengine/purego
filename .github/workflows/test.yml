@@ -36,6 +36,9 @@ jobs:
         run: |
           env CGO_ENABLED=0 go vet -v ./...
 
+      - name: gofmt
+        run: test -z "$(gofmt -s -l .)"
+
       - name: go build
         run: |
           go build -v ./...
