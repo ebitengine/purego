@@ -33,11 +33,11 @@ func genasm386() {
 // It then calls the Go implementation for that callback.
 #include "textflag.h"
 
-TEXT callbackasm(SB),NOSPLIT|NOFRAME,$0
+TEXT callbackasm(SB), NOSPLIT|NOFRAME, $0
 `)
 	for i := 0; i < maxCallback; i++ {
-		fmt.Fprintf(&buf, "\tMOVL\t$%d, CX\n", i)
-		buf.WriteString("\tJMP\tcallbackasm1(SB)\n")
+		fmt.Fprintf(&buf, "\tMOVL $%d, CX\n", i)
+		buf.WriteString("\tJMP  callbackasm1(SB)\n")
 	}
 	if err := os.WriteFile("zcallback_386.s", buf.Bytes(), 0644); err != nil {
 		fmt.Fprintf(os.Stderr, "wincallback: %s\n", err)
