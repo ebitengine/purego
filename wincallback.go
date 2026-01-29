@@ -33,10 +33,10 @@ func genasmAmd64() {
 // which Go callback function is executed later on.
 #include "textflag.h"
 
-TEXT callbackasm(SB),NOSPLIT|NOFRAME,$0
+TEXT callbackasm(SB), NOSPLIT|NOFRAME, $0
 `)
 	for i := 0; i < maxCallback; i++ {
-		buf.WriteString("\tCALL\tcallbackasm1(SB)\n")
+		buf.WriteString("\tCALL callbackasm1(SB)\n")
 	}
 	if err := os.WriteFile("zcallback_amd64.s", buf.Bytes(), 0644); err != nil {
 		fmt.Fprintf(os.Stderr, "wincallback: %s\n", err)
@@ -60,11 +60,11 @@ func genasmArm() {
 // It then calls the Go implementation for that callback.
 #include "textflag.h"
 
-TEXT callbackasm(SB),NOSPLIT|NOFRAME,$0
+TEXT callbackasm(SB), NOSPLIT|NOFRAME, $0
 `)
 	for i := 0; i < maxCallback; i++ {
-		fmt.Fprintf(&buf, "\tMOVW\t$%d, R12\n", i)
-		buf.WriteString("\tB\tcallbackasm1(SB)\n")
+		fmt.Fprintf(&buf, "\tMOVW $%d, R12\n", i)
+		buf.WriteString("\tB    callbackasm1(SB)\n")
 	}
 	if err := os.WriteFile("zcallback_arm.s", buf.Bytes(), 0644); err != nil {
 		fmt.Fprintf(os.Stderr, "wincallback: %s\n", err)
@@ -88,11 +88,11 @@ func genasmArm64() {
 // It then calls the Go implementation for that callback.
 #include "textflag.h"
 
-TEXT callbackasm(SB),NOSPLIT|NOFRAME,$0
+TEXT callbackasm(SB), NOSPLIT|NOFRAME, $0
 `)
 	for i := 0; i < maxCallback; i++ {
-		fmt.Fprintf(&buf, "\tMOVD\t$%d, R12\n", i)
-		buf.WriteString("\tB\tcallbackasm1(SB)\n")
+		fmt.Fprintf(&buf, "\tMOVD $%d, R12\n", i)
+		buf.WriteString("\tB    callbackasm1(SB)\n")
 	}
 	if err := os.WriteFile("zcallback_arm64.s", buf.Bytes(), 0644); err != nil {
 		fmt.Fprintf(os.Stderr, "wincallback: %s\n", err)
@@ -116,11 +116,11 @@ func genasmLoong64() {
 // It then calls the Go implementation for that callback.
 #include "textflag.h"
 
-TEXT callbackasm(SB),NOSPLIT|NOFRAME,$0
+TEXT callbackasm(SB), NOSPLIT|NOFRAME, $0
 `)
 	for i := 0; i < maxCallback; i++ {
-		fmt.Fprintf(&buf, "\tMOVV\t$%d, R12\n", i)
-		buf.WriteString("\tJMP\tcallbackasm1(SB)\n")
+		fmt.Fprintf(&buf, "\tMOVV $%d, R12\n", i)
+		buf.WriteString("\tJMP  callbackasm1(SB)\n")
 	}
 	if err := os.WriteFile("zcallback_loong64.s", buf.Bytes(), 0644); err != nil {
 		fmt.Fprintf(os.Stderr, "wincallback: %s\n", err)
@@ -148,14 +148,16 @@ func genasmRiscv64() {
 // It then calls the Go implementation for that callback.
 #include "textflag.h"
 
-TEXT callbackasm(SB),NOSPLIT|NOFRAME,$0
+TEXT callbackasm(SB), NOSPLIT|NOFRAME, $0
 `)
 	for i := 0; i < maxCallback; i++ {
+		space := " "
 		if i <= 32 {
-			fmt.Fprintf(&buf, "\tPCALIGN\t$8\n")
+			fmt.Fprintf(&buf, "\tPCALIGN $8\n")
+			space = "     "
 		}
-		fmt.Fprintf(&buf, "\tMOV\t$%d, X7\n", i)
-		buf.WriteString("\tJMP\tcallbackasm1(SB)\n")
+		fmt.Fprintf(&buf, "\tMOV%s$%d, X7\n", space, i)
+		fmt.Fprintf(&buf, "\tJMP%scallbackasm1(SB)\n", space)
 	}
 	if err := os.WriteFile("zcallback_riscv64.s", buf.Bytes(), 0644); err != nil {
 		fmt.Fprintf(os.Stderr, "wincallback: %s\n", err)
