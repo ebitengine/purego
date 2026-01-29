@@ -63,7 +63,7 @@ TEXT threadentry_trampoline(SB), NOSPLIT, $0-0
 	MOVD ·threadentry_call(SB), R9
 	MOVD (R9), R9
 	CALL R9
-	MOVD $0, R0                     // TODO: get the return value from threadentry
+	MOVD $0, R0                    // TODO: get the return value from threadentry
 
 	RESTORE_R19_TO_R28(8*4)
 	RESTORE_F8_TO_F15(8*14)
