@@ -121,6 +121,7 @@ jobs:
            sudo apt-get update
            sudo apt-get install gcc-multilib
            sudo apt-get install g++-multilib
+           env CGO_ENABLED=0 GOARCH=386 go test -shuffle=on -v -count=10 ./...
            env CGO_ENABLED=1 GOARCH=386 go test -shuffle=on -v -count=10 ./...
       
       - name: go test (Linux arm)
