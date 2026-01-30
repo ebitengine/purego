@@ -3,17 +3,23 @@
 
 #include <stdint.h>
 
-struct Empty{};
+struct Empty {};
 
 struct Empty ReturnEmpty() {
     struct Empty e = {};
     return e;
 }
 
-struct StructInStruct{
-    struct{ int16_t a; } a;
-    struct{ int16_t b; } b;
-    struct{ int16_t c; } c;
+struct StructInStruct {
+    struct {
+        int16_t a;
+    } a;
+    struct {
+        int16_t b;
+    } b;
+    struct {
+        int16_t c;
+    } c;
 };
 
 struct StructInStruct ReturnStructInStruct(int16_t a, int16_t b, int16_t c) {
@@ -21,7 +27,7 @@ struct StructInStruct ReturnStructInStruct(int16_t a, int16_t b, int16_t c) {
     return e;
 }
 
-struct ThreeShorts{
+struct ThreeShorts {
     int16_t a, b, c;
 };
 
@@ -30,7 +36,7 @@ struct ThreeShorts ReturnThreeShorts(int16_t a, int16_t b, int16_t c) {
     return e;
 }
 
-struct FourShorts{
+struct FourShorts {
     int16_t a, b, c, d;
 };
 
@@ -39,7 +45,7 @@ struct FourShorts ReturnFourShorts(int16_t a, int16_t b, int16_t c, int16_t d) {
     return e;
 }
 
-struct OneLong{
+struct OneLong {
     int64_t a;
 };
 
@@ -48,7 +54,7 @@ struct OneLong ReturnOneLong(int64_t a) {
     return e;
 }
 
-struct TwoLongs{
+struct TwoLongs {
     int64_t a, b;
 };
 
@@ -57,7 +63,7 @@ struct TwoLongs ReturnTwoLongs(int64_t a, int64_t b) {
     return e;
 }
 
-struct ThreeLongs{
+struct ThreeLongs {
     int64_t a, b, c;
 };
 
@@ -66,20 +72,20 @@ struct ThreeLongs ReturnThreeLongs(int64_t a, int64_t b, int64_t c) {
     return e;
 }
 
-struct OneFloat{
+struct OneFloat {
     float a;
 };
 
-struct TwoFloats{
+struct TwoFloats {
     float a, b;
 };
 
 struct TwoFloats ReturnTwoFloats(float a, float b) {
-    struct TwoFloats e = {a-b, a*b};
+    struct TwoFloats e = {a - b, a * b};
     return e;
 }
 
-struct ThreeFloats{
+struct ThreeFloats {
     float a, b, c;
 };
 
@@ -93,7 +99,7 @@ struct OneFloat ReturnOneFloat(float a) {
     return e;
 }
 
-struct OneDouble{
+struct OneDouble {
     double a;
 };
 
@@ -102,7 +108,7 @@ struct OneDouble ReturnOneDouble(double a) {
     return e;
 }
 
-struct TwoDoubles{
+struct TwoDoubles {
     double a, b;
 };
 
@@ -111,7 +117,7 @@ struct TwoDoubles ReturnTwoDoubles(double a, double b) {
     return e;
 }
 
-struct ThreeDoubles{
+struct ThreeDoubles {
     double a, b, c;
 };
 
@@ -120,7 +126,7 @@ struct ThreeDoubles ReturnThreeDoubles(double a, double b, double c) {
     return e;
 }
 
-struct FourDoubles{
+struct FourDoubles {
     double a, b, c, d;
 };
 
@@ -129,7 +135,7 @@ struct FourDoubles ReturnFourDoubles(double a, double b, double c, double d) {
     return e;
 }
 
-struct FourDoublesInternal{
+struct FourDoublesInternal {
     struct {
         double a, b;
     } f;
@@ -139,11 +145,11 @@ struct FourDoublesInternal{
 };
 
 struct FourDoublesInternal ReturnFourDoublesInternal(double a, double b, double c, double d) {
-    struct FourDoublesInternal e = { {a, b}, {c, d} };
+    struct FourDoublesInternal e = {{a, b}, {c, d}};
     return e;
 }
 
-struct FiveDoubles{
+struct FiveDoubles {
     double a, b, c, d, e;
 };
 
@@ -152,8 +158,8 @@ struct FiveDoubles ReturnFiveDoubles(double a, double b, double c, double d, dou
     return s;
 }
 
-struct OneFloatOneDouble{
-    float a;
+struct OneFloatOneDouble {
+    float  a;
     double b;
 };
 
@@ -162,9 +168,9 @@ struct OneFloatOneDouble ReturnOneFloatOneDouble(float a, double b) {
     return e;
 }
 
-struct OneDoubleOneFloat{
+struct OneDoubleOneFloat {
     double a;
-    float b;
+    float  b;
 };
 
 struct OneDoubleOneFloat ReturnOneDoubleOneFloat(double a, float b) {
@@ -172,7 +178,7 @@ struct OneDoubleOneFloat ReturnOneDoubleOneFloat(double a, float b) {
     return e;
 }
 
-struct Unaligned1{
+struct Unaligned1 {
     int8_t  a;
     int16_t b;
     int64_t c;
@@ -183,9 +189,9 @@ struct Unaligned1 ReturnUnaligned1(int8_t a, int16_t b, int64_t c) {
     return e;
 }
 
-struct Mixed1{
-     float a;
-     int32_t b;
+struct Mixed1 {
+    float   a;
+    int32_t b;
 };
 
 struct Mixed1 ReturnMixed1(float a, int32_t b) {
@@ -193,11 +199,11 @@ struct Mixed1 ReturnMixed1(float a, int32_t b) {
     return e;
 }
 
-struct Mixed2{
-     float a;
-     int32_t b;
-     float c;
-     int32_t d;
+struct Mixed2 {
+    float   a;
+    int32_t b;
+    float   c;
+    int32_t d;
 };
 
 struct Mixed2 ReturnMixed2(float a, int32_t b, float c, int32_t d) {
@@ -205,10 +211,10 @@ struct Mixed2 ReturnMixed2(float a, int32_t b, float c, int32_t d) {
     return e;
 }
 
-struct Mixed3{
-     float a;
-     uint32_t b;
-     double c;
+struct Mixed3 {
+    float    a;
+    uint32_t b;
+    double   c;
 };
 
 struct Mixed3 ReturnMixed3(float a, uint32_t b, double c) {
@@ -216,10 +222,10 @@ struct Mixed3 ReturnMixed3(float a, uint32_t b, double c) {
     return s;
 }
 
-struct Mixed4{
-     double a;
-     uint32_t b;
-     float c;
+struct Mixed4 {
+    double   a;
+    uint32_t b;
+    float    c;
 };
 
 struct Mixed4 ReturnMixed4(double a, uint32_t b, float c) {
@@ -227,9 +233,9 @@ struct Mixed4 ReturnMixed4(double a, uint32_t b, float c) {
     return s;
 }
 
-struct Ptr1{
-     int64_t *a;
-     void *b;
+struct Ptr1 {
+    int64_t *a;
+    void    *b;
 };
 
 struct Ptr1 ReturnPtr1(int64_t *a, void *b) {

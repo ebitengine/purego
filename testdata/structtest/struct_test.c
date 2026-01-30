@@ -6,7 +6,7 @@
 #include <stdlib.h>
 
 #if defined(__x86_64__) || defined(__aarch64__)
-typedef int64_t GoInt;
+typedef int64_t  GoInt;
 typedef uint64_t GoUint;
 #endif
 
@@ -32,7 +32,7 @@ unsigned long EmptyEmptyWithReg(unsigned int x, struct EmptyEmpty e, unsigned in
 
 // GreaterThan16Bytes is 24 bytes on 64 bit systems
 struct GreaterThan16Bytes {
-   long  *x, *y, *z;
+    long *x, *y, *z;
 };
 
 // GreaterThan16Bytes is a basic test for structs bigger than 16 bytes
@@ -43,7 +43,7 @@ unsigned long GreaterThan16Bytes(struct GreaterThan16Bytes g) {
 // AfterRegisters tests to make sure that structs placed on the stack work properly
 unsigned long AfterRegisters(long a, long b, long c, long d, long e, long f, long g, long h, struct GreaterThan16Bytes bytes) {
     long registers = a + b + c + d + e + f + g + h;
-    long stack =  *bytes.x + *bytes.y + *bytes.z;
+    long stack = *bytes.x + *bytes.y + *bytes.z;
     if (registers != stack) {
         return 0xbadbad;
     }
@@ -59,8 +59,8 @@ unsigned long BeforeRegisters(struct GreaterThan16Bytes bytes, long a, long b) {
 
 struct GreaterThan16BytesStruct {
     struct {
-        long  *x, *y, *z;
-    } a ;
+        long *x, *y, *z;
+    } a;
 };
 
 unsigned long GreaterThan16BytesStruct(struct GreaterThan16BytesStruct g) {
@@ -175,7 +175,7 @@ struct UnsignedChar4Bytes {
 };
 
 unsigned int UnsignedChar4Bytes(struct UnsignedChar4Bytes b) {
-    return (((int)b.a)<<24) | (((int)b.b)<<16) | (((int)b.c)<<8) | (((int)b.d)<<0);
+    return (((int) b.a) << 24) | (((int) b.b) << 16) | (((int) b.c) << 8) | (((int) b.d) << 0);
 }
 
 struct UnsignedChar4BytesStruct {
@@ -194,7 +194,7 @@ struct UnsignedChar4BytesStruct {
 };
 
 unsigned int UnsignedChar4BytesStruct(struct UnsignedChar4BytesStruct b) {
-    return (((int)b.x.a)<<24) | (((int)b.y.b)<<16) | (((int)b.z.c)<<8) | (((int)b.w.d)<<0);
+    return (((int) b.x.a) << 24) | (((int) b.y.b) << 16) | (((int) b.z.c) << 8) | (((int) b.w.d) << 0);
 }
 
 struct Short {
@@ -202,7 +202,7 @@ struct Short {
 };
 
 unsigned long Short(struct Short s) {
-    return (long)s.a << 48 | (long)s.b << 32 | (long)s.c << 16 | (long)s.d << 0;
+    return (long) s.a << 48 | (long) s.b << 32 | (long) s.c << 16 | (long) s.d << 0;
 }
 
 struct Int {
@@ -210,7 +210,7 @@ struct Int {
 };
 
 unsigned long Int(struct Int i) {
-    return (long)i.a << 32 | (long)i.b << 0;
+    return (long) i.a << 32 | (long) i.b << 0;
 }
 
 struct Long {
@@ -226,7 +226,7 @@ struct Char8Bytes {
 };
 
 int Char8Bytes(struct Char8Bytes b) {
-    return (int)b.a + (int)b.b + (int)b.c + (int)b.d + (int)b.e + (int)b.f + (int)b.g + (int)b.h;
+    return (int) b.a + (int) b.b + (int) b.c + (int) b.d + (int) b.e + (int) b.f + (int) b.g + (int) b.h;
 }
 
 struct Odd {
@@ -234,20 +234,20 @@ struct Odd {
 };
 
 int Odd(struct Odd o) {
-    return (int)o.a + (int)o.b + (int)o.c;
+    return (int) o.a + (int) o.b + (int) o.c;
 }
 
 struct Char2Short1 {
-    unsigned char a, b;
+    unsigned char  a, b;
     unsigned short c;
 };
 
 int Char2Short1s(struct Char2Short1 s) {
-    return (int)s.a + (int)s.b + (int)s.c;
+    return (int) s.a + (int) s.b + (int) s.c;
 }
 
 struct SignedChar2Short1 {
-    signed char a, b;
+    signed char  a, b;
     signed short c;
 };
 
@@ -260,7 +260,7 @@ struct Array4UnsignedChars {
 };
 
 unsigned int Array4UnsignedChars(struct Array4UnsignedChars a) {
-    return (((int)a.a[0])<<24) | (((int)a.a[1])<<16) | (((int)a.a[2])<<8) | (((int)a.a[3])<<0);
+    return (((int) a.a[0]) << 24) | (((int) a.a[1]) << 16) | (((int) a.a[2]) << 8) | (((int) a.a[3]) << 0);
 }
 
 struct Array3UnsignedChar {
@@ -268,7 +268,7 @@ struct Array3UnsignedChar {
 };
 
 unsigned int Array3UnsignedChars(struct Array3UnsignedChar a) {
-    return (((int)a.a[0])<<24) | (((int)a.a[1])<<16) | (((int)a.a[2])<<8) | 0xef;
+    return (((int) a.a[0]) << 24) | (((int) a.a[1]) << 16) | (((int) a.a[2]) << 8) | 0xef;
 }
 
 struct Array2UnsignedShort {
@@ -276,7 +276,7 @@ struct Array2UnsignedShort {
 };
 
 unsigned int Array2UnsignedShorts(struct Array2UnsignedShort a) {
-    return (((int)a.a[0])<<16) | (((int)a.a[1])<<0);
+    return (((int) a.a[0]) << 16) | (((int) a.a[1]) << 0);
 }
 
 struct Array4Chars {
@@ -284,7 +284,7 @@ struct Array4Chars {
 };
 
 int Array4Chars(struct Array4Chars a) {
-    return (int)a.a[0] + (int)a.a[1] + (int)a.a[2] + (int)a.a[3];
+    return (int) a.a[0] + (int) a.a[1] + (int) a.a[2] + (int) a.a[3];
 }
 
 struct Array2Short {
@@ -292,7 +292,7 @@ struct Array2Short {
 };
 
 int Array2Shorts(struct Array2Short a) {
-    return (int)a.a[0] + (int)a.a[1];
+    return (int) a.a[0] + (int) a.a[1];
 }
 
 struct Array3Short {
@@ -300,7 +300,7 @@ struct Array3Short {
 };
 
 int Array3Shorts(struct Array3Short a) {
-    return (int)a.a[0] + (int)a.a[1] + (int)a.a[2];
+    return (int) a.a[0] + (int) a.a[1] + (int) a.a[2];
 }
 
 struct BoolStruct {
@@ -323,16 +323,20 @@ float BoolFloat(struct BoolFloat s) {
 }
 
 struct Content {
-      struct { double x, y; } point;
-      struct { double width, height; } size;
+    struct {
+        double x, y;
+    } point;
+    struct {
+        double width, height;
+    } size;
 };
 
 unsigned long InitWithContentRect(int *win, struct Content c, int style, int backing, _Bool flag) {
-  if (win == 0)
-      return 0xBAD;
-  if (!flag)
-      return 0xF1A6; // FLAG
-  return (unsigned long)(c.point.x + c.point.y + c.size.width + c.size.height) / (style - backing);
+    if (win == 0)
+        return 0xBAD;
+    if (!flag)
+        return 0xF1A6; // FLAG
+    return (unsigned long) (c.point.x + c.point.y + c.size.width + c.size.height) / (style - backing);
 }
 
 struct GoInt4 {
