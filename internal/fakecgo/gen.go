@@ -37,7 +37,7 @@ TEXT _x_cgo_{{.Name}}_trampoline(SB), NOSPLIT, $0-0
 	RET
 {{- else }}
 TEXT _x_cgo_{{.Name}}_trampoline(SB), NOSPLIT, ${{mul .ArgsCount $.Arch.WordSize}}-0
-{{- if eq $.Arch.Name "arm" }}
+{{- if eq $.Arch.Goarch "arm" }}
 {{- range $i := .ArgsCount }}
 	{{- $dstOffset := add 4 (mul $i $.Arch.WordSize) }}
 	{{$.Arch.MOV}} R{{$i}}, {{$dstOffset}}(R13)
@@ -397,7 +397,7 @@ func run() error {
 }
 
 type Arch struct {
-	Name            string // as in runtime.GOARCH
+	Goarch          string
 	GoABI0          ABI
 	C               ABI
 	WordSize        int    // 4 on 32-bit systems, 8 on 64-bit systems
@@ -422,7 +422,7 @@ type AsmGoSymbol struct {
 var (
 	archs = []Arch{
 		{
-			Name:        "386",
+			Goarch:      "386",
 			WordSize:    4,
 			GoABI0:      ABI{}, // stack-based calling convention
 			C:           ABI{}, // stack-based calling convention
@@ -431,7 +431,7 @@ var (
 			StackBased:  true,
 		},
 		{
-			Name:        "amd64",
+			Goarch:      "amd64",
 			WordSize:    8,
 			GoABI0:      ABI{IntRegArgs: [5]string{"AX", "BX", "CX", "DX", "SI"}, OutRegArg: "AX"},
 			C:           ABI{IntRegArgs: [5]string{"DI", "SI", "DX", "CX", "R8"}, OutRegArg: "AX"},
@@ -439,7 +439,7 @@ var (
 			VolatileReg: "R11",
 		},
 		{
-			Name:            "arm",
+			Goarch:          "arm",
 			WordSize:        4,
 			GoABI0:          ABI{}, // stack-based calling convention
 			C:               ABI{}, // stack-based calling convention
@@ -449,7 +449,7 @@ var (
 			CallNeedsParens: true,
 		},
 		{
-			Name:        "arm64",
+			Goarch:      "arm64",
 			WordSize:    8,
 			GoABI0:      ABI{IntRegArgs: [5]string{"R0", "R1", "R2", "R3", "R4"}, OutRegArg: "R0"},
 			C:           ABI{IntRegArgs: [5]string{"R0", "R1", "R2", "R3", "R4"}, OutRegArg: "R0"},
@@ -457,7 +457,7 @@ var (
 			VolatileReg: "R9",
 		},
 		{
-			Name:            "loong64",
+			Goarch:          "loong64",
 			WordSize:        8,
 			GoABI0:          ABI{IntRegArgs: [5]string{"R4", "R5", "R6", "R7", "R8"}, OutRegArg: "R4"},
 			C:               ABI{IntRegArgs: [5]string{"R4", "R5", "R6", "R7", "R8"}, OutRegArg: "R4"},
@@ -466,7 +466,7 @@ var (
 			CallNeedsParens: true,
 		},
 		{
-			Name:        "riscv64",
+			Goarch:      "riscv64",
 			WordSize:    8,
 			GoABI0:      ABI{IntRegArgs: [5]string{"X10", "X11", "X12", "X13", "X14"}, OutRegArg: "X10"},
 			C:           ABI{IntRegArgs: [5]string{"X10", "X11", "X12", "X13", "X14"}, OutRegArg: "X10"},
@@ -486,7 +486,7 @@ var (
 
 func writeArchTrampolines(arch Arch) error {
 	var gooses []string
-	switch arch.Name {
+	switch arch.Goarch {
 	case "amd64", "arm64":
 		gooses = []string{"darwin", "freebsd", "linux"}
 	case "loong64", "riscv64":
@@ -509,7 +509,7 @@ func writeArchTrampolines(arch Arch) error {
 		Symbols: asmGoSymbols,
 		Arch:    arch,
 	}
-	return execute(templateArchTrampolines, fmt.Sprintf("ztrampolines_%s.s", arch.Name), data)
+	return execute(templateArchTrampolines, fmt.Sprintf("ztrampolines_%s.s", arch.Goarch), data)
 }
 
 func main() {
