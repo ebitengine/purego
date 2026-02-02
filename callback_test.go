@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023 The Ebitengine Authors
 
-//go:build darwin || (linux && (386 || amd64 || arm || arm64 || loong64 || riscv64))
+//go:build darwin || (linux && (386 || amd64 || arm || arm64 || loong64 || ppc64le || riscv64))
 
 package purego_test
 
