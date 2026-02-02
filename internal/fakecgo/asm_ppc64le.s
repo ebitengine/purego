@@ -80,4 +80,3 @@ TEXT crosscall2(SB), NOSPLIT|NOFRAME, $0
 	MOVW R0, CR
 
 	RET
-

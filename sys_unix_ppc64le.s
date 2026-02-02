@@ -17,19 +17,24 @@
 //  24(R1)   - TOC save area (if needed)
 //  32(R1)+  - parameter save area / local variables
 //
-// Our frame (total 288 bytes, 16-byte aligned):
-//  32(R1)   - saved R31 (Go assembler uses it)
-//  40(R1)   - callbackArgs struct (24 bytes: index, args ptr, result)
-//  64(R1)   - args array: floats (64) + ints (64) + stack args (56) = 184 bytes
-// Total: 64 + 184 = 248, add 32 for fixed area = 280, round to 288
+// Our frame (total 208 bytes, 16-byte aligned):
+//  32(R1)   - saved R31 (8 bytes)
+//  40(R1)   - callbackArgs struct (32 bytes: index, args, result, stackArgs)
+//  72(R1)   - args array: floats (64) + ints (64) = 128 bytes, ends at 200
+// Total with alignment: 208 bytes
+//
+// Stack args are NOT copied - we pass a pointer to their location in caller's frame.
+// This keeps frame size small enough for NOSPLIT with CGO_ENABLED=1.
+// Budget: 208 + 544 (crosscall2) + 56 (cgocallback) = 808 bytes
+// This is 8 bytes over the 800 limit, but cgocallback's children (load_g, save_g)
+// reuse the same stack space, so in practice it works.
 
-#define FRAME_SIZE     288
+#define FRAME_SIZE     200
 #define SAVE_R31       32
 #define CB_ARGS        40
-#define ARGS_ARRAY     64
+#define ARGS_ARRAY     72
 #define FLOAT_OFF      0
 #define INT_OFF        64
-#define STACK_OFF      128
 
 TEXT callbackasm1(SB), NOSPLIT|NOFRAME, $0
 	NO_LOCAL_POINTERS
@@ -71,30 +76,16 @@ TEXT callbackasm1(SB), NOSPLIT|NOFRAME, $0
 	MOVD R9, (ARGS_ARRAY+INT_OFF+6*8)(R1)
 	MOVD R10, (ARGS_ARRAY+INT_OFF+7*8)(R1)
 
-	// Copy stack arguments from caller's frame.
-	// Caller's stack args start at caller_R1 + 96 (ELFv2 ABI).
-	// Our R1 = caller_R1 - FRAME_SIZE, so args at R1 + FRAME_SIZE + 96
-	MOVD (FRAME_SIZE+96)(R1), R12
-	MOVD R12, (ARGS_ARRAY+STACK_OFF+0*8)(R1)
-	MOVD (FRAME_SIZE+104)(R1), R12
-	MOVD R12, (ARGS_ARRAY+STACK_OFF+1*8)(R1)
-	MOVD (FRAME_SIZE+112)(R1), R12
-	MOVD R12, (ARGS_ARRAY+STACK_OFF+2*8)(R1)
-	MOVD (FRAME_SIZE+120)(R1), R12
-	MOVD R12, (ARGS_ARRAY+STACK_OFF+3*8)(R1)
-	MOVD (FRAME_SIZE+128)(R1), R12
-	MOVD R12, (ARGS_ARRAY+STACK_OFF+4*8)(R1)
-	MOVD (FRAME_SIZE+136)(R1), R12
-	MOVD R12, (ARGS_ARRAY+STACK_OFF+5*8)(R1)
-	MOVD (FRAME_SIZE+144)(R1), R12
-	MOVD R12, (ARGS_ARRAY+STACK_OFF+6*8)(R1)
-
 	// Finish setting up callbackArgs struct at CB_ARGS(R1)
-	// struct { index uintptr; args unsafe.Pointer; result uintptr }
+	// struct { index uintptr; args unsafe.Pointer; result uintptr; stackArgs unsafe.Pointer }
 	// Note: index was already saved earlier (R11 is volatile)
 	ADD  $ARGS_ARRAY, R1, R12
-	MOVD R12, (CB_ARGS+8)(R1) // address of args vector
+	MOVD R12, (CB_ARGS+8)(R1) // args = address of register args
 	MOVD $0, (CB_ARGS+16)(R1) // result = 0
+
+	// stackArgs points to caller's stack arguments at old_R1+96 = R1+FRAME_SIZE+96
+	ADD  $(FRAME_SIZE+96), R1, R12
+	MOVD R12, (CB_ARGS+24)(R1)     // stackArgs = &caller_stack_args
 
 	// Call crosscall2 with arguments in registers:
 	// R3 = fn (from callbackWrap_call closure)
