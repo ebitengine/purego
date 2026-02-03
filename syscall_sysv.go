@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2022 The Ebitengine Authors
 
-//go:build darwin || freebsd || (linux && (386 || amd64 || arm || arm64 || loong64 || ppc64le || riscv64)) || netbsd
+//go:build darwin || freebsd || (linux && (386 || amd64 || arm || arm64 || loong64 || ppc64le || riscv64 || s390x)) || netbsd
 
 package purego
 
@@ -270,6 +270,9 @@ func callbackasmAddr(i int) uintptr {
 		// On ARM, ARM64, Loong64, PPC64LE and RISCV64, each entry is a MOV instruction
 		// followed by a branch instruction
 		entrySize = 8
+	case "s390x":
+		// On S390X, each entry is LGHI (4 bytes) + JG (6 bytes)
+		entrySize = 10
 	}
 	return callbackasmABI0 + uintptr(i*entrySize)
 }

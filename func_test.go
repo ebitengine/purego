@@ -50,7 +50,7 @@ func TestRegisterFunc(t *testing.T) {
 }
 
 func Test_qsort(t *testing.T) {
-	if runtime.GOARCH != "arm" && runtime.GOARCH != "arm64" && runtime.GOARCH != "386" && runtime.GOARCH != "amd64" && runtime.GOARCH != "loong64" && runtime.GOARCH != "ppc64le" && runtime.GOARCH != "riscv64" {
+	if runtime.GOARCH != "arm" && runtime.GOARCH != "arm64" && runtime.GOARCH != "386" && runtime.GOARCH != "amd64" && runtime.GOARCH != "loong64" && runtime.GOARCH != "ppc64le" && runtime.GOARCH != "riscv64" && runtime.GOARCH != "s390x" {
 		t.Skip("Platform doesn't support Floats")
 		return
 	}
@@ -79,7 +79,7 @@ func Test_qsort(t *testing.T) {
 }
 
 func TestRegisterFunc_Floats(t *testing.T) {
-	if runtime.GOARCH != "arm" && runtime.GOARCH != "arm64" && runtime.GOARCH != "386" && runtime.GOARCH != "amd64" && runtime.GOARCH != "loong64" && runtime.GOARCH != "ppc64le" && runtime.GOARCH != "riscv64" {
+	if runtime.GOARCH != "arm" && runtime.GOARCH != "arm64" && runtime.GOARCH != "386" && runtime.GOARCH != "amd64" && runtime.GOARCH != "loong64" && runtime.GOARCH != "ppc64le" && runtime.GOARCH != "riscv64" && runtime.GOARCH != "s390x" {
 		t.Skip("Platform doesn't support Floats")
 		return
 	}
@@ -121,7 +121,7 @@ func TestRegisterFunc_Floats(t *testing.T) {
 }
 
 func TestRegisterLibFunc_Bool(t *testing.T) {
-	if runtime.GOARCH != "arm" && runtime.GOARCH != "arm64" && runtime.GOARCH != "386" && runtime.GOARCH != "amd64" && runtime.GOARCH != "loong64" && runtime.GOARCH != "ppc64le" && runtime.GOARCH != "riscv64" {
+	if runtime.GOARCH != "arm" && runtime.GOARCH != "arm64" && runtime.GOARCH != "386" && runtime.GOARCH != "amd64" && runtime.GOARCH != "loong64" && runtime.GOARCH != "ppc64le" && runtime.GOARCH != "riscv64" && runtime.GOARCH != "s390x" {
 		t.Skip("Platform doesn't support callbacks")
 		return
 	}
@@ -376,7 +376,7 @@ func TestABI_ArgumentPassing(t *testing.T) {
 			if tt.name == "20_int32" && (runtime.GOOS != "darwin" || runtime.GOARCH != "arm64") {
 				t.Skip("20 int32 arguments only supported on Darwin ARM64 with smart stack checking")
 			}
-			if tt.name == "10_float32" && (runtime.GOARCH == "loong64" || runtime.GOARCH == "ppc64le" || runtime.GOARCH == "riscv64") {
+			if tt.name == "10_float32" && (runtime.GOARCH == "loong64" || runtime.GOARCH == "ppc64le" || runtime.GOARCH == "riscv64" || runtime.GOARCH == "s390x") {
 				t.Skip("float32 stack arguments not yet supported on this platform")
 			}
 			// Struct tests require Darwin ARM64 or AMD64
