@@ -152,10 +152,10 @@ func callbackWrap(a *callbackArgs) {
 	args := make([]reflect.Value, fnType.NumIn())
 	frame := (*[callbackMaxFrame]uintptr)(a.args)
 	// stackFrame points to stack-passed arguments. On most architectures this is
-	// contiguous with frame (after register args), but on ppc64le and loong64 it's separate.
+	// contiguous with frame (after register args), but on ppc64le it's separate.
 	var stackFrame *[callbackMaxFrame]uintptr
-	if (runtime.GOARCH == "ppc64le" || runtime.GOARCH == "loong64") && a.stackArgs != nil {
-		// ppc64le and loong64 use separate stackArgs pointer due to NOSPLIT constraints
+	if runtime.GOARCH == "ppc64le" && a.stackArgs != nil {
+		// Only ppc64le uses separate stackArgs pointer due to NOSPLIT constraints
 		stackFrame = (*[callbackMaxFrame]uintptr)(a.stackArgs)
 	}
 	// floatsN and intsN track the number of register slots used, not argument count.
@@ -164,10 +164,10 @@ func callbackWrap(a *callbackArgs) {
 	var intsN int
 	// stackSlot points to the index into frame (or stackFrame) of the current stack element.
 	// When stackFrame is nil, stack begins after float and integer registers in frame.
-	// When stackFrame is not nil (ppc64le/loong64), stackSlot indexes into stackFrame starting at 0.
+	// When stackFrame is not nil (ppc64le), stackSlot indexes into stackFrame starting at 0.
 	stackSlot := numOfIntegerRegisters() + numOfFloatRegisters()
-	if stackFrame != nil {
-		// ppc64le/loong64: stackArgs is a separate pointer, indices start at 0
+	if runtime.GOARCH == "ppc64le" && stackFrame != nil {
+		// ppc64le: stackArgs is a separate pointer, indices start at 0
 		stackSlot = 0
 	}
 	// stackByteOffset tracks the byte offset within the stack area for Darwin ARM64
@@ -184,8 +184,8 @@ func callbackWrap(a *callbackArgs) {
 				if runtime.GOOS == "darwin" && runtime.GOARCH == "arm64" {
 					// Darwin ARM64: read from packed stack with proper alignment
 					args[i] = callbackArgFromStack(a.args, stackSlot, &stackByteOffset, inType)
-				} else if stackFrame != nil {
-					// ppc64le/loong64: stack args are in separate stackFrame
+				} else if runtime.GOARCH == "ppc64le" && stackFrame != nil {
+					// ppc64le: stack args are in separate stackFrame
 					args[i] = reflect.NewAt(inType, unsafe.Pointer(&stackFrame[stackSlot])).Elem()
 					stackSlot += slots
 				} else {
@@ -205,8 +205,8 @@ func callbackWrap(a *callbackArgs) {
 				if runtime.GOOS == "darwin" && runtime.GOARCH == "arm64" {
 					// Darwin ARM64: read from packed stack with proper alignment
 					args[i] = callbackArgFromStack(a.args, stackSlot, &stackByteOffset, inType)
-				} else if stackFrame != nil {
-					// ppc64le/loong64: stack args are in separate stackFrame
+				} else if runtime.GOARCH == "ppc64le" && stackFrame != nil {
+					// ppc64le: stack args are in separate stackFrame
 					args[i] = reflect.NewAt(inType, unsafe.Pointer(&stackFrame[stackSlot])).Elem()
 					stackSlot += slots
 				} else {

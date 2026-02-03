@@ -53,11 +53,6 @@ TEXT callbackasm1(SB), NOSPLIT|NOFRAME, $0
 	MOVV R14, callbackArgs_args(R13)    // address of args vector
 	MOVV $0, callbackArgs_result(R13)   // result
 
-	// stackArgs points to caller's stack arguments at original R3 + 0
-	// Original R3 = current R3 + (22*8) = current R3 + 176
-	ADDV $(22*8), R3, R12
-	MOVV R12, callbackArgs_stackArgs(R13)
-
 	// Move parameters into registers
 	// Get the ABIInternal function pointer
 	// without <ABIInternal> by using a closure.
