@@ -268,8 +268,8 @@ func callbackasmAddr(i int) uintptr {
 	case "386":
 		// On 386, each callback entry is MOVL $imm, CX (5 bytes) + JMP (5 bytes)
 		entrySize = 10
-	case "arm", "arm64", "loong64", "riscv64", "ppc64le":
-		// On ARM, ARM64, Loong64, RISCV64, and PPC64LE, each entry is a MOV instruction
+	case "arm", "arm64", "loong64", "ppc64le", "riscv64":
+		// On ARM, ARM64, Loong64, PPC64LE and RISCV64, each entry is a MOV instruction
 		// followed by a branch instruction
 		entrySize = 8
 	}
