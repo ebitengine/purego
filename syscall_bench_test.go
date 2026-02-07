@@ -38,7 +38,7 @@ func BenchmarkCallingMethods(b *testing.B) {
 	// Build C library for benchmarking
 	libFileName := filepath.Join(b.TempDir(), "libbenchmark.so")
 	if err := buildSharedLib("CC", libFileName, filepath.Join("testdata", "benchmarktest", "benchmark.c")); err != nil {
-		b.Skipf("Failed to build C library: %v", err)
+		b.Fatalf("Failed to build C library: %v", err)
 	}
 	b.Cleanup(func() {
 		os.Remove(libFileName)
@@ -195,7 +195,7 @@ func makeRegisterFunc(n int) any {
 	case 15:
 		return new(func(int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64) int64)
 	default:
-		return nil
+		panic(fmt.Sprintf("unsupported arg count: %d", n))
 	}
 }
 
@@ -243,6 +243,8 @@ func callRegisterFunc(registerFn any, n int, args []int64, iterations int) int64
 				args[5], args[6], args[7], args[8], args[9],
 				args[10], args[11], args[12], args[13], args[14])
 		}
+	default:
+		panic(fmt.Sprintf("unsupported arg count: %d", n))
 	}
 	return result
 }
