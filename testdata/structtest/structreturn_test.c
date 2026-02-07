@@ -239,6 +239,10 @@ struct Mixed5 ReturnMixed5(int64_t *a, int32_t b, float c, int32_t d) {
     return s;
 }
 
+struct Mixed5 IdentityMixed5(struct Mixed5 m) {
+    return m;
+}
+
 struct SmallBool{
      _Bool a;
      int32_t b;

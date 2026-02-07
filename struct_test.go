@@ -805,6 +805,22 @@ func TestRegisterFunc_structReturns(t *testing.T) {
 		runtime.KeepAlive(ptr)
 	}
 	{
+		type Mixed5 struct {
+			a *int64
+			b int32
+			c float32
+			d int32
+		}
+		var IdentityMixed5 func(m Mixed5) Mixed5
+		purego.RegisterLibFunc(&IdentityMixed5, lib, "IdentityMixed5")
+		ptr := new(int64)
+		expected := Mixed5{ptr, 1, 7.2, 9}
+		if ret := IdentityMixed5(expected); ret != expected {
+			t.Fatalf("IdentityMixed5 returned %+v wanted %+v", ret, expected)
+		}
+		runtime.KeepAlive(ptr)
+	}
+	{
 		type SmallBool struct {
 			a bool
 			b int32
