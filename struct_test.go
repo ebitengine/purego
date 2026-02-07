@@ -373,7 +373,7 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 		}
 		var Array4CharsFn func(chars Array4Chars) int32
 		purego.RegisterLibFunc(&Array4CharsFn, lib, "Array4Chars")
-		const expectedSum = 123
+		const expectedSum = 10 + 20 + 30 + 63
 		if ret := Array4CharsFn(Array4Chars{a: [...]int8{10, 20, 30, 63}}); ret != expectedSum {
 			t.Fatalf("Array4CharsFn returned %d wanted %d", ret, expectedSum)
 		}
