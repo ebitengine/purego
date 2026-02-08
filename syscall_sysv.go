@@ -59,8 +59,6 @@ var cbs struct {
 	funcs [maxCB]reflect.Value // the saved callbacks
 }
 
-// callbackArgs is implemented in syscall_sysv_others.go and syscall_sysv_ppc64le.go
-
 func compileCallback(fn any) uintptr {
 	val := reflect.ValueOf(fn)
 	if val.Kind() != reflect.Func {
