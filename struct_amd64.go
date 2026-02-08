@@ -239,24 +239,22 @@ func tryPlaceRegister(v reflect.Value, addFloat func(uintptr), addInt func(uintp
 }
 
 func placeStack(v reflect.Value, addStack func(uintptr)) {
-	for i := 0; i < v.Type().NumField(); i++ {
-		f := v.Field(i)
-		switch f.Kind() {
-		case reflect.Pointer, reflect.UnsafePointer:
-			addStack(f.Pointer())
-		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-			addStack(uintptr(f.Int()))
-		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
-			addStack(uintptr(f.Uint()))
-		case reflect.Float32:
-			addStack(uintptr(math.Float32bits(float32(f.Float()))))
-		case reflect.Float64:
-			addStack(uintptr(math.Float64bits(f.Float())))
-		case reflect.Struct:
-			placeStack(f, addStack)
-		default:
-			panic("purego: unsupported kind " + f.Kind().String())
-		}
+	// Copy the struct as a contiguous block of memory in eightbyte (8-byte)
+	// chunks. The x86-64 ABI requires structs passed on the stack to be
+	// laid out exactly as in memory, including padding and field packing
+	// within eightbytes. Decomposing field-by-field would place each field
+	// as a separate stack slot, breaking structs with mixed-type fields
+	// that share an eightbyte (e.g. int32 + float32).
+	if !v.CanAddr() {
+		tmp := reflect.New(v.Type()).Elem()
+		tmp.Set(v)
+		v = tmp
+	}
+	ptr := v.Addr().UnsafePointer()
+	size := v.Type().Size()
+	for off := uintptr(0); off < size; off += 8 {
+		chunk := *(*uintptr)(unsafe.Add(ptr, off))
+		addStack(chunk)
 	}
 }
 
