@@ -140,6 +140,20 @@ jobs:
            go env -u CC
            go env -u CXX
 
+      - name: go test (Linux ppc64le)
+        if: ${{ runner.os == 'Linux' && runner.arch != 'ARM64' && !startsWith(matrix.go, '1.18.') && !startsWith(matrix.go, '1.19.') && !startsWith(matrix.go, '1.20.') && !startsWith(matrix.go, '1.21.') }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-powerpc64le-linux-gnu g++-powerpc64le-linux-gnu qemu-user
+          go env -w CC=powerpc64le-linux-gnu-gcc
+          go env -w CXX=powerpc64le-linux-gnu-g++
+          env GOOS=linux GOARCH=ppc64le CGO_ENABLED=0 go test -c -o=purego-test-nocgo .
+          env QEMU_LD_PREFIX=/usr/powerpc64le-linux-gnu qemu-ppc64le ./purego-test-nocgo -test.shuffle=on -test.v -test.count=10
+          env GOOS=linux GOARCH=ppc64le CGO_ENABLED=1 go test -c -o=purego-test-cgo .
+          env QEMU_LD_PREFIX=/usr/powerpc64le-linux-gnu qemu-ppc64le ./purego-test-cgo -test.shuffle=on -test.v -test.count=10
+          go env -u CC
+          go env -u CXX
+
       - name: go test (Linux riscv64)
         if: ${{ runner.os == 'Linux' && runner.arch != 'ARM64' && !startsWith(matrix.go, '1.18.') && !startsWith(matrix.go, '1.19.') && !startsWith(matrix.go, '1.20.') && !startsWith(matrix.go, '1.21.') }}
         run: |
