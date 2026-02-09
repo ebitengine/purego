@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2022 The Ebitengine Authors
 
-//go:build darwin || freebsd || (linux && (386 || amd64 || arm || arm64 || loong64 || ppc64le || riscv64 || s390x)) || netbsd
+//go:build darwin || freebsd || (linux && (386 || amd64 || arm || arm64 || loong64 || ppc64le || riscv64 || (cgo && s390x))) || netbsd
 
 package purego
 
@@ -164,15 +164,25 @@ func callbackWrap(a *callbackArgs) {
 					// Darwin ARM64: read from packed stack with proper alignment
 					args[i] = callbackArgFromStack(a.args, stackSlot, &stackByteOffset, inType)
 				} else if stackFrame != nil {
-					// ppc64le: stack args are in separate stackFrame
-					args[i] = reflect.NewAt(inType, unsafe.Pointer(&stackFrame[stackSlot])).Elem()
+					// ppc64le/s390x: stack args are in separate stackFrame
+					if runtime.GOARCH == "s390x" {
+						// s390x big-endian: sub-8-byte values are right-justified
+						args[i] = callbackArgFromSlotBigEndian(unsafe.Pointer(&stackFrame[stackSlot]), inType)
+					} else {
+						args[i] = reflect.NewAt(inType, unsafe.Pointer(&stackFrame[stackSlot])).Elem()
+					}
 					stackSlot += slots
 				} else {
 					args[i] = reflect.NewAt(inType, unsafe.Pointer(&frame[stackSlot])).Elem()
 					stackSlot += slots
 				}
 			} else {
-				args[i] = reflect.NewAt(inType, unsafe.Pointer(&frame[floatsN])).Elem()
+				if runtime.GOARCH == "s390x" {
+					// s390x big-endian: float32 is right-justified in 8-byte FPR slot
+					args[i] = callbackArgFromSlotBigEndian(unsafe.Pointer(&frame[floatsN]), inType)
+				} else {
+					args[i] = reflect.NewAt(inType, unsafe.Pointer(&frame[floatsN])).Elem()
+				}
 			}
 			floatsN += slots
 		case reflect.Struct:
@@ -185,8 +195,13 @@ func callbackWrap(a *callbackArgs) {
 					// Darwin ARM64: read from packed stack with proper alignment
 					args[i] = callbackArgFromStack(a.args, stackSlot, &stackByteOffset, inType)
 				} else if stackFrame != nil {
-					// ppc64le: stack args are in separate stackFrame
-					args[i] = reflect.NewAt(inType, unsafe.Pointer(&stackFrame[stackSlot])).Elem()
+					// ppc64le/s390x: stack args are in separate stackFrame
+					if runtime.GOARCH == "s390x" {
+						// s390x big-endian: sub-8-byte values are right-justified
+						args[i] = callbackArgFromSlotBigEndian(unsafe.Pointer(&stackFrame[stackSlot]), inType)
+					} else {
+						args[i] = reflect.NewAt(inType, unsafe.Pointer(&stackFrame[stackSlot])).Elem()
+					}
 					stackSlot += slots
 				} else {
 					args[i] = reflect.NewAt(inType, unsafe.Pointer(&frame[stackSlot])).Elem()
@@ -195,7 +210,12 @@ func callbackWrap(a *callbackArgs) {
 			} else {
 				// the integers begin after the floats in frame
 				pos := intsN + numOfFloatRegisters()
-				args[i] = reflect.NewAt(inType, unsafe.Pointer(&frame[pos])).Elem()
+				if runtime.GOARCH == "s390x" {
+					// s390x big-endian: sub-8-byte values are right-justified in GPR slot
+					args[i] = callbackArgFromSlotBigEndian(unsafe.Pointer(&frame[pos]), inType)
+				} else {
+					args[i] = reflect.NewAt(inType, unsafe.Pointer(&frame[pos])).Elem()
+				}
 			}
 			intsN += slots
 		}
@@ -243,6 +263,27 @@ func callbackArgFromStack(argsBase unsafe.Pointer, stackSlot int, stackByteOffse
 	ptr := unsafe.Add(stackBase, *stackByteOffset)
 	*stackByteOffset += size
 
+	return reflect.NewAt(inType, ptr).Elem()
+}
+
+// callbackArgFromSlotBigEndian reads an argument from an 8-byte slot on big-endian architectures.
+// On s390x:
+// - Integer types are right-justified in GPRs: sub-8-byte values are at offset (8 - size)
+// - Float32 in FPRs is left-justified: stored in upper 32 bits, so at offset 0
+// - Float64 occupies the full 8-byte slot
+func callbackArgFromSlotBigEndian(slotPtr unsafe.Pointer, inType reflect.Type) reflect.Value {
+	size := inType.Size()
+	if size >= 8 {
+		// 8-byte values occupy the entire slot
+		return reflect.NewAt(inType, slotPtr).Elem()
+	}
+	// Float32 is left-justified in FPRs (upper 32 bits), so offset is 0
+	if inType.Kind() == reflect.Float32 {
+		return reflect.NewAt(inType, slotPtr).Elem()
+	}
+	// Integer types are right-justified: offset = 8 - size
+	offset := 8 - size
+	ptr := unsafe.Add(slotPtr, offset)
 	return reflect.NewAt(inType, ptr).Elem()
 }
 
