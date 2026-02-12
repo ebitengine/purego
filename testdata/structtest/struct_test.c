@@ -280,7 +280,7 @@ unsigned int Array2UnsignedShorts(struct Array2UnsignedShort a) {
 }
 
 struct Array4Chars {
-    char a[4];
+    signed char a[4];
 };
 
 int Array4Chars(struct Array4Chars a) {
@@ -373,4 +373,21 @@ struct FourInt32s {
 
 int32_t FourInt32s(struct FourInt32s s) {
     return s.f0 + s.f1 + s.f2 + s.f3;
+}
+
+struct PointerWrapper {
+    void* ctx;
+};
+
+uintptr_t ExtractPointer(struct PointerWrapper wrapper) {
+    return (uintptr_t)wrapper.ctx;
+}
+
+struct TwoPointers {
+    void* ptr1;
+    void* ptr2;
+};
+
+uintptr_t AddPointers(struct TwoPointers wrapper) {
+    return (uintptr_t)wrapper.ptr1 + (uintptr_t)wrapper.ptr2;
 }

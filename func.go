@@ -64,7 +64,7 @@ func RegisterLibFunc(fptr any, handle uintptr, name string) {
 //	int64 <=> int64_t
 //	float32 <=> float
 //	float64 <=> double
-//	struct <=> struct (WIP - darwin only)
+//	struct <=> struct (darwin amd64/arm64, linux amd64/arm64)
 //	func <=> C function
 //	unsafe.Pointer, *T <=> void*
 //	[]T => void*
@@ -173,9 +173,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 					stack++
 				}
 			case reflect.Struct:
-				if runtime.GOOS != "darwin" || (runtime.GOARCH != "amd64" && runtime.GOARCH != "arm64") {
-					panic("purego: struct arguments are only supported on darwin amd64 & arm64")
-				}
+				ensureStructSupportedForRegisterFunc()
 				if arg.Size() == 0 {
 					continue
 				}
@@ -194,9 +192,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 			}
 		}
 		if ty.NumOut() == 1 && ty.Out(0).Kind() == reflect.Struct {
-			if runtime.GOOS != "darwin" {
-				panic("purego: struct return values only supported on darwin arm64 & amd64")
-			}
+			ensureStructSupportedForRegisterFunc()
 			outType := ty.Out(0)
 			checkStructFieldsSupported(outType)
 			if runtime.GOARCH == "amd64" && outType.Size() > maxRegAllocStructSize {
@@ -477,10 +473,20 @@ func checkStructFieldsSupported(ty reflect.Type) {
 		switch f.Kind() {
 		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
 			reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
-			reflect.Uintptr, reflect.Ptr, reflect.UnsafePointer, reflect.Float64, reflect.Float32:
+			reflect.Uintptr, reflect.Ptr, reflect.UnsafePointer, reflect.Float64, reflect.Float32,
+			reflect.Bool:
 		default:
 			panic(fmt.Sprintf("purego: struct field type %s is not supported", f))
 		}
+	}
+}
+
+func ensureStructSupportedForRegisterFunc() {
+	if runtime.GOARCH != "amd64" && runtime.GOARCH != "arm64" {
+		panic("purego: struct arguments are only supported on amd64 and arm64")
+	}
+	if runtime.GOOS != "darwin" && runtime.GOOS != "linux" {
+		panic("purego: struct arguments are only supported on darwin and linux")
 	}
 }
 
