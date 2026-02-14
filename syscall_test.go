@@ -27,7 +27,7 @@ func TestOS(t *testing.T) {
 
 func TestErrno(t *testing.T) {
 	if runtime.GOOS != "darwin" {
-		t.Skip("GOOS does not support returning errno from syscall")
+		t.Skip("platform does not support returning errno from syscall")
 	}
 
 	libc, err := load.OpenLibrary("/usr/lib/libSystem.B.dylib")
