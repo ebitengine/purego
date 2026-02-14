@@ -61,6 +61,9 @@ var (
 	free           func(ptr unsafe.Pointer)
 	_Block_copy    func(Block) Block
 	_Block_release func(Block)
+
+	sel_count         SEL
+	sel_objectAtIndex SEL
 )
 
 func init() {
@@ -121,6 +124,9 @@ func init() {
 	purego.RegisterLibFunc(&_Block_copy, objc, "_Block_copy")
 	purego.RegisterLibFunc(&_Block_release, objc, "_Block_release")
 	theBlocksCache = newBlockCache()
+
+	sel_count = RegisterName("count")
+	sel_objectAtIndex = RegisterName("objectAtIndex:")
 }
 
 // ID is an opaque pointer to some Objective-C object
@@ -148,6 +154,35 @@ func (id ID) SetIvar(ivar Ivar, value ID) {
 	object_setIvar(id, ivar, value)
 }
 
+// NSArrayToSlice converts an NSArray into a []ID by calling
+// count and objectAtIndex: on the given array object.
+func NSArrayToSlice(array ID) []ID {
+	count := Send[uint](array, sel_count)
+	if count == 0 {
+		return nil
+	}
+	result := make([]ID, count)
+	for i := uint(0); i < count; i++ {
+		result[i] = Send[ID](array, sel_objectAtIndex, i)
+	}
+	return result
+}
+
+var idType = reflect.TypeOf(ID(0))
+
+// sendSlice handles the slice return type case for Send and SendSuper.
+// It calls msgSendFn to get the raw NSArray ID, converts it via NSArrayToSlice,
+// and returns the result as T. It panics if T's element type is not objc.ID.
+func sendSlice[T any](arrayID ID) T {
+	var zero T
+	elemType := reflect.TypeOf(&zero).Elem().Elem()
+	if elemType != idType {
+		panic("objc: Send with slice return only supports []objc.ID, got []" + elemType.String())
+	}
+	var result any = NSArrayToSlice(arrayID)
+	return result.(T)
+}
+
 // keep in sync with func.go
 const maxRegAllocStructSize = 16
 
@@ -155,8 +190,12 @@ const maxRegAllocStructSize = 16
 // This function takes a SEL instead of a string since RegisterName grabs the global Objective-C lock.
 // It is best to cache the result of RegisterName.
 func Send[T any](id ID, sel SEL, args ...any) T {
-	var fn func(id ID, sel SEL, args ...any) T
 	var zero T
+	if reflect.TypeOf(&zero).Elem().Kind() == reflect.Slice {
+		arrayID := id.Send(sel, args...)
+		return sendSlice[T](arrayID)
+	}
+	var fn func(id ID, sel SEL, args ...any) T
 	if runtime.GOARCH == "amd64" &&
 		reflect.ValueOf(zero).Kind() == reflect.Struct &&
 		reflect.ValueOf(zero).Type().Size() > maxRegAllocStructSize {
@@ -190,12 +229,16 @@ func (id ID) SendSuper(sel SEL, args ...any) ID {
 // This function takes a SEL instead of a string since RegisterName grabs the global Objective-C lock.
 // It is best to cache the result of RegisterName.
 func SendSuper[T any](id ID, sel SEL, args ...any) T {
+	var zero T
+	if reflect.TypeOf(&zero).Elem().Kind() == reflect.Slice {
+		arrayID := id.SendSuper(sel, args...)
+		return sendSlice[T](arrayID)
+	}
 	super := &objc_super{
 		receiver:   id,
 		superClass: id.Class(),
 	}
 	var fn func(objcSuper *objc_super, sel SEL, args ...any) T
-	var zero T
 	if runtime.GOARCH == "amd64" &&
 		reflect.ValueOf(zero).Kind() == reflect.Struct &&
 		reflect.ValueOf(zero).Type().Size() > maxRegAllocStructSize {
