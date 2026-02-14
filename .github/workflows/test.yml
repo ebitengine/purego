@@ -170,6 +170,18 @@ jobs:
           go env -u CC
           go env -u CXX
 
+      - name: go test (Linux s390x)
+        if: ${{ runner.os == 'Linux' && runner.arch != 'ARM64' && !startsWith(matrix.go, '1.18.') && !startsWith(matrix.go, '1.19.') && !startsWith(matrix.go, '1.20.') && !startsWith(matrix.go, '1.21.') }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-s390x-linux-gnu g++-s390x-linux-gnu qemu-user
+          go env -w CC=s390x-linux-gnu-gcc
+          go env -w CXX=s390x-linux-gnu-g++
+          env GOOS=linux GOARCH=s390x CGO_ENABLED=1 go test -c -o=purego-test-cgo .
+          env QEMU_LD_PREFIX=/usr/s390x-linux-gnu qemu-s390x ./purego-test-cgo -test.shuffle=on -test.v -test.count=10
+          go env -u CC
+          go env -u CXX
+
       - name: go test race (no Cgo)
         if: ${{ runner.os == 'macOS' &&  !startsWith(matrix.go, '1.18.') && !startsWith(matrix.go, '1.19.') }}
         run: |

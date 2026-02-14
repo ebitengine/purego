@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023 The Ebitengine Authors
 
-//go:build darwin || (linux && (386 || amd64 || arm || arm64 || loong64 || ppc64le || riscv64))
+//go:build darwin || (linux && (386 || amd64 || arm || arm64 || loong64 || ppc64le || riscv64 || s390x))
 
 package purego_test
 
@@ -126,6 +126,11 @@ func TestNewCallbackFloat32(t *testing.T) {
 }
 
 func TestNewCallbackFloat32AndFloat64(t *testing.T) {
+	if runtime.GOARCH == "s390x" {
+		// S390X has only 4 float registers (F0,F2,F4,F6), so 15 floats requires
+		// 11 stack slots, but only 10 are available (maxArgs - numIntRegs = 15 - 5)
+		t.Skip("Test requires too many stack arguments for s390x")
+	}
 	// This tests that calling a function with a mix of float32 and float64 arguments works
 	const (
 		expectedCbTotalF32 = float32(72)
