@@ -35,7 +35,7 @@ func TestErrno(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	openSym, err := purego.Dlsym(libc, "open")
+	openSym, err := load.OpenSymbol(libc, "open")
 	if err != nil {
 		t.Fatal(err)
 	}
