@@ -70,12 +70,14 @@ jobs:
           env GOOS=netbsd GOARCH=amd64 go build -v ./...
           env GOOS=netbsd GOARCH=arm64 go build -v ./...
 
-      - name: go build (Linux loong64)
-        if: ${{ !startsWith(matrix.go, '1.18.') && !startsWith(matrix.go, '1.19.') && !startsWith(matrix.go, '1.20.') && !startsWith(matrix.go, '1.21.') && !startsWith(matrix.go, '1.22.') && !startsWith(matrix.go, '1.23.') && !startsWith(matrix.go, '1.24.') }}
+      - name: go build (Linux minor architectures)
+        # Test them only on the latest Go to reduce CI time.
+        if: startsWith(matrix.go, '1.26.')
         run: |
-          # Check cross-compiling Linux binaries for loong64.
-          # Loong64 support internal linking from go1.25.
+          # Check cross-compiling Linux binaries for minor architectures.
           env GOOS=linux GOARCH=loong64 go build -v ./...
+          env GOOS=linux GOARCH=ppc64le go build -v ./...
+          env GOOS=linux GOARCH=riscv64 go build -v ./...
 
       - name: go build (plugin)
         if: runner.os == 'Linux' || runner.os == 'macOS'
@@ -140,36 +142,6 @@ jobs:
            go env -u CC
            go env -u CXX
 
-      - name: go test (Linux ppc64le)
-        if: ${{ runner.os == 'Linux' && runner.arch != 'ARM64' && !startsWith(matrix.go, '1.18.') && !startsWith(matrix.go, '1.19.') && !startsWith(matrix.go, '1.20.') && !startsWith(matrix.go, '1.21.') }}
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gcc-powerpc64le-linux-gnu g++-powerpc64le-linux-gnu qemu-user
-          go env -w CC=powerpc64le-linux-gnu-gcc
-          go env -w CXX=powerpc64le-linux-gnu-g++
-          env GOOS=linux GOARCH=ppc64le CGO_ENABLED=0 go test -c -o=purego-test-nocgo .
-          env QEMU_LD_PREFIX=/usr/powerpc64le-linux-gnu qemu-ppc64le ./purego-test-nocgo -test.shuffle=on -test.v -test.count=10
-          env GOOS=linux GOARCH=ppc64le CGO_ENABLED=1 go test -c -o=purego-test-cgo .
-          env QEMU_LD_PREFIX=/usr/powerpc64le-linux-gnu qemu-ppc64le ./purego-test-cgo -test.shuffle=on -test.v -test.count=10
-          go env -u CC
-          go env -u CXX
-
-      - name: go test (Linux riscv64)
-        if: ${{ runner.os == 'Linux' && runner.arch != 'ARM64' && !startsWith(matrix.go, '1.18.') && !startsWith(matrix.go, '1.19.') && !startsWith(matrix.go, '1.20.') && !startsWith(matrix.go, '1.21.') }}
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gcc-riscv64-linux-gnu g++-riscv64-linux-gnu qemu-user
-          go env -w CC=riscv64-linux-gnu-gcc
-          go env -w CXX=riscv64-linux-gnu-g++
-          # Create symlink for the dynamic linker that QEMU expects
-          sudo ln -sf /usr/riscv64-linux-gnu/lib/ld-linux-riscv64-lp64d.so.1 /lib/ld.so.1
-          env GOOS=linux GOARCH=riscv64 CGO_ENABLED=0 go test -c -o=purego-test-nocgo .
-          env QEMU_LD_PREFIX=/usr/riscv64-linux-gnu qemu-riscv64 ./purego-test-nocgo -test.shuffle=on -test.v -test.count=10
-          env GOOS=linux GOARCH=riscv64 CGO_ENABLED=1 go test -c -o=purego-test-cgo .
-          env QEMU_LD_PREFIX=/usr/riscv64-linux-gnu qemu-riscv64 ./purego-test-cgo -test.shuffle=on -test.v -test.count=10
-          go env -u CC
-          go env -u CXX
-
       - name: go test race (no Cgo)
         if: ${{ runner.os == 'macOS' &&  !startsWith(matrix.go, '1.18.') && !startsWith(matrix.go, '1.19.') }}
         run: |
@@ -181,26 +153,34 @@ jobs:
         run: |
           env CGO_ENABLED=1 go test -race -shuffle=on -v -count=10 ./...
 
-  loong:
+  minor-arches:
     strategy:
       matrix:
-        # Loong64 support internal linking from go1.25.
-        go: ['1.25.x', '1.26.x']
-    name: Test with Go ${{ matrix.go }} on Linux loong64
+        # Test them only on the latest Go to reduce CI time.
+        go: ['1.26.x']
+    name: Test with Go ${{ matrix.go }} on Linux minor architectures
     runs-on: ubuntu-latest
     defaults:
       run:
         shell: bash
     steps:
-      - uses: actions/checkout@v5
+      - name: Checkout
+        uses: actions/checkout@v5
+
       - name: Setup Go
         uses: actions/setup-go@v6
         with:
           go-version: ${{ matrix.go }}
+
       - name: Set up the prerequisites
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcc-14-loongarch64-linux-gnu g++-14-loongarch64-linux-gnu qemu-user
+          sudo apt-get install -y \
+            gcc-14-loongarch64-linux-gnu g++-14-loongarch64-linux-gnu \
+            gcc-powerpc64le-linux-gnu g++-powerpc64le-linux-gnu \
+            gcc-riscv64-linux-gnu g++-riscv64-linux-gnu \
+            qemu-user
+
       - name: go test (Linux loong64)
         run: |
           go env -w CC=loongarch64-linux-gnu-gcc-14
@@ -209,6 +189,30 @@ jobs:
           env QEMU_LD_PREFIX=/usr/loongarch64-linux-gnu qemu-loongarch64 ./purego-test-nocgo -test.shuffle=on -test.v -test.count=10
           env GOOS=linux GOARCH=loong64 CGO_ENABLED=1 go test -c -o=purego-test-cgo .
           env QEMU_LD_PREFIX=/usr/loongarch64-linux-gnu qemu-loongarch64 ./purego-test-cgo -test.shuffle=on -test.v -test.count=10
+          go env -u CC
+          go env -u CXX
+
+      - name: go test (Linux ppc64le)
+        run: |
+          go env -w CC=powerpc64le-linux-gnu-gcc
+          go env -w CXX=powerpc64le-linux-gnu-g++
+          env GOOS=linux GOARCH=ppc64le CGO_ENABLED=0 go test -c -o=purego-test-nocgo .
+          env QEMU_LD_PREFIX=/usr/powerpc64le-linux-gnu qemu-ppc64le ./purego-test-nocgo -test.shuffle=on -test.v -test.count=10
+          env GOOS=linux GOARCH=ppc64le CGO_ENABLED=1 go test -c -o=purego-test-cgo .
+          env QEMU_LD_PREFIX=/usr/powerpc64le-linux-gnu qemu-ppc64le ./purego-test-cgo -test.shuffle=on -test.v -test.count=10
+          go env -u CC
+          go env -u CXX
+
+      - name: go test (Linux riscv64)
+        run: |
+          go env -w CC=riscv64-linux-gnu-gcc
+          go env -w CXX=riscv64-linux-gnu-g++
+          # Create symlink for the dynamic linker that QEMU expects
+          sudo ln -sf /usr/riscv64-linux-gnu/lib/ld-linux-riscv64-lp64d.so.1 /lib/ld.so.1
+          env GOOS=linux GOARCH=riscv64 CGO_ENABLED=0 go test -c -o=purego-test-nocgo .
+          env QEMU_LD_PREFIX=/usr/riscv64-linux-gnu qemu-riscv64 ./purego-test-nocgo -test.shuffle=on -test.v -test.count=10
+          env GOOS=linux GOARCH=riscv64 CGO_ENABLED=1 go test -c -o=purego-test-cgo .
+          env QEMU_LD_PREFIX=/usr/riscv64-linux-gnu qemu-riscv64 ./purego-test-cgo -test.shuffle=on -test.v -test.count=10
           go env -u CC
           go env -u CXX
 
