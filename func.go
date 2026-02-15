@@ -403,21 +403,9 @@ func addValue(v reflect.Value, keepAlive []any, addInt func(x uintptr), addFloat
 		ptr := strings.CString(v.String())
 		keepAlive = append(keepAlive, ptr)
 		addInt(uintptr(unsafe.Pointer(ptr)))
-	case reflect.Uintptr, reflect.Uint, reflect.Uint64:
+	case reflect.Uintptr, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 		addInt(uintptr(v.Uint()))
-	case reflect.Uint8, reflect.Uint16, reflect.Uint32:
-		// On S390X big-endian, small integers are zero-extended to 64 bits.
-		// The S390X ABI specifies that values smaller than 8 bytes are
-		// right-justified in the 8-byte slot (value at high address).
-		// No shift needed - just zero-extend.
-		addInt(uintptr(v.Uint()))
-	case reflect.Int, reflect.Int64:
-		addInt(uintptr(v.Int()))
-	case reflect.Int8, reflect.Int16, reflect.Int32:
-		// On S390X big-endian, small integers are sign-extended to 64 bits.
-		// The S390X ABI specifies that values smaller than 8 bytes are
-		// right-justified in the 8-byte slot (value at high address).
-		// No shift needed - just sign-extend.
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		addInt(uintptr(v.Int()))
 	case reflect.Ptr, reflect.UnsafePointer, reflect.Slice:
 		// There is no need to keepAlive this pointer separately because it is kept alive in the args variable
