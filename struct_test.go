@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2024 The Ebitengine Authors
 
-//go:build darwin && (arm64 || amd64)
+//go:build (darwin || linux) && (amd64 || arm64)
 
 package purego_test
 
@@ -373,8 +373,8 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 		}
 		var Array4CharsFn func(chars Array4Chars) int32
 		purego.RegisterLibFunc(&Array4CharsFn, lib, "Array4Chars")
-		const expectedSum = 1 + 2 + 4 + 8
-		if ret := Array4CharsFn(Array4Chars{a: [...]int8{1, 2, 4, 8}}); ret != expectedSum {
+		const expectedSum = 10 + 20 + 30 + 63
+		if ret := Array4CharsFn(Array4Chars{a: [...]int8{10, 20, 30, 63}}); ret != expectedSum {
 			t.Fatalf("Array4CharsFn returned %d wanted %d", ret, expectedSum)
 		}
 	}
@@ -497,6 +497,37 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 		const want = 100 - 127 + 4 - 100
 		if result != want {
 			t.Fatalf("FourInt32s returned %d wanted %d", result, want)
+		}
+	}
+	{
+		type PointerWrapper struct {
+			ctx unsafe.Pointer
+		}
+		var ExtractPointer func(wrapper PointerWrapper) uintptr
+		purego.RegisterLibFunc(&ExtractPointer, lib, "ExtractPointer")
+
+		var v int
+		ptr := unsafe.Pointer(&v)
+		expected := uintptr(ptr)
+		result := ExtractPointer(PointerWrapper{ctx: ptr})
+		if result != expected {
+			t.Fatalf("ExtractPointer returned %#x wanted %#x", result, expected)
+		}
+	}
+	{
+		type TwoPointers struct {
+			ptr1, ptr2 unsafe.Pointer
+		}
+		var AddPointers func(wrapper TwoPointers) uintptr
+		purego.RegisterLibFunc(&AddPointers, lib, "AddPointers")
+
+		var v1, v2 int
+		ptr1 := unsafe.Pointer(&v1)
+		ptr2 := unsafe.Pointer(&v2)
+		expected := uintptr(ptr1) + uintptr(ptr2)
+		result := AddPointers(TwoPointers{ptr1, ptr2})
+		if result != expected {
+			t.Fatalf("AddPointers returned %#x wanted %#x", result, expected)
 		}
 	}
 }
@@ -755,6 +786,65 @@ func TestRegisterFunc_structReturns(t *testing.T) {
 		expected := Mixed4{1, 2, 3}
 		if ret := ReturnMixed4(1, 2, 3); ret != expected {
 			t.Fatalf("ReturnMixed4 returned %+v wanted %+v", ret, expected)
+		}
+	}
+	{
+		type Mixed5 struct {
+			a *int64
+			b int32
+			c float32
+			d int32
+		}
+		var ReturnMixed5 func(a *int64, b int32, c float32, d int32) Mixed5
+		purego.RegisterLibFunc(&ReturnMixed5, lib, "ReturnMixed5")
+		ptr := new(int64)
+		expected := Mixed5{ptr, 1, 7.2, 9}
+		if ret := ReturnMixed5(ptr, 1, 7.2, 9); ret != expected {
+			t.Fatalf("ReturnMixed5 returned %+v wanted %+v", ret, expected)
+		}
+		runtime.KeepAlive(ptr)
+	}
+	{
+		type Mixed5 struct {
+			a *int64
+			b int32
+			c float32
+			d int32
+		}
+		var IdentityMixed5 func(m Mixed5) Mixed5
+		purego.RegisterLibFunc(&IdentityMixed5, lib, "IdentityMixed5")
+		ptr := new(int64)
+		expected := Mixed5{ptr, 1, 7.2, 9}
+		if ret := IdentityMixed5(expected); ret != expected {
+			t.Fatalf("IdentityMixed5 returned %+v wanted %+v", ret, expected)
+		}
+		runtime.KeepAlive(ptr)
+	}
+	{
+		type SmallBool struct {
+			a bool
+			b int32
+			c int64
+		}
+		var ReturnSmallBool func(a bool, b int32, c int64) SmallBool
+		purego.RegisterLibFunc(&ReturnSmallBool, lib, "ReturnSmallBool")
+		expected := SmallBool{true, 42, 123456789}
+		if ret := ReturnSmallBool(true, 42, 123456789); ret != expected {
+			t.Fatalf("ReturnSmallBool returned %+v wanted %+v", ret, expected)
+		}
+	}
+	{
+		type LargeBool struct {
+			a bool
+			b int32
+			c int64
+			d int64
+		}
+		var ReturnLargeBool func(a bool, b int32, c int64, d int64) LargeBool
+		purego.RegisterLibFunc(&ReturnLargeBool, lib, "ReturnLargeBool")
+		expected := LargeBool{false, -99, 987654321, 111222333444}
+		if ret := ReturnLargeBool(false, -99, 987654321, 111222333444); ret != expected {
+			t.Fatalf("ReturnLargeBool returned %+v wanted %+v", ret, expected)
 		}
 	}
 	{
