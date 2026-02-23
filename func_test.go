@@ -60,9 +60,19 @@ func TestRegisterLibFunc_ArrayArgument(t *testing.T) {
 	}
 	var strlen func([6]byte) uintptr
 	purego.RegisterLibFunc(&strlen, libc, "strlen")
-	got := strlen([6]byte{'h', 'e', 'l', 'l', 'o', 0})
-	if got != 5 {
-		t.Fatalf("strlen failed. got %d but wanted %d", got, 5)
+	tests := []struct {
+		name string
+		arg  [6]byte
+		want uintptr
+	}{
+		{name: "hello", arg: [6]byte{'h', 'e', 'l', 'l', 'o', 0}, want: 5},
+		{name: "empty", arg: [6]byte{0, 0, 0, 0, 0, 0}, want: 0},
+	}
+	for _, tt := range tests {
+		got := strlen(tt.arg)
+		if got != tt.want {
+			t.Fatalf("%s: strlen failed. got %d but wanted %d", tt.name, got, tt.want)
+		}
 	}
 }
 
