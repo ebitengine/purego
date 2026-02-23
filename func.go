@@ -68,6 +68,7 @@ func RegisterLibFunc(fptr any, handle uintptr, name string) {
 //	func <=> C function
 //	unsafe.Pointer, *T <=> void*
 //	[]T => void*
+//	[N]T => void*
 //
 // There is a special case when the last argument of fptr is a variadic interface (or []interface}
 // it will be expanded into a call to the C function as if it had the arguments in that slice.
@@ -160,7 +161,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 				}
 			case reflect.String, reflect.Uintptr, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
 				reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Ptr, reflect.UnsafePointer,
-				reflect.Slice, reflect.Bool:
+				reflect.Slice, reflect.Array, reflect.Bool:
 				if ints < numOfIntegerRegisters() {
 					ints++
 				} else {
@@ -431,6 +432,14 @@ func addValue(v reflect.Value, keepAlive []any, addInt func(x uintptr), addFloat
 		}
 	case reflect.Struct:
 		keepAlive = addStruct(v, numInts, numFloats, numStack, addInt, addFloat, addStack, keepAlive)
+	case reflect.Array:
+		if !v.CanAddr() {
+			tmp := reflect.New(v.Type()).Elem()
+			tmp.Set(v)
+			v = tmp
+			keepAlive = append(keepAlive, v.Addr().Interface())
+		}
+		addInt(v.Addr().Pointer())
 	default:
 		panic("purego: unsupported kind: " + v.Kind().String())
 	}
@@ -551,6 +560,9 @@ func estimateStackBytes(ty reflect.Type) int {
 	for i := 0; i < ty.NumIn(); i++ {
 		arg := ty.In(i)
 		size := int(arg.Size())
+		if arg.Kind() == reflect.Array {
+			size = int(unsafe.Sizeof(uintptr(0)))
+		}
 
 		// Check if this goes to register or stack
 		usesInt := arg.Kind() != reflect.Float32 && arg.Kind() != reflect.Float64
