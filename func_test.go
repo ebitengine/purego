@@ -50,9 +50,6 @@ func TestRegisterFunc(t *testing.T) {
 }
 
 func TestRegisterLibFunc_ArrayArgument(t *testing.T) {
-	if runtime.GOOS == "windows" {
-		t.Skip("strlen symbol lookup differs on windows")
-	}
 	library, err := getSystemLibrary()
 	if err != nil {
 		t.Fatalf("couldn't get system library: %s", err)
