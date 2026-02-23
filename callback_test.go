@@ -426,7 +426,8 @@ func TestNewCallbackStructArg(t *testing.T) {
 		t.Skipf("RegisterFunc struct args not supported on %s/%s", runtime.GOOS, runtime.GOARCH)
 	}
 
-	sentinel := unsafe.Pointer(uintptr(0xDEADBEEF))
+	var marker byte
+	sentinel := unsafe.Pointer(&marker)
 	var fn func(Exception)
 	purego.RegisterFunc(&fn, cb)
 	fn(Exception{Object{sentinel}})
