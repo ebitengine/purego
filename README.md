@@ -112,6 +112,7 @@ This is a list of the copied files:
 * `internal/fakecgo/setenv.go` from package `runtime/cgo`
 * `internal/fakecgo/freebsd.go` from package `runtime/cgo`
 * `internal/fakecgo/netbsd.go` from package `runtime/cgo`
+* `internal/fakecgo/linux_syscall.go` from package `runtime/cgo`
 
 The `internal/fakecgo/go_GOOS.go` files were modified from `runtime/cgo/gcc_GOOS_GOARCH.go`.
 

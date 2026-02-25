@@ -50,7 +50,7 @@ TEXT ·setg_trampoline(SB), NOSPLIT, $0-16
 	CALL R9
 	RET
 
-TEXT threadentry_trampoline(SB), NOSPLIT, $0-0
+TEXT threadentry_trampoline(SB), NOSPLIT|NOFRAME, $0-0
 	// See crosscall2.
 	SUB  $(8*24), RSP
 	STP  (R0, R1), (8*1)(RSP)

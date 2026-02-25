@@ -131,7 +131,15 @@ jobs:
         if: ${{ runner.os == 'Linux' && runner.arch == 'ARM64' }}
         run: |
            sudo apt-get update
-           sudo apt-get install -y qemu-user gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf libc6-armhf-cross
+           sudo apt-get install -y gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf libc6-armhf-cross
+
+           # Install QEMU 10.x from Debian trixie. Ubuntu 24.04 ships QEMU 8.2
+           # which has a bug where inter-thread signal delivery (tgkill) hangs,
+           # causing TestSetuidEtc to deadlock.
+           wget -q http://ftp.debian.org/debian/pool/main/q/qemu/qemu-user_10.0.7+ds-0+deb13u1+b1_arm64.deb -O /tmp/qemu-user.deb
+           wget -q http://ftp.debian.org/debian/pool/main/q/qemu/qemu-user-binfmt_10.0.7+ds-0+deb13u1+b1_arm64.deb -O /tmp/qemu-user-binfmt.deb
+           sudo dpkg --force-depends -i /tmp/qemu-user.deb /tmp/qemu-user-binfmt.deb || true
+
            # Create symlink for the dynamic linker that QEMU expects
            sudo ln -sf /usr/arm-linux-gnueabihf/lib/ld-linux-armhf.so.3 /lib/ld-linux.so.3
            go env -w CC=arm-linux-gnueabihf-gcc
@@ -180,8 +188,14 @@ jobs:
             gcc-14-loongarch64-linux-gnu g++-14-loongarch64-linux-gnu \
             gcc-powerpc64le-linux-gnu g++-powerpc64le-linux-gnu \
             gcc-riscv64-linux-gnu g++-riscv64-linux-gnu \
-            gcc-s390x-linux-gnu g++-s390x-linux-gnu \
-            qemu-user
+            gcc-s390x-linux-gnu g++-s390x-linux-gnu
+
+          # Install QEMU 10.x from Debian trixie. Ubuntu 24.04 ships QEMU 8.2
+          # which has a bug where inter-thread signal delivery (tgkill) hangs,
+          # causing TestSetuidEtc to deadlock.
+          wget -q http://ftp.debian.org/debian/pool/main/q/qemu/qemu-user_10.0.7+ds-0+deb13u1+b1_amd64.deb -O /tmp/qemu-user.deb
+          wget -q http://ftp.debian.org/debian/pool/main/q/qemu/qemu-user-binfmt_10.0.7+ds-0+deb13u1+b1_amd64.deb -O /tmp/qemu-user-binfmt.deb
+          sudo dpkg --force-depends -i /tmp/qemu-user.deb /tmp/qemu-user-binfmt.deb || true
 
       - name: go test (Linux loong64)
         run: |

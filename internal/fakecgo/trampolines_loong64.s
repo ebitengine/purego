@@ -49,16 +49,14 @@ TEXT ·setg_trampoline(SB), NOSPLIT, $0
 	CALL (R23)
 	RET
 
-TEXT threadentry_trampoline(SB), NOSPLIT, $0
+TEXT threadentry_trampoline(SB), NOSPLIT, $176
 	// See crosscall2.
-	ADDV $(-23*8), R3
 	MOVV R4, (1*8)(R3) // fn unsafe.Pointer
 	MOVV R5, (2*8)(R3) // a unsafe.Pointer
 	MOVV R7, (3*8)(R3) // ctxt uintptr
 
 	SAVE_R22_TO_R31((4*8))
 	SAVE_F24_TO_F31((14*8))
-	MOVV R1, (22*8)(R3)
 
 	MOVV ·threadentry_call(SB), R23
 	MOVV (R23), R23
@@ -66,9 +64,6 @@ TEXT threadentry_trampoline(SB), NOSPLIT, $0
 
 	RESTORE_R22_TO_R31((4*8))
 	RESTORE_F24_TO_F31((14*8))
-	MOVV (22*8)(R3), R1
-
-	ADDV $(23*8), R3
 	RET
 
 TEXT ·call5(SB), NOSPLIT, $0-0
