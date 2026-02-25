@@ -11,29 +11,24 @@
 // R23 is used as temporary register.
 
 TEXT x_cgo_init_trampoline(SB), NOSPLIT, $16
-	MOVV R4, 8(R3)
-	MOVV R5, 16(R3)
 	MOVV ·x_cgo_init_call(SB), R23
 	MOVV (R23), R23
 	CALL (R23)
 	RET
 
 TEXT x_cgo_thread_start_trampoline(SB), NOSPLIT, $8
-	MOVV R4, 8(R3)
 	MOVV ·x_cgo_thread_start_call(SB), R23
 	MOVV (R23), R23
 	CALL (R23)
 	RET
 
 TEXT x_cgo_setenv_trampoline(SB), NOSPLIT, $8
-	MOVV R4, 8(R3)
 	MOVV ·x_cgo_setenv_call(SB), R23
 	MOVV (R23), R23
 	CALL (R23)
 	RET
 
 TEXT x_cgo_unsetenv_trampoline(SB), NOSPLIT, $8
-	MOVV R4, 8(R3)
 	MOVV ·x_cgo_unsetenv_call(SB), R23
 	MOVV (R23), R23
 	CALL (R23)

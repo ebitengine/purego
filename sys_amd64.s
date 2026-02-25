@@ -92,9 +92,10 @@ TEXT syscall15X(SB), NOSPLIT|NOFRAME, $0
 	MOVQ X1, syscall15Args_f2(DI) // f2
 
 #ifdef GOOS_darwin
-    CALL purego_error(SB)
-    MOVD (AX), AX
-    MOVD AX, syscall15Args_a3(DI) // save errno
+	CALL purego_error(SB)
+	MOVD (AX), AX
+	MOVD AX, syscall15Args_a3(DI) // save errno
+
 #endif
 
 	XORL AX, AX          // no error (it's ignored anyway)
