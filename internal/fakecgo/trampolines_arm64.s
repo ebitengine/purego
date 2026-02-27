@@ -50,15 +50,13 @@ TEXT ·setg_trampoline(SB), NOSPLIT, $0-16
 	CALL R9
 	RET
 
-TEXT threadentry_trampoline(SB), NOSPLIT|NOFRAME, $0-0
+TEXT threadentry_trampoline(SB), NOSPLIT, $192-0
 	// See crosscall2.
-	SUB  $(8*24), RSP
 	STP  (R0, R1), (8*1)(RSP)
 	MOVD R3, (8*3)(RSP)
 
 	SAVE_R19_TO_R28(8*4)
 	SAVE_F8_TO_F15(8*14)
-	STP (R29, R30), (8*22)(RSP)
 
 	MOVD ·threadentry_call(SB), R9
 	MOVD (R9), R9
@@ -67,9 +65,7 @@ TEXT threadentry_trampoline(SB), NOSPLIT|NOFRAME, $0-0
 
 	RESTORE_R19_TO_R28(8*4)
 	RESTORE_F8_TO_F15(8*14)
-	LDP (8*22)(RSP), (R29, R30)
 
-	ADD $(8*24), RSP
 	RET
 
 TEXT ·call5(SB), NOSPLIT, $0-0
