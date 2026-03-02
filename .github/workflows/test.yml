@@ -177,7 +177,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            gcc-14-loongarch64-linux-gnu g++-14-loongarch64-linux-gnu \
+            gcc-loongarch64-linux-gnu g++-loongarch64-linux-gnu \
             gcc-powerpc64le-linux-gnu g++-powerpc64le-linux-gnu \
             gcc-riscv64-linux-gnu g++-riscv64-linux-gnu \
             gcc-s390x-linux-gnu g++-s390x-linux-gnu \
@@ -185,8 +185,8 @@ jobs:
 
       - name: go test (Linux loong64)
         run: |
-          go env -w CC=loongarch64-linux-gnu-gcc-14
-          go env -w CXX=loongarch64-linux-gnu-g++-14
+          go env -w CC=loongarch64-linux-gnu-gcc
+          go env -w CXX=loongarch64-linux-gnu-g++
           env GOOS=linux GOARCH=loong64 CGO_ENABLED=0 go test -c -o=purego-test-nocgo .
           env QEMU_LD_PREFIX=/usr/loongarch64-linux-gnu qemu-loongarch64 ./purego-test-nocgo -test.shuffle=on -test.v -test.count=10
           env GOOS=linux GOARCH=loong64 CGO_ENABLED=1 go test -c -o=purego-test-cgo .
