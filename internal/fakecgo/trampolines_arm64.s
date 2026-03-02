@@ -67,7 +67,6 @@ TEXT threadentry_trampoline(SB), NOSPLIT, $0-0
 	RESTORE_R19_TO_R28(8*4)
 	RESTORE_F8_TO_F15(8*14)
 	ADD $(8*24), RSP
-
 	RET
 
 TEXT ·call5(SB), NOSPLIT, $0-0
