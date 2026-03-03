@@ -80,12 +80,12 @@ TEXT ·setg_trampoline(SB), NOSPLIT, $4-8
 	CALL BX
 	RET
 
-TEXT threadentry_trampoline(SB), NOSPLIT, $20-4
+TEXT threadentry_trampoline(SB), NOSPLIT, $24-4
 	// Save callee-saved registers
-	MOVL BP, 16(SP)
-	MOVL BX, 12(SP)
-	MOVL SI, 8(SP)
-	MOVL DI, 4(SP)
+	MOVL BP, 20(SP)
+	MOVL BX, 16(SP)
+	MOVL SI, 12(SP)
+	MOVL DI, 8(SP)
 
 	// Move C argument (arg) to stack for Go function
 	MOVL arg+0(FP), AX
@@ -96,13 +96,13 @@ TEXT threadentry_trampoline(SB), NOSPLIT, $20-4
 	CALL CX
 
 	// Restore callee-saved registers
-	MOVL 4(SP), DI
-	MOVL 8(SP), SI
-	MOVL 12(SP), BX
-	MOVL 16(SP), BP
+	MOVL 8(SP), DI
+	MOVL 12(SP), SI
+	MOVL 16(SP), BX
+	MOVL 20(SP), BP
 	RET
 
-TEXT ·call5(SB), NOSPLIT, $20-28
+TEXT ·call5(SB), NOSPLIT, $24-28
 	MOVL fn+0(FP), AX
 	MOVL a1+4(FP), BX
 	MOVL a2+8(FP), CX

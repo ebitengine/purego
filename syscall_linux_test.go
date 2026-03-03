@@ -30,9 +30,6 @@ func TestAllThreadsSyscall(t *testing.T) {
 // here is considered authoritative and should compile and run
 // CGO_ENABLED=0 or 1.
 func TestSetuidEtc(t *testing.T) {
-	if runtime.GOARCH == "386" && syscall.Getuid() != 0 {
-		t.Skip("linux/386 requires root to run this test")
-	}
 	vs := []struct {
 		call           string
 		fn             func() error
@@ -173,9 +170,6 @@ func compareStatus(filter, expect string) error {
 // library and calling a C function that invokes a Go callback, followed by
 // AllThreadsSyscall (used by Setuid etc.), causes a SIGSEGV on amd64.
 func TestDlopenThenAllThreadsSyscall(t *testing.T) {
-	if runtime.GOARCH == "386" && syscall.Getuid() != 0 {
-		t.Skip("linux/386 requires root to run this test")
-	}
 	// Step 1: Build and load a shared C library that calls back into Go.
 	libFileName := filepath.Join(t.TempDir(), "libcbtest.so")
 	if err := buildSharedLib("CC", libFileName, filepath.Join("testdata", "libcbtest", "callback_test.c")); err != nil {
