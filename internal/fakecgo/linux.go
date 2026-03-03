@@ -40,6 +40,8 @@ var _cgo_libc_setreuid = &_cgo_purego_setreuid_trampoline
 var _cgo_libc_setuid = &_cgo_purego_setuid_trampoline
 var _cgo_libc_setgroups = &_cgo_purego_setgroups_trampoline
 
+//go:nosplit
+//go:norace
 func errno() int32 {
 	// this indirection is to avoid go vet complaining about possible misuse of unsafe.Pointer
 	loc := __errno_location()
