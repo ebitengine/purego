@@ -1,5 +1,6 @@
-// SPDX-License-Identifier: Apache-2.0
-// SPDX-FileCopyrightText: 2026 The Ebitengine Authors
+// Copyright 2015 The Go Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
 
 package purego_test
 
@@ -66,17 +67,17 @@ func TestSetuidEtc(t *testing.T) {
 	}
 
 	for i, v := range vs {
-		// Generate some thread churn as we execute the tests.
+		// Generate some thread churn.
 		c := make(chan struct{})
 		go killAThread(c)
 		close(c)
 
 		if err := v.fn(); err != nil {
 			if syscall.Getuid() == 0 && syscall.Getgid() == 0 {
-				// If we are still root, then the syscall should have succeeded.
+				// If root, then the syscall should have succeeded.
 				t.Errorf("[%d] %q setup failed: %v", i, v.call, err)
 			} else if !errors.Is(err, syscall.EPERM) {
-				// If we are not root, then EPERM is the only acceptable error.
+				// If not root, then EPERM is the only acceptable error.
 				t.Errorf("[%d] %q unexpected error: %v", i, v.call, err)
 			}
 			continue
@@ -206,10 +207,10 @@ func TestDlopenThenAllThreadsSyscall(t *testing.T) {
 
 		if err := syscall.Setuid(0); err != nil {
 			if syscall.Getuid() == 0 && syscall.Getgid() == 0 {
-				// If we are still root, then the syscall should have succeeded.
+				// If root, then the syscall should have succeeded.
 				t.Errorf("setup failed: %v", err)
 			} else if !errors.Is(err, syscall.EPERM) {
-				// If we are not root, then EPERM is the only acceptable error.
+				// If not root, then EPERM is the only acceptable error.
 				t.Errorf("unexpected error: %v", err)
 			}
 		}
