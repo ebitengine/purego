@@ -172,8 +172,6 @@ func compareStatus(filter, expect string) error {
 // TestDlopenThenAllThreadsSyscall reproduces a crash where loading a shared
 // library and calling a C function that invokes a Go callback, followed by
 // AllThreadsSyscall (used by Setuid etc.), causes a SIGSEGV on amd64.
-//
-// Run with: CGO_ENABLED=1 go test -run TestDlopenThenAllThreadsSyscall -count=10
 func TestDlopenThenAllThreadsSyscall(t *testing.T) {
 	if runtime.GOARCH == "386" && syscall.Getuid() != 0 {
 		t.Skip("linux/386 requires root to run this test")
@@ -204,8 +202,6 @@ func TestDlopenThenAllThreadsSyscall(t *testing.T) {
 	}
 
 	// Step 2: Generate thread churn + AllThreadsSyscall (via Setuid).
-	// This crashes because AllThreadsSyscall signals all threads,
-	// including ones left over from the C library / callback machinery.
 	for i := 0; i < 20; i++ {
 		c := make(chan struct{})
 		go func() {
