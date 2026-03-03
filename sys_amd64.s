@@ -90,7 +90,7 @@ TEXT syscall15X(SB), NOSPLIT, $STACK_SIZE
 
 #ifdef GOOS_darwin
 	CALL purego_error(SB)
-	MOVQ 72(SP), DI      // reload (DI clobbered by call)
+	MOVQ PTR_ADDRESS(SP), DI      // reload (DI clobbered by call)
 	MOVQ (AX), AX
 	MOVQ AX, syscall15Args_a3(DI) // save errno
 #endif
