@@ -195,8 +195,14 @@ jobs:
           # causing TestSetuidEtc to deadlock.
           wget -q http://ftp.debian.org/debian/pool/main/q/qemu/qemu-user_10.0.7+ds-0+deb13u1+b1_amd64.deb -O /tmp/qemu-user.deb
           wget -q http://ftp.debian.org/debian/pool/main/q/qemu/qemu-user-binfmt_10.0.7+ds-0+deb13u1+b1_amd64.deb -O /tmp/qemu-user-binfmt.deb
-          sudo dpkg --force-depends -i /tmp/qemu-user.deb /tmp/qemu-user-binfmt.deb || true
+          sudo dpkg --force-depends -i /tmp/qemu-user.deb /tmp/qemu-user-binfmt.deb
+          sudo apt-get -f install -y
 
+          # Verify that the expected QEMU binaries are installed and usable.
+          qemu-loongarch64 --version
+          qemu-ppc64le --version
+          qemu-riscv64 --version
+          qemu-s390x --version
       - name: go test (Linux loong64)
         run: |
           go env -w CC=loongarch64-linux-gnu-gcc-14
