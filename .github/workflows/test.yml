@@ -203,6 +203,7 @@ jobs:
           qemu-ppc64le --version
           qemu-riscv64 --version
           qemu-s390x --version
+
       - name: go test (Linux loong64)
         run: |
           go env -w CC=loongarch64-linux-gnu-gcc-14
