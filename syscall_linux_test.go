@@ -1,0 +1,218 @@
+// Copyright 2015 The Go Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
+package purego_test
+
+import (
+	"errors"
+	"fmt"
+	"os"
+	"path/filepath"
+	"runtime"
+	"sort"
+	"strings"
+	"syscall"
+	"testing"
+	"unsafe"
+
+	"github.com/ebitengine/purego"
+)
+
+func TestAllThreadsSyscall(t *testing.T) {
+	_, _, err := syscall.AllThreadsSyscall(syscall.SYS_FCNTL, 0, 0, 0)
+	if err != syscall.ENOTSUP {
+		t.Errorf("AllThreadsSyscall should return ENOTSUP, got: %v", err)
+	}
+}
+
+// TestSetuidEtc performs tests on all of the wrapped system calls
+// that mirror to the 9 glibc syscalls with POSIX semantics. The test
+// here is considered authoritative and should compile and run
+// CGO_ENABLED=0 or 1.
+func TestSetuidEtc(t *testing.T) {
+	vs := []struct {
+		call           string
+		fn             func() error
+		filter, expect string
+	}{
+		{call: "Setegid(1)", fn: func() error { return syscall.Setegid(1) }, filter: "Gid:", expect: "\t0\t1\t0\t1"},
+		{call: "Setegid(0)", fn: func() error { return syscall.Setegid(0) }, filter: "Gid:", expect: "\t0\t0\t0\t0"},
+
+		{call: "Seteuid(1)", fn: func() error { return syscall.Seteuid(1) }, filter: "Uid:", expect: "\t0\t1\t0\t1"},
+		{call: "Setuid(0)", fn: func() error { return syscall.Setuid(0) }, filter: "Uid:", expect: "\t0\t0\t0\t0"},
+
+		{call: "Setgid(1)", fn: func() error { return syscall.Setgid(1) }, filter: "Gid:", expect: "\t1\t1\t1\t1"},
+		{call: "Setgid(0)", fn: func() error { return syscall.Setgid(0) }, filter: "Gid:", expect: "\t0\t0\t0\t0"},
+
+		{call: "Setgroups([]int{0,1,2,3})", fn: func() error { return syscall.Setgroups([]int{0, 1, 2, 3}) }, filter: "Groups:", expect: "\t0 1 2 3"},
+		{call: "Setgroups(nil)", fn: func() error { return syscall.Setgroups(nil) }, filter: "Groups:", expect: ""},
+		{call: "Setgroups([]int{0})", fn: func() error { return syscall.Setgroups([]int{0}) }, filter: "Groups:", expect: "\t0"},
+
+		{call: "Setregid(101,0)", fn: func() error { return syscall.Setregid(101, 0) }, filter: "Gid:", expect: "\t101\t0\t0\t0"},
+		{call: "Setregid(0,102)", fn: func() error { return syscall.Setregid(0, 102) }, filter: "Gid:", expect: "\t0\t102\t102\t102"},
+		{call: "Setregid(0,0)", fn: func() error { return syscall.Setregid(0, 0) }, filter: "Gid:", expect: "\t0\t0\t0\t0"},
+
+		{call: "Setreuid(1,0)", fn: func() error { return syscall.Setreuid(1, 0) }, filter: "Uid:", expect: "\t1\t0\t0\t0"},
+		{call: "Setreuid(0,2)", fn: func() error { return syscall.Setreuid(0, 2) }, filter: "Uid:", expect: "\t0\t2\t2\t2"},
+		{call: "Setreuid(0,0)", fn: func() error { return syscall.Setreuid(0, 0) }, filter: "Uid:", expect: "\t0\t0\t0\t0"},
+
+		{call: "Setresgid(101,0,102)", fn: func() error { return syscall.Setresgid(101, 0, 102) }, filter: "Gid:", expect: "\t101\t0\t102\t0"},
+		{call: "Setresgid(0,102,101)", fn: func() error { return syscall.Setresgid(0, 102, 101) }, filter: "Gid:", expect: "\t0\t102\t101\t102"},
+		{call: "Setresgid(0,0,0)", fn: func() error { return syscall.Setresgid(0, 0, 0) }, filter: "Gid:", expect: "\t0\t0\t0\t0"},
+
+		{call: "Setresuid(1,0,2)", fn: func() error { return syscall.Setresuid(1, 0, 2) }, filter: "Uid:", expect: "\t1\t0\t2\t0"},
+		{call: "Setresuid(0,2,1)", fn: func() error { return syscall.Setresuid(0, 2, 1) }, filter: "Uid:", expect: "\t0\t2\t1\t2"},
+		{call: "Setresuid(0,0,0)", fn: func() error { return syscall.Setresuid(0, 0, 0) }, filter: "Uid:", expect: "\t0\t0\t0\t0"},
+	}
+
+	for i, v := range vs {
+		// Generate some thread churn.
+		c := make(chan struct{})
+		go killAThread(c)
+		close(c)
+
+		if err := v.fn(); err != nil {
+			if syscall.Getuid() == 0 && syscall.Getgid() == 0 {
+				// If root, then the syscall should have succeeded.
+				t.Errorf("[%d] %q setup failed: %v", i, v.call, err)
+			} else if !errors.Is(err, syscall.EPERM) {
+				// If not root, then EPERM is the only acceptable error.
+				t.Errorf("[%d] %q unexpected error: %v", i, v.call, err)
+			}
+			continue
+		}
+		if err := compareStatus(v.filter, v.expect); err != nil {
+			t.Errorf("[%d] %q comparison: %v", i, v.call, err)
+		}
+	}
+}
+
+// killAThread locks the goroutine to an OS thread and exits; this
+// causes an OS thread to terminate.
+func killAThread(c <-chan struct{}) {
+	runtime.LockOSThread()
+	<-c
+}
+
+// compareStatus is used to confirm the contents of the thread
+// specific status files match expectations.
+func compareStatus(filter, expect string) error {
+	expected := filter + expect
+	pid := syscall.Getpid()
+	fs, err := os.ReadDir(fmt.Sprintf("/proc/%d/task", pid))
+	if err != nil {
+		return fmt.Errorf("unable to find %d tasks: %v", pid, err)
+	}
+	expectedProc := fmt.Sprintf("Pid:\t%d", pid)
+	foundAThread := false
+	for _, f := range fs {
+		tf := fmt.Sprintf("/proc/%s/status", f.Name())
+		d, err := os.ReadFile(tf)
+		if err != nil {
+			// There are a surprising number of ways this
+			// can error out on linux.  We've seen all of
+			// the following, so treat any error here as
+			// equivalent to the "process is gone":
+			//    os.IsNotExist(err),
+			//    "... : no such process",
+			//    "... : bad file descriptor.
+			continue
+		}
+		lines := strings.Split(string(d), "\n")
+		for _, line := range lines {
+			// Different kernel vintages pad differently.
+			line = strings.TrimSpace(line)
+			if strings.HasPrefix(line, "Pid:\t") {
+				// On loaded systems, it is possible
+				// for a TID to be reused really
+				// quickly. As such, we need to
+				// validate that the thread status
+				// info we just read is a task of the
+				// same process PID as we are
+				// currently running, and not a
+				// recently terminated thread
+				// resurfaced in a different process.
+				if line != expectedProc {
+					break
+				}
+				// Fall through in the unlikely case
+				// that filter at some point is
+				// "Pid:\t".
+			}
+			if strings.HasPrefix(line, filter) {
+				if line == expected {
+					foundAThread = true
+					break
+				}
+				if filter == "Groups:" && strings.HasPrefix(line, "Groups:\t") {
+					// https://github.com/golang/go/issues/46145
+					// Containers don't reliably output this line in sorted order so manually sort and compare that.
+					a := strings.Split(line[8:], " ")
+					sort.Slice(a, func(i, j int) bool { return a[i] < a[j] })
+					got := strings.Join(a, " ")
+					if got == expected[8:] {
+						foundAThread = true
+						break
+					}
+
+				}
+				return fmt.Errorf("%q got:%q want:%q (bad) [pid=%d file:'%s' %v]\n", tf, line, expected, pid, string(d), expectedProc)
+			}
+		}
+	}
+	if !foundAThread {
+		return fmt.Errorf("found no thread /proc/<TID>/status files for process %q", expectedProc)
+	}
+	return nil
+}
+
+// TestDlopenThenAllThreadsSyscall reproduces a crash where loading a shared
+// library and calling a C function that invokes a Go callback, followed by
+// AllThreadsSyscall (used by Setuid etc.), causes a SIGSEGV on amd64.
+func TestDlopenThenAllThreadsSyscall(t *testing.T) {
+	// Step 1: Build and load a shared C library that calls back into Go.
+	libFileName := filepath.Join(t.TempDir(), "libcbtest.so")
+	if err := buildSharedLib("CC", libFileName, filepath.Join("testdata", "libcbtest", "callback_test.c")); err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove(libFileName)
+
+	lib, err := purego.Dlopen(libFileName, purego.RTLD_NOW|purego.RTLD_GLOBAL)
+	if err != nil {
+		t.Fatalf("Dlopen(%q) failed: %v", libFileName, err)
+	}
+
+	var callCallback func(p uintptr, s string) int
+	purego.RegisterLibFunc(&callCallback, lib, "callCallback")
+
+	goFunc := func(cstr *byte, n int) int {
+		_ = string(unsafe.Slice(cstr, n))
+		return 1
+	}
+
+	cb := purego.NewCallback(goFunc)
+	for i := 0; i < 10; i++ {
+		callCallback(cb, "hello")
+	}
+
+	// Step 2: Generate thread churn + AllThreadsSyscall (via Setuid).
+	for i := 0; i < 20; i++ {
+		c := make(chan struct{})
+		go func() {
+			runtime.LockOSThread()
+			<-c
+		}()
+		close(c)
+
+		if err := syscall.Setuid(0); err != nil {
+			if syscall.Getuid() == 0 && syscall.Getgid() == 0 {
+				// If root, then the syscall should have succeeded.
+				t.Errorf("setup failed: %v", err)
+			} else if !errors.Is(err, syscall.EPERM) {
+				// If not root, then EPERM is the only acceptable error.
+				t.Errorf("unexpected error: %v", err)
+			}
+		}
+	}
+}

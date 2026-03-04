@@ -121,6 +121,16 @@ var (
 		{"nanosleep", [5]Arg{{"ts", "*syscall.Timespec"}, {"rem", "*syscall.Timespec"}}, "int32", nil},
 		{"abort", [5]Arg{}, "", nil},
 		{"sigaltstack", [5]Arg{{"ss", "*stack_t"}, {"old_ss", "*stack_t"}}, "int32", []string{"netbsd"}},
+		{"__errno_location", [5]Arg{}, "uintptr", []string{"linux"}},
+		{"setegid", [5]Arg{{"egid", "uint32"}}, "int32", []string{"linux"}},
+		{"seteuid", [5]Arg{{"euid", "uint32"}}, "int32", []string{"linux"}},
+		{"setgid", [5]Arg{{"gid", "uint32"}}, "int32", []string{"linux"}},
+		{"setregid", [5]Arg{{"rgid", "uint32"}, {"egid", "uint32"}}, "int32", []string{"linux"}},
+		{"setresgid", [5]Arg{{"rgid", "uint32"}, {"egid", "uint32"}, {"sgid", "uint32"}}, "int32", []string{"linux"}},
+		{"setresuid", [5]Arg{{"ruid", "uint32"}, {"euid", "uint32"}, {"suid", "uint32"}}, "int32", []string{"linux"}},
+		{"setreuid", [5]Arg{{"ruid", "uint32"}, {"euid", "uint32"}}, "int32", []string{"linux"}},
+		{"setuid", [5]Arg{{"uid", "uint32"}}, "int32", []string{"linux"}},
+		{"setgroups", [5]Arg{{"ngid", "uint32"}, {"gidset", "*uint32"}}, "int32", []string{"linux"}},
 	}
 	pthreadSymbols = []Symbol{
 		{"pthread_attr_init", [5]Arg{{"attr", "*pthread_attr_t"}}, "int32", nil},
