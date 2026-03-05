@@ -18,7 +18,6 @@ type syscall15Args struct {
 	fn, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15                uintptr
 	a16, a17, a18, a19, a20, a21, a22, a23, a24, a25, a26, a27, a28, a29, a30, a31, a32 uintptr
 	f1, f2, f3, f4, f5, f6, f7, f8                                                      uintptr
-	f9, f10, f11, f12, f13                                                              uintptr
 	arm64_r8                                                                            uintptr
 }
 
@@ -64,11 +63,6 @@ func (s *syscall15Args) Set(fn uintptr, ints []uintptr, floats []uintptr, r8 uin
 	s.f6 = floats[5]
 	s.f7 = floats[6]
 	s.f8 = floats[7]
-	s.f9 = floats[8]
-	s.f10 = floats[9]
-	s.f11 = floats[10]
-	s.f12 = floats[11]
-	s.f13 = floats[12]
 	s.arm64_r8 = r8
 }
 
