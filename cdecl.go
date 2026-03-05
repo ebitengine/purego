@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2026 The Ebitengine Authors
 
-//go:build darwin || freebsd || linux || netbsd || windows
-
 package purego
 
 // CDecl marks a function as being called using the __cdecl calling convention as defined in
