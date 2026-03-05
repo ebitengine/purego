@@ -373,9 +373,6 @@ func TestABI_ArgumentPassing(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.name == "20_int32" && runtime.GOOS == "windows" {
-				t.Skip("windows supports at most 15 arguments")
-			}
 			if tt.name == "10_float32" && (runtime.GOARCH == "loong64" || runtime.GOARCH == "ppc64le" || runtime.GOARCH == "riscv64" || runtime.GOARCH == "s390x") {
 				t.Skip("float32 stack arguments not yet supported on this platform")
 			}
@@ -396,10 +393,6 @@ func TestABI_ArgumentPassing(t *testing.T) {
 	}
 
 	t.Run("20_uintptr", func(t *testing.T) {
-		if runtime.GOOS == "windows" {
-			t.Skip("windows supports at most 15 arguments")
-		}
-
 		var fn func(uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr) uintptr
 		purego.RegisterLibFunc(&fn, lib, "stack_20_uintptr")
 		got := fn(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20)
@@ -410,10 +403,6 @@ func TestABI_ArgumentPassing(t *testing.T) {
 	})
 
 	t.Run("32_uintptr", func(t *testing.T) {
-		if runtime.GOOS == "windows" {
-			t.Skip("windows supports at most 15 arguments")
-		}
-
 		var fn func(
 			uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr,
 			uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr,
@@ -434,10 +423,6 @@ func TestABI_ArgumentPassing(t *testing.T) {
 	})
 
 	t.Run("syscalln_20_uintptr", func(t *testing.T) {
-		if runtime.GOOS == "windows" {
-			t.Skip("windows supports at most 15 arguments")
-		}
-
 		fn, err := load.OpenSymbol(lib, "stack_20_uintptr")
 		if err != nil {
 			t.Fatalf("OpenSymbol(stack_20_uintptr) failed: %v", err)
@@ -453,10 +438,6 @@ func TestABI_ArgumentPassing(t *testing.T) {
 	})
 
 	t.Run("syscalln_32_uintptr", func(t *testing.T) {
-		if runtime.GOOS == "windows" {
-			t.Skip("windows supports at most 15 arguments")
-		}
-
 		fn, err := load.OpenSymbol(lib, "stack_32_uintptr")
 		if err != nil {
 			t.Fatalf("OpenSymbol(stack_32_uintptr) failed: %v", err)
@@ -474,9 +455,6 @@ func TestABI_ArgumentPassing(t *testing.T) {
 	})
 
 	t.Run("32_mixed_int_float", func(t *testing.T) {
-		if runtime.GOOS == "windows" {
-			t.Skip("windows supports at most 15 arguments")
-		}
 		if unsafe.Sizeof(uintptr(0)) == 4 {
 			t.Skip("requires 64-bit uintptr slots")
 		}
@@ -520,8 +498,7 @@ func TestABI_TooManyArguments(t *testing.T) {
 		f()
 	}
 
-	// 33 int64 parameters exceeds maxArgs=32 on non-Windows targets.
-	// On Windows this is still an overflow because maxArgs is 15.
+	// 33 int64 parameters exceeds maxArgs=32.
 	t.Run("registerfunc_33_int64_exceeds_limit", func(t *testing.T) {
 		mustPanic(t, "purego: too many stack arguments", func() {
 			var fn func(

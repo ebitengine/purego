@@ -102,23 +102,13 @@ func SyscallN(fn uintptr, args ...uintptr) (r1, r2, err uintptr) {
 	if fn == 0 {
 		panic("purego: fn is nil")
 	}
-	limit := maxArgs
-	if runtime.GOOS == "windows" {
-		limit = 15
-	}
-	if len(args) > limit {
+	if len(args) > maxArgs {
 		panic("purego: too many arguments to SyscallN")
 	}
 
-	// Windows uses syscall.Syscall15 in syscall_windows.go.
+	// Windows uses syscall.SyscallN in syscall_windows.go.
 	if runtime.GOOS == "windows" {
-		var tmp [maxArgs]uintptr
-		copy(tmp[:], args)
-		return syscall_syscall15X(
-			fn,
-			tmp[0], tmp[1], tmp[2], tmp[3], tmp[4], tmp[5], tmp[6], tmp[7],
-			tmp[8], tmp[9], tmp[10], tmp[11], tmp[12], tmp[13], tmp[14],
-		)
+		return syscall_syscallN(fn, args...)
 	}
 
 	syscall := thePool.Get().(*syscall15Args)
