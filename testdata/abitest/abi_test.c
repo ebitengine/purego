@@ -129,3 +129,41 @@ void stack_25_int64_exceeds(char *buf, size_t bufsize, int64_t a1, int64_t a2, i
     snprintf(buf, bufsize, "%" PRId64 ":%" PRId64 ":%" PRId64 ":%" PRId64 ":%" PRId64 ":%" PRId64 ":%" PRId64 ":%" PRId64 ":%" PRId64 ":%" PRId64 ":%" PRId64 ":%" PRId64 ":%" PRId64 ":%" PRId64 ":%" PRId64 ":%" PRId64 ":%" PRId64 ":%" PRId64 ":%" PRId64 ":%" PRId64 ":%" PRId64 ":%" PRId64 ":%" PRId64 ":%" PRId64 ":%" PRId64,
              a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24, a25);
 }
+
+uintptr_t stack_20_uintptr(
+    uintptr_t a1, uintptr_t a2, uintptr_t a3, uintptr_t a4, uintptr_t a5,
+    uintptr_t a6, uintptr_t a7, uintptr_t a8, uintptr_t a9, uintptr_t a10,
+    uintptr_t a11, uintptr_t a12, uintptr_t a13, uintptr_t a14, uintptr_t a15,
+    uintptr_t a16, uintptr_t a17, uintptr_t a18, uintptr_t a19, uintptr_t a20
+) {
+    return a1 + a2 + a3 + a4 + a5 + a6 + a7 + a8 + a9 + a10 +
+           a11 + a12 + a13 + a14 + a15 + a16 + a17 + a18 + a19 + a20;
+}
+
+uintptr_t stack_32_uintptr(
+    uintptr_t a1, uintptr_t a2, uintptr_t a3, uintptr_t a4, uintptr_t a5, uintptr_t a6, uintptr_t a7, uintptr_t a8,
+    uintptr_t a9, uintptr_t a10, uintptr_t a11, uintptr_t a12, uintptr_t a13, uintptr_t a14, uintptr_t a15, uintptr_t a16,
+    uintptr_t a17, uintptr_t a18, uintptr_t a19, uintptr_t a20, uintptr_t a21, uintptr_t a22, uintptr_t a23, uintptr_t a24,
+    uintptr_t a25, uintptr_t a26, uintptr_t a27, uintptr_t a28, uintptr_t a29, uintptr_t a30, uintptr_t a31, uintptr_t a32
+) {
+    return a1 + a2 + a3 + a4 + a5 + a6 + a7 + a8 +
+           a9 + a10 + a11 + a12 + a13 + a14 + a15 + a16 +
+           a17 + a18 + a19 + a20 + a21 + a22 + a23 + a24 +
+           a25 + a26 + a27 + a28 + a29 + a30 + a31 + a32;
+}
+
+double stack_32_mixed_int_float(
+    uintptr_t a1, uintptr_t a2, uintptr_t a3, uintptr_t a4, uintptr_t a5, uintptr_t a6, uintptr_t a7, uintptr_t a8,
+    uintptr_t a9, uintptr_t a10, uintptr_t a11, uintptr_t a12, uintptr_t a13, uintptr_t a14, uintptr_t a15, uintptr_t a16,
+    double f1, double f2, double f3, double f4, double f5, double f6, double f7, double f8,
+    double f9, double f10, double f11, double f12, double f13, double f14, double f15, double f16
+) {
+    return (double)a1 * 1 + (double)a2 * 2 + (double)a3 * 3 + (double)a4 * 4 +
+           (double)a5 * 5 + (double)a6 * 6 + (double)a7 * 7 + (double)a8 * 8 +
+           (double)a9 * 9 + (double)a10 * 10 + (double)a11 * 11 + (double)a12 * 12 +
+           (double)a13 * 13 + (double)a14 * 14 + (double)a15 * 15 + (double)a16 * 16 +
+           f1 * 17 + f2 * 18 + f3 * 19 + f4 * 20 +
+           f5 * 21 + f6 * 22 + f7 * 23 + f8 * 24 +
+           f9 * 25 + f10 * 26 + f11 * 27 + f12 * 28 +
+           f13 * 29 + f14 * 30 + f15 * 31 + f16 * 32;
+}
