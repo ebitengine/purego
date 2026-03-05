@@ -8,7 +8,7 @@
 #include "go_asm.h"
 #include "funcdata.h"
 
-#define STACK_SIZE 80
+#define STACK_SIZE 224
 #define PTR_ADDRESS (STACK_SIZE - 8)
 
 // syscall15X calls a function in libc on behalf of the syscall package.
@@ -80,6 +80,40 @@ TEXT syscall15X(SB), NOSPLIT|NOFRAME, $0
 	MOVQ R12, 56(SP)                 // push a14
 	MOVQ syscall15Args_a15(R11), R12
 	MOVQ R12, 64(SP)                 // push a15
+	MOVQ syscall15Args_a16(R11), R12
+	MOVQ R12, 72(SP)                 // push a16
+	MOVQ syscall15Args_a17(R11), R12
+	MOVQ R12, 80(SP)                 // push a17
+	MOVQ syscall15Args_a18(R11), R12
+	MOVQ R12, 88(SP)                 // push a18
+	MOVQ syscall15Args_a19(R11), R12
+	MOVQ R12, 96(SP)                 // push a19
+	MOVQ syscall15Args_a20(R11), R12
+	MOVQ R12, 104(SP)                // push a20
+	MOVQ syscall15Args_a21(R11), R12
+	MOVQ R12, 112(SP)                // push a21
+	MOVQ syscall15Args_a22(R11), R12
+	MOVQ R12, 120(SP)                // push a22
+	MOVQ syscall15Args_a23(R11), R12
+	MOVQ R12, 128(SP)                // push a23
+	MOVQ syscall15Args_a24(R11), R12
+	MOVQ R12, 136(SP)                // push a24
+	MOVQ syscall15Args_a25(R11), R12
+	MOVQ R12, 144(SP)                // push a25
+	MOVQ syscall15Args_a26(R11), R12
+	MOVQ R12, 152(SP)                // push a26
+	MOVQ syscall15Args_a27(R11), R12
+	MOVQ R12, 160(SP)                // push a27
+	MOVQ syscall15Args_a28(R11), R12
+	MOVQ R12, 168(SP)                // push a28
+	MOVQ syscall15Args_a29(R11), R12
+	MOVQ R12, 176(SP)                // push a29
+	MOVQ syscall15Args_a30(R11), R12
+	MOVQ R12, 184(SP)                // push a30
+	MOVQ syscall15Args_a31(R11), R12
+	MOVQ R12, 192(SP)                // push a31
+	MOVQ syscall15Args_a32(R11), R12
+	MOVQ R12, 200(SP)                // push a32
 	XORL AX, AX                      // vararg: say "no float args"
 
 	MOVQ syscall15Args_fn(R11), R10 // fn
