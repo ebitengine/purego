@@ -373,8 +373,8 @@ func TestABI_ArgumentPassing(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.name == "20_int32" && (runtime.GOOS != "darwin" || runtime.GOARCH != "arm64") {
-				t.Skip("20 int32 arguments only supported on Darwin ARM64 with smart stack checking")
+			if tt.name == "20_int32" && runtime.GOOS == "windows" {
+				t.Skip("windows supports at most 15 arguments")
 			}
 			if tt.name == "10_float32" && (runtime.GOARCH == "loong64" || runtime.GOARCH == "ppc64le" || runtime.GOARCH == "riscv64" || runtime.GOARCH == "s390x") {
 				t.Skip("float32 stack arguments not yet supported on this platform")
@@ -394,39 +394,157 @@ func TestABI_ArgumentPassing(t *testing.T) {
 			}
 		})
 	}
-}
 
-func TestABI_TooManyArguments(t *testing.T) {
-	if runtime.GOOS != "darwin" || runtime.GOARCH != "arm64" {
-		t.Skip("This test is specific to Darwin ARM64")
-	}
+	t.Run("20_uintptr", func(t *testing.T) {
+		if runtime.GOOS == "windows" {
+			t.Skip("windows supports at most 15 arguments")
+		}
 
-	libFileName := filepath.Join(t.TempDir(), "abitest.so")
-	if err := buildSharedLib("CC", libFileName, filepath.Join("testdata", "abitest", "abi_test.c")); err != nil {
-		t.Fatal(err)
-	}
-	lib, err := load.OpenLibrary(libFileName)
-	if err != nil {
-		t.Fatalf("Failed to open library %q: %v", libFileName, err)
-	}
-	t.Cleanup(func() {
-		if err := load.CloseLibrary(lib); err != nil {
-			t.Errorf("Failed to close library: %v", err)
+		var fn func(uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr) uintptr
+		purego.RegisterLibFunc(&fn, lib, "stack_20_uintptr")
+		got := fn(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20)
+		const want = uintptr(210)
+		if got != want {
+			t.Fatalf("stack_20_uintptr: got %d, want %d", got, want)
 		}
 	})
 
-	// Test that 35 int64 arguments (27 slots needed) exceeds the limit
-	t.Run("35_int64_exceeds_limit", func(t *testing.T) {
+	t.Run("32_uintptr", func(t *testing.T) {
+		if runtime.GOOS == "windows" {
+			t.Skip("windows supports at most 15 arguments")
+		}
+
+		var fn func(
+			uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr,
+			uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr,
+			uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr,
+			uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr,
+		) uintptr
+		purego.RegisterLibFunc(&fn, lib, "stack_32_uintptr")
+		got := fn(
+			1, 2, 3, 4, 5, 6, 7, 8,
+			9, 10, 11, 12, 13, 14, 15, 16,
+			17, 18, 19, 20, 21, 22, 23, 24,
+			25, 26, 27, 28, 29, 30, 31, 32,
+		)
+		const want = uintptr(528)
+		if got != want {
+			t.Fatalf("stack_32_uintptr: got %d, want %d", got, want)
+		}
+	})
+
+	t.Run("syscalln_20_uintptr", func(t *testing.T) {
+		if runtime.GOOS == "windows" {
+			t.Skip("windows supports at most 15 arguments")
+		}
+
+		fn, err := load.OpenSymbol(lib, "stack_20_uintptr")
+		if err != nil {
+			t.Fatalf("OpenSymbol(stack_20_uintptr) failed: %v", err)
+		}
+		got, _, _ := purego.SyscallN(fn,
+			1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+			11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+		)
+		const want = uintptr(210)
+		if got != want {
+			t.Fatalf("stack_20_uintptr SyscallN: got %d, want %d", got, want)
+		}
+	})
+
+	t.Run("syscalln_32_uintptr", func(t *testing.T) {
+		if runtime.GOOS == "windows" {
+			t.Skip("windows supports at most 15 arguments")
+		}
+
+		fn, err := load.OpenSymbol(lib, "stack_32_uintptr")
+		if err != nil {
+			t.Fatalf("OpenSymbol(stack_32_uintptr) failed: %v", err)
+		}
+		got, _, _ := purego.SyscallN(fn,
+			1, 2, 3, 4, 5, 6, 7, 8,
+			9, 10, 11, 12, 13, 14, 15, 16,
+			17, 18, 19, 20, 21, 22, 23, 24,
+			25, 26, 27, 28, 29, 30, 31, 32,
+		)
+		const want = uintptr(528)
+		if got != want {
+			t.Fatalf("stack_32_uintptr SyscallN: got %d, want %d", got, want)
+		}
+	})
+
+	t.Run("32_mixed_int_float", func(t *testing.T) {
+		if runtime.GOOS == "windows" {
+			t.Skip("windows supports at most 15 arguments")
+		}
+		if unsafe.Sizeof(uintptr(0)) == 4 {
+			t.Skip("requires 64-bit uintptr slots")
+		}
+		if runtime.GOARCH == "ppc64le" {
+			t.Skip("mixed int/float stack arguments are not yet supported on ppc64le")
+		}
+
+		var fn func(
+			uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr,
+			uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr,
+			float64, float64, float64, float64, float64, float64, float64, float64,
+			float64, float64, float64, float64, float64, float64, float64, float64,
+		) float64
+		purego.RegisterLibFunc(&fn, lib, "stack_32_mixed_int_float")
+		got := fn(
+			1, 2, 3, 4, 5, 6, 7, 8,
+			9, 10, 11, 12, 13, 14, 15, 16,
+			1, 2, 3, 4, 5, 6, 7, 8,
+			9, 10, 11, 12, 13, 14, 15, 16,
+		)
+		const want = 5168.0
+		if got != want {
+			t.Fatalf("stack_32_mixed_int_float: got %f, want %f", got, want)
+		}
+	})
+}
+
+func TestABI_TooManyArguments(t *testing.T) {
+	mustPanic := func(t *testing.T, want string, f func()) {
+		t.Helper()
 		defer func() {
-			if r := recover(); r != nil {
-				t.Logf("Got expected panic: %v", r)
-			} else {
-				t.Errorf("Expected panic but didn't get one")
+			r := recover()
+			if r == nil {
+				t.Fatalf("expected panic %q, got none", want)
+			}
+			got := fmt.Sprint(r)
+			if got != want {
+				t.Fatalf("panic mismatch:\n  got:  %q\n  want: %q", got, want)
 			}
 		}()
+		f()
+	}
 
-		var fn func(*byte, uintptr, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64)
-		purego.RegisterLibFunc(&fn, lib, "stack_35_int64_exceeds")
+	// 33 int64 parameters exceeds maxArgs=32 on non-Windows targets.
+	// On Windows this is still an overflow because maxArgs is 15.
+	t.Run("registerfunc_33_int64_exceeds_limit", func(t *testing.T) {
+		mustPanic(t, "purego: too many stack arguments", func() {
+			var fn func(
+				int64, int64, int64, int64, int64, int64, int64, int64,
+				int64, int64, int64, int64, int64, int64, int64, int64,
+				int64, int64, int64, int64, int64, int64, int64, int64,
+				int64, int64, int64, int64, int64, int64, int64, int64,
+				int64,
+			)
+			purego.RegisterFunc(&fn, 1)
+		})
+	})
+
+	t.Run("syscalln_33_uintptr_exceeds_limit", func(t *testing.T) {
+		mustPanic(t, "purego: too many arguments to SyscallN", func() {
+			purego.SyscallN(1,
+				1, 2, 3, 4, 5, 6, 7, 8,
+				9, 10, 11, 12, 13, 14, 15, 16,
+				17, 18, 19, 20, 21, 22, 23, 24,
+				25, 26, 27, 28, 29, 30, 31, 32,
+				33,
+			)
+		})
 	})
 }
 
