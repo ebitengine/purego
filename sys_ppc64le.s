@@ -9,7 +9,7 @@
 
 // PPC64LE ELFv2 ABI:
 // - Integer args: R3-R10 (8 registers)
-// - Float args: F1-F8 (8 registers)
+// - Float args: F1-F13 (13 registers)
 // - Return: R3 (integer), F1 (float)
 // - Stack pointer: R1
 // - Link register: LR (special)
@@ -53,7 +53,7 @@ TEXT syscall15X(SB), NOSPLIT, $0
 	// R11 := args pointer (syscall15Args*)
 	MOVD R3, R11
 
-	// Load float args into F1-F8
+	// Load float args into F1-F13
 	FMOVD syscall15Args_f1(R11), F1
 	FMOVD syscall15Args_f2(R11), F2
 	FMOVD syscall15Args_f3(R11), F3
@@ -62,6 +62,11 @@ TEXT syscall15X(SB), NOSPLIT, $0
 	FMOVD syscall15Args_f6(R11), F6
 	FMOVD syscall15Args_f7(R11), F7
 	FMOVD syscall15Args_f8(R11), F8
+	FMOVD syscall15Args_f9(R11), F9
+	FMOVD syscall15Args_f10(R11), F10
+	FMOVD syscall15Args_f11(R11), F11
+	FMOVD syscall15Args_f12(R11), F12
+	FMOVD syscall15Args_f13(R11), F13
 
 	// Load integer args into R3-R10
 	MOVD syscall15Args_a1(R11), R3

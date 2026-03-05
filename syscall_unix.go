@@ -140,7 +140,6 @@ func callbackWrap(a *callbackArgs) {
 	// stackFrame points to stack-passed arguments. On most architectures this is
 	// contiguous with frame (after register args), but on ppc64le it's separate.
 	var stackFrame *[callbackMaxFrame]uintptr
-	isPPC64LE := runtime.GOARCH == "ppc64le"
 	if sf := a.stackFrame(); sf != nil {
 		// Only ppc64le uses separate stackArgs pointer due to NOSPLIT constraints
 		stackFrame = (*[callbackMaxFrame]uintptr)(sf)
@@ -199,7 +198,8 @@ func callbackWrap(a *callbackArgs) {
 				} else {
 					args[i] = reflect.NewAt(inType, unsafe.Pointer(&frame[floatsN])).Elem()
 				}
-				if isPPC64LE {
+				if runtime.GOARCH == "ppc64le" {
+					// ELFv2: each FPR-passed float also consumes a stack slot.
 					stackSlot += slots
 				}
 			}
@@ -242,6 +242,10 @@ func callbackWrap(a *callbackArgs) {
 					args[i] = callbackArgFromSlotBigEndian(unsafe.Pointer(&frame[pos]), inType)
 				} else {
 					args[i] = reflect.NewAt(inType, unsafe.Pointer(&frame[pos])).Elem()
+				}
+				if runtime.GOARCH == "ppc64le" {
+					// ELFv2: each GPR-passed int also consumes a stack slot.
+					stackSlot += slots
 				}
 			}
 			intsN += slots
