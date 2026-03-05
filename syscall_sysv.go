@@ -76,6 +76,9 @@ func compileCallback(fn any) uintptr {
 			if i == 0 && in.AssignableTo(reflect.TypeOf(CDecl{})) {
 				continue
 			}
+			if in.Size() <= ptrSize && isPointerLikeStruct(in) {
+				continue
+			}
 			fallthrough
 		case reflect.Interface, reflect.Func, reflect.Slice,
 			reflect.Chan, reflect.Complex64, reflect.Complex128,
@@ -187,8 +190,23 @@ func callbackWrap(a *callbackArgs) {
 			}
 			floatsN += slots
 		case reflect.Struct:
-			// This is the CDecl field
-			args[i] = reflect.Zero(inType)
+			if inType.AssignableTo(reflect.TypeOf(CDecl{})) {
+				args[i] = reflect.Zero(inType)
+				continue
+			}
+			slots = int((inType.Size() + ptrSize - 1) / ptrSize)
+			if intsN+slots > numOfIntegerRegisters() {
+				if runtime.GOOS == "darwin" && runtime.GOARCH == "arm64" {
+					args[i] = callbackArgFromStack(a.args, stackSlot, &stackByteOffset, inType)
+				} else {
+					args[i] = reflect.NewAt(inType, unsafe.Pointer(&frame[stackSlot])).Elem()
+					stackSlot += slots
+				}
+			} else {
+				pos := intsN + numOfFloatRegisters()
+				args[i] = reflect.NewAt(inType, unsafe.Pointer(&frame[pos])).Elem()
+			}
+			intsN += slots
 		default:
 			slots = int((inType.Size() + ptrSize - 1) / ptrSize)
 			if intsN+slots > numOfIntegerRegisters() {
@@ -286,6 +304,23 @@ func callbackArgFromSlotBigEndian(slotPtr unsafe.Pointer, inType reflect.Type) r
 	offset := 8 - size
 	ptr := unsafe.Add(slotPtr, offset)
 	return reflect.NewAt(inType, ptr).Elem()
+}
+
+// isPointerLikeStruct reports whether t is a struct whose leaf fields
+// total exactly one pointer-sized value.
+func isPointerLikeStruct(t reflect.Type) bool {
+	return flattenStructSize(t) == ptrSize
+}
+
+func flattenStructSize(t reflect.Type) uintptr {
+	if t.Kind() != reflect.Struct {
+		return t.Size()
+	}
+	var total uintptr
+	for i := 0; i < t.NumField(); i++ {
+		total += flattenStructSize(t.Field(i).Type)
+	}
+	return total
 }
 
 // callbackasmAddr returns address of runtime.callbackasm

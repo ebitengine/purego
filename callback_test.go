@@ -411,3 +411,28 @@ func TestCallbackFloat32StackPacking(t *testing.T) {
 		t.Errorf("callCallback12Float32() = %d, want %d", got, want)
 	}
 }
+
+func TestNewCallbackStructArg(t *testing.T) {
+	type Object struct{ Ptr unsafe.Pointer }
+	type Exception struct{ Object }
+
+	var got Exception
+	cb := purego.NewCallback(func(e Exception) { got = e })
+	if cb == 0 {
+		t.Fatal("NewCallback returned 0")
+	}
+
+	if runtime.GOOS != "darwin" {
+		t.Skipf("RegisterFunc struct args not supported on %s/%s", runtime.GOOS, runtime.GOARCH)
+	}
+
+	var marker byte
+	sentinel := unsafe.Pointer(&marker)
+	var fn func(Exception)
+	purego.RegisterFunc(&fn, cb)
+	fn(Exception{Object{sentinel}})
+
+	if got.Ptr != sentinel {
+		t.Errorf("struct callback arg: got %v, want %v", got.Ptr, sentinel)
+	}
+}
