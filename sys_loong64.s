@@ -7,7 +7,7 @@
 #include "go_asm.h"
 #include "funcdata.h"
 
-#define STACK_SIZE 64
+#define STACK_SIZE 208
 #define PTR_ADDRESS (STACK_SIZE - 8)
 
 // syscall15X calls a function in libc on behalf of the syscall package.
@@ -76,6 +76,40 @@ TEXT syscall15X(SB), NOSPLIT, $0
 	MOVV R12, 40(R3)
 	MOVV syscall15Args_a15(R13), R12
 	MOVV R12, 48(R3)
+	MOVV syscall15Args_a16(R13), R12
+	MOVV R12, 56(R3)
+	MOVV syscall15Args_a17(R13), R12
+	MOVV R12, 64(R3)
+	MOVV syscall15Args_a18(R13), R12
+	MOVV R12, 72(R3)
+	MOVV syscall15Args_a19(R13), R12
+	MOVV R12, 80(R3)
+	MOVV syscall15Args_a20(R13), R12
+	MOVV R12, 88(R3)
+	MOVV syscall15Args_a21(R13), R12
+	MOVV R12, 96(R3)
+	MOVV syscall15Args_a22(R13), R12
+	MOVV R12, 104(R3)
+	MOVV syscall15Args_a23(R13), R12
+	MOVV R12, 112(R3)
+	MOVV syscall15Args_a24(R13), R12
+	MOVV R12, 120(R3)
+	MOVV syscall15Args_a25(R13), R12
+	MOVV R12, 128(R3)
+	MOVV syscall15Args_a26(R13), R12
+	MOVV R12, 136(R3)
+	MOVV syscall15Args_a27(R13), R12
+	MOVV R12, 144(R3)
+	MOVV syscall15Args_a28(R13), R12
+	MOVV R12, 152(R3)
+	MOVV syscall15Args_a29(R13), R12
+	MOVV R12, 160(R3)
+	MOVV syscall15Args_a30(R13), R12
+	MOVV R12, 168(R3)
+	MOVV syscall15Args_a31(R13), R12
+	MOVV R12, 176(R3)
+	MOVV syscall15Args_a32(R13), R12
+	MOVV R12, 184(R3)
 
 	MOVV syscall15Args_fn(R13), R12
 	JAL  (R12)

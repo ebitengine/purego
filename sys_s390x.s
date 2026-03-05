@@ -24,14 +24,13 @@
 //
 // We need space for:
 // - 160 bytes standard frame (with register save area)
-// - Stack args a6-a15 (10 * 8 = 80 bytes)
+// - Stack args a6-a32 (27 * 8 = 216 bytes)
 // - Saved args pointer (8 bytes)
-// - Padding for alignment
-// Total: 264 bytes (rounded to 8-byte alignment)
+// Total: 384 bytes
 
-#define STACK_SIZE 264
+#define STACK_SIZE 384
 #define STACK_ARGS 160
-#define ARGP_SAVE  248
+#define ARGP_SAVE  376
 
 GLOBL ·syscall15XABI0(SB), NOPTR|RODATA, $8
 DATA ·syscall15XABI0(SB)/8, $syscall15X(SB)
@@ -65,7 +64,7 @@ TEXT syscall15X(SB), NOSPLIT, $0
 	MOVD syscall15Args_a4(R9), R5
 	MOVD syscall15Args_a5(R9), R6
 
-	// Spill remaining args (a6-a15) onto the stack at 160(R15)
+	// Spill remaining args (a6-a32) onto the stack at 160(R15)
 	MOVD ARGP_SAVE(R15), R9        // reload args pointer
 	MOVD syscall15Args_a6(R9), R1
 	MOVD R1, (STACK_ARGS+0*8)(R15)
@@ -87,6 +86,40 @@ TEXT syscall15X(SB), NOSPLIT, $0
 	MOVD R1, (STACK_ARGS+8*8)(R15)
 	MOVD syscall15Args_a15(R9), R1
 	MOVD R1, (STACK_ARGS+9*8)(R15)
+	MOVD syscall15Args_a16(R9), R1
+	MOVD R1, (STACK_ARGS+10*8)(R15)
+	MOVD syscall15Args_a17(R9), R1
+	MOVD R1, (STACK_ARGS+11*8)(R15)
+	MOVD syscall15Args_a18(R9), R1
+	MOVD R1, (STACK_ARGS+12*8)(R15)
+	MOVD syscall15Args_a19(R9), R1
+	MOVD R1, (STACK_ARGS+13*8)(R15)
+	MOVD syscall15Args_a20(R9), R1
+	MOVD R1, (STACK_ARGS+14*8)(R15)
+	MOVD syscall15Args_a21(R9), R1
+	MOVD R1, (STACK_ARGS+15*8)(R15)
+	MOVD syscall15Args_a22(R9), R1
+	MOVD R1, (STACK_ARGS+16*8)(R15)
+	MOVD syscall15Args_a23(R9), R1
+	MOVD R1, (STACK_ARGS+17*8)(R15)
+	MOVD syscall15Args_a24(R9), R1
+	MOVD R1, (STACK_ARGS+18*8)(R15)
+	MOVD syscall15Args_a25(R9), R1
+	MOVD R1, (STACK_ARGS+19*8)(R15)
+	MOVD syscall15Args_a26(R9), R1
+	MOVD R1, (STACK_ARGS+20*8)(R15)
+	MOVD syscall15Args_a27(R9), R1
+	MOVD R1, (STACK_ARGS+21*8)(R15)
+	MOVD syscall15Args_a28(R9), R1
+	MOVD R1, (STACK_ARGS+22*8)(R15)
+	MOVD syscall15Args_a29(R9), R1
+	MOVD R1, (STACK_ARGS+23*8)(R15)
+	MOVD syscall15Args_a30(R9), R1
+	MOVD R1, (STACK_ARGS+24*8)(R15)
+	MOVD syscall15Args_a31(R9), R1
+	MOVD R1, (STACK_ARGS+25*8)(R15)
+	MOVD syscall15Args_a32(R9), R1
+	MOVD R1, (STACK_ARGS+26*8)(R15)
 
 	// Call function
 	MOVD syscall15Args_fn(R9), R1

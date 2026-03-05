@@ -7,7 +7,7 @@
 #include "go_asm.h"
 #include "funcdata.h"
 
-#define STACK_SIZE 64
+#define STACK_SIZE 208
 #define PTR_ADDRESS (STACK_SIZE - 8)
 
 // syscall15X calls a function in libc on behalf of the syscall package.
@@ -75,6 +75,40 @@ TEXT syscall15X(SB), NOSPLIT, $0
 	MOVD R10, 40(RSP)               // push a14 onto stack
 	MOVD syscall15Args_a15(R9), R10
 	MOVD R10, 48(RSP)               // push a15 onto stack
+	MOVD syscall15Args_a16(R9), R10
+	MOVD R10, 56(RSP)               // push a16 onto stack
+	MOVD syscall15Args_a17(R9), R10
+	MOVD R10, 64(RSP)               // push a17 onto stack
+	MOVD syscall15Args_a18(R9), R10
+	MOVD R10, 72(RSP)               // push a18 onto stack
+	MOVD syscall15Args_a19(R9), R10
+	MOVD R10, 80(RSP)               // push a19 onto stack
+	MOVD syscall15Args_a20(R9), R10
+	MOVD R10, 88(RSP)               // push a20 onto stack
+	MOVD syscall15Args_a21(R9), R10
+	MOVD R10, 96(RSP)               // push a21 onto stack
+	MOVD syscall15Args_a22(R9), R10
+	MOVD R10, 104(RSP)              // push a22 onto stack
+	MOVD syscall15Args_a23(R9), R10
+	MOVD R10, 112(RSP)              // push a23 onto stack
+	MOVD syscall15Args_a24(R9), R10
+	MOVD R10, 120(RSP)              // push a24 onto stack
+	MOVD syscall15Args_a25(R9), R10
+	MOVD R10, 128(RSP)              // push a25 onto stack
+	MOVD syscall15Args_a26(R9), R10
+	MOVD R10, 136(RSP)              // push a26 onto stack
+	MOVD syscall15Args_a27(R9), R10
+	MOVD R10, 144(RSP)              // push a27 onto stack
+	MOVD syscall15Args_a28(R9), R10
+	MOVD R10, 152(RSP)              // push a28 onto stack
+	MOVD syscall15Args_a29(R9), R10
+	MOVD R10, 160(RSP)              // push a29 onto stack
+	MOVD syscall15Args_a30(R9), R10
+	MOVD R10, 168(RSP)              // push a30 onto stack
+	MOVD syscall15Args_a31(R9), R10
+	MOVD R10, 176(RSP)              // push a31 onto stack
+	MOVD syscall15Args_a32(R9), R10
+	MOVD R10, 184(RSP)              // push a32 onto stack
 
 	MOVD syscall15Args_fn(R9), R10 // fn
 	BL   (R10)
