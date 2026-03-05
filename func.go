@@ -253,10 +253,6 @@ func RegisterFunc(fptr any, cfn uintptr) {
 				if numFloats < floatArgRegs {
 					floats[numFloats] = x
 					numFloats++
-					if runtime.GOARCH == "ppc64le" {
-						// Keep stack indexing in sync with ppc64le callback decoding.
-						numStack++
-					}
 				} else {
 					addStack(x)
 				}
