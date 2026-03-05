@@ -204,13 +204,14 @@ func RegisterFunc(fptr any, cfn uintptr) {
 		}
 
 		argsLimit := maxArgs
-		if runtime.GOOS == "windows" {
-			argsLimit = 15
-		}
 		sizeOfStack := argsLimit - numOfIntegerRegisters()
-		// On Darwin ARM64, use byte-based validation since arguments pack efficiently.
-		// See https://developer.apple.com/documentation/xcode/writing-arm64-code-for-apple-platforms
-		if runtime.GOOS == "darwin" && runtime.GOARCH == "arm64" {
+		if runtime.GOOS == "windows" {
+			if ints+floats+stack > argsLimit {
+				panic("purego: too many stack arguments")
+			}
+		} else if runtime.GOOS == "darwin" && runtime.GOARCH == "arm64" {
+			// On Darwin ARM64, use byte-based validation since arguments pack efficiently.
+			// See https://developer.apple.com/documentation/xcode/writing-arm64-code-for-apple-platforms
 			stackBytes := estimateStackBytes(ty)
 			maxStackBytes := sizeOfStack * 8
 			if stackBytes > maxStackBytes {
@@ -267,6 +268,9 @@ func RegisterFunc(fptr any, cfn uintptr) {
 			// This is in contrast to how macOS and Linux pass arguments which
 			// tries to use as many registers as possible in the calling convention.
 			addStack = func(x uintptr) {
+				if numStack >= maxArgs {
+					panic("purego: too many stack arguments")
+				}
 				sysargs[numStack] = x
 				numStack++
 			}
@@ -332,10 +336,8 @@ func RegisterFunc(fptr any, cfn uintptr) {
 			runtime_cgocall(syscall15XABI0, unsafe.Pointer(syscall))
 		} else {
 			*syscall = syscall15Args{}
-			// This is a fallback for Windows amd64, 386, and arm. Note this may not support floats
-			syscall.a1, syscall.a2, _ = syscall_syscall15X(cfn, sysargs[0], sysargs[1], sysargs[2], sysargs[3], sysargs[4],
-				sysargs[5], sysargs[6], sysargs[7], sysargs[8], sysargs[9], sysargs[10], sysargs[11],
-				sysargs[12], sysargs[13], sysargs[14])
+			// This is a fallback for Windows amd64, 386, and arm.
+			syscall.a1, syscall.a2, _ = syscall_syscallN(cfn, sysargs[:numStack]...)
 			syscall.f1 = syscall.a2 // on amd64 a2 stores the float return. On 32bit platforms floats aren't support
 		}
 		if ty.NumOut() == 0 {
