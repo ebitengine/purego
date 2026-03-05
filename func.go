@@ -141,6 +141,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 		// to avoid crashing with too many arguments
 		var ints int
 		var floats int
+		floatArgRegs := numOfFloatRegisters()
 		var stack int
 		for i := 0; i < ty.NumIn(); i++ {
 			arg := ty.In(i)
@@ -167,7 +168,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 					stack++
 				}
 			case reflect.Float32, reflect.Float64:
-				if floats < numOfFloatRegisters() {
+				if floats < floatArgRegs {
 					floats++
 				} else {
 					stack++
@@ -202,7 +203,11 @@ func RegisterFunc(fptr any, cfn uintptr) {
 			}
 		}
 
-		sizeOfStack := maxArgs - numOfIntegerRegisters()
+		argsLimit := maxArgs
+		if runtime.GOOS == "windows" {
+			argsLimit = 15
+		}
+		sizeOfStack := argsLimit - numOfIntegerRegisters()
 		// On Darwin ARM64, use byte-based validation since arguments pack efficiently.
 		// See https://developer.apple.com/documentation/xcode/writing-arm64-code-for-apple-platforms
 		if runtime.GOOS == "darwin" && runtime.GOARCH == "arm64" {
@@ -224,6 +229,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 		// since numOfFloatRegisters() is a function call, not a constant.
 		// maxArgs is always greater than or equal to numOfFloatRegisters() so this is safe.
 		var floats [maxArgs]uintptr
+		floatArgRegs := numOfFloatRegisters()
 		var numInts int
 		var numFloats int
 		var numStack int
@@ -243,9 +249,13 @@ func RegisterFunc(fptr any, cfn uintptr) {
 				}
 			}
 			addFloat = func(x uintptr) {
-				if numFloats < numOfFloatRegisters() {
+				if numFloats < floatArgRegs {
 					floats[numFloats] = x
 					numFloats++
+					if runtime.GOARCH == "ppc64le" {
+						// Keep stack indexing in sync with ppc64le callback decoding.
+						numStack++
+					}
 				} else {
 					addStack(x)
 				}

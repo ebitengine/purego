@@ -8,17 +8,16 @@
 #include "funcdata.h"
 
 // Stack usage:
-//  0(SP)  - 56(SP):  stack args a9-a15 (7 * 8 bytes = 56)
-// 56(SP)  - 64(SP):  saved RA (x1)
-// 64(SP)  - 72(SP):  saved X9 (s1)
-// 72(SP)  - 80(SP):  saved X18 (s2)
-// 80(SP)  - 88(SP):  saved args pointer (original X10)
-// 88(SP)  - 96(SP):  padding
-#define STACK_SIZE 96
-#define SAVE_RA    56
-#define SAVE_X9    64
-#define SAVE_X18   72
-#define SAVE_ARGP  80
+//   0(SP)  - 192(SP): stack args a9-a32 (24 * 8 bytes)
+// 192(SP)  - 200(SP): saved RA (x1)
+// 200(SP)  - 208(SP): saved X9 (s1)
+// 208(SP)  - 216(SP): saved X18 (s2)
+// 216(SP)  - 224(SP): saved args pointer (original X10)
+#define STACK_SIZE 224
+#define SAVE_RA    192
+#define SAVE_X9    200
+#define SAVE_X18   208
+#define SAVE_ARGP  216
 
 GLOBL ·syscall15XABI0(SB), NOPTR|RODATA, $8
 DATA ·syscall15XABI0(SB)/8, $syscall15X(SB)
@@ -58,7 +57,7 @@ TEXT syscall15X(SB), NOSPLIT, $0
 	MOV syscall15Args_a7(X9), X16
 	MOV syscall15Args_a8(X9), X17
 
-	// Spill a9-a15 onto the stack (C ABI)
+	// Spill a9-a32 onto the stack (C ABI)
 	MOV syscall15Args_a9(X9), X18
 	MOV X18, 0(SP)
 	MOV syscall15Args_a10(X9), X18
@@ -73,6 +72,40 @@ TEXT syscall15X(SB), NOSPLIT, $0
 	MOV X18, 40(SP)
 	MOV syscall15Args_a15(X9), X18
 	MOV X18, 48(SP)
+	MOV syscall15Args_a16(X9), X18
+	MOV X18, 56(SP)
+	MOV syscall15Args_a17(X9), X18
+	MOV X18, 64(SP)
+	MOV syscall15Args_a18(X9), X18
+	MOV X18, 72(SP)
+	MOV syscall15Args_a19(X9), X18
+	MOV X18, 80(SP)
+	MOV syscall15Args_a20(X9), X18
+	MOV X18, 88(SP)
+	MOV syscall15Args_a21(X9), X18
+	MOV X18, 96(SP)
+	MOV syscall15Args_a22(X9), X18
+	MOV X18, 104(SP)
+	MOV syscall15Args_a23(X9), X18
+	MOV X18, 112(SP)
+	MOV syscall15Args_a24(X9), X18
+	MOV X18, 120(SP)
+	MOV syscall15Args_a25(X9), X18
+	MOV X18, 128(SP)
+	MOV syscall15Args_a26(X9), X18
+	MOV X18, 136(SP)
+	MOV syscall15Args_a27(X9), X18
+	MOV X18, 144(SP)
+	MOV syscall15Args_a28(X9), X18
+	MOV X18, 152(SP)
+	MOV syscall15Args_a29(X9), X18
+	MOV X18, 160(SP)
+	MOV syscall15Args_a30(X9), X18
+	MOV X18, 168(SP)
+	MOV syscall15Args_a31(X9), X18
+	MOV X18, 176(SP)
+	MOV syscall15Args_a32(X9), X18
+	MOV X18, 184(SP)
 
 	// Call fn
 	// IMPORTANT: preserve RA across this call (we saved it above)
