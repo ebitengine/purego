@@ -49,6 +49,33 @@ func TestRegisterFunc(t *testing.T) {
 	puts("Calling C from from Go without Cgo!")
 }
 
+func TestRegisterLibFunc_ArrayArgument(t *testing.T) {
+	library, err := getSystemLibrary()
+	if err != nil {
+		t.Fatalf("couldn't get system library: %s", err)
+	}
+	libc, err := load.OpenLibrary(library)
+	if err != nil {
+		t.Fatalf("failed to dlopen: %s", err)
+	}
+	var strlen func([6]byte) uintptr
+	purego.RegisterLibFunc(&strlen, libc, "strlen")
+	tests := []struct {
+		name string
+		arg  [6]byte
+		want uintptr
+	}{
+		{name: "hello", arg: [6]byte{'h', 'e', 'l', 'l', 'o', 0}, want: 5},
+		{name: "empty", arg: [6]byte{0, 0, 0, 0, 0, 0}, want: 0},
+	}
+	for _, tt := range tests {
+		got := strlen(tt.arg)
+		if got != tt.want {
+			t.Fatalf("%s: strlen failed. got %d but wanted %d", tt.name, got, tt.want)
+		}
+	}
+}
+
 func Test_qsort(t *testing.T) {
 	if runtime.GOARCH != "arm" && runtime.GOARCH != "arm64" && runtime.GOARCH != "386" && runtime.GOARCH != "amd64" && runtime.GOARCH != "loong64" && runtime.GOARCH != "ppc64le" && runtime.GOARCH != "riscv64" && runtime.GOARCH != "s390x" {
 		t.Skip("Platform doesn't support Floats")
