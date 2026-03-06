@@ -43,9 +43,11 @@ env GOOS=freebsd GOARCH=arm64 go build -gcflags="github.com/ebitengine/purego/in
 env GOOS=netbsd GOARCH=amd64 go build -v ./...
 env GOOS=netbsd GOARCH=arm64 go build -v ./...
 
-echo "=> go build (plugin)"
-# Make sure that plugin buildmode works since we save the R15 register (#254)
-go build -buildmode=plugin ./examples/libc
+if [ "$(uname)" = "FreeBSD" ]; then
+  echo "=> go build (plugin)"
+  # Make sure that plugin buildmode works since we save the R15 register (#254)
+  go build -buildmode=plugin ./examples/libc
+fi
 
 echo "=> go mod vendor"
 mkdir /tmp/vendoring

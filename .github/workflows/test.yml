@@ -251,16 +251,8 @@ jobs:
   bsd:
     strategy:
       matrix:
-        os: ['FreeBSD'] # TODO: Add 'NetBSD' again (#304)
-        go: ['1.18.10', '1.19.13', '1.20.14', '1.21.13', '1.22.12', '1.23.12', '1.24.13', '1.25.7', '1.26.0']
-        exclude:
-          # there are no prebuilt download links for these versions of Go for NetBSD
-          - os: NetBSD
-            go: '1.18.10'
-          - os: NetBSD
-            go: '1.19.13'
-          - os: NetBSD
-            go: '1.20.14'
+        os: ['FreeBSD', 'NetBSD']
+        go: ['1.25.8', '1.26.1']
     name: Test with Go ${{ matrix.go }} on ${{ matrix.os }}
     runs-on: ubuntu-22.04
     defaults:
