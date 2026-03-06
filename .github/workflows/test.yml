@@ -165,8 +165,9 @@ jobs:
   minor-arches:
     strategy:
       matrix:
-        # Test them only on the latest Go to reduce CI time.
-        go: ['1.26.x']
+        # Test only the latest two Go versions to save CI time.
+        # See https://go.dev/doc/devel/release#policy
+        go: ['1.25.x', '1.26.x']
     name: Test with Go ${{ matrix.go }} on Linux minor architectures
     runs-on: ubuntu-latest
     defaults:
@@ -252,6 +253,8 @@ jobs:
     strategy:
       matrix:
         os: ['FreeBSD', 'NetBSD']
+        # Test only the latest two Go versions to save CI time.
+        # See https://go.dev/doc/devel/release#policy
         go: ['1.25.8', '1.26.1']
     name: Test with Go ${{ matrix.go }} on ${{ matrix.os }}
     runs-on: ubuntu-22.04
