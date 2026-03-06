@@ -1,24 +1,18 @@
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-FileCopyrightText: 2022 The Ebitengine Authors
+// SPDX-FileCopyrightText: 2026 The Ebitengine Authors
 
-//go:build (!386 && !arm && windows) || ((amd64 || arm64) && (darwin || freebsd || linux || netbsd)) || (linux && (loong64 || ppc64le || riscv64 || s390x))
+//go:build !386 && !arm && !windows && (darwin || freebsd || linux || netbsd) && !(amd64 || arm64 || loong64 || ppc64le || riscv64 || s390x)
 
 package purego
 
-import (
-	"runtime"
-	"unsafe"
-)
-
 const (
-	maxArgs = 32
+	maxArgs = 15
 )
 
 type syscall15Args struct {
-	fn, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15                uintptr
-	a16, a17, a18, a19, a20, a21, a22, a23, a24, a25, a26, a27, a28, a29, a30, a31, a32 uintptr
-	f1, f2, f3, f4, f5, f6, f7, f8                                                      uintptr
-	arm64_r8                                                                            uintptr
+	fn, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15 uintptr
+	f1, f2, f3, f4, f5, f6, f7, f8                                       uintptr
+	arm64_r8                                                             uintptr
 }
 
 func (s *syscall15Args) Set(fn uintptr, ints []uintptr, floats []uintptr, r8 uintptr) {
@@ -38,23 +32,6 @@ func (s *syscall15Args) Set(fn uintptr, ints []uintptr, floats []uintptr, r8 uin
 	s.a13 = ints[12]
 	s.a14 = ints[13]
 	s.a15 = ints[14]
-	s.a16 = ints[15]
-	s.a17 = ints[16]
-	s.a18 = ints[17]
-	s.a19 = ints[18]
-	s.a20 = ints[19]
-	s.a21 = ints[20]
-	s.a22 = ints[21]
-	s.a23 = ints[22]
-	s.a24 = ints[23]
-	s.a25 = ints[24]
-	s.a26 = ints[25]
-	s.a27 = ints[26]
-	s.a28 = ints[27]
-	s.a29 = ints[28]
-	s.a30 = ints[29]
-	s.a31 = ints[30]
-	s.a32 = ints[31]
 	s.f1 = floats[0]
 	s.f2 = floats[1]
 	s.f3 = floats[2]
@@ -92,22 +69,8 @@ func SyscallN(fn uintptr, args ...uintptr) (r1, r2, err uintptr) {
 	if len(args) > maxArgs {
 		panic("purego: too many arguments to SyscallN")
 	}
-
-	// Windows uses syscall.SyscallN in syscall_windows.go.
-	if runtime.GOOS == "windows" {
-		return syscall_syscallN(fn, args...)
-	}
-
-	syscall := thePool.Get().(*syscall15Args)
-	defer thePool.Put(syscall)
-	*syscall = syscall15Args{}
-
 	// add padding so there is no out-of-bounds slicing
 	var tmp [maxArgs]uintptr
 	copy(tmp[:], args)
-	var floats [maxArgs]uintptr
-	copy(floats[:], tmp[:])
-	syscall.Set(fn, tmp[:], floats[:], 0)
-	runtime_cgocall(syscall15XABI0, unsafe.Pointer(syscall))
-	return syscall.a1, syscall.a2, syscall.a3
+	return syscall_syscall15X(fn, tmp[0], tmp[1], tmp[2], tmp[3], tmp[4], tmp[5], tmp[6], tmp[7], tmp[8], tmp[9], tmp[10], tmp[11], tmp[12], tmp[13], tmp[14])
 }
