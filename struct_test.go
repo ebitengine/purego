@@ -9,6 +9,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"reflect"
 	"runtime"
 	"testing"
 	"unsafe"
@@ -532,6 +533,41 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 	}
 }
 
+// TODO: this could use the iter.Seq interface when purego supports Go 1.23
+func nextFieldFn(v reflect.Value) func() (reflect.Value, bool) {
+	fieldIndex := 0
+	var tracker func() (reflect.Value, bool)
+	return func() (reflect.Value, bool) {
+		if v.NumField() == 0 {
+			return reflect.Value{}, false
+		}
+		if tracker != nil {
+			if field, ok := tracker(); ok {
+				return field, ok
+			}
+			tracker = nil
+		}
+		for fieldIndex < v.NumField() {
+			if v.Type().Field(fieldIndex).Name == "_" {
+				fieldIndex++
+				continue
+			}
+			field := v.Field(fieldIndex)
+			fieldIndex++
+			if field.Kind() == reflect.Struct {
+				tracker = nextFieldFn(field)
+				if inner, ok := tracker(); ok {
+					return inner, ok
+				}
+				tracker = nil
+			} else {
+				return field, true
+			}
+		}
+		return reflect.Value{}, false
+	}
+}
+
 func TestRegisterFunc_structReturns(t *testing.T) {
 	libFileName := filepath.Join(t.TempDir(), "structreturntest.so")
 	t.Logf("Build %v", libFileName)
@@ -545,321 +581,365 @@ func TestRegisterFunc_structReturns(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Dlopen(%q) failed: %v", libFileName, err)
 	}
+	implementations := []struct {
+		name     string
+		register func(fptr any, handle uintptr, name string)
+	}{
+		{
+			name:     "RegisterLibFunc",
+			register: purego.RegisterLibFunc,
+		},
+		{
+			name: "GoCallbackFunc",
+			register: func(fptr any, _ uintptr, _ string) {
+				fn := reflect.MakeFunc(reflect.TypeOf(fptr).Elem(), func(args []reflect.Value) []reflect.Value {
+					retType := reflect.TypeOf(fptr).Elem().Out(0)
+					ret := reflect.New(retType).Elem()
+					next := nextFieldFn(ret)
+					for _, a := range args {
+						field, ok := next()
+						if !ok {
+							panic("purego: no more fields")
+						}
+						field.Set(a)
+					}
+					return []reflect.Value{ret}
+				})
+				purego.RegisterFunc(fptr, purego.NewCallback(fn.Interface()))
+			},
+		},
+	}
+	for _, imp := range implementations {
+		imp := imp
+		t.Run(imp.name, func(t *testing.T) {
+			register := imp.register
+			{
+				type Empty struct{}
+				var ReturnEmpty func() Empty
+				register(&ReturnEmpty, lib, "ReturnEmpty")
+				ret := ReturnEmpty()
+				_ = ret
+			}
+			{
+				type inner struct{ A int16 }
+				type StructInStruct struct {
+					A inner
+					B inner
+					C inner
+				}
+				var ReturnStructInStruct func(a, b, c int16) StructInStruct
+				register(&ReturnStructInStruct, lib, "ReturnStructInStruct")
+				expected := StructInStruct{inner{^int16(0)}, inner{2}, inner{3}}
+				if ret := ReturnStructInStruct(^int16(0), 2, 3); ret != expected {
+					t.Fatalf("StructInStruct returned %+v wanted %+v", ret, expected)
+				}
+			}
+			{
+				type ThreeShorts struct{ A, B, C int16 }
+				var ReturnThreeShorts func(a, b, c int16) ThreeShorts
+				register(&ReturnThreeShorts, lib, "ReturnThreeShorts")
+				expected := ThreeShorts{^int16(0), 2, 3}
+				if ret := ReturnThreeShorts(^int16(0), 2, 3); ret != expected {
+					t.Fatalf("ReturnThreeShorts returned %+v wanted %+v", ret, expected)
+				}
+			}
+			{
+				type FourShorts struct{ A, B, C, D int16 }
+				var ReturnFourShorts func(a, b, c, d int16) FourShorts
+				register(&ReturnFourShorts, lib, "ReturnFourShorts")
+				expected := FourShorts{^int16(0), 2, 3, 4}
+				if ret := ReturnFourShorts(^int16(0), 2, 3, 4); ret != expected {
+					t.Fatalf("ReturnFourShorts returned %+v wanted %+v", ret, expected)
+				}
+			}
+			{
+				type OneLong struct{ A int64 }
+				var ReturnOneLong func(a int64) OneLong
+				register(&ReturnOneLong, lib, "ReturnOneLong")
+				expected := OneLong{5}
+				if ret := ReturnOneLong(5); ret != expected {
+					t.Fatalf("ReturnOneLong returned %+v wanted %+v", ret, expected)
+				}
+			}
+			{
+				type TwoLongs struct{ A, B int64 }
+				var ReturnTwoLongs func(a, b int64) TwoLongs
+				register(&ReturnTwoLongs, lib, "ReturnTwoLongs")
+				expected := TwoLongs{1, 2}
+				if ret := ReturnTwoLongs(1, 2); ret != expected {
+					t.Fatalf("ReturnTwoLongs returned %+v wanted %+v", ret, expected)
+				}
+			}
+			{
+				type ThreeLongs struct{ A, B, C int64 }
+				var ReturnThreeLongs func(a, b, c int64) ThreeLongs
+				register(&ReturnThreeLongs, lib, "ReturnThreeLongs")
+				expected := ThreeLongs{1, 2, 3}
+				if ret := ReturnThreeLongs(1, 2, 3); ret != expected {
+					t.Fatalf("ReturnThreeLongs returned %+v wanted %+v", ret, expected)
+				}
+			}
+			{
+				type OneFloat struct{ A float32 }
+				var ReturnOneFloat func(a float32) OneFloat
+				register(&ReturnOneFloat, lib, "ReturnOneFloat")
+				expected := OneFloat{1}
+				if ret := ReturnOneFloat(1); ret != expected {
+					t.Fatalf("ReturnOneFloat returned %+v wanted %+v", ret, expected)
+				}
+			}
+			{
+				type TwoFloats struct{ A, B float32 }
+				var ReturnTwoFloats func(a, b float32) TwoFloats
+				register(&ReturnTwoFloats, lib, "ReturnTwoFloats")
+				expected := TwoFloats{5, 2}
+				if ret := ReturnTwoFloats(5, 2); ret != expected {
+					t.Fatalf("ReturnTwoFloats returned %+v wanted %+v", ret, expected)
+				}
+			}
+			{
+				type ThreeFloats struct{ A, B, C float32 }
+				var ReturnThreeFloats func(a, b, c float32) ThreeFloats
+				register(&ReturnThreeFloats, lib, "ReturnThreeFloats")
+				expected := ThreeFloats{1, 2, 3}
+				if ret := ReturnThreeFloats(1, 2, 3); ret != expected {
+					t.Fatalf("ReturnThreeFloats returned %+v wanted %+v", ret, expected)
+				}
+			}
+			{
+				type FourFloats struct{ A, B, C, D float32 }
+				var ReturnFourFloats func(a, b, c, d float32) FourFloats
+				register(&ReturnFourFloats, lib, "ReturnFourFloats")
+				expected := FourFloats{1, 2, 3, 4}
+				if ret := ReturnFourFloats(1, 2, 3, 4); ret != expected {
+					t.Fatalf("ReturnFourFloats returned %+v wanted %+v", ret, expected)
+				}
+			}
+			{
+				type OneDouble struct{ A float64 }
+				var ReturnOneDouble func(a float64) OneDouble
+				register(&ReturnOneDouble, lib, "ReturnOneDouble")
+				expected := OneDouble{1}
+				if ret := ReturnOneDouble(1); ret != expected {
+					t.Fatalf("ReturnOneDouble returned %+v wanted %+v", ret, expected)
+				}
+			}
+			{
+				type TwoDoubles struct{ A, B float64 }
+				var ReturnTwoDoubles func(a, b float64) TwoDoubles
+				register(&ReturnTwoDoubles, lib, "ReturnTwoDoubles")
+				expected := TwoDoubles{7, 3}
+				if ret := ReturnTwoDoubles(7, 3); ret != expected {
+					t.Fatalf("ReturnTwoDoubles returned %+v wanted %+v", ret, expected)
+				}
+			}
+			{
+				type ThreeDoubles struct{ A, B, C float64 }
+				var ReturnThreeDoubles func(a, b, c float64) ThreeDoubles
+				register(&ReturnThreeDoubles, lib, "ReturnThreeDoubles")
+				expected := ThreeDoubles{1, 2, 3}
+				if ret := ReturnThreeDoubles(1, 2, 3); ret != expected {
+					t.Fatalf("ReturnThreeDoubles returned %+v wanted %+v", ret, expected)
+				}
+			}
+			{
+				type FourDoubles struct{ A, B, C, D float64 }
+				var ReturnFourDoubles func(a, b, c, d float64) FourDoubles
+				register(&ReturnFourDoubles, lib, "ReturnFourDoubles")
+				expected := FourDoubles{1, 2, 3, 4}
+				if ret := ReturnFourDoubles(1, 2, 3, 4); ret != expected {
+					t.Fatalf("ReturnFourDoubles returned %+v wanted %+v", ret, expected)
+				}
+			}
+			{
+				type FourDoublesInternal struct {
+					F struct{ A, B float64 }
+					G struct{ C, D float64 }
+				}
+				var ReturnFourDoublesInternal func(a, b, c, d float64) FourDoublesInternal
+				register(&ReturnFourDoublesInternal, lib, "ReturnFourDoublesInternal")
+				expected := FourDoublesInternal{F: struct{ A, B float64 }{A: 1, B: 2}, G: struct{ C, D float64 }{C: 3, D: 4}}
+				if ret := ReturnFourDoublesInternal(1, 2, 3, 4); ret != expected {
+					t.Fatalf("ReturnFourDoublesInternal returned %+v wanted %+v", ret, expected)
+				}
+			}
+			{
+				type FiveDoubles struct{ A, B, C, D, E float64 }
+				var ReturnFiveDoubles func(a, b, c, d, e float64) FiveDoubles
+				register(&ReturnFiveDoubles, lib, "ReturnFiveDoubles")
+				expected := FiveDoubles{1, 2, 3, 4, 5}
+				if ret := ReturnFiveDoubles(1, 2, 3, 4, 5); ret != expected {
+					t.Fatalf("ReturnFiveDoubles returned %+v wanted %+v", ret, expected)
+				}
+			}
+			{
+				type OneFloatOneDouble struct {
+					A float32
+					_ float32
+					B float64
+				}
+				var ReturnOneFloatOneDouble func(a float32, b float64) OneFloatOneDouble
+				register(&ReturnOneFloatOneDouble, lib, "ReturnOneFloatOneDouble")
+				expected := OneFloatOneDouble{A: 1, B: 2}
+				if ret := ReturnOneFloatOneDouble(1, 2); ret != expected {
+					t.Fatalf("ReturnOneFloatOneDouble returned %+v wanted %+v", ret, expected)
+				}
+			}
+			{
+				type OneDoubleOneFloat struct {
+					A float64
+					B float32
+				}
+				var ReturnOneDoubleOneFloat func(a float64, b float32) OneDoubleOneFloat
+				register(&ReturnOneDoubleOneFloat, lib, "ReturnOneDoubleOneFloat")
+				expected := OneDoubleOneFloat{1, 2}
+				if ret := ReturnOneDoubleOneFloat(1, 2); ret != expected {
+					t.Fatalf("ReturnOneDoubleOneFloat returned %+v wanted %+v", ret, expected)
+				}
+			}
+			{
+				type Unaligned1 struct {
+					A int8
+					_ [1]int8
+					B int16
+					_ [1]int32
+					C int64
+				}
+				var ReturnUnaligned1 func(a int8, b int16, c int64) Unaligned1
+				register(&ReturnUnaligned1, lib, "ReturnUnaligned1")
+				expected := Unaligned1{A: 1, B: 2, C: 3}
+				if ret := ReturnUnaligned1(1, 2, 3); ret != expected {
+					t.Fatalf("ReturnUnaligned1 returned %+v wanted %+v", ret, expected)
+				}
+			}
 
-	{
-		type Empty struct{}
-		var ReturnEmpty func() Empty
-		purego.RegisterLibFunc(&ReturnEmpty, lib, "ReturnEmpty")
-		ret := ReturnEmpty()
-		_ = ret
-	}
-	{
-		type inner struct{ a int16 }
-		type StructInStruct struct {
-			a inner
-			b inner
-			c inner
-		}
-		var ReturnStructInStruct func(a, b, c int16) StructInStruct
-		purego.RegisterLibFunc(&ReturnStructInStruct, lib, "ReturnStructInStruct")
-		expected := StructInStruct{inner{^int16(0)}, inner{2}, inner{3}}
-		if ret := ReturnStructInStruct(^int16(0), 2, 3); ret != expected {
-			t.Fatalf("StructInStruct returned %+v wanted %+v", ret, expected)
-		}
-	}
-	{
-		type ThreeShorts struct{ a, b, c int16 }
-		var ReturnThreeShorts func(a, b, c int16) ThreeShorts
-		purego.RegisterLibFunc(&ReturnThreeShorts, lib, "ReturnThreeShorts")
-		expected := ThreeShorts{^int16(0), 2, 3}
-		if ret := ReturnThreeShorts(^int16(0), 2, 3); ret != expected {
-			t.Fatalf("ReturnThreeShorts returned %+v wanted %+v", ret, expected)
-		}
-	}
-	{
-		type FourShorts struct{ a, b, c, d int16 }
-		var ReturnFourShorts func(a, b, c, d int16) FourShorts
-		purego.RegisterLibFunc(&ReturnFourShorts, lib, "ReturnFourShorts")
-		expected := FourShorts{^int16(0), 2, 3, 4}
-		if ret := ReturnFourShorts(^int16(0), 2, 3, 4); ret != expected {
-			t.Fatalf("ReturnFourShorts returned %+v wanted %+v", ret, expected)
-		}
-	}
-	{
-		type OneLong struct{ a int64 }
-		var ReturnOneLong func(a int64) OneLong
-		purego.RegisterLibFunc(&ReturnOneLong, lib, "ReturnOneLong")
-		expected := OneLong{5}
-		if ret := ReturnOneLong(5); ret != expected {
-			t.Fatalf("ReturnOneLong returned %+v wanted %+v", ret, expected)
-		}
-	}
-	{
-		type TwoLongs struct{ a, b int64 }
-		var ReturnTwoLongs func(a, b int64) TwoLongs
-		purego.RegisterLibFunc(&ReturnTwoLongs, lib, "ReturnTwoLongs")
-		expected := TwoLongs{1, 2}
-		if ret := ReturnTwoLongs(1, 2); ret != expected {
-			t.Fatalf("ReturnTwoLongs returned %+v wanted %+v", ret, expected)
-		}
-	}
-	{
-		type ThreeLongs struct{ a, b, c int64 }
-		var ReturnThreeLongs func(a, b, c int64) ThreeLongs
-		purego.RegisterLibFunc(&ReturnThreeLongs, lib, "ReturnThreeLongs")
-		expected := ThreeLongs{1, 2, 3}
-		if ret := ReturnThreeLongs(1, 2, 3); ret != expected {
-			t.Fatalf("ReturnThreeLongs returned %+v wanted %+v", ret, expected)
-		}
-	}
-	{
-		type OneFloat struct{ a float32 }
-		var ReturnOneFloat func(a float32) OneFloat
-		purego.RegisterLibFunc(&ReturnOneFloat, lib, "ReturnOneFloat")
-		expected := OneFloat{1}
-		if ret := ReturnOneFloat(1); ret != expected {
-			t.Fatalf("ReturnOneFloat returned %+v wanted %+v", ret, expected)
-		}
-	}
-	{
-		type TwoFloats struct{ a, b float32 }
-		var ReturnTwoFloats func(a, b float32) TwoFloats
-		purego.RegisterLibFunc(&ReturnTwoFloats, lib, "ReturnTwoFloats")
-		expected := TwoFloats{3, 10}
-		if ret := ReturnTwoFloats(5, 2); ret != expected {
-			t.Fatalf("ReturnTwoFloats returned %+v wanted %+v", ret, expected)
-		}
-	}
-	{
-		type ThreeFloats struct{ a, b, c float32 }
-		var ReturnThreeFloats func(a, b, c float32) ThreeFloats
-		purego.RegisterLibFunc(&ReturnThreeFloats, lib, "ReturnThreeFloats")
-		expected := ThreeFloats{1, 2, 3}
-		if ret := ReturnThreeFloats(1, 2, 3); ret != expected {
-			t.Fatalf("ReturnThreeFloats returned %+v wanted %+v", ret, expected)
-		}
-	}
-	{
-		type OneDouble struct{ a float64 }
-		var ReturnOneDouble func(a float64) OneDouble
-		purego.RegisterLibFunc(&ReturnOneDouble, lib, "ReturnOneDouble")
-		expected := OneDouble{1}
-		if ret := ReturnOneDouble(1); ret != expected {
-			t.Fatalf("ReturnOneDouble returned %+v wanted %+v", ret, expected)
-		}
-	}
-	{
-		type TwoDoubles struct{ a, b float64 }
-		var ReturnTwoDoubles func(a, b float64) TwoDoubles
-		purego.RegisterLibFunc(&ReturnTwoDoubles, lib, "ReturnTwoDoubles")
-		expected := TwoDoubles{1, 2}
-		if ret := ReturnTwoDoubles(1, 2); ret != expected {
-			t.Fatalf("ReturnTwoDoubles returned %+v wanted %+v", ret, expected)
-		}
-	}
-	{
-		type ThreeDoubles struct{ a, b, c float64 }
-		var ReturnThreeDoubles func(a, b, c float64) ThreeDoubles
-		purego.RegisterLibFunc(&ReturnThreeDoubles, lib, "ReturnThreeDoubles")
-		expected := ThreeDoubles{1, 2, 3}
-		if ret := ReturnThreeDoubles(1, 2, 3); ret != expected {
-			t.Fatalf("ReturnThreeDoubles returned %+v wanted %+v", ret, expected)
-		}
-	}
-	{
-		type FourDoubles struct{ a, b, c, d float64 }
-		var ReturnFourDoubles func(a, b, c, d float64) FourDoubles
-		purego.RegisterLibFunc(&ReturnFourDoubles, lib, "ReturnFourDoubles")
-		expected := FourDoubles{1, 2, 3, 4}
-		if ret := ReturnFourDoubles(1, 2, 3, 4); ret != expected {
-			t.Fatalf("ReturnFourDoubles returned %+v wanted %+v", ret, expected)
-		}
-	}
-	{
-		type FourDoublesInternal struct {
-			f struct{ a, b float64 }
-			g struct{ c, d float64 }
-		}
-		var ReturnFourDoublesInternal func(a, b, c, d float64) FourDoublesInternal
-		purego.RegisterLibFunc(&ReturnFourDoublesInternal, lib, "ReturnFourDoublesInternal")
-		expected := FourDoublesInternal{f: struct{ a, b float64 }{a: 1, b: 2}, g: struct{ c, d float64 }{c: 3, d: 4}}
-		if ret := ReturnFourDoublesInternal(1, 2, 3, 4); ret != expected {
-			t.Fatalf("ReturnFourDoublesInternal returned %+v wanted %+v", ret, expected)
-		}
-	}
-	{
-		type FiveDoubles struct{ a, b, c, d, e float64 }
-		var ReturnFiveDoubles func(a, b, c, d, e float64) FiveDoubles
-		purego.RegisterLibFunc(&ReturnFiveDoubles, lib, "ReturnFiveDoubles")
-		expected := FiveDoubles{1, 2, 3, 4, 5}
-		if ret := ReturnFiveDoubles(1, 2, 3, 4, 5); ret != expected {
-			t.Fatalf("ReturnFiveDoubles returned %+v wanted %+v", ret, expected)
-		}
-	}
-	{
-		type OneFloatOneDouble struct {
-			a float32
-			_ float32
-			b float64
-		}
-		var ReturnOneFloatOneDouble func(a float32, b float64) OneFloatOneDouble
-		purego.RegisterLibFunc(&ReturnOneFloatOneDouble, lib, "ReturnOneFloatOneDouble")
-		expected := OneFloatOneDouble{a: 1, b: 2}
-		if ret := ReturnOneFloatOneDouble(1, 2); ret != expected {
-			t.Fatalf("ReturnOneFloatOneDouble returned %+v wanted %+v", ret, expected)
-		}
-	}
-	{
-		type OneDoubleOneFloat struct {
-			a float64
-			b float32
-		}
-		var ReturnOneDoubleOneFloat func(a float64, b float32) OneDoubleOneFloat
-		purego.RegisterLibFunc(&ReturnOneDoubleOneFloat, lib, "ReturnOneDoubleOneFloat")
-		expected := OneDoubleOneFloat{1, 2}
-		if ret := ReturnOneDoubleOneFloat(1, 2); ret != expected {
-			t.Fatalf("ReturnOneDoubleOneFloat returned %+v wanted %+v", ret, expected)
-		}
-	}
-	{
-		type Unaligned1 struct {
-			a int8
-			_ [1]int8
-			b int16
-			_ [1]int32
-			c int64
-		}
-		var ReturnUnaligned1 func(a int8, b int16, c int64) Unaligned1
-		purego.RegisterLibFunc(&ReturnUnaligned1, lib, "ReturnUnaligned1")
-		expected := Unaligned1{a: 1, b: 2, c: 3}
-		if ret := ReturnUnaligned1(1, 2, 3); ret != expected {
-			t.Fatalf("ReturnUnaligned1 returned %+v wanted %+v", ret, expected)
-		}
-	}
-	{
-		type Mixed1 struct {
-			a float32
-			b int32
-		}
-		var ReturnMixed1 func(a float32, b int32) Mixed1
-		purego.RegisterLibFunc(&ReturnMixed1, lib, "ReturnMixed1")
-		expected := Mixed1{1, 2}
-		if ret := ReturnMixed1(1, 2); ret != expected {
-			t.Fatalf("ReturnMixed1 returned %+v wanted %+v", ret, expected)
-		}
-	}
-	{
-		type Mixed2 struct {
-			a float32
-			b int32
-			c float32
-			d int32
-		}
-		var ReturnMixed2 func(a float32, b int32, c float32, d int32) Mixed2
-		purego.RegisterLibFunc(&ReturnMixed2, lib, "ReturnMixed2")
-		expected := Mixed2{1, 2, 3, 4}
-		if ret := ReturnMixed2(1, 2, 3, 4); ret != expected {
-			t.Fatalf("ReturnMixed2 returned %+v wanted %+v", ret, expected)
-		}
-	}
-	{
-		type Mixed3 struct {
-			a float32
-			b uint32
-			c float64
-		}
-		var ReturnMixed3 func(a float32, b uint32, c float64) Mixed3
-		purego.RegisterLibFunc(&ReturnMixed3, lib, "ReturnMixed3")
-		expected := Mixed3{1, 2, 3}
-		if ret := ReturnMixed3(1, 2, 3); ret != expected {
-			t.Fatalf("ReturnMixed3 returned %+v wanted %+v", ret, expected)
-		}
-	}
-	{
-		type Mixed4 struct {
-			a float64
-			b uint32
-			c float32
-		}
-		var ReturnMixed4 func(a float64, b uint32, c float32) Mixed4
-		purego.RegisterLibFunc(&ReturnMixed4, lib, "ReturnMixed4")
-		expected := Mixed4{1, 2, 3}
-		if ret := ReturnMixed4(1, 2, 3); ret != expected {
-			t.Fatalf("ReturnMixed4 returned %+v wanted %+v", ret, expected)
-		}
-	}
-	{
-		type Mixed5 struct {
-			a *int64
-			b int32
-			c float32
-			d int32
-		}
-		var ReturnMixed5 func(a *int64, b int32, c float32, d int32) Mixed5
-		purego.RegisterLibFunc(&ReturnMixed5, lib, "ReturnMixed5")
-		ptr := new(int64)
-		expected := Mixed5{ptr, 1, 7.2, 9}
-		if ret := ReturnMixed5(ptr, 1, 7.2, 9); ret != expected {
-			t.Fatalf("ReturnMixed5 returned %+v wanted %+v", ret, expected)
-		}
-		runtime.KeepAlive(ptr)
-	}
-	{
-		type Mixed5 struct {
-			a *int64
-			b int32
-			c float32
-			d int32
-		}
-		var IdentityMixed5 func(m Mixed5) Mixed5
-		purego.RegisterLibFunc(&IdentityMixed5, lib, "IdentityMixed5")
-		ptr := new(int64)
-		expected := Mixed5{ptr, 1, 7.2, 9}
-		if ret := IdentityMixed5(expected); ret != expected {
-			t.Fatalf("IdentityMixed5 returned %+v wanted %+v", ret, expected)
-		}
-		runtime.KeepAlive(ptr)
-	}
-	{
-		type SmallBool struct {
-			a bool
-			b int32
-			c int64
-		}
-		var ReturnSmallBool func(a bool, b int32, c int64) SmallBool
-		purego.RegisterLibFunc(&ReturnSmallBool, lib, "ReturnSmallBool")
-		expected := SmallBool{true, 42, 123456789}
-		if ret := ReturnSmallBool(true, 42, 123456789); ret != expected {
-			t.Fatalf("ReturnSmallBool returned %+v wanted %+v", ret, expected)
-		}
-	}
-	{
-		type LargeBool struct {
-			a bool
-			b int32
-			c int64
-			d int64
-		}
-		var ReturnLargeBool func(a bool, b int32, c int64, d int64) LargeBool
-		purego.RegisterLibFunc(&ReturnLargeBool, lib, "ReturnLargeBool")
-		expected := LargeBool{false, -99, 987654321, 111222333444}
-		if ret := ReturnLargeBool(false, -99, 987654321, 111222333444); ret != expected {
-			t.Fatalf("ReturnLargeBool returned %+v wanted %+v", ret, expected)
-		}
-	}
-	{
-		type Ptr1 struct {
-			a *int64
-			b unsafe.Pointer
-		}
-		var ReturnPtr1 func(a *int64, b unsafe.Pointer) Ptr1
-		purego.RegisterLibFunc(&ReturnPtr1, lib, "ReturnPtr1")
-		a, b := new(int64), new(struct{})
-		expected := Ptr1{a, unsafe.Pointer(b)}
-		if ret := ReturnPtr1(a, unsafe.Pointer(b)); ret != expected {
-			t.Fatalf("ReturnPtr1 returned %+v wanted %+v", ret, expected)
-		}
-		runtime.KeepAlive(a)
-		runtime.KeepAlive(b)
+			{
+				type Mixed1 struct {
+					A float32
+					B int32
+				}
+				var ReturnMixed1 func(a float32, b int32) Mixed1
+				register(&ReturnMixed1, lib, "ReturnMixed1")
+				expected := Mixed1{1, 2}
+				if ret := ReturnMixed1(1, 2); ret != expected {
+					t.Fatalf("ReturnMixed1 returned %+v wanted %+v", ret, expected)
+				}
+			}
+			{
+				type Mixed2 struct {
+					A float32
+					B int32
+					C float32
+					D int32
+				}
+				var ReturnMixed2 func(a float32, b int32, c float32, d int32) Mixed2
+				register(&ReturnMixed2, lib, "ReturnMixed2")
+				expected := Mixed2{1, 2, 3, 4}
+				if ret := ReturnMixed2(1, 2, 3, 4); ret != expected {
+					t.Fatalf("ReturnMixed2 returned %+v wanted %+v", ret, expected)
+				}
+			}
+			{
+				type Mixed3 struct {
+					A float32
+					B uint32
+					C float64
+				}
+				var ReturnMixed3 func(a float32, b uint32, c float64) Mixed3
+				register(&ReturnMixed3, lib, "ReturnMixed3")
+				expected := Mixed3{1, 2, 3}
+				if ret := ReturnMixed3(1, 2, 3); ret != expected {
+					t.Fatalf("ReturnMixed3 returned %+v wanted %+v", ret, expected)
+				}
+			}
+			{
+				type Mixed4 struct {
+					A float64
+					B uint32
+					C float32
+				}
+				var ReturnMixed4 func(a float64, b uint32, c float32) Mixed4
+				register(&ReturnMixed4, lib, "ReturnMixed4")
+				expected := Mixed4{1, 2, 3}
+				if ret := ReturnMixed4(1, 2, 3); ret != expected {
+					t.Fatalf("ReturnMixed4 returned %+v wanted %+v", ret, expected)
+				}
+			}
+			{
+				type Mixed5 struct {
+					A *int64
+					B int32
+					C float32
+					D int32
+				}
+				var ReturnMixed5 func(a *int64, b int32, c float32, d int32) Mixed5
+				register(&ReturnMixed5, lib, "ReturnMixed5")
+				ptr := new(int64)
+				expected := Mixed5{ptr, 1, 7.2, 9}
+				if ret := ReturnMixed5(ptr, 1, 7.2, 9); ret != expected {
+					t.Fatalf("ReturnMixed5 returned %+v wanted %+v", ret, expected)
+				}
+				runtime.KeepAlive(ptr)
+			}
+			{
+				type Mixed5 struct {
+					A *int64
+					B int32
+					C float32
+					D int32
+				}
+				var IdentityMixed5 func(m Mixed5) Mixed5
+				// TODO: when struct args are supported in NewCallback use register() instead
+				purego.RegisterLibFunc(&IdentityMixed5, lib, "IdentityMixed5")
+				ptr := new(int64)
+				expected := Mixed5{ptr, 1, 7.2, 9}
+				if ret := IdentityMixed5(expected); ret != expected {
+					t.Fatalf("IdentityMixed5 returned %+v wanted %+v", ret, expected)
+				}
+				runtime.KeepAlive(ptr)
+			}
+			{
+				type SmallBool struct {
+					A bool
+					B int32
+					C int64
+				}
+				var ReturnSmallBool func(a bool, b int32, c int64) SmallBool
+				register(&ReturnSmallBool, lib, "ReturnSmallBool")
+				expected := SmallBool{true, 42, 123456789}
+				if ret := ReturnSmallBool(true, 42, 123456789); ret != expected {
+					t.Fatalf("ReturnSmallBool returned %+v wanted %+v", ret, expected)
+				}
+			}
+			{
+				type LargeBool struct {
+					A bool
+					B int32
+					C int64
+					D int64
+				}
+				var ReturnLargeBool func(a bool, b int32, c int64, d int64) LargeBool
+				register(&ReturnLargeBool, lib, "ReturnLargeBool")
+				expected := LargeBool{false, -99, 987654321, 111222333444}
+				if ret := ReturnLargeBool(false, -99, 987654321, 111222333444); ret != expected {
+					t.Fatalf("ReturnLargeBool returned %+v wanted %+v", ret, expected)
+				}
+			}
+			{
+				type Ptr1 struct {
+					a *int64
+					b unsafe.Pointer
+				}
+				var ReturnPtr1 func(a *int64, b unsafe.Pointer) Ptr1
+				purego.RegisterLibFunc(&ReturnPtr1, lib, "ReturnPtr1")
+				a, b := new(int64), new(struct{})
+				expected := Ptr1{a, unsafe.Pointer(b)}
+				if ret := ReturnPtr1(a, unsafe.Pointer(b)); ret != expected {
+					t.Fatalf("ReturnPtr1 returned %+v wanted %+v", ret, expected)
+				}
+				runtime.KeepAlive(a)
+				runtime.KeepAlive(b)
+			}
+		})
 	}
 }

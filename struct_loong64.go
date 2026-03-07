@@ -37,7 +37,7 @@ func getStruct(outType reflect.Type, syscall syscall15Args) (v reflect.Value) {
 				r1 = syscall.f1
 				r2 = syscall.f2
 			default:
-				panic("unreachable")
+				panic("not reached")
 			}
 		}
 		return reflect.NewAt(outType, unsafe.Pointer(&struct{ a, b uintptr }{r1, r2})).Elem()
@@ -210,4 +210,18 @@ func collectStackArgs(args []reflect.Value, startIdx int, numInts, numFloats int
 // bundleStackArgs is not used on loong64.
 func bundleStackArgs(stackArgs []reflect.Value, addStack func(uintptr)) {
 	panic("purego: bundleStackArgs should not be called on loong64")
+}
+
+func setStruct(a *callbackArgs, ret reflect.Value) {
+	outSize := ret.Type().Size()
+	switch {
+	case outSize == 0:
+		return
+	case outSize <= 8:
+		reflect.NewAt(ret.Type(), unsafe.Pointer(&a.result[0])).Elem().Set(ret)
+	default:
+		// Structs > 8 bytes are returned by hidden pointer.
+		// a.result[0] contains the pointer passed by the caller in the first integer register.
+		reflect.NewAt(ret.Type(), *(*unsafe.Pointer)(unsafe.Pointer(&a.result[0]))).Elem().Set(ret)
+	}
 }

@@ -75,7 +75,7 @@ struct TwoFloats{
 };
 
 struct TwoFloats ReturnTwoFloats(float a, float b) {
-    struct TwoFloats e = {a-b, a*b};
+    struct TwoFloats e = {a, b};
     return e;
 }
 
@@ -85,6 +85,15 @@ struct ThreeFloats{
 
 struct ThreeFloats ReturnThreeFloats(float a, float b, float c) {
     struct ThreeFloats e = {a, b, c};
+    return e;
+}
+
+struct FourFloats{
+    float a, b, c, d;
+};
+
+struct FourFloats ReturnFourFloats(float a, float b, float c, float d) {
+    struct FourFloats e = {a, b, c, d};
     return e;
 }
 

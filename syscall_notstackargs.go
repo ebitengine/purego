@@ -29,7 +29,7 @@ type callbackArgs struct {
 	// for this callback.
 	args unsafe.Pointer
 	// Below are out-args from callbackWrap
-	result uintptr
+	result [4]uintptr
 }
 
 func (c *callbackArgs) stackFrame() unsafe.Pointer {

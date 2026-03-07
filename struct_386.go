@@ -39,3 +39,7 @@ func collectStackArgs(args []reflect.Value, startIdx int, numInts, numFloats int
 func bundleStackArgs(stackArgs []reflect.Value, addStack func(uintptr)) {
 	panic("purego: bundleStackArgs should not be called on 386")
 }
+
+func setStruct(a *callbackArgs, ret reflect.Value) {
+	panic("purego: struct returns are not supported on 386")
+}

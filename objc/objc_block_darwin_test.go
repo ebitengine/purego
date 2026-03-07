@@ -59,7 +59,7 @@ func ExampleInvokeBlock() {
 		&vector{X: 6.7, Y: 8.9, Z: 0.1},
 	)
 
-	fmt.Println(*result, err)
+	fmt.Printf("{%.2f %.2f %.2f} %v\n", result.X, result.Y, result.Z, err)
 	// Output: {-39.82 30.14 -14.52} <nil>
 }
 

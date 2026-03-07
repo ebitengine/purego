@@ -29,7 +29,7 @@ type callbackArgs struct {
 	// for this callback.
 	args unsafe.Pointer
 	// Below are out-args from callbackWrap
-	result uintptr
+	result [1]uintptr
 	// stackArgs points to stack-passed arguments for architectures where
 	// they can't be made contiguous with register args (e.g., ppc64le).
 	// On other architectures, this is nil and stack args are read from
