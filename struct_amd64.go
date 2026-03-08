@@ -335,34 +335,36 @@ func setStruct(a *callbackArgs, ret reflect.Value) {
 // classifyEightbyte returns the SysV ABI class for the byte range [start, end)
 // within a type, by examining all scalar fields that overlap that range.
 func classifyEightbyte(t reflect.Type, start, end uintptr) int {
-	class := _NO_CLASS
-	classifyHelper(t, 0, start, end, &class)
-	return class
+	return doClassifyEightbyte(t, 0, start, end)
 }
 
-func classifyHelper(t reflect.Type, base, start, end uintptr, class *int) {
+func doClassifyEightbyte(t reflect.Type, base, start, end uintptr) int {
 	switch t.Kind() {
 	case reflect.Struct:
+		class := _NO_CLASS
 		for i := 0; i < t.NumField(); i++ {
 			f := t.Field(i)
-			classifyHelper(f.Type, base+f.Offset, start, end, class)
+			class |= doClassifyEightbyte(f.Type, base+f.Offset, start, end)
 		}
+		return class
 	case reflect.Array:
+		class := _NO_CLASS
 		elemSize := t.Elem().Size()
 		for i := 0; i < t.Len(); i++ {
-			classifyHelper(t.Elem(), base+uintptr(i)*elemSize, start, end, class)
+			class |= doClassifyEightbyte(t.Elem(), base+uintptr(i)*elemSize, start, end)
 		}
+		return class
 	default:
 		fStart := base
 		fEnd := base + t.Size()
 		if fStart >= end || fEnd <= start {
-			return
+			return _NO_CLASS
 		}
 		switch t.Kind() {
 		case reflect.Float32, reflect.Float64:
-			*class |= _SSE
+			return _SSE
 		default:
-			*class |= _INTEGER
+			return _INTEGER
 		}
 	}
 }
