@@ -73,10 +73,10 @@ func compileCallback(fn any) uintptr {
 		in := ty.In(i)
 		switch in.Kind() {
 		case reflect.Struct:
-			ensureStructSupported()
 			if i == 0 && in.AssignableTo(reflect.TypeOf(CDecl{})) {
 				continue
 			}
+			ensureStructSupported()
 			fallthrough
 		case reflect.Interface, reflect.Func, reflect.Slice,
 			reflect.Chan, reflect.Complex64, reflect.Complex128,
