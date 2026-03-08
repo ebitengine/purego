@@ -85,15 +85,5 @@ func bundleStackArgs(stackArgs []reflect.Value, addStack func(uintptr)) {
 }
 
 func setStruct(a *callbackArgs, ret reflect.Value) {
-	outSize := ret.Type().Size()
-	switch {
-	case outSize == 0:
-		return
-	case outSize <= 4:
-		reflect.NewAt(ret.Type(), unsafe.Pointer(&a.result[0])).Elem().Set(ret)
-	default:
-		// Structs > 4 bytes are returned by hidden pointer.
-		// a.result[0] contains the pointer passed by the caller.
-		reflect.NewAt(ret.Type(), *(*unsafe.Pointer)(unsafe.Pointer(&a.result[0]))).Elem().Set(ret)
-	}
+	panic("purego: struct returns are not supported on arm")
 }
