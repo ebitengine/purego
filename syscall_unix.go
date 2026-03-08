@@ -73,6 +73,7 @@ func compileCallback(fn any) uintptr {
 		in := ty.In(i)
 		switch in.Kind() {
 		case reflect.Struct:
+			ensureStructSupported()
 			if i == 0 && in.AssignableTo(reflect.TypeOf(CDecl{})) {
 				continue
 			}
