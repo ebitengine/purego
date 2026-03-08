@@ -142,6 +142,10 @@ func bundleStackArgs(stackArgs []reflect.Value, addStack func(uintptr)) {
 	panic("purego: bundleStackArgs should not be called on s390x")
 }
 
+func getCallbackStruct(inType reflect.Type, frame unsafe.Pointer, floatsN *int, intsN *int, stackSlot *int, stackByteOffset *uintptr) reflect.Value {
+	panic("purego: struct callback arguments are not supported on s390x")
+}
+
 func setStruct(a *callbackArgs, ret reflect.Value) {
 	panic("purego: struct returns are not supported on s390x")
 }

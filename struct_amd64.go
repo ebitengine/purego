@@ -6,6 +6,7 @@ package purego
 import (
 	"math"
 	"reflect"
+	"runtime"
 	"unsafe"
 )
 
@@ -283,6 +284,83 @@ func collectStackArgs(args []reflect.Value, startIdx int, numInts, numFloats int
 // bundleStackArgs is not used on amd64.
 func bundleStackArgs(stackArgs []reflect.Value, addStack func(uintptr)) {
 	panic("purego: bundleStackArgs should not be called on amd64")
+}
+
+// getCallbackStruct reads a struct argument from the callback frame on amd64.
+// It mirrors the SysV AMD64 ABI rules used by addStruct for the Go→C path.
+//
+// getCallbackStruct is only used on Unix. On Windows, callbacks are handled by
+// the runtime's own callback mechanism, so this function is compiled but unused.
+//
+// SysV AMD64 struct argument passing rules:
+//   - Struct > 16 bytes (postMerger): passed on the stack as raw bytes
+//   - Struct ≤ 16 bytes: classify each eightbyte (INTEGER or SSE),
+//     read from the appropriate register class
+//   - If not enough registers for all eightbytes: entire struct goes on the stack
+func getCallbackStruct(inType reflect.Type, frame unsafe.Pointer, floatsN *int, intsN *int, stackSlot *int, stackByteOffset *uintptr) reflect.Value {
+	switch runtime.GOOS {
+	case "darwin", "freebsd", "linux", "netbsd":
+	default:
+		panic("purego: getCallbackStruct is not supported on " + runtime.GOOS)
+	}
+
+	f := (*[callbackMaxFrame]uintptr)(frame)
+	size := inType.Size()
+
+	// Structs > 16 bytes are passed on the stack as raw bytes (SysV ABI MEMORY class).
+	if postMerger(inType) {
+		numSlots := int((size + 7) / 8)
+		v := reflect.NewAt(inType, unsafe.Pointer(&f[*stackSlot])).Elem()
+		*stackSlot += numSlots
+		return v
+	}
+
+	// Struct ≤ 16 bytes: classify each eightbyte and read from the appropriate register.
+	numEightbytes := int((size + 7) / 8)
+
+	// Count how many integer and SSE registers this struct needs.
+	var needInts, needFloats int
+	for i := 0; i < numEightbytes; i++ {
+		class := classifyEightbyte(inType, uintptr(i)*8, uintptr(i)*8+8)
+		if class == _SSE {
+			needFloats++
+		} else {
+			needInts++
+		}
+	}
+
+	// If not enough registers for all eightbytes, the entire struct goes on the stack.
+	if *intsN+needInts > numOfIntegerRegisters() || *floatsN+needFloats > numOfFloatRegisters() {
+		v := reflect.NewAt(inType, unsafe.Pointer(&f[*stackSlot])).Elem()
+		*stackSlot += numEightbytes
+		return v
+	}
+
+	// Read each eightbyte from its appropriate register class.
+	var r1, r2 uintptr
+	for i := 0; i < numEightbytes; i++ {
+		class := classifyEightbyte(inType, uintptr(i)*8, uintptr(i)*8+8)
+		if class == _SSE {
+			if i == 0 {
+				r1 = f[*floatsN]
+			} else {
+				r2 = f[*floatsN]
+			}
+			*floatsN++
+		} else {
+			if i == 0 {
+				r1 = f[numOfFloatRegisters()+*intsN]
+			} else {
+				r2 = f[numOfFloatRegisters()+*intsN]
+			}
+			*intsN++
+		}
+	}
+
+	if numEightbytes == 1 {
+		return reflect.NewAt(inType, unsafe.Pointer(&struct{ a uintptr }{r1})).Elem()
+	}
+	return reflect.NewAt(inType, unsafe.Pointer(&struct{ a, b uintptr }{r1, r2})).Elem()
 }
 
 func setStruct(a *callbackArgs, ret reflect.Value) {

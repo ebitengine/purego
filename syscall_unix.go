@@ -77,7 +77,8 @@ func compileCallback(fn any) uintptr {
 				continue
 			}
 			ensureStructSupported()
-			fallthrough
+			checkStructFieldsSupported(in)
+			continue
 		case reflect.Interface, reflect.Func, reflect.Slice,
 			reflect.Chan, reflect.Complex64, reflect.Complex128,
 			reflect.String, reflect.Map, reflect.Invalid:
@@ -196,8 +197,16 @@ func callbackWrap(a *callbackArgs) {
 			}
 			floatsN += slots
 		case reflect.Struct:
-			// This is the CDecl field
-			args[i] = reflect.Zero(inType)
+			if i == 0 && inType.AssignableTo(reflect.TypeOf(CDecl{})) {
+				args[i] = reflect.Zero(inType)
+				continue
+			}
+			if inType.Size() == 0 {
+				args[i] = reflect.New(inType).Elem()
+				continue
+			}
+			args[i] = getCallbackStruct(inType, a.args, &floatsN, &intsN, &stackSlot, &stackByteOffset)
+			continue
 		default:
 			slots = int((inType.Size() + ptrSize - 1) / ptrSize)
 			if intsN+slots > numOfIntegerRegisters() {
