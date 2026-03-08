@@ -535,7 +535,7 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 
 // TODO: this could use the iter.Seq interface when purego supports Go 1.23
 func nextFieldFn(v reflect.Value) func() (reflect.Value, bool) {
-	fieldIndex := 0
+	var fieldIndex int
 	var tracker func() (reflect.Value, bool)
 	return func() (reflect.Value, bool) {
 		if v.NumField() == 0 {
