@@ -24,10 +24,6 @@ func getStruct(outType reflect.Type, syscall syscall15Args) (v reflect.Value) {
 		if isAllFloats, numFields := isAllSameFloat(outType); isAllFloats {
 			r1 = syscall.f1
 			if numFields == 2 {
-				// Pack two float32 values into one uintptr.
-				// The math.MaxUint32 mask is not strictly necessary since the
-				// assembly reads float32 values from 32-bit S registers, which
-				// zero the upper 32 bits, but it makes the intent explicit.
 				r1 = syscall.f2<<32 | syscall.f1&math.MaxUint32
 			}
 		}
@@ -35,10 +31,6 @@ func getStruct(outType reflect.Type, syscall syscall15Args) (v reflect.Value) {
 	case outSize <= 16:
 		r1, r2 := syscall.a1, syscall.a2
 		if isAllFloats, numFields := isAllSameFloat(outType); isAllFloats {
-			// Pack two float32 values into one uintptr where needed.
-			// The math.MaxUint32 mask is not strictly necessary since the
-			// assembly reads float32 values from 32-bit S registers, which
-			// zero the upper 32 bits, but it makes the intent explicit.
 			switch numFields {
 			case 4:
 				r1 = syscall.f2<<32 | syscall.f1&math.MaxUint32
