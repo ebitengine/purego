@@ -24,7 +24,7 @@ func getStruct(outType reflect.Type, syscall syscall15Args) (v reflect.Value) {
 		if isAllFloats, numFields := isAllSameFloat(outType); isAllFloats {
 			r1 = syscall.f1
 			if numFields == 2 {
-				r1 = syscall.f2<<32 | syscall.f1
+				r1 = syscall.f2<<32 | syscall.f1&math.MaxUint32
 			}
 		}
 		return reflect.NewAt(outType, unsafe.Pointer(&struct{ a uintptr }{r1})).Elem()
@@ -33,16 +33,16 @@ func getStruct(outType reflect.Type, syscall syscall15Args) (v reflect.Value) {
 		if isAllFloats, numFields := isAllSameFloat(outType); isAllFloats {
 			switch numFields {
 			case 4:
-				r1 = syscall.f2<<32 | syscall.f1
-				r2 = syscall.f4<<32 | syscall.f3
+				r1 = syscall.f2<<32 | syscall.f1&math.MaxUint32
+				r2 = syscall.f4<<32 | syscall.f3&math.MaxUint32
 			case 3:
-				r1 = syscall.f2<<32 | syscall.f1
+				r1 = syscall.f2<<32 | syscall.f1&math.MaxUint32
 				r2 = syscall.f3
 			case 2:
 				r1 = syscall.f1
 				r2 = syscall.f2
 			default:
-				panic("unreachable")
+				panic("not reached")
 			}
 		}
 		return reflect.NewAt(outType, unsafe.Pointer(&struct{ a, b uintptr }{r1, r2})).Elem()
@@ -54,7 +54,7 @@ func getStruct(outType reflect.Type, syscall syscall15Args) (v reflect.Value) {
 			case 3:
 				return reflect.NewAt(outType, unsafe.Pointer(&struct{ a, b, c uintptr }{syscall.f1, syscall.f2, syscall.f3})).Elem()
 			default:
-				panic("unreachable")
+				panic("not reached")
 			}
 		}
 		// create struct from the Go pointer created in arm64_r8
@@ -546,4 +546,48 @@ func bundleStackArgs(stackArgs []reflect.Value, addStack func(uintptr)) {
 	ptr := unsafe.Pointer(structInstance.Addr().Pointer())
 	size := structType.Size()
 	copyStruct8ByteChunks(ptr, size, addStack)
+}
+
+func setStruct(a *callbackArgs, ret reflect.Value) {
+	outSize := ret.Type().Size()
+	switch {
+	case outSize == 0:
+		return
+	case outSize <= 8:
+		reflect.NewAt(ret.Type(), unsafe.Pointer(&a.result)).Elem().Set(ret)
+		if isAllFloats, numFields := isAllSameFloat(ret.Type()); isAllFloats && numFields == 2 {
+			a.result[1] = a.result[0] >> 32 // expanding two float32s into a.result[0] and a.result[1]
+			a.result[0] &= math.MaxUint32   // clear the top bits since they contain the second argument
+		}
+		return
+	case outSize <= 16:
+		reflect.NewAt(ret.Type(), unsafe.Pointer(&a.result)).Elem().Set(ret)
+		if isAllFloats, numFields := isAllSameFloat(ret.Type()); isAllFloats {
+			switch numFields {
+			case 4:
+				a.result[3] = a.result[1] >> 32
+				a.result[2] = a.result[1] & math.MaxUint32
+				a.result[1] = a.result[0] >> 32
+				a.result[0] &= math.MaxUint32
+			case 3:
+				a.result[2] = a.result[1] & math.MaxUint32
+				a.result[1] = a.result[0] >> 32
+				a.result[0] &= math.MaxUint32
+			case 2:
+				// two float64s are already in a.result[0] and a.result[1]
+			default:
+				panic("not reached")
+			}
+		}
+		return
+	default:
+		if isAllFloats, numFields := isAllSameFloat(ret.Type()); isAllFloats && numFields <= 4 {
+			reflect.NewAt(ret.Type(), unsafe.Pointer(&a.result)).Elem().Set(ret)
+			return
+		}
+		// The caller passed the address to place the return struct,
+		// so copy the Go struct into the provided memory.
+		reflect.NewAt(ret.Type(), *(*unsafe.Pointer)(unsafe.Pointer(&a.result[0]))).Elem().Set(ret)
+		return
+	}
 }

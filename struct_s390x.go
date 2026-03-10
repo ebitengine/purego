@@ -139,5 +139,9 @@ func collectStackArgs(
 }
 
 func bundleStackArgs(stackArgs []reflect.Value, addStack func(uintptr)) {
-	panic("bundleStackArgs not supported on S390X")
+	panic("purego: bundleStackArgs should not be called on s390x")
+}
+
+func setStruct(a *callbackArgs, ret reflect.Value) {
+	panic("purego: struct returns are not supported on s390x")
 }

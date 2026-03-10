@@ -140,7 +140,7 @@ TEXT callbackasm1(SB), NOSPLIT|NOFRAME, $0
 	SUBQ $(24+callbackArgs__size), SP
 	MOVQ AX, (24+callbackArgs_index)(SP)  // callback index
 	MOVQ R8, (24+callbackArgs_args)(SP)   // address of args vector
-	MOVQ $0, (24+callbackArgs_result)(SP) // result
+	MOVQ DI, (24+callbackArgs_result)(SP) // result
 	LEAQ 24(SP), AX                       // take the address of callbackArgs
 
 	// Call cgocallback, which will call callbackWrap(frame).
@@ -153,7 +153,12 @@ TEXT callbackasm1(SB), NOSPLIT|NOFRAME, $0
 
 	// Get callback result.
 	MOVQ (24+callbackArgs_result)(SP), AX
-	ADDQ $(24+callbackArgs__size), SP     // remove callbackArgs struct
+	MOVQ (24+callbackArgs_result+8)(SP), DX
+	// Restore XMM0/XMM1 from result[2]/result[3] for struct eightbytes
+	// classified as SSE by the SysV ABI.
+	MOVQ (24+callbackArgs_result+16)(SP), X0
+	MOVQ (24+callbackArgs_result+24)(SP), X1
+	ADDQ $(24+callbackArgs__size), SP      // remove callbackArgs struct
 
 	POP_REGS_HOST_TO_ABI0()
 

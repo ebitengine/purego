@@ -284,3 +284,87 @@ func collectStackArgs(args []reflect.Value, startIdx int, numInts, numFloats int
 func bundleStackArgs(stackArgs []reflect.Value, addStack func(uintptr)) {
 	panic("purego: bundleStackArgs should not be called on amd64")
 }
+
+func setStruct(a *callbackArgs, ret reflect.Value) {
+	outSize := ret.Type().Size()
+	switch {
+	case outSize == 0:
+		return
+	case outSize <= 16:
+		// Copy the struct's raw bytes (including padding) into a buffer.
+		var buf [2]uintptr
+		reflect.NewAt(ret.Type(), unsafe.Pointer(&buf[0])).Elem().Set(ret)
+		// Classify each eightbyte by the SysV ABI rules (§3.2.3, rule 4d
+		// of https://refspecs.linuxbase.org/elf/x86_64-abi-0.99.pdf).
+		// INTEGER wins over SSE for mixed eightbytes. Place INTEGER eightbytes in
+		// result[0]/result[1] (AX/DX) and SSE eightbytes in result[2]/result[3]
+		// (XMM0/XMM1).
+		// Assign each eightbyte to the next available register of the
+		// appropriate class. The ABI counts integer (AX, DX) and SSE
+		// (XMM0, XMM1) return registers independently.
+		var numInts int
+		var numFloats int
+		for i := 0; i < 2 && uintptr(i)*8 < outSize; i++ {
+			class := classifyEightbyte(ret.Type(), uintptr(i)*8, uintptr(i)*8+8)
+			if class == _SSE {
+				switch numFloats {
+				case 0:
+					a.result[2] = buf[i]
+				case 1:
+					a.result[3] = buf[i]
+				}
+				numFloats++
+			} else {
+				switch numInts {
+				case 0:
+					a.result[0] = buf[i]
+				case 1:
+					a.result[1] = buf[i]
+				}
+				numInts++
+			}
+		}
+	default:
+		// Structs > 16 bytes are returned by hidden pointer.
+		// a.result[0] contains the pointer passed by the caller in RDI.
+		// Write the struct through this pointer.
+		reflect.NewAt(ret.Type(), *(*unsafe.Pointer)(unsafe.Pointer(&a.result[0]))).Elem().Set(ret)
+	}
+}
+
+// classifyEightbyte returns the SysV ABI class for the byte range [start, end)
+// within a type, by examining all scalar fields that overlap that range.
+func classifyEightbyte(t reflect.Type, start, end uintptr) int {
+	return doClassifyEightbyte(t, 0, start, end)
+}
+
+func doClassifyEightbyte(t reflect.Type, base, start, end uintptr) int {
+	switch t.Kind() {
+	case reflect.Struct:
+		class := _NO_CLASS
+		for i := 0; i < t.NumField(); i++ {
+			f := t.Field(i)
+			class |= doClassifyEightbyte(f.Type, base+f.Offset, start, end)
+		}
+		return class
+	case reflect.Array:
+		class := _NO_CLASS
+		elemSize := t.Elem().Size()
+		for i := 0; i < t.Len(); i++ {
+			class |= doClassifyEightbyte(t.Elem(), base+uintptr(i)*elemSize, start, end)
+		}
+		return class
+	default:
+		fStart := base
+		fEnd := base + t.Size()
+		if fStart >= end || fEnd <= start {
+			return _NO_CLASS
+		}
+		switch t.Kind() {
+		case reflect.Float32, reflect.Float64:
+			return _SSE
+		default:
+			return _INTEGER
+		}
+	}
+}
