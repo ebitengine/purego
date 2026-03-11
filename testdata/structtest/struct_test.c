@@ -391,3 +391,70 @@ struct TwoPointers {
 uintptr_t AddPointers(struct TwoPointers wrapper) {
     return (uintptr_t)wrapper.ptr1 + (uintptr_t)wrapper.ptr2;
 }
+
+// Identity functions for round-trip testing of struct arguments
+
+struct OneInt64 {
+    long long a;
+};
+
+struct OneInt64 IdentityOneInt64(struct OneInt64 s) {
+    return s;
+}
+
+struct IntLessThan16Bytes IdentityIntLessThan16Bytes(struct IntLessThan16Bytes s) {
+    return s;
+}
+
+struct TwoDoubleStruct IdentityTwoDoubleStruct(struct TwoDoubleStruct s) {
+    return s;
+}
+
+struct FourFloat32 {
+    float a, b, c, d;
+};
+
+struct FourFloat32 IdentityFourFloat32(struct FourFloat32 s) {
+    return s;
+}
+
+struct FloatAndInt IdentityFloatAndInt(struct FloatAndInt s) {
+    return s;
+}
+
+struct ThreeInt64 {
+    long long a, b, c;
+};
+
+struct ThreeInt64 IdentityThreeInt64(struct ThreeInt64 s) {
+    return s;
+}
+
+struct PtrInt64Ptr {
+    long long *a;
+    long long b;
+    long long *c;
+};
+
+struct PtrInt64Ptr IdentityPtrInt64Ptr(struct PtrInt64Ptr s) {
+    return s;
+}
+
+struct IntLessThan16Bytes IdentityTwoInt64AfterPrims(long long x, double y, struct IntLessThan16Bytes s) {
+    return s;
+}
+
+struct FloatLessThan16Bytes IdentityTwoFloat32AfterFloats(double x, double y, struct FloatLessThan16Bytes s) {
+    return s;
+}
+
+struct Mixed5Args {
+    long long *a;
+    int32_t b;
+    float c;
+    int32_t d;
+};
+
+struct Mixed5Args IdentityMixed5Args(struct Mixed5Args s) {
+    return s;
+}

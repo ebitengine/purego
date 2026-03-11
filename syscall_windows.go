@@ -6,6 +6,7 @@ package purego
 import (
 	"reflect"
 	"syscall"
+	"unsafe"
 )
 
 var syscall15XABI0 uintptr
@@ -43,4 +44,11 @@ func NewCallback(fn any) uintptr {
 
 func loadSymbol(handle uintptr, name string) (uintptr, error) {
 	return syscall.GetProcAddress(syscall.Handle(handle), name)
+}
+
+// callbackMaxFrame is a stub definition.
+const callbackMaxFrame = 0
+
+func callbackArgFromStack(argsBase unsafe.Pointer, stackSlot int, stackByteOffset *uintptr, inType reflect.Type) reflect.Value {
+	panic("purego: callbackArgFromStack should not be called on windows")
 }
