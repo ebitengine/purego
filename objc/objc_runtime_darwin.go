@@ -707,3 +707,34 @@ func clone[S ~[]E, E any](s S) S {
 	// zero-length slice of a large array; see https://go.dev/issue/68488.
 	return append(S{}, s...)
 }
+
+var (
+	selIsKindOf   SEL
+	selUTF8String SEL
+
+	classNSString Class
+)
+
+func init() {
+	// Must pull in Foundation to get the NSString class.
+	_, err := purego.Dlopen("/System/Library/Frameworks/Foundation.framework/Foundation", purego.RTLD_GLOBAL|purego.RTLD_NOW)
+	if err != nil {
+		panic(fmt.Errorf("objc: %w", err))
+	}
+	selIsKindOf = RegisterName("isKindOfClass:")
+	selUTF8String = RegisterName("UTF8String")
+	classNSString = GetClass("NSString")
+}
+
+// NSStringToString returns a copy of the NSString contents as a Go string.
+// If the ID is 0 then an empty string is returned.
+// If the ID is not an NSString class then the function panics.
+func NSStringToString(str ID) string {
+	if str == 0 {
+		return ""
+	}
+	if str.Send(selIsKindOf, classNSString) == 0 {
+		panic("objc: provided ID is not an NSString")
+	}
+	return strings.GoString(uintptr(str.Send(selUTF8String)))
+}
