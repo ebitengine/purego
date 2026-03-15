@@ -159,7 +159,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 					}
 				}
 			case reflect.String, reflect.Uintptr, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
-				reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Ptr, reflect.UnsafePointer,
+				reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Pointer, reflect.UnsafePointer,
 				reflect.Slice, reflect.Bool:
 				if ints < numOfIntegerRegisters() {
 					ints++
@@ -343,7 +343,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 		case reflect.UnsafePointer:
 			// We take the address and then dereference it to trick go vet from creating a possible miss-use of unsafe.Pointer
 			v.SetPointer(*(*unsafe.Pointer)(unsafe.Pointer(&syscall.a1)))
-		case reflect.Ptr:
+		case reflect.Pointer:
 			v = reflect.NewAt(outType, unsafe.Pointer(&syscall.a1)).Elem()
 		case reflect.Func:
 			// wrap this C function in a nicely typed Go function
@@ -403,7 +403,7 @@ func addValue(v reflect.Value, keepAlive []any, addInt func(x uintptr), addFloat
 		addInt(uintptr(v.Uint()))
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		addInt(uintptr(v.Int()))
-	case reflect.Ptr, reflect.UnsafePointer, reflect.Slice:
+	case reflect.Pointer, reflect.UnsafePointer, reflect.Slice:
 		// There is no need to keepAlive this pointer separately because it is kept alive in the args variable
 		addInt(v.Pointer())
 	case reflect.Func:
@@ -482,7 +482,7 @@ func checkStructFieldsSupported(ty reflect.Type) {
 		switch f.Kind() {
 		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
 			reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
-			reflect.Uintptr, reflect.Ptr, reflect.UnsafePointer, reflect.Float64, reflect.Float32,
+			reflect.Uintptr, reflect.Pointer, reflect.UnsafePointer, reflect.Float64, reflect.Float32,
 			reflect.Bool:
 		default:
 			panic(fmt.Sprintf("purego: struct field type %s is not supported", f))
