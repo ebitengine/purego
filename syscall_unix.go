@@ -30,6 +30,10 @@ func syscall_syscall15X(fn, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a
 	return args.a1, args.a2, args.a3
 }
 
+func syscall_syscallN(fn uintptr, args ...uintptr) (r1, r2, err uintptr) {
+	panic("purego: syscall_syscallN is only supported on windows")
+}
+
 // NewCallback converts a Go function to a function pointer conforming to the C calling convention.
 // This is useful when interoperating with C code requiring callbacks. The argument is expected to be a
 // function with zero or one uintptr-sized result. The function must not have arguments with size larger than the size
@@ -194,6 +198,10 @@ func callbackWrap(a *callbackArgs) {
 				} else {
 					args[i] = reflect.NewAt(inType, unsafe.Pointer(&frame[floatsN])).Elem()
 				}
+				if runtime.GOARCH == "ppc64le" {
+					// ELFv2: each FPR-passed float also consumes a stack slot.
+					stackSlot += slots
+				}
 			}
 			floatsN += slots
 		case reflect.Struct:
@@ -234,6 +242,10 @@ func callbackWrap(a *callbackArgs) {
 					args[i] = callbackArgFromSlotBigEndian(unsafe.Pointer(&frame[pos]), inType)
 				} else {
 					args[i] = reflect.NewAt(inType, unsafe.Pointer(&frame[pos])).Elem()
+				}
+				if runtime.GOARCH == "ppc64le" {
+					// ELFv2: each GPR-passed int also consumes a stack slot.
+					stackSlot += slots
 				}
 			}
 			intsN += slots
