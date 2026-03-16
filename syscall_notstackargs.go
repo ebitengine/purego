@@ -35,3 +35,7 @@ type callbackArgs struct {
 func (c *callbackArgs) stackFrame() unsafe.Pointer {
 	return nil
 }
+
+func (c *callbackArgs) intFrame() unsafe.Pointer {
+	return nil
+}

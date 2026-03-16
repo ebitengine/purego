@@ -140,9 +140,13 @@ func callbackWrap(a *callbackArgs) {
 	// stackFrame points to stack-passed arguments. On most architectures this is
 	// contiguous with frame (after register args), but on ppc64le it's separate.
 	var stackFrame *[callbackMaxFrame]uintptr
+	var intFrame *[callbackMaxFrame]uintptr
 	if sf := a.stackFrame(); sf != nil {
 		// Only ppc64le uses separate stackArgs pointer due to NOSPLIT constraints
 		stackFrame = (*[callbackMaxFrame]uintptr)(sf)
+	}
+	if intf := a.intFrame(); intf != nil {
+		intFrame = (*[callbackMaxFrame]uintptr)(intf)
 	}
 	// floatsN and intsN track the number of register slots used, not argument count.
 	// This distinction matters on ARM32 where float64 uses 2 slots (32-bit registers).
@@ -151,7 +155,7 @@ func callbackWrap(a *callbackArgs) {
 	// On amd64/loong64/ppc64le/riscv64/s390x, when returning a struct larger than
 	// maxRegAllocStructSize, the caller passes a hidden pointer in the first integer
 	// register. Skip it to avoid misreading it as the first function argument.
-	if (runtime.GOARCH == "amd64" || runtime.GOARCH == "loong64" || runtime.GOARCH == "ppc64le" || runtime.GOARCH == "riscv64" || runtime.GOARCH == "s390x") &&
+	if (runtime.GOARCH == "amd64" || runtime.GOARCH == "loong64" || runtime.GOARCH == "riscv64" || runtime.GOARCH == "s390x") &&
 		fnType.NumOut() == 1 && fnType.Out(0).Kind() == reflect.Struct &&
 		fnType.Out(0).Size() > maxRegAllocStructSize {
 		intsN = 1
@@ -198,10 +202,6 @@ func callbackWrap(a *callbackArgs) {
 				} else {
 					args[i] = reflect.NewAt(inType, unsafe.Pointer(&frame[floatsN])).Elem()
 				}
-				if runtime.GOARCH == "ppc64le" {
-					// ELFv2: each FPR-passed float also consumes a stack slot.
-					stackSlot += slots
-				}
 			}
 			floatsN += slots
 		case reflect.Struct:
@@ -235,17 +235,17 @@ func callbackWrap(a *callbackArgs) {
 					stackSlot += slots
 				}
 			} else {
-				// the integers begin after the floats in frame
-				pos := intsN + numOfFloatRegisters()
-				if runtime.GOARCH == "s390x" {
-					// s390x big-endian: sub-8-byte values are right-justified in GPR slot
-					args[i] = callbackArgFromSlotBigEndian(unsafe.Pointer(&frame[pos]), inType)
+				if intFrame != nil {
+					args[i] = reflect.NewAt(inType, unsafe.Pointer(&intFrame[intsN])).Elem()
 				} else {
-					args[i] = reflect.NewAt(inType, unsafe.Pointer(&frame[pos])).Elem()
-				}
-				if runtime.GOARCH == "ppc64le" {
-					// ELFv2: each GPR-passed int also consumes a stack slot.
-					stackSlot += slots
+					// the integers begin after the floats in frame
+					pos := intsN + numOfFloatRegisters()
+					if runtime.GOARCH == "s390x" {
+						// s390x big-endian: sub-8-byte values are right-justified in GPR slot
+						args[i] = callbackArgFromSlotBigEndian(unsafe.Pointer(&frame[pos]), inType)
+					} else {
+						args[i] = reflect.NewAt(inType, unsafe.Pointer(&frame[pos])).Elem()
+					}
 				}
 			}
 			intsN += slots

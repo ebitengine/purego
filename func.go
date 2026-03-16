@@ -253,12 +253,6 @@ func RegisterFunc(fptr any, cfn uintptr) {
 				if numFloats < floatArgRegs {
 					floats[numFloats] = x
 					numFloats++
-					if runtime.GOARCH == "ppc64le" {
-						// ELFv2: each float parameter consumes a GPR/stack slot
-						// even when passed in an FPR. Advance numStack so overflow
-						// floats land at the correct parameter-order position.
-						numStack++
-					}
 				} else {
 					addStack(x)
 				}
@@ -520,8 +514,7 @@ func roundUpTo8(val uintptr) uintptr {
 func numOfFloatRegisters() int {
 	switch runtime.GOARCH {
 	case "ppc64le":
-		// ELFv2 ABI uses F1-F13 for floating-point parameters.
-		return 13
+		return 8
 	case "amd64", "arm64", "loong64", "riscv64":
 		return 8
 	case "s390x":
