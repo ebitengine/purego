@@ -9,7 +9,7 @@
 
 // PPC64LE ELFv2 ABI:
 // - Integer args: R3-R10 (8 registers)
-// - Float args: F1-F13 (13 registers)
+// - Float args: F1-F8 (8 registers)
 // - Return: R3 (integer), F1 (float)
 // - Stack pointer: R1
 // - Link register: LR (special)
@@ -24,15 +24,16 @@
 // 32(R1)  - Parameter save area start (8 * 8 = 64 bytes for R3-R10)
 // 96(R1)  - First stack arg (a9) - this is where callee looks
 // 104(R1) - Second stack arg (a10)
-// 112-280 - Stack args a11-a32
-// 288(R1) - TOC save (outside parameter save area)
-// 296(R1) - saved args pointer
-// Total: 304 bytes
+// 112-152 - Stack args a11-a15 (5 * 8 = 40 bytes)
+// 160(R1) - TOC save (we put it here, outside param save area)
+// 168(R1) - saved args pointer
+// 176(R1) - padding for 16-byte alignment
+// Total: 176 bytes
 
-#define STACK_SIZE 304
+#define STACK_SIZE 176
 #define LR_SAVE    16
-#define TOC_SAVE   288
-#define ARGP_SAVE  296
+#define TOC_SAVE   160
+#define ARGP_SAVE  168
 
 GLOBL ·syscall15XABI0(SB), NOPTR|RODATA, $8
 DATA ·syscall15XABI0(SB)/8, $syscall15X(SB)
@@ -53,7 +54,7 @@ TEXT syscall15X(SB), NOSPLIT, $0
 	// R11 := args pointer (syscall15Args*)
 	MOVD R3, R11
 
-	// Load float args into F1-F13
+	// Load float args into F1-F8
 	FMOVD syscall15Args_f1(R11), F1
 	FMOVD syscall15Args_f2(R11), F2
 	FMOVD syscall15Args_f3(R11), F3
@@ -62,11 +63,6 @@ TEXT syscall15X(SB), NOSPLIT, $0
 	FMOVD syscall15Args_f6(R11), F6
 	FMOVD syscall15Args_f7(R11), F7
 	FMOVD syscall15Args_f8(R11), F8
-	FMOVD syscall15Args_f9(R11), F9
-	FMOVD syscall15Args_f10(R11), F10
-	FMOVD syscall15Args_f11(R11), F11
-	FMOVD syscall15Args_f12(R11), F12
-	FMOVD syscall15Args_f13(R11), F13
 
 	// Load integer args into R3-R10
 	MOVD syscall15Args_a1(R11), R3
@@ -78,7 +74,7 @@ TEXT syscall15X(SB), NOSPLIT, $0
 	MOVD syscall15Args_a7(R11), R9
 	MOVD syscall15Args_a8(R11), R10
 
-	// Spill a9-a32 onto the stack (stack parameters start at 96(R1))
+	// Spill a9-a15 onto the stack (stack parameters start at 96(R1))
 	// Per ELFv2: parameter save area is 32-95, stack args start at 96
 	MOVD ARGP_SAVE(R1), R11          // reload args pointer
 	MOVD syscall15Args_a9(R11), R12
@@ -95,40 +91,6 @@ TEXT syscall15X(SB), NOSPLIT, $0
 	MOVD R12, 136(R1)                // a14 at 136(R1)
 	MOVD syscall15Args_a15(R11), R12
 	MOVD R12, 144(R1)                // a15 at 144(R1)
-	MOVD syscall15Args_a16(R11), R12
-	MOVD R12, 152(R1)                // a16 at 152(R1)
-	MOVD syscall15Args_a17(R11), R12
-	MOVD R12, 160(R1)                // a17 at 160(R1)
-	MOVD syscall15Args_a18(R11), R12
-	MOVD R12, 168(R1)                // a18 at 168(R1)
-	MOVD syscall15Args_a19(R11), R12
-	MOVD R12, 176(R1)                // a19 at 176(R1)
-	MOVD syscall15Args_a20(R11), R12
-	MOVD R12, 184(R1)                // a20 at 184(R1)
-	MOVD syscall15Args_a21(R11), R12
-	MOVD R12, 192(R1)                // a21 at 192(R1)
-	MOVD syscall15Args_a22(R11), R12
-	MOVD R12, 200(R1)                // a22 at 200(R1)
-	MOVD syscall15Args_a23(R11), R12
-	MOVD R12, 208(R1)                // a23 at 208(R1)
-	MOVD syscall15Args_a24(R11), R12
-	MOVD R12, 216(R1)                // a24 at 216(R1)
-	MOVD syscall15Args_a25(R11), R12
-	MOVD R12, 224(R1)                // a25 at 224(R1)
-	MOVD syscall15Args_a26(R11), R12
-	MOVD R12, 232(R1)                // a26 at 232(R1)
-	MOVD syscall15Args_a27(R11), R12
-	MOVD R12, 240(R1)                // a27 at 240(R1)
-	MOVD syscall15Args_a28(R11), R12
-	MOVD R12, 248(R1)                // a28 at 248(R1)
-	MOVD syscall15Args_a29(R11), R12
-	MOVD R12, 256(R1)                // a29 at 256(R1)
-	MOVD syscall15Args_a30(R11), R12
-	MOVD R12, 264(R1)                // a30 at 264(R1)
-	MOVD syscall15Args_a31(R11), R12
-	MOVD R12, 272(R1)                // a31 at 272(R1)
-	MOVD syscall15Args_a32(R11), R12
-	MOVD R12, 280(R1)                // a32 at 280(R1)
 
 	// Call function: load fn and call
 	MOVD syscall15Args_fn(R11), R12

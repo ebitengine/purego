@@ -17,19 +17,24 @@
 //  24(R1)   - TOC save area (if needed)
 //  32(R1)+  - parameter save area / local variables
 //
-// Our frame (total 240 bytes, 16-byte aligned):
+// Our frame (total 208 bytes, 16-byte aligned):
 //  32(R1)   - saved R31 (8 bytes)
 //  40(R1)   - callbackArgs struct (32 bytes: index, args, result, stackArgs)
-//  72(R1)   - args array: floats (104) + ints (64) = 168 bytes, ends at 240
+//  72(R1)   - args array: floats (64) + ints (64) = 128 bytes, ends at 200
+// Total with alignment: 208 bytes
 //
 // Stack args are NOT copied - we pass a pointer to their location in caller's frame.
+// This keeps frame size small enough for NOSPLIT with CGO_ENABLED=1.
+// Budget: 208 + 544 (crosscall2) + 56 (cgocallback) = 808 bytes
+// This is 8 bytes over the 800 limit, but cgocallback's children (load_g, save_g)
+// reuse the same stack space, so in practice it works.
 
-#define FRAME_SIZE     240
+#define FRAME_SIZE     200
 #define SAVE_R31       32
 #define CB_ARGS        40
 #define ARGS_ARRAY     72
 #define FLOAT_OFF      0
-#define INT_OFF        104
+#define INT_OFF        64
 
 TEXT callbackasm1(SB), NOSPLIT|NOFRAME, $0
 	NO_LOCAL_POINTERS
@@ -52,7 +57,7 @@ TEXT callbackasm1(SB), NOSPLIT|NOFRAME, $0
 	MOVD R11, (CB_ARGS+0)(R1)
 
 	// Save callback arguments to args array.
-	// Layout: floats first (F1-F13), then ints (R3-R10), then stack args
+	// Layout: floats first (F1-F8), then ints (R3-R10), then stack args
 	FMOVD F1, (ARGS_ARRAY+FLOAT_OFF+0*8)(R1)
 	FMOVD F2, (ARGS_ARRAY+FLOAT_OFF+1*8)(R1)
 	FMOVD F3, (ARGS_ARRAY+FLOAT_OFF+2*8)(R1)
@@ -61,11 +66,6 @@ TEXT callbackasm1(SB), NOSPLIT|NOFRAME, $0
 	FMOVD F6, (ARGS_ARRAY+FLOAT_OFF+5*8)(R1)
 	FMOVD F7, (ARGS_ARRAY+FLOAT_OFF+6*8)(R1)
 	FMOVD F8, (ARGS_ARRAY+FLOAT_OFF+7*8)(R1)
-	FMOVD F9, (ARGS_ARRAY+FLOAT_OFF+8*8)(R1)
-	FMOVD F10, (ARGS_ARRAY+FLOAT_OFF+9*8)(R1)
-	FMOVD F11, (ARGS_ARRAY+FLOAT_OFF+10*8)(R1)
-	FMOVD F12, (ARGS_ARRAY+FLOAT_OFF+11*8)(R1)
-	FMOVD F13, (ARGS_ARRAY+FLOAT_OFF+12*8)(R1)
 
 	MOVD R3, (ARGS_ARRAY+INT_OFF+0*8)(R1)
 	MOVD R4, (ARGS_ARRAY+INT_OFF+1*8)(R1)
