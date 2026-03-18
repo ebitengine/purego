@@ -513,9 +513,7 @@ func roundUpTo8(val uintptr) uintptr {
 
 func numOfFloatRegisters() int {
 	switch runtime.GOARCH {
-	case "ppc64le":
-		return 8
-	case "amd64", "arm64", "loong64", "riscv64":
+	case "amd64", "arm64", "loong64", "ppc64le", "riscv64":
 		return 8
 	case "s390x":
 		return 4
