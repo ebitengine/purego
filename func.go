@@ -218,6 +218,10 @@ func RegisterFunc(fptr any, cfn uintptr) {
 		}
 	}
 
+	if tryRegisterFastPath(fn, cfn, ty) {
+		return
+	}
+
 	v := reflect.MakeFunc(ty, func(args []reflect.Value) (results []reflect.Value) {
 		var sysargs [maxArgs]uintptr
 		// Use maxArgs instead of numOfFloatRegisters() to keep this code path allocation-free,
@@ -435,6 +439,151 @@ func addValue(v reflect.Value, keepAlive []any, addInt func(x uintptr), addFloat
 		panic("purego: unsupported kind: " + v.Kind().String())
 	}
 	return keepAlive
+}
+
+// isSmallRegStruct reports whether ty fits in one integer register and is not
+// a homogeneous float aggregate.
+func isSmallRegStruct(ty reflect.Type) bool {
+	if ty.Kind() != reflect.Struct {
+		return false
+	}
+	if ty.Size() == 0 || ty.Size() > unsafe.Sizeof(uintptr(0)) {
+		return false
+	}
+	hasInt := false
+	hasFloat := false
+	for i := 0; i < ty.NumField(); i++ {
+		f := ty.Field(i).Type
+		switch f.Kind() {
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+			reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
+			reflect.Bool:
+			hasInt = true
+		case reflect.Float32, reflect.Float64:
+			hasFloat = true
+		case reflect.Struct:
+			if !isSmallRegStruct(f) {
+				return false
+			}
+			hasInt = true // nested struct already validated as non-HFA
+		default:
+			return false
+		}
+	}
+	// Reject all-float structs; they go in float registers.
+	if hasFloat && !hasInt {
+		return false
+	}
+	return true
+}
+
+// flattenStructToUintptr packs a small register-passed struct into one uintptr.
+func flattenStructToUintptr(v reflect.Value) uintptr {
+	var buf [8]byte
+	flattenStructFields(v, buf[:])
+	return *(*uintptr)(unsafe.Pointer(&buf[0]))
+}
+
+func flattenStructFields(v reflect.Value, buf []byte) {
+	ty := v.Type()
+	for i := 0; i < ty.NumField(); i++ {
+		f := v.Field(i)
+		off := ty.Field(i).Offset
+		switch f.Kind() {
+		case reflect.Bool:
+			if f.Bool() {
+				buf[off] = 1
+			}
+		case reflect.Int8:
+			buf[off] = byte(int8(f.Int()))
+		case reflect.Uint8:
+			buf[off] = byte(f.Uint())
+		case reflect.Int16:
+			*(*int16)(unsafe.Pointer(&buf[off])) = int16(f.Int())
+		case reflect.Uint16:
+			*(*uint16)(unsafe.Pointer(&buf[off])) = uint16(f.Uint())
+		case reflect.Int32:
+			*(*int32)(unsafe.Pointer(&buf[off])) = int32(f.Int())
+		case reflect.Uint32, reflect.Float32:
+			if f.Kind() == reflect.Float32 {
+				*(*uint32)(unsafe.Pointer(&buf[off])) = math.Float32bits(float32(f.Float()))
+			} else {
+				*(*uint32)(unsafe.Pointer(&buf[off])) = uint32(f.Uint())
+			}
+		case reflect.Int64, reflect.Int:
+			*(*int64)(unsafe.Pointer(&buf[off])) = f.Int()
+		case reflect.Uint64, reflect.Uint, reflect.Float64:
+			if f.Kind() == reflect.Float64 {
+				*(*uint64)(unsafe.Pointer(&buf[off])) = math.Float64bits(f.Float())
+			} else {
+				*(*uint64)(unsafe.Pointer(&buf[off])) = f.Uint()
+			}
+		case reflect.Struct:
+			flattenStructFields(f, buf[off:])
+		}
+	}
+}
+
+// registerFastFuncWithStructs handles functions with small register-passed
+// struct arguments.
+func registerFastFuncWithStructs(fn reflect.Value, cfn uintptr, ty reflect.Type, numInts, numFloats int, hasReturn bool) {
+	numIn := ty.NumIn()
+	v := reflect.MakeFunc(ty, func(args []reflect.Value) []reflect.Value {
+		var ints [15]uintptr
+		var floats [8]uintptr
+		var ii, fi int
+		for i := 0; i < numIn; i++ {
+			arg := args[i]
+			switch ty.In(i).Kind() {
+			case reflect.Float32:
+				floats[fi] = uintptr(math.Float32bits(float32(arg.Float())))
+				fi++
+			case reflect.Float64:
+				floats[fi] = uintptr(math.Float64bits(arg.Float()))
+				fi++
+			case reflect.Bool:
+				if arg.Bool() {
+					ints[ii] = 1
+				}
+				ii++
+			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+				ints[ii] = uintptr(arg.Int())
+				ii++
+			case reflect.Pointer, reflect.UnsafePointer:
+				ints[ii] = arg.Pointer()
+				ii++
+			case reflect.Struct:
+				ints[ii] = flattenStructToUintptr(arg)
+				ii++
+			default:
+				ints[ii] = uintptr(arg.Uint())
+				ii++
+			}
+		}
+		r := fastCallIF(cfn, ints, numInts, floats, numFloats)
+		if !hasReturn {
+			return nil
+		}
+		out := reflect.New(ty.Out(0)).Elem()
+		switch ty.Out(0).Kind() {
+		case reflect.Uintptr, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+			out.SetUint(uint64(r))
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			out.SetInt(int64(r))
+		case reflect.Bool:
+			out.SetBool(byte(r) != 0)
+		case reflect.UnsafePointer:
+			out.SetPointer(*(*unsafe.Pointer)(unsafe.Pointer(&r)))
+		case reflect.Pointer:
+			out = reflect.NewAt(ty.Out(0), unsafe.Pointer(&r)).Elem()
+		}
+		if len(args) > 0 {
+			args[0] = out
+			return args[:1]
+		}
+		return []reflect.Value{out}
+	})
+	fn.Set(v)
 }
 
 // maxRegAllocStructSize is the biggest a struct can be while still fitting in registers.
