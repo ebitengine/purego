@@ -261,10 +261,10 @@ func buildA9to15(n int) string {
 
 func emitFastCallIF(buf *bytes.Buffer, cfg fastPathConfig) {
 	type ifCaseData struct {
-		N         int
-		Assign    string // "s.a9, s.a10 = ints[8], ints[9]"
-		ZeroRest  string // "s.a11, ... = 0, 0, ..."
-		HasZeros  bool
+		N        int
+		Assign   string // "s.a9, s.a10 = ints[8], ints[9]"
+		ZeroRest string // "s.a11, ... = 0, 0, ..."
+		HasZeros bool
 	}
 
 	type ifData struct {
