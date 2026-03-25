@@ -512,12 +512,14 @@ func flattenStructFields(v reflect.Value, buf []byte) {
 			}
 		case reflect.Int64, reflect.Int:
 			*(*int64)(unsafe.Pointer(&buf[off])) = f.Int()
-		case reflect.Uint64, reflect.Uint, reflect.Float64:
+		case reflect.Uint64, reflect.Uint, reflect.Uintptr, reflect.Float64:
 			if f.Kind() == reflect.Float64 {
 				*(*uint64)(unsafe.Pointer(&buf[off])) = math.Float64bits(f.Float())
 			} else {
 				*(*uint64)(unsafe.Pointer(&buf[off])) = f.Uint()
 			}
+		case reflect.Pointer, reflect.UnsafePointer:
+			*(*uintptr)(unsafe.Pointer(&buf[off])) = f.Pointer()
 		case reflect.Struct:
 			flattenStructFields(f, buf[off:])
 		}
