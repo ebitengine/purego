@@ -783,12 +783,12 @@ func tryRegisterFastPath(fn reflect.Value, cfn uintptr, ty reflect.Type) bool {
 	}
 
 	canFastPath := true
-	numFloats := 0
-	numInts := 0
-	hasStructs := false
-	hasSmallStackArg := false
+	var numFloats int
+	var numInts int
+	var hasStructs bool
+	var hasSmallStackArg bool
 	trailingFloats := true
-	seenFloat := false
+	var seenFloat bool
 	floatPos := -1
 	intRegCount := numOfIntegerRegisters()
 
