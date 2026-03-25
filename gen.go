@@ -4,3 +4,5 @@
 package purego
 
 //go:generate go run wincallback.go
+//go:generate go run genfastfunc.go
+//go:generate gofmt -s -w .

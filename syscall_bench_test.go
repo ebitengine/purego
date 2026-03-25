@@ -5,12 +5,9 @@ package purego_test
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/ebitengine/purego"
-	"github.com/ebitengine/purego/internal/load"
 )
 
 // BenchmarkCallingMethods compares RegisterFunc, SyscallN, and Callback methods
@@ -31,44 +28,16 @@ func BenchmarkCallingMethods(b *testing.B) {
 		{3, goSum3, 0, 0, "sum3_c", 0, "call_callback3", []int64{1, 2, 3}, 6},
 		{5, goSum5, 0, 0, "sum5_c", 0, "call_callback5", []int64{1, 2, 3, 4, 5}, 15},
 		{10, goSum10, 0, 0, "sum10_c", 0, "call_callback10", []int64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}, 55},
-		{14, goSum15, 0, 0, "sum14_c", 0, "call_callback14", []int64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14}, 105},
-		{15, goSum15, 0, 0, "sum15_c", 0, "call_callback15", []int64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}, 120},
 	}
 
-	// Build C library for benchmarking
-	libFileName := filepath.Join(b.TempDir(), "libbenchmark.so")
-	if err := buildSharedLib("CC", libFileName, filepath.Join("testdata", "benchmarktest", "benchmark.c")); err != nil {
-		b.Fatalf("Failed to build C library: %v", err)
-	}
-	b.Cleanup(func() {
-		os.Remove(libFileName)
-	})
-
-	libHandle, err := load.OpenLibrary(libFileName)
-	if err != nil {
-		b.Fatalf("Failed to load C library: %v", err)
-	}
-	b.Cleanup(func() {
-		if err := load.CloseLibrary(libHandle); err != nil {
-			b.Fatalf("Failed to close library: %s", err)
-		}
-	})
+	libHandle := openBenchmarkLibrary(b)
 
 	// Create callbacks and load C functions
 	for i := range testCases {
 		testCases[i].goFnPtr = purego.NewCallback(testCases[i].goFn)
 
-		cFn, err := load.OpenSymbol(libHandle, testCases[i].cFnName)
-		if err != nil {
-			b.Fatalf("Failed to load C function %s: %v", testCases[i].cFnName, err)
-		}
-		testCases[i].cFnPtr = cFn
-
-		cCallbackFn, err := load.OpenSymbol(libHandle, testCases[i].cCallbackName)
-		if err != nil {
-			b.Fatalf("Failed to load C callback wrapper %s: %v", testCases[i].cCallbackName, err)
-		}
-		testCases[i].cCallbackPtr = cCallbackFn
+		testCases[i].cFnPtr = openBenchmarkSymbol(b, libHandle, testCases[i].cFnName)
+		testCases[i].cCallbackPtr = openBenchmarkSymbol(b, libHandle, testCases[i].cCallbackName)
 	}
 
 	b.Run("RegisterFunc/Callback", func(b *testing.B) {
@@ -190,10 +159,6 @@ func makeRegisterFunc(n int) any {
 		return new(func(int64, int64, int64, int64, int64) int64)
 	case 10:
 		return new(func(int64, int64, int64, int64, int64, int64, int64, int64, int64, int64) int64)
-	case 14:
-		return new(func(int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64) int64)
-	case 15:
-		return new(func(int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64) int64)
 	default:
 		panic(fmt.Sprintf("unsupported arg count: %d", n))
 	}
@@ -229,20 +194,6 @@ func callRegisterFunc(registerFn any, n int, args []int64, iterations int) int64
 			result = (*f)(args[0], args[1], args[2], args[3], args[4],
 				args[5], args[6], args[7], args[8], args[9])
 		}
-	case 14:
-		f := registerFn.(*func(int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64) int64)
-		for i := 0; i < iterations; i++ {
-			result = (*f)(args[0], args[1], args[2], args[3], args[4],
-				args[5], args[6], args[7], args[8], args[9],
-				args[10], args[11], args[12], args[13])
-		}
-	case 15:
-		f := registerFn.(*func(int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64) int64)
-		for i := 0; i < iterations; i++ {
-			result = (*f)(args[0], args[1], args[2], args[3], args[4],
-				args[5], args[6], args[7], args[8], args[9],
-				args[10], args[11], args[12], args[13], args[14])
-		}
 	default:
 		panic(fmt.Sprintf("unsupported arg count: %d", n))
 	}
@@ -270,6 +221,28 @@ func goSum10(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10 int64) int64 {
 	return a1 + a2 + a3 + a4 + a5 + a6 + a7 + a8 + a9 + a10
 }
 
-func goSum15(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15 int64) int64 {
-	return a1 + a2 + a3 + a4 + a5 + a6 + a7 + a8 + a9 + a10 + a11 + a12 + a13 + a14 + a15
+func BenchmarkInterleavedFloat32(b *testing.B) {
+	libHandle := openBenchmarkLibrary(b)
+
+	b.Run("5args_float_at_3", func(b *testing.B) {
+		b.ReportAllocs()
+		sym := openBenchmarkSymbol(b, libHandle, "rmsnorm_shape_c")
+		var fn func(uintptr, uintptr, uintptr, float32, uintptr) int32
+		purego.RegisterFunc(&fn, sym)
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			fn(10, 20, 30, 1.0, 40)
+		}
+	})
+
+	b.Run("9args_float_at_4", func(b *testing.B) {
+		b.ReportAllocs()
+		sym := openBenchmarkSymbol(b, libHandle, "sdpa_shape_c")
+		var fn func(uintptr, uintptr, uintptr, uintptr, float32, uintptr, uintptr, uintptr, uintptr) int32
+		purego.RegisterFunc(&fn, sym)
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			fn(1, 2, 3, 4, 1.0, 5, 6, 7, 8)
+		}
+	})
 }

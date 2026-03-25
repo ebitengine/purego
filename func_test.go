@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
@@ -136,6 +137,189 @@ func TestRegisterLibFunc_Bool(t *testing.T) {
 	expected := false
 	if got := runFalse(); got != expected {
 		t.Errorf("runFalse failed. got %t but wanted %t", got, expected)
+	}
+}
+
+func TestRegisterFunc_FastPath(t *testing.T) {
+	if runtime.GOOS == "windows" || (runtime.GOARCH != "amd64" && runtime.GOARCH != "arm64") {
+		t.Skip("fast path only enabled on non-Windows amd64 and arm64")
+	}
+
+	lib := openBenchmarkLibrary(t)
+	sym := openBenchmarkSymbol(t, lib, "sum5_c")
+
+	var fn func(int64, int64, int64, int64, int64) int64
+	purego.RegisterFunc(&fn, sym)
+
+	if got, want := fn(1, 2, 3, 4, 5), int64(15); got != want {
+		t.Fatalf("got %d, want %d", got, want)
+	}
+
+	allocs := testing.AllocsPerRun(1000, func() {
+		if got := fn(1, 2, 3, 4, 5); got != 15 {
+			panic(fmt.Sprintf("got %d, want 15", got))
+		}
+	})
+	if allocs != 0 {
+		t.Fatalf("allocs per run = %v, want 0", allocs)
+	}
+}
+
+func TestRegisterFunc_FastPathFloat(t *testing.T) {
+	if runtime.GOOS == "windows" || (runtime.GOARCH != "amd64" && runtime.GOARCH != "arm64") {
+		t.Skip("fast path only enabled on non-Windows amd64 and arm64")
+	}
+
+	lib := openBenchmarkLibrary(t)
+
+	t.Run("3ints_1float32", func(t *testing.T) {
+		sym := openBenchmarkSymbol(t, lib, "weighted_sum3f_c")
+		var fn func(int64, int64, int64, float32) int64
+		purego.RegisterFunc(&fn, sym)
+		if got, want := fn(1, 2, 3, 2.0), int64(12); got != want {
+			t.Fatalf("got %d, want %d", got, want)
+		}
+		allocs := testing.AllocsPerRun(1000, func() {
+			fn(1, 2, 3, 2.0)
+		})
+		if allocs != 0 {
+			t.Fatalf("allocs per run = %v, want 0", allocs)
+		}
+	})
+
+	t.Run("5ints_1float32", func(t *testing.T) {
+		sym := openBenchmarkSymbol(t, lib, "weighted_sum5f_c")
+		var fn func(int64, int64, int64, int64, int64, float32) int64
+		purego.RegisterFunc(&fn, sym)
+		if got, want := fn(1, 2, 3, 4, 5, 3.0), int64(45); got != want {
+			t.Fatalf("got %d, want %d", got, want)
+		}
+		allocs := testing.AllocsPerRun(1000, func() {
+			fn(1, 2, 3, 4, 5, 3.0)
+		})
+		if allocs != 0 {
+			t.Fatalf("allocs per run = %v, want 0", allocs)
+		}
+	})
+
+	t.Run("3ints_1float64", func(t *testing.T) {
+		sym := openBenchmarkSymbol(t, lib, "weighted_sum3d_c")
+		var fn func(int64, int64, int64, float64) int64
+		purego.RegisterFunc(&fn, sym)
+		if got, want := fn(1, 2, 3, 2.0), int64(12); got != want {
+			t.Fatalf("got %d, want %d", got, want)
+		}
+		allocs := testing.AllocsPerRun(1000, func() {
+			fn(1, 2, 3, 2.0)
+		})
+		if allocs != 0 {
+			t.Fatalf("allocs per run = %v, want 0", allocs)
+		}
+	})
+}
+
+func TestRegisterFunc_FastPathInterleavedFloat(t *testing.T) {
+	if runtime.GOOS == "windows" || (runtime.GOARCH != "amd64" && runtime.GOARCH != "arm64") {
+		t.Skip("fast path only enabled on non-Windows amd64 and arm64")
+	}
+
+	lib := openBenchmarkLibrary(t)
+
+	t.Run("int_float_int_int", func(t *testing.T) {
+		sym := openBenchmarkSymbol(t, lib, "interleaved_if_c")
+		var fn func(int64, float32, int64, int64) int64
+		purego.RegisterFunc(&fn, sym)
+		if got, want := fn(1, 2.0, 2, 3), int64(12); got != want {
+			t.Fatalf("got %d, want %d", got, want)
+		}
+	})
+
+	t.Run("int_float_int_float_int", func(t *testing.T) {
+		sym := openBenchmarkSymbol(t, lib, "interleaved_2f_c")
+		var fn func(int64, float32, int64, float32, int64) int64
+		purego.RegisterFunc(&fn, sym)
+		if got, want := fn(10, 2.0, 20, 3.0, 5), int64(85); got != want {
+			t.Fatalf("got %d, want %d", got, want)
+		}
+	})
+}
+
+func TestRegisterFunc_FastPathInterleavedFloat32x1(t *testing.T) {
+	if runtime.GOOS == "windows" || (runtime.GOARCH != "amd64" && runtime.GOARCH != "arm64") {
+		t.Skip("fast path only enabled on non-Windows amd64 and arm64")
+	}
+
+	lib := openBenchmarkLibrary(t)
+
+	t.Run("5args_float_at_3", func(t *testing.T) {
+		sym := openBenchmarkSymbol(t, lib, "rmsnorm_shape_c")
+		var fn func(uintptr, uintptr, uintptr, float32, uintptr) int32
+		purego.RegisterFunc(&fn, sym)
+		got := fn(10, 20, 30, 1.0, 40)
+		want := int32(10 + 20 + 30 + 1 + 40)
+		if got != want {
+			t.Fatalf("got %d, want %d", got, want)
+		}
+		allocs := testing.AllocsPerRun(1000, func() {
+			fn(10, 20, 30, 1.0, 40)
+		})
+		if allocs != 0 {
+			t.Fatalf("allocs per run = %v, want 0", allocs)
+		}
+	})
+
+	t.Run("9args_float_at_4", func(t *testing.T) {
+		sym := openBenchmarkSymbol(t, lib, "sdpa_shape_c")
+		var fn func(uintptr, uintptr, uintptr, uintptr, float32, uintptr, uintptr, uintptr, uintptr) int32
+		purego.RegisterFunc(&fn, sym)
+		got := fn(1, 2, 3, 4, 1.0, 5, 6, 7, 8)
+		want := int32(1 + 2 + 3 + 4 + 1 + 5 + 6 + 7 + 8)
+		if got != want {
+			t.Fatalf("got %d, want %d", got, want)
+		}
+		allocs := testing.AllocsPerRun(1000, func() {
+			fn(1, 2, 3, 4, 1.0, 5, 6, 7, 8)
+		})
+		if allocs != 0 {
+			t.Fatalf("allocs per run = %v, want 0", allocs)
+		}
+	})
+
+	t.Run("3args_float_at_0", func(t *testing.T) {
+		sym := openBenchmarkSymbol(t, lib, "interleaved_3_f0_c")
+		var fn func(float32, int64, int64) int64
+		purego.RegisterFunc(&fn, sym)
+		got := fn(2.0, 10, 20)
+		want := int64(60)
+		if got != want {
+			t.Fatalf("got %d, want %d", got, want)
+		}
+		allocs := testing.AllocsPerRun(1000, func() {
+			fn(2.0, 10, 20)
+		})
+		if allocs != 0 {
+			t.Fatalf("allocs per run = %v, want 0", allocs)
+		}
+	})
+}
+
+func TestRegisterFunc_FastPathBoolReturn(t *testing.T) {
+	if runtime.GOOS == "windows" || (runtime.GOARCH != "amd64" && runtime.GOARCH != "arm64") {
+		t.Skip("fast path only enabled on non-Windows amd64 and arm64")
+	}
+
+	cb := purego.NewCallback(func(v uintptr) bool {
+		return v == 42
+	})
+
+	var fn func(uintptr) bool
+	purego.RegisterFunc(&fn, cb)
+
+	if !fn(42) {
+		t.Fatal("fn(42) = false, want true")
+	}
+	if fn(0) {
+		t.Fatal("fn(0) = true, want false")
 	}
 }
 
@@ -428,6 +612,39 @@ func TestABI_TooManyArguments(t *testing.T) {
 		var fn func(*byte, uintptr, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64)
 		purego.RegisterLibFunc(&fn, lib, "stack_35_int64_exceeds")
 	})
+}
+
+func openBenchmarkLibrary(tb testing.TB) uintptr {
+	tb.Helper()
+
+	libFileName := filepath.Join(tb.TempDir(), "libbenchmark.so")
+	if err := buildSharedLib("CC", libFileName, filepath.Join("testdata", "benchmarktest", "benchmark.c")); err != nil {
+		tb.Fatalf("build benchmark library: %v", err)
+	}
+	tb.Cleanup(func() {
+		_ = os.Remove(libFileName)
+	})
+
+	h, err := load.OpenLibrary(libFileName)
+	if err != nil {
+		tb.Fatalf("open benchmark library %q: %v", libFileName, err)
+	}
+	tb.Cleanup(func() {
+		if err := load.CloseLibrary(h); err != nil {
+			tb.Fatalf("close benchmark library: %v", err)
+		}
+	})
+	return h
+}
+
+func openBenchmarkSymbol(tb testing.TB, lib uintptr, name string) uintptr {
+	tb.Helper()
+
+	sym, err := load.OpenSymbol(lib, name)
+	if err != nil {
+		tb.Fatalf("open benchmark symbol %q: %v", name, err)
+	}
+	return sym
 }
 
 func buildSharedLib(compilerEnv, libFile string, sources ...string) error {
