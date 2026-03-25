@@ -308,7 +308,8 @@ var tmplFastCallIF = `// fastCallIF calls cfn with numInts integer args (in a1..
 func fastCallIF(cfn uintptr, ints [{{.MaxIntArgs}}]uintptr, numInts int, floats [8]uintptr, numFloats int) uintptr {
 	s := thePool.Get().(*syscall15Args)
 	s.fn = cfn
-	// Set integer args
+	// Set integer args. Callers initialize ints via composite literals
+	// (e.g. [15]uintptr{a1, a2}), so elements beyond numInts are always zero.
 	switch {
 	case numInts >= 8:
 		s.a1, s.a2, s.a3, s.a4, s.a5, s.a6, s.a7, s.a8 = ints[0], ints[1], ints[2], ints[3], ints[4], ints[5], ints[6], ints[7]
