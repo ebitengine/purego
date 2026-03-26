@@ -6,7 +6,6 @@
 package purego
 
 import (
-	"runtime"
 	"unsafe"
 )
 
@@ -73,11 +72,6 @@ func SyscallN(fn uintptr, args ...uintptr) (r1, r2, err uintptr) {
 	}
 	if len(args) > maxArgs {
 		panic("purego: too many arguments to SyscallN")
-	}
-
-	// Windows uses syscall.SyscallN in syscall_windows.go.
-	if runtime.GOOS == "windows" {
-		return syscall_syscallN(fn, args...)
 	}
 
 	syscall := thePool.Get().(*syscall15Args)
