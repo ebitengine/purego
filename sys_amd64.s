@@ -11,8 +11,8 @@
 #define STACK_SIZE 224
 #define PTR_ADDRESS (STACK_SIZE - 8)
 
-// syscall15X calls a function in libc on behalf of the syscall package.
-// syscall15X takes a pointer to a struct like:
+// syscallX calls a function in libc on behalf of the syscall package.
+// syscallX takes a pointer to a struct like:
 // struct {
 //	fn    uintptr
 //	a1    uintptr
@@ -34,99 +34,99 @@
 //	r2    uintptr
 //	err   uintptr
 // }
-// syscall15X must be called on the g0 stack with the
+// syscallX must be called on the g0 stack with the
 // C calling convention (use libcCall).
-GLOBL ·syscall15XABI0(SB), NOPTR|RODATA, $8
-DATA ·syscall15XABI0(SB)/8, $syscall15X(SB)
-TEXT syscall15X(SB), NOSPLIT, $STACK_SIZE
+GLOBL ·syscallXABI0(SB), NOPTR|RODATA, $8
+DATA ·syscallXABI0(SB)/8, $syscallX(SB)
+TEXT syscallX(SB), NOSPLIT, $STACK_SIZE
 	MOVQ  DI, PTR_ADDRESS(SP) // save the pointer
 	MOVQ  DI, R11
 
-	MOVQ syscall15Args_f1(R11), X0 // f1
-	MOVQ syscall15Args_f2(R11), X1 // f2
-	MOVQ syscall15Args_f3(R11), X2 // f3
-	MOVQ syscall15Args_f4(R11), X3 // f4
-	MOVQ syscall15Args_f5(R11), X4 // f5
-	MOVQ syscall15Args_f6(R11), X5 // f6
-	MOVQ syscall15Args_f7(R11), X6 // f7
-	MOVQ syscall15Args_f8(R11), X7 // f8
+	MOVQ syscallArgs_f1(R11), X0 // f1
+	MOVQ syscallArgs_f2(R11), X1 // f2
+	MOVQ syscallArgs_f3(R11), X2 // f3
+	MOVQ syscallArgs_f4(R11), X3 // f4
+	MOVQ syscallArgs_f5(R11), X4 // f5
+	MOVQ syscallArgs_f6(R11), X5 // f6
+	MOVQ syscallArgs_f7(R11), X6 // f7
+	MOVQ syscallArgs_f8(R11), X7 // f8
 
-	MOVQ syscall15Args_a1(R11), DI // a1
-	MOVQ syscall15Args_a2(R11), SI // a2
-	MOVQ syscall15Args_a3(R11), DX // a3
-	MOVQ syscall15Args_a4(R11), CX // a4
-	MOVQ syscall15Args_a5(R11), R8 // a5
-	MOVQ syscall15Args_a6(R11), R9 // a6
+	MOVQ syscallArgs_a1(R11), DI // a1
+	MOVQ syscallArgs_a2(R11), SI // a2
+	MOVQ syscallArgs_a3(R11), DX // a3
+	MOVQ syscallArgs_a4(R11), CX // a4
+	MOVQ syscallArgs_a5(R11), R8 // a5
+	MOVQ syscallArgs_a6(R11), R9 // a6
 
 	// push the remaining parameters onto the stack
-	MOVQ syscall15Args_a7(R11), R12
+	MOVQ syscallArgs_a7(R11), R12
 	MOVQ R12, 0(SP)                  // push a7
-	MOVQ syscall15Args_a8(R11), R12
+	MOVQ syscallArgs_a8(R11), R12
 	MOVQ R12, 8(SP)                  // push a8
-	MOVQ syscall15Args_a9(R11), R12
+	MOVQ syscallArgs_a9(R11), R12
 	MOVQ R12, 16(SP)                 // push a9
-	MOVQ syscall15Args_a10(R11), R12
+	MOVQ syscallArgs_a10(R11), R12
 	MOVQ R12, 24(SP)                 // push a10
-	MOVQ syscall15Args_a11(R11), R12
+	MOVQ syscallArgs_a11(R11), R12
 	MOVQ R12, 32(SP)                 // push a11
-	MOVQ syscall15Args_a12(R11), R12
+	MOVQ syscallArgs_a12(R11), R12
 	MOVQ R12, 40(SP)                 // push a12
-	MOVQ syscall15Args_a13(R11), R12
+	MOVQ syscallArgs_a13(R11), R12
 	MOVQ R12, 48(SP)                 // push a13
-	MOVQ syscall15Args_a14(R11), R12
+	MOVQ syscallArgs_a14(R11), R12
 	MOVQ R12, 56(SP)                 // push a14
-	MOVQ syscall15Args_a15(R11), R12
+	MOVQ syscallArgs_a15(R11), R12
 	MOVQ R12, 64(SP)                 // push a15
-	MOVQ syscall15Args_a16(R11), R12
+	MOVQ syscallArgs_a16(R11), R12
 	MOVQ R12, 72(SP)                 // push a16
-	MOVQ syscall15Args_a17(R11), R12
+	MOVQ syscallArgs_a17(R11), R12
 	MOVQ R12, 80(SP)                 // push a17
-	MOVQ syscall15Args_a18(R11), R12
+	MOVQ syscallArgs_a18(R11), R12
 	MOVQ R12, 88(SP)                 // push a18
-	MOVQ syscall15Args_a19(R11), R12
+	MOVQ syscallArgs_a19(R11), R12
 	MOVQ R12, 96(SP)                 // push a19
-	MOVQ syscall15Args_a20(R11), R12
+	MOVQ syscallArgs_a20(R11), R12
 	MOVQ R12, 104(SP)                // push a20
-	MOVQ syscall15Args_a21(R11), R12
+	MOVQ syscallArgs_a21(R11), R12
 	MOVQ R12, 112(SP)                // push a21
-	MOVQ syscall15Args_a22(R11), R12
+	MOVQ syscallArgs_a22(R11), R12
 	MOVQ R12, 120(SP)                // push a22
-	MOVQ syscall15Args_a23(R11), R12
+	MOVQ syscallArgs_a23(R11), R12
 	MOVQ R12, 128(SP)                // push a23
-	MOVQ syscall15Args_a24(R11), R12
+	MOVQ syscallArgs_a24(R11), R12
 	MOVQ R12, 136(SP)                // push a24
-	MOVQ syscall15Args_a25(R11), R12
+	MOVQ syscallArgs_a25(R11), R12
 	MOVQ R12, 144(SP)                // push a25
-	MOVQ syscall15Args_a26(R11), R12
+	MOVQ syscallArgs_a26(R11), R12
 	MOVQ R12, 152(SP)                // push a26
-	MOVQ syscall15Args_a27(R11), R12
+	MOVQ syscallArgs_a27(R11), R12
 	MOVQ R12, 160(SP)                // push a27
-	MOVQ syscall15Args_a28(R11), R12
+	MOVQ syscallArgs_a28(R11), R12
 	MOVQ R12, 168(SP)                // push a28
-	MOVQ syscall15Args_a29(R11), R12
+	MOVQ syscallArgs_a29(R11), R12
 	MOVQ R12, 176(SP)                // push a29
-	MOVQ syscall15Args_a30(R11), R12
+	MOVQ syscallArgs_a30(R11), R12
 	MOVQ R12, 184(SP)                // push a30
-	MOVQ syscall15Args_a31(R11), R12
+	MOVQ syscallArgs_a31(R11), R12
 	MOVQ R12, 192(SP)                // push a31
-	MOVQ syscall15Args_a32(R11), R12
+	MOVQ syscallArgs_a32(R11), R12
 	MOVQ R12, 200(SP)                // push a32
 	XORL AX, AX                      // vararg: say "no float args"
 
-	MOVQ syscall15Args_fn(R11), R10 // fn
+	MOVQ syscallArgs_fn(R11), R10 // fn
 	CALL R10
 
 	MOVQ PTR_ADDRESS(SP), DI      // get the pointer back
-	MOVQ AX, syscall15Args_a1(DI) // r1
-	MOVQ DX, syscall15Args_a2(DI) // r2
-	MOVQ X0, syscall15Args_f1(DI) // f1
-	MOVQ X1, syscall15Args_f2(DI) // f2
+	MOVQ AX, syscallArgs_a1(DI) // r1
+	MOVQ DX, syscallArgs_a2(DI) // r2
+	MOVQ X0, syscallArgs_f1(DI) // f1
+	MOVQ X1, syscallArgs_f2(DI) // f2
 
 #ifdef GOOS_darwin
 	CALL purego_error(SB)
 	MOVQ PTR_ADDRESS(SP), DI      // reload (DI clobbered by call)
 	MOVQ (AX), AX
-	MOVQ AX, syscall15Args_a3(DI) // save errno
+	MOVQ AX, syscallArgs_a3(DI) // save errno
 #endif
 
 	XORL AX, AX          // no error (it's ignored anyway)

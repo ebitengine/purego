@@ -28,7 +28,7 @@ func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFl
 	return keepAlive
 }
 
-func getStruct(outType reflect.Type, syscall syscall15Args) (v reflect.Value) {
+func getStruct(outType reflect.Type, syscall syscallArgs) (v reflect.Value) {
 	outSize := outType.Size()
 	if outSize == 0 {
 		return reflect.New(outType).Elem()

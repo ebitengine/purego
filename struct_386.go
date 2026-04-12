@@ -12,7 +12,7 @@ func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFl
 	panic("purego: struct arguments are not supported")
 }
 
-func getStruct(outType reflect.Type, syscall syscall15Args) (v reflect.Value) {
+func getStruct(outType reflect.Type, syscall syscallArgs) (v reflect.Value) {
 	panic("purego: struct returns are not supported")
 }
 

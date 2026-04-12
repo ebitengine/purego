@@ -13,38 +13,26 @@ const (
 	maxArgs = 15
 )
 
-type syscall15Args struct {
+type syscallArgs struct {
 	fn, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15 uintptr
 	f1, f2, f3, f4, f5, f6, f7, f8                                       uintptr
 	arm64_r8                                                             uintptr
 }
 
-func (s *syscall15Args) Set(fn uintptr, ints []uintptr, floats []uintptr, r8 uintptr) {
-	s.fn = fn
-	s.a1 = ints[0]
-	s.a2 = ints[1]
-	s.a3 = ints[2]
-	s.a4 = ints[3]
-	s.a5 = ints[4]
-	s.a6 = ints[5]
-	s.a7 = ints[6]
-	s.a8 = ints[7]
-	s.a9 = ints[8]
-	s.a10 = ints[9]
-	s.a11 = ints[10]
-	s.a12 = ints[11]
-	s.a13 = ints[12]
-	s.a14 = ints[13]
-	s.a15 = ints[14]
-	s.f1 = floats[0]
-	s.f2 = floats[1]
-	s.f3 = floats[2]
-	s.f4 = floats[3]
-	s.f5 = floats[4]
-	s.f6 = floats[5]
-	s.f7 = floats[6]
-	s.f8 = floats[7]
-	s.arm64_r8 = r8
+func syscall_SyscallN(fn uintptr, sysargs []uintptr, floats []uintptr, r8 uintptr) *syscallArgs {
+	s := thePool.Get().(*syscallArgs)
+	*s = syscallArgs{
+		fn:  fn,
+		a1:  sysargs[0], a2: sysargs[1], a3: sysargs[2], a4: sysargs[3],
+		a5:  sysargs[4], a6: sysargs[5], a7: sysargs[6], a8: sysargs[7],
+		a9:  sysargs[8], a10: sysargs[9], a11: sysargs[10], a12: sysargs[11],
+		a13: sysargs[12], a14: sysargs[13], a15: sysargs[14],
+		f1: floats[0], f2: floats[1], f3: floats[2], f4: floats[3],
+		f5: floats[4], f6: floats[5], f7: floats[6], f8: floats[7],
+		arm64_r8: r8,
+	}
+	runtime_cgocall(syscallXABI0, unsafe.Pointer(s))
+	return s
 }
 
 // SyscallN takes fn, a C function pointer and a list of arguments as uintptr.
@@ -74,15 +62,11 @@ func SyscallN(fn uintptr, args ...uintptr) (r1, r2, err uintptr) {
 		panic("purego: too many arguments to SyscallN")
 	}
 
-	syscall := thePool.Get().(*syscall15Args)
-	defer thePool.Put(syscall)
-	*syscall = syscall15Args{}
-
 	var tmp [maxArgs]uintptr
 	copy(tmp[:], args)
 	var floats [maxArgs]uintptr
 	copy(floats[:], tmp[:])
-	syscall.Set(fn, tmp[:], floats[:], 0)
-	runtime_cgocall(syscall15XABI0, unsafe.Pointer(syscall))
-	return syscall.a1, syscall.a2, syscall.a3
+	s := syscall_SyscallN(fn, tmp[:], floats[:], 0)
+	defer thePool.Put(s)
+	return s.a1, s.a2, s.a3
 }
