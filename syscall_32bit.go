@@ -24,10 +24,10 @@ type syscallArgs struct {
 func syscall_SyscallN(fn uintptr, sysargs []uintptr, floats []uintptr, r8 uintptr) *syscallArgs {
 	s := thePool.Get().(*syscallArgs)
 	*s = syscallArgs{
-		fn:  fn,
-		a1:  sysargs[0], a2: sysargs[1], a3: sysargs[2], a4: sysargs[3],
-		a5:  sysargs[4], a6: sysargs[5], a7: sysargs[6], a8: sysargs[7],
-		a9:  sysargs[8], a10: sysargs[9], a11: sysargs[10], a12: sysargs[11],
+		fn: fn,
+		a1: sysargs[0], a2: sysargs[1], a3: sysargs[2], a4: sysargs[3],
+		a5: sysargs[4], a6: sysargs[5], a7: sysargs[6], a8: sysargs[7],
+		a9: sysargs[8], a10: sysargs[9], a11: sysargs[10], a12: sysargs[11],
 		a13: sysargs[12], a14: sysargs[13], a15: sysargs[14], a16: sysargs[15],
 		a17: sysargs[16], a18: sysargs[17], a19: sysargs[18], a20: sysargs[19],
 		a21: sysargs[20], a22: sysargs[21], a23: sysargs[22], a24: sysargs[23],

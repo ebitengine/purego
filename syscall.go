@@ -18,23 +18,23 @@ type syscallArgs struct {
 	fn, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15                uintptr
 	a16, a17, a18, a19, a20, a21, a22, a23, a24, a25, a26, a27, a28, a29, a30, a31, a32 uintptr
 	f1, f2, f3, f4, f5, f6, f7, f8                                                      uintptr
-	arm64_r8                                                                             uintptr
+	arm64_r8                                                                            uintptr
 }
 
 func syscall_SyscallN(fn uintptr, sysargs []uintptr, floats []uintptr, r8 uintptr) *syscallArgs {
 	s := thePool.Get().(*syscallArgs)
 	*s = syscallArgs{
-		fn:  fn,
-		a1:  sysargs[0], a2: sysargs[1], a3: sysargs[2], a4: sysargs[3],
-		a5:  sysargs[4], a6: sysargs[5], a7: sysargs[6], a8: sysargs[7],
-		a9:  sysargs[8], a10: sysargs[9], a11: sysargs[10], a12: sysargs[11],
+		fn: fn,
+		a1: sysargs[0], a2: sysargs[1], a3: sysargs[2], a4: sysargs[3],
+		a5: sysargs[4], a6: sysargs[5], a7: sysargs[6], a8: sysargs[7],
+		a9: sysargs[8], a10: sysargs[9], a11: sysargs[10], a12: sysargs[11],
 		a13: sysargs[12], a14: sysargs[13], a15: sysargs[14], a16: sysargs[15],
 		a17: sysargs[16], a18: sysargs[17], a19: sysargs[18], a20: sysargs[19],
 		a21: sysargs[20], a22: sysargs[21], a23: sysargs[22], a24: sysargs[23],
 		a25: sysargs[24], a26: sysargs[25], a27: sysargs[26], a28: sysargs[27],
 		a29: sysargs[28], a30: sysargs[29], a31: sysargs[30], a32: sysargs[31],
-		f1:  floats[0], f2: floats[1], f3: floats[2], f4: floats[3],
-		f5:  floats[4], f6: floats[5], f7: floats[6], f8: floats[7],
+		f1: floats[0], f2: floats[1], f3: floats[2], f4: floats[3],
+		f5: floats[4], f6: floats[5], f7: floats[6], f8: floats[7],
 		arm64_r8: r8,
 	}
 	runtime_cgocall(syscallXABI0, unsafe.Pointer(s))
