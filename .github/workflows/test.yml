@@ -3,7 +3,7 @@ name: Test
 on: [push, pull_request]
 
 env:
-  QEMU_VERSION: "10.2.1+ds-1"
+  QEMU_MAJOR: "10"
 
 jobs:
   test:
@@ -136,12 +136,22 @@ jobs:
            sudo apt-get update
            sudo apt-get install -y gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf libc6-armhf-cross
 
-           # Install QEMU 10.x from Debian trixie. Ubuntu 24.04 ships QEMU 8.2
+           # Install the latest QEMU 10.x package from Debian. Ubuntu 24.04 ships QEMU 8.2
            # which has a bug where inter-thread signal delivery (tgkill) hangs,
            # causing TestSetuidEtc to deadlock.
-           wget -q https://ftp.debian.org/debian/pool/main/q/qemu/qemu-user_${QEMU_VERSION}_arm64.deb -O /tmp/qemu-user.deb
-           wget -q https://ftp.debian.org/debian/pool/main/q/qemu/qemu-user-binfmt_${QEMU_VERSION}_arm64.deb -O /tmp/qemu-user-binfmt.deb
-           sudo dpkg --force-depends -i /tmp/qemu-user.deb /tmp/qemu-user-binfmt.deb
+           arch=$(dpkg --print-architecture)
+           qemu_user_deb=$(
+             curl -fsSL https://ftp.debian.org/debian/pool/main/q/qemu/ |
+               grep -Eo "qemu-user_${QEMU_MAJOR}\.[0-9.]+\+ds-[0-9]+_${arch}\.deb" |
+               sort -V |
+               tail -n 1
+           )
+           if [ -z "${qemu_user_deb}" ]; then
+             echo "missing qemu-user ${QEMU_MAJOR}.x package for ${arch}" >&2
+             exit 1
+           fi
+           wget -q "https://ftp.debian.org/debian/pool/main/q/qemu/${qemu_user_deb}" -O /tmp/qemu-user.deb
+           sudo dpkg --force-depends -i /tmp/qemu-user.deb
            sudo apt-get -f install -y
 
            # Create symlink for the dynamic linker that QEMU expects
@@ -195,12 +205,22 @@ jobs:
             gcc-riscv64-linux-gnu g++-riscv64-linux-gnu \
             gcc-s390x-linux-gnu g++-s390x-linux-gnu
 
-          # Install QEMU 10.x from Debian trixie. Ubuntu 24.04 ships QEMU 8.2
+          # Install the latest QEMU 10.x package from Debian. Ubuntu 24.04 ships QEMU 8.2
           # which has a bug where inter-thread signal delivery (tgkill) hangs,
           # causing TestSetuidEtc to deadlock.
-          wget -q https://ftp.debian.org/debian/pool/main/q/qemu/qemu-user_${QEMU_VERSION}_amd64.deb -O /tmp/qemu-user.deb
-          wget -q https://ftp.debian.org/debian/pool/main/q/qemu/qemu-user-binfmt_${QEMU_VERSION}_amd64.deb -O /tmp/qemu-user-binfmt.deb
-          sudo dpkg --force-depends -i /tmp/qemu-user.deb /tmp/qemu-user-binfmt.deb
+          arch=$(dpkg --print-architecture)
+          qemu_user_deb=$(
+            curl -fsSL https://ftp.debian.org/debian/pool/main/q/qemu/ |
+              grep -Eo "qemu-user_${QEMU_MAJOR}\.[0-9.]+\+ds-[0-9]+_${arch}\.deb" |
+              sort -V |
+              tail -n 1
+          )
+          if [ -z "${qemu_user_deb}" ]; then
+            echo "missing qemu-user ${QEMU_MAJOR}.x package for ${arch}" >&2
+            exit 1
+          fi
+          wget -q "https://ftp.debian.org/debian/pool/main/q/qemu/${qemu_user_deb}" -O /tmp/qemu-user.deb
+          sudo dpkg --force-depends -i /tmp/qemu-user.deb
           sudo apt-get -f install -y
 
           # Verify that the expected QEMU binaries are installed and usable.
