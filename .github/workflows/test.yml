@@ -142,7 +142,7 @@ jobs:
            arch=$(dpkg --print-architecture)
            qemu_user_deb=$(
              curl -fsSL https://ftp.debian.org/debian/pool/main/q/qemu/ |
-               grep -Eo "qemu-user_${QEMU_MAJOR_VERSION}\.[0-9.]+\+ds-[0-9]+_${arch}\.deb" |
+               grep -Eo "qemu-user_${QEMU_MAJOR_VERSION}\.[0-9.]+\+ds-[0-9]+([+~][A-Za-z0-9.+:~-]+)*_${arch}\.deb" |
                sort -V |
                tail -n 1
            )
@@ -211,7 +211,7 @@ jobs:
           arch=$(dpkg --print-architecture)
           qemu_user_deb=$(
             curl -fsSL https://ftp.debian.org/debian/pool/main/q/qemu/ |
-              grep -Eo "qemu-user_${QEMU_MAJOR_VERSION}\.[0-9.]+\+ds-[0-9]+_${arch}\.deb" |
+              grep -Eo "qemu-user_${QEMU_MAJOR_VERSION}\.[0-9.]+\+ds-[0-9]+([+~][A-Za-z0-9.+:~-]+)*_${arch}\.deb" |
               sort -V |
               tail -n 1
           )
