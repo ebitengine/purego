@@ -3,7 +3,7 @@ name: Test
 on: [push, pull_request]
 
 env:
-  QEMU_MAJOR: "10"
+  QEMU_MAJOR_VERSION: "10"
 
 jobs:
   test:
@@ -142,12 +142,12 @@ jobs:
            arch=$(dpkg --print-architecture)
            qemu_user_deb=$(
              curl -fsSL https://ftp.debian.org/debian/pool/main/q/qemu/ |
-               grep -Eo "qemu-user_${QEMU_MAJOR}\.[0-9.]+\+ds-[0-9]+_${arch}\.deb" |
+               grep -Eo "qemu-user_${QEMU_MAJOR_VERSION}\.[0-9.]+\+ds-[0-9]+_${arch}\.deb" |
                sort -V |
                tail -n 1
            )
            if [ -z "${qemu_user_deb}" ]; then
-             echo "missing qemu-user ${QEMU_MAJOR}.x package for ${arch}" >&2
+             echo "missing qemu-user ${QEMU_MAJOR_VERSION}.x package for ${arch}" >&2
              exit 1
            fi
            wget -q "https://ftp.debian.org/debian/pool/main/q/qemu/${qemu_user_deb}" -O /tmp/qemu-user.deb
@@ -211,12 +211,12 @@ jobs:
           arch=$(dpkg --print-architecture)
           qemu_user_deb=$(
             curl -fsSL https://ftp.debian.org/debian/pool/main/q/qemu/ |
-              grep -Eo "qemu-user_${QEMU_MAJOR}\.[0-9.]+\+ds-[0-9]+_${arch}\.deb" |
+              grep -Eo "qemu-user_${QEMU_MAJOR_VERSION}\.[0-9.]+\+ds-[0-9]+_${arch}\.deb" |
               sort -V |
               tail -n 1
           )
           if [ -z "${qemu_user_deb}" ]; then
-            echo "missing qemu-user ${QEMU_MAJOR}.x package for ${arch}" >&2
+            echo "missing qemu-user ${QEMU_MAJOR_VERSION}.x package for ${arch}" >&2
             exit 1
           fi
           wget -q "https://ftp.debian.org/debian/pool/main/q/qemu/${qemu_user_deb}" -O /tmp/qemu-user.deb
