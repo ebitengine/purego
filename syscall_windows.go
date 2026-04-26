@@ -9,10 +9,10 @@ import (
 	"unsafe"
 )
 
-var syscall15XABI0 uintptr
+var syscallXABI0 uintptr
 
-func syscall_syscall15X(fn, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15 uintptr) (r1, r2, err uintptr) {
-	r1, r2, errno := syscall.Syscall15(fn, 15, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15)
+func syscall_syscallN(fn uintptr, args ...uintptr) (r1, r2, err uintptr) {
+	r1, r2, errno := syscall.SyscallN(fn, args...)
 	return r1, r2, uintptr(errno)
 }
 

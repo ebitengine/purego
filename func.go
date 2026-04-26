@@ -23,7 +23,7 @@ const (
 )
 
 var thePool = sync.Pool{New: func() any {
-	return new(syscall15Args)
+	return new(syscallArgs)
 }}
 
 // RegisterLibFunc is a wrapper around RegisterFunc that uses the C function returned from Dlsym(handle, name).
@@ -141,6 +141,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 		// to avoid crashing with too many arguments
 		var ints int
 		var floats int
+		floatArgRegs := numOfFloatRegisters()
 		var stack int
 		for i := 0; i < ty.NumIn(); i++ {
 			arg := ty.In(i)
@@ -167,7 +168,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 					stack++
 				}
 			case reflect.Float32, reflect.Float64:
-				if floats < numOfFloatRegisters() {
+				if floats < floatArgRegs {
 					floats++
 				} else {
 					stack++
@@ -202,10 +203,15 @@ func RegisterFunc(fptr any, cfn uintptr) {
 			}
 		}
 
-		sizeOfStack := maxArgs - numOfIntegerRegisters()
-		// On Darwin ARM64, use byte-based validation since arguments pack efficiently.
-		// See https://developer.apple.com/documentation/xcode/writing-arm64-code-for-apple-platforms
-		if runtime.GOOS == "darwin" && runtime.GOARCH == "arm64" {
+		argsLimit := maxArgs
+		sizeOfStack := argsLimit - numOfIntegerRegisters()
+		if runtime.GOOS == "windows" {
+			if ints+floats+stack > argsLimit {
+				panic("purego: too many stack arguments")
+			}
+		} else if runtime.GOOS == "darwin" && runtime.GOARCH == "arm64" {
+			// On Darwin ARM64, use byte-based validation since arguments pack efficiently.
+			// See https://developer.apple.com/documentation/xcode/writing-arm64-code-for-apple-platforms
 			stackBytes := estimateStackBytes(ty)
 			maxStackBytes := sizeOfStack * 8
 			if stackBytes > maxStackBytes {
@@ -224,6 +230,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 		// since numOfFloatRegisters() is a function call, not a constant.
 		// maxArgs is always greater than or equal to numOfFloatRegisters() so this is safe.
 		var floats [maxArgs]uintptr
+		floatArgRegs := numOfFloatRegisters()
 		var numInts int
 		var numFloats int
 		var numStack int
@@ -243,7 +250,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 				}
 			}
 			addFloat = func(x uintptr) {
-				if numFloats < numOfFloatRegisters() {
+				if numFloats < floatArgRegs {
 					floats[numFloats] = x
 					numFloats++
 				} else {
@@ -257,6 +264,9 @@ func RegisterFunc(fptr any, cfn uintptr) {
 			// This is in contrast to how macOS and Linux pass arguments which
 			// tries to use as many registers as possible in the calling convention.
 			addStack = func(x uintptr) {
+				if numStack >= maxArgs {
+					panic("purego: too many stack arguments")
+				}
 				sysargs[numStack] = x
 				numStack++
 			}
@@ -310,24 +320,16 @@ func RegisterFunc(fptr any, cfn uintptr) {
 			keepAlive = addValue(v, keepAlive, addInt, addFloat, addStack, &numInts, &numFloats, &numStack)
 		}
 
-		syscall := thePool.Get().(*syscall15Args)
-		defer thePool.Put(syscall)
-
-		if runtime.GOARCH == "loong64" || runtime.GOARCH == "ppc64le" || runtime.GOARCH == "riscv64" || runtime.GOARCH == "s390x" {
-			syscall.Set(cfn, sysargs[:], floats[:], 0)
-			runtime_cgocall(syscall15XABI0, unsafe.Pointer(syscall))
-		} else if runtime.GOARCH == "arm64" || runtime.GOOS != "windows" {
-			// Use the normal arm64 calling convention even on Windows
-			syscall.Set(cfn, sysargs[:], floats[:], arm64_r8)
-			runtime_cgocall(syscall15XABI0, unsafe.Pointer(syscall))
-		} else {
-			*syscall = syscall15Args{}
-			// This is a fallback for Windows amd64, 386, and arm. Note this may not support floats
-			syscall.a1, syscall.a2, _ = syscall_syscall15X(cfn, sysargs[0], sysargs[1], sysargs[2], sysargs[3], sysargs[4],
-				sysargs[5], sysargs[6], sysargs[7], sysargs[8], sysargs[9], sysargs[10], sysargs[11],
-				sysargs[12], sysargs[13], sysargs[14])
+		var syscall *syscallArgs
+		if runtime.GOOS == "windows" && runtime.GOARCH != "arm64" {
+			// Windows amd64, 386, and arm use syscall.SyscallN.
+			syscall = thePool.Get().(*syscallArgs)
+			syscall.a1, syscall.a2, _ = syscall_syscallN(cfn, sysargs[:numStack]...)
 			syscall.f1 = syscall.a2 // on amd64 a2 stores the float return. On 32bit platforms floats aren't support
+		} else {
+			syscall = syscall_SyscallN(cfn, sysargs[:], floats[:], arm64_r8)
 		}
+		defer thePool.Put(syscall)
 		if ty.NumOut() == 0 {
 			return nil
 		}
