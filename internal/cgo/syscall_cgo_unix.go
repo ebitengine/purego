@@ -47,17 +47,3 @@ import "unsafe"
 
 // assign purego.syscallXABI0 to the C version of this function.
 var SyscallXABI0 = unsafe.Pointer(C.syscall15)
-
-//go:nosplit
-func SyscallX(fn, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15 uintptr) (r1, r2, err uintptr) {
-	args := C.syscallArgs{
-		fn: C.uintptr_t(fn),
-		a1: C.uintptr_t(a1), a2: C.uintptr_t(a2), a3: C.uintptr_t(a3),
-		a4: C.uintptr_t(a4), a5: C.uintptr_t(a5), a6: C.uintptr_t(a6),
-		a7: C.uintptr_t(a7), a8: C.uintptr_t(a8), a9: C.uintptr_t(a9),
-		a10: C.uintptr_t(a10), a11: C.uintptr_t(a11), a12: C.uintptr_t(a12),
-		a13: C.uintptr_t(a13), a14: C.uintptr_t(a14), a15: C.uintptr_t(a15),
-	}
-	C.syscall15(&args)
-	return uintptr(args.a1), uintptr(args.a2), uintptr(args.a3)
-}
