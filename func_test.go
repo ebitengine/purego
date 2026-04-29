@@ -527,6 +527,19 @@ func TestABI_TooManyArguments(t *testing.T) {
 		})
 	})
 
+	t.Run("registerfunc_16_int64_exceeds_ppc64le_limit", func(t *testing.T) {
+		if runtime.GOARCH != "ppc64le" {
+			t.Skip("ppc64le retains the 15-argument limit")
+		}
+		mustPanic(t, "purego: too many stack arguments", func() {
+			var fn func(
+				int64, int64, int64, int64, int64, int64, int64, int64,
+				int64, int64, int64, int64, int64, int64, int64, int64,
+			)
+			purego.RegisterFunc(&fn, 1)
+		})
+	})
+
 	t.Run("syscalln_33_uintptr_exceeds_limit", func(t *testing.T) {
 		mustPanic(t, "purego: too many arguments to SyscallN", func() {
 			purego.SyscallN(1,
@@ -535,6 +548,18 @@ func TestABI_TooManyArguments(t *testing.T) {
 				17, 18, 19, 20, 21, 22, 23, 24,
 				25, 26, 27, 28, 29, 30, 31, 32,
 				33,
+			)
+		})
+	})
+
+	t.Run("syscalln_16_uintptr_exceeds_ppc64le_limit", func(t *testing.T) {
+		if runtime.GOARCH != "ppc64le" {
+			t.Skip("ppc64le retains the 15-argument limit")
+		}
+		mustPanic(t, "purego: too many arguments to SyscallN", func() {
+			purego.SyscallN(1,
+				1, 2, 3, 4, 5, 6, 7, 8,
+				9, 10, 11, 12, 13, 14, 15, 16,
 			)
 		})
 	})
