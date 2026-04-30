@@ -469,6 +469,117 @@ func TestABI_ArgumentPassing(t *testing.T) {
 		}
 	})
 
+	t.Run("syscall_fixed", func(t *testing.T) {
+		fn0, err := load.OpenSymbol(lib, "stack_0_uintptr")
+		if err != nil {
+			t.Fatalf("OpenSymbol(stack_0_uintptr) failed: %v", err)
+		}
+		fn15, err := load.OpenSymbol(lib, "stack_15_uintptr")
+		if err != nil {
+			t.Fatalf("OpenSymbol(stack_15_uintptr) failed: %v", err)
+		}
+
+		// stack_0_uintptr takes no arguments and returns the constant 42.
+		{
+			got, _, _ := purego.Syscall0(fn0)
+			gotN, _, _ := purego.SyscallN(fn0)
+			if got != 42 {
+				t.Errorf("Syscall0: got %d, want 42", got)
+			}
+			if got != gotN {
+				t.Errorf("Syscall0 vs SyscallN: %d != %d", got, gotN)
+			}
+		}
+
+		// stack_15_uintptr sums its 15 arguments. Calling it with K explicit
+		// arguments (the remaining slots are zero-initialised) yields sum(1..K).
+		check := func(name string, got, gotN uintptr, want int) {
+			t.Helper()
+			if got != uintptr(want) {
+				t.Errorf("%s: got %d, want %d", name, got, want)
+			}
+			if got != gotN {
+				t.Errorf("%s vs SyscallN: %d != %d", name, got, gotN)
+			}
+		}
+
+		{
+			got, _, _ := purego.Syscall1(fn15, 1)
+			gotN, _, _ := purego.SyscallN(fn15, 1)
+			check("Syscall1", got, gotN, 1)
+		}
+		{
+			got, _, _ := purego.Syscall2(fn15, 1, 2)
+			gotN, _, _ := purego.SyscallN(fn15, 1, 2)
+			check("Syscall2", got, gotN, 3)
+		}
+		{
+			got, _, _ := purego.Syscall3(fn15, 1, 2, 3)
+			gotN, _, _ := purego.SyscallN(fn15, 1, 2, 3)
+			check("Syscall3", got, gotN, 6)
+		}
+		{
+			got, _, _ := purego.Syscall4(fn15, 1, 2, 3, 4)
+			gotN, _, _ := purego.SyscallN(fn15, 1, 2, 3, 4)
+			check("Syscall4", got, gotN, 10)
+		}
+		{
+			got, _, _ := purego.Syscall5(fn15, 1, 2, 3, 4, 5)
+			gotN, _, _ := purego.SyscallN(fn15, 1, 2, 3, 4, 5)
+			check("Syscall5", got, gotN, 15)
+		}
+		{
+			got, _, _ := purego.Syscall6(fn15, 1, 2, 3, 4, 5, 6)
+			gotN, _, _ := purego.SyscallN(fn15, 1, 2, 3, 4, 5, 6)
+			check("Syscall6", got, gotN, 21)
+		}
+		{
+			got, _, _ := purego.Syscall7(fn15, 1, 2, 3, 4, 5, 6, 7)
+			gotN, _, _ := purego.SyscallN(fn15, 1, 2, 3, 4, 5, 6, 7)
+			check("Syscall7", got, gotN, 28)
+		}
+		{
+			got, _, _ := purego.Syscall8(fn15, 1, 2, 3, 4, 5, 6, 7, 8)
+			gotN, _, _ := purego.SyscallN(fn15, 1, 2, 3, 4, 5, 6, 7, 8)
+			check("Syscall8", got, gotN, 36)
+		}
+		{
+			got, _, _ := purego.Syscall9(fn15, 1, 2, 3, 4, 5, 6, 7, 8, 9)
+			gotN, _, _ := purego.SyscallN(fn15, 1, 2, 3, 4, 5, 6, 7, 8, 9)
+			check("Syscall9", got, gotN, 45)
+		}
+		{
+			got, _, _ := purego.Syscall10(fn15, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+			gotN, _, _ := purego.SyscallN(fn15, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+			check("Syscall10", got, gotN, 55)
+		}
+		{
+			got, _, _ := purego.Syscall11(fn15, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
+			gotN, _, _ := purego.SyscallN(fn15, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
+			check("Syscall11", got, gotN, 66)
+		}
+		{
+			got, _, _ := purego.Syscall12(fn15, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)
+			gotN, _, _ := purego.SyscallN(fn15, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)
+			check("Syscall12", got, gotN, 78)
+		}
+		{
+			got, _, _ := purego.Syscall13(fn15, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13)
+			gotN, _, _ := purego.SyscallN(fn15, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13)
+			check("Syscall13", got, gotN, 91)
+		}
+		{
+			got, _, _ := purego.Syscall14(fn15, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14)
+			gotN, _, _ := purego.SyscallN(fn15, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14)
+			check("Syscall14", got, gotN, 105)
+		}
+		{
+			got, _, _ := purego.Syscall15(fn15, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)
+			gotN, _, _ := purego.SyscallN(fn15, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)
+			check("Syscall15", got, gotN, 120)
+		}
+	})
+
 	t.Run("32_mixed_int_float", func(t *testing.T) {
 		if unsafe.Sizeof(uintptr(0)) == 4 {
 			t.Skip("requires 64-bit uintptr slots")
