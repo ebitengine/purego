@@ -8,7 +8,7 @@ import (
 	"unsafe"
 )
 
-func getStruct(outType reflect.Type, syscall syscall15Args) reflect.Value {
+func getStruct(outType reflect.Type, syscall syscallArgs) reflect.Value {
 	outSize := outType.Size()
 
 	switch {

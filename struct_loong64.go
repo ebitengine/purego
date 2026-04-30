@@ -9,7 +9,7 @@ import (
 	"unsafe"
 )
 
-func getStruct(outType reflect.Type, syscall syscall15Args) (v reflect.Value) {
+func getStruct(outType reflect.Type, syscall syscallArgs) (v reflect.Value) {
 	outSize := outType.Size()
 	switch {
 	case outSize == 0:
