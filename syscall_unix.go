@@ -13,21 +13,10 @@ import (
 	"unsafe"
 )
 
-var syscall15XABI0 uintptr
+var syscallXABI0 uintptr
 
-func syscall_syscall15X(fn, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15 uintptr) (r1, r2, err uintptr) {
-	args := thePool.Get().(*syscall15Args)
-	defer thePool.Put(args)
-
-	*args = syscall15Args{
-		fn: fn,
-		a1: a1, a2: a2, a3: a3, a4: a4, a5: a5, a6: a6, a7: a7, a8: a8,
-		a9: a9, a10: a10, a11: a11, a12: a12, a13: a13, a14: a14, a15: a15,
-		f1: a1, f2: a2, f3: a3, f4: a4, f5: a5, f6: a6, f7: a7, f8: a8,
-	}
-
-	runtime_cgocall(syscall15XABI0, unsafe.Pointer(args))
-	return args.a1, args.a2, args.a3
+func syscall_syscallN(fn uintptr, args ...uintptr) (r1, r2, err uintptr) {
+	panic("purego: syscall_syscallN is only supported on windows")
 }
 
 // NewCallback converts a Go function to a function pointer conforming to the C calling convention.
@@ -76,7 +65,9 @@ func compileCallback(fn any) uintptr {
 			if i == 0 && in.AssignableTo(reflect.TypeOf(CDecl{})) {
 				continue
 			}
-			fallthrough
+			ensureStructSupported()
+			checkStructFieldsSupported(in)
+			continue
 		case reflect.Interface, reflect.Func, reflect.Slice,
 			reflect.Chan, reflect.Complex64, reflect.Complex128,
 			reflect.String, reflect.Map, reflect.Invalid:
@@ -89,7 +80,7 @@ output:
 		switch ty.Out(0).Kind() {
 		case reflect.Pointer, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
 			reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr,
-			reflect.Bool, reflect.UnsafePointer:
+			reflect.Bool, reflect.UnsafePointer, reflect.Struct:
 			break output
 		}
 		panic("purego: unsupported return type: " + ty.String())
@@ -134,14 +125,26 @@ func callbackWrap(a *callbackArgs) {
 	// stackFrame points to stack-passed arguments. On most architectures this is
 	// contiguous with frame (after register args), but on ppc64le it's separate.
 	var stackFrame *[callbackMaxFrame]uintptr
+	var intFrame *[callbackMaxFrame]uintptr
 	if sf := a.stackFrame(); sf != nil {
 		// Only ppc64le uses separate stackArgs pointer due to NOSPLIT constraints
 		stackFrame = (*[callbackMaxFrame]uintptr)(sf)
+	}
+	if intf := a.intFrame(); intf != nil {
+		intFrame = (*[callbackMaxFrame]uintptr)(intf)
 	}
 	// floatsN and intsN track the number of register slots used, not argument count.
 	// This distinction matters on ARM32 where float64 uses 2 slots (32-bit registers).
 	var floatsN int
 	var intsN int
+	// On amd64/loong64/ppc64le/riscv64/s390x, when returning a struct larger than
+	// maxRegAllocStructSize, the caller passes a hidden pointer in the first integer
+	// register. Skip it to avoid misreading it as the first function argument.
+	if (runtime.GOARCH == "amd64" || runtime.GOARCH == "loong64" || runtime.GOARCH == "riscv64" || runtime.GOARCH == "s390x") &&
+		fnType.NumOut() == 1 && fnType.Out(0).Kind() == reflect.Struct &&
+		fnType.Out(0).Size() > maxRegAllocStructSize {
+		intsN = 1
+	}
 	// stackSlot points to the index into frame (or stackFrame) of the current stack element.
 	// When stackFrame is nil, stack begins after float and integer registers in frame.
 	// When stackFrame is not nil (ppc64le), stackSlot indexes into stackFrame starting at 0.
@@ -187,8 +190,16 @@ func callbackWrap(a *callbackArgs) {
 			}
 			floatsN += slots
 		case reflect.Struct:
-			// This is the CDecl field
-			args[i] = reflect.Zero(inType)
+			if i == 0 && inType.AssignableTo(reflect.TypeOf(CDecl{})) {
+				args[i] = reflect.Zero(inType)
+				continue
+			}
+			if inType.Size() == 0 {
+				args[i] = reflect.New(inType).Elem()
+				continue
+			}
+			args[i] = getCallbackStruct(inType, a.args, &floatsN, &intsN, &stackSlot, &stackByteOffset)
+			continue
 		default:
 			slots = int((inType.Size() + ptrSize - 1) / ptrSize)
 			if intsN+slots > numOfIntegerRegisters() {
@@ -209,13 +220,17 @@ func callbackWrap(a *callbackArgs) {
 					stackSlot += slots
 				}
 			} else {
-				// the integers begin after the floats in frame
-				pos := intsN + numOfFloatRegisters()
-				if runtime.GOARCH == "s390x" {
-					// s390x big-endian: sub-8-byte values are right-justified in GPR slot
-					args[i] = callbackArgFromSlotBigEndian(unsafe.Pointer(&frame[pos]), inType)
+				if intFrame != nil {
+					args[i] = reflect.NewAt(inType, unsafe.Pointer(&intFrame[intsN])).Elem()
 				} else {
-					args[i] = reflect.NewAt(inType, unsafe.Pointer(&frame[pos])).Elem()
+					// the integers begin after the floats in frame
+					pos := intsN + numOfFloatRegisters()
+					if runtime.GOARCH == "s390x" {
+						// s390x big-endian: sub-8-byte values are right-justified in GPR slot
+						args[i] = callbackArgFromSlotBigEndian(unsafe.Pointer(&frame[pos]), inType)
+					} else {
+						args[i] = reflect.NewAt(inType, unsafe.Pointer(&frame[pos])).Elem()
+					}
 				}
 			}
 			intsN += slots
@@ -225,19 +240,21 @@ func callbackWrap(a *callbackArgs) {
 	if len(ret) > 0 {
 		switch k := ret[0].Kind(); k {
 		case reflect.Uint, reflect.Uint64, reflect.Uint32, reflect.Uint16, reflect.Uint8, reflect.Uintptr:
-			a.result = uintptr(ret[0].Uint())
+			a.result[0] = uintptr(ret[0].Uint())
 		case reflect.Int, reflect.Int64, reflect.Int32, reflect.Int16, reflect.Int8:
-			a.result = uintptr(ret[0].Int())
+			a.result[0] = uintptr(ret[0].Int())
 		case reflect.Bool:
 			if ret[0].Bool() {
-				a.result = 1
+				a.result[0] = 1
 			} else {
-				a.result = 0
+				a.result[0] = 0
 			}
 		case reflect.Pointer:
-			a.result = ret[0].Pointer()
+			a.result[0] = ret[0].Pointer()
 		case reflect.UnsafePointer:
-			a.result = ret[0].Pointer()
+			a.result[0] = ret[0].Pointer()
+		case reflect.Struct:
+			setStruct(a, ret[0])
 		default:
 			panic("purego: unsupported kind: " + k.String())
 		}

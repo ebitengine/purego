@@ -14,7 +14,7 @@ import (
 	"github.com/ebitengine/purego/internal/strings"
 )
 
-func getStruct(outType reflect.Type, syscall syscall15Args) (v reflect.Value) {
+func getStruct(outType reflect.Type, syscall syscallArgs) (v reflect.Value) {
 	outSize := outType.Size()
 	switch {
 	case outSize == 0:
@@ -24,7 +24,7 @@ func getStruct(outType reflect.Type, syscall syscall15Args) (v reflect.Value) {
 		if isAllFloats, numFields := isAllSameFloat(outType); isAllFloats {
 			r1 = syscall.f1
 			if numFields == 2 {
-				r1 = syscall.f2<<32 | syscall.f1
+				r1 = syscall.f2<<32 | syscall.f1&math.MaxUint32
 			}
 		}
 		return reflect.NewAt(outType, unsafe.Pointer(&struct{ a uintptr }{r1})).Elem()
@@ -33,16 +33,16 @@ func getStruct(outType reflect.Type, syscall syscall15Args) (v reflect.Value) {
 		if isAllFloats, numFields := isAllSameFloat(outType); isAllFloats {
 			switch numFields {
 			case 4:
-				r1 = syscall.f2<<32 | syscall.f1
-				r2 = syscall.f4<<32 | syscall.f3
+				r1 = syscall.f2<<32 | syscall.f1&math.MaxUint32
+				r2 = syscall.f4<<32 | syscall.f3&math.MaxUint32
 			case 3:
-				r1 = syscall.f2<<32 | syscall.f1
+				r1 = syscall.f2<<32 | syscall.f1&math.MaxUint32
 				r2 = syscall.f3
 			case 2:
 				r1 = syscall.f1
 				r2 = syscall.f2
 			default:
-				panic("unreachable")
+				panic("not reached")
 			}
 		}
 		return reflect.NewAt(outType, unsafe.Pointer(&struct{ a, b uintptr }{r1, r2})).Elem()
@@ -54,7 +54,7 @@ func getStruct(outType reflect.Type, syscall syscall15Args) (v reflect.Value) {
 			case 3:
 				return reflect.NewAt(outType, unsafe.Pointer(&struct{ a, b, c uintptr }{syscall.f1, syscall.f2, syscall.f3})).Elem()
 			default:
-				panic("unreachable")
+				panic("not reached")
 			}
 		}
 		// create struct from the Go pointer created in arm64_r8
@@ -190,7 +190,7 @@ func placeRegistersArm64(v reflect.Value, addFloat func(uintptr), addInt func(ui
 				shift = 0
 				flushed = true
 				class = _NO_CLASS
-			case reflect.Ptr, reflect.UnsafePointer:
+			case reflect.Pointer, reflect.UnsafePointer:
 				addInt(f.Pointer())
 				shift = 0
 				flushed = true
@@ -546,4 +546,200 @@ func bundleStackArgs(stackArgs []reflect.Value, addStack func(uintptr)) {
 	ptr := unsafe.Pointer(structInstance.Addr().Pointer())
 	size := structType.Size()
 	copyStruct8ByteChunks(ptr, size, addStack)
+}
+
+// getCallbackStruct reads a struct argument from the callback frame on arm64.
+// It mirrors the AAPCS64 rules used by addStruct for the Go→C path.
+//
+// getCallbackStruct is only used on Unix. On Windows, callbacks are handled by
+// the runtime's own callback mechanism, so this function is compiled but unused.
+//
+// AAPCS64 struct argument passing rules:
+//   - HFA (Homogeneous Float Aggregate): each float field in a separate float register
+//   - Non-HFA ≤ 16 bytes: packed into 1–2 integer registers
+//   - > 16 bytes (not HFA): passed by pointer in integer register
+//   - Register overflow: struct goes on the stack
+//   - Darwin ARM64: byte-level packing on the stack
+func getCallbackStruct(inType reflect.Type, frame unsafe.Pointer, floatsN *int, intsN *int, stackSlot *int, stackByteOffset *uintptr) reflect.Value {
+	switch runtime.GOOS {
+	case "darwin", "freebsd", "linux", "netbsd":
+	default:
+		panic("purego: getCallbackStruct is not supported on " + runtime.GOOS)
+	}
+
+	f := (*[callbackMaxFrame]uintptr)(frame)
+
+	if isHFA(inType) {
+		_, numFloatFields := isAllSameFloat(inType)
+		if *floatsN+numFloatFields <= numOfFloatRegisters() {
+			return readHFAFromRegisters(inType, f, floatsN, numFloatFields)
+		}
+		// Not enough float registers: entire struct goes on stack.
+		// Exhaust float registers per AAPCS64.
+		*floatsN = numOfFloatRegisters()
+		return readStructFromStackArm64(inType, f, frame, stackSlot, stackByteOffset)
+	}
+
+	if size := inType.Size(); size <= 16 {
+		// Non-HFA composite ≤ 16 bytes: packed into 1–2 integer registers.
+		numSlots := int((size + 7) / 8)
+		if *intsN+numSlots <= numOfIntegerRegisters() {
+			pos := numOfFloatRegisters() + *intsN
+			var r1, r2 uintptr
+			r1 = f[pos]
+			*intsN++
+			if numSlots == 2 {
+				r2 = f[pos+1]
+				*intsN++
+			}
+			if numSlots == 1 {
+				return reflect.NewAt(inType, unsafe.Pointer(&struct{ a uintptr }{r1})).Elem()
+			}
+			return reflect.NewAt(inType, unsafe.Pointer(&struct{ a, b uintptr }{r1, r2})).Elem()
+		}
+		// Not enough int registers: goes on stack.
+		return readStructFromStackArm64(inType, f, frame, stackSlot, stackByteOffset)
+	}
+
+	// > 16 bytes, not HFA: passed by pointer in integer register.
+	if *intsN < numOfIntegerRegisters() {
+		ptr := f[numOfFloatRegisters()+*intsN]
+		*intsN++
+		return reflect.NewAt(inType, *(*unsafe.Pointer)(unsafe.Pointer(&ptr))).Elem()
+	}
+
+	// Pointer on stack (rare: all integer registers exhausted).
+	if runtime.GOOS == "darwin" {
+		ptrVal := callbackArgFromStack(frame, *stackSlot, stackByteOffset, reflect.TypeOf(uintptr(0)))
+		ptr := uintptr(ptrVal.Uint())
+		return reflect.NewAt(inType, *(*unsafe.Pointer)(unsafe.Pointer(&ptr))).Elem()
+	}
+	ptr := f[*stackSlot]
+	*stackSlot++
+	return reflect.NewAt(inType, *(*unsafe.Pointer)(unsafe.Pointer(&ptr))).Elem()
+}
+
+// readHFAFromRegisters reads an HFA (Homogeneous Float Aggregate) struct from
+// float registers. Each float field occupies one float register slot.
+// For float32, the value is in the low 32 bits of the register.
+func readHFAFromRegisters(inType reflect.Type, f *[callbackMaxFrame]uintptr, floatsN *int, numFields int) reflect.Value {
+	size := inType.Size()
+
+	// Determine the element type
+	root := inType.Field(0).Type
+	for root.Kind() == reflect.Struct {
+		root = root.Field(0).Type
+	}
+	isFloat32 := root.Kind() == reflect.Float32
+
+	if isFloat32 {
+		// Each float32 is in a separate register (low 32 bits).
+		// Pack pairs into uintptrs to match the struct memory layout.
+		switch {
+		case size <= 8:
+			var r1 uintptr
+			switch numFields {
+			case 1:
+				r1 = f[*floatsN]
+			case 2:
+				r1 = f[*floatsN+1]<<32 | f[*floatsN]&math.MaxUint32
+			}
+			*floatsN += numFields
+			return reflect.NewAt(inType, unsafe.Pointer(&struct{ a uintptr }{r1})).Elem()
+		case size <= 16:
+			var r1, r2 uintptr
+			switch numFields {
+			case 3:
+				r1 = f[*floatsN+1]<<32 | f[*floatsN]&math.MaxUint32
+				r2 = f[*floatsN+2]
+			case 4:
+				r1 = f[*floatsN+1]<<32 | f[*floatsN]&math.MaxUint32
+				r2 = f[*floatsN+3]<<32 | f[*floatsN+2]&math.MaxUint32
+			}
+			*floatsN += numFields
+			return reflect.NewAt(inType, unsafe.Pointer(&struct{ a, b uintptr }{r1, r2})).Elem()
+		default:
+			panic("not reached")
+		}
+	}
+
+	// float64: each field occupies one full register.
+	switch numFields {
+	case 1:
+		r1 := f[*floatsN]
+		*floatsN++
+		return reflect.NewAt(inType, unsafe.Pointer(&struct{ a uintptr }{r1})).Elem()
+	case 2:
+		r1, r2 := f[*floatsN], f[*floatsN+1]
+		*floatsN += 2
+		return reflect.NewAt(inType, unsafe.Pointer(&struct{ a, b uintptr }{r1, r2})).Elem()
+	case 3:
+		r1, r2, r3 := f[*floatsN], f[*floatsN+1], f[*floatsN+2]
+		*floatsN += 3
+		return reflect.NewAt(inType, unsafe.Pointer(&struct{ a, b, c uintptr }{r1, r2, r3})).Elem()
+	case 4:
+		r1, r2, r3, r4 := f[*floatsN], f[*floatsN+1], f[*floatsN+2], f[*floatsN+3]
+		*floatsN += 4
+		return reflect.NewAt(inType, unsafe.Pointer(&struct{ a, b, c, d uintptr }{r1, r2, r3, r4})).Elem()
+	default:
+		panic("purego: HFA with more than 4 fields is not supported")
+	}
+}
+
+// readStructFromStackArm64 reads a struct argument from the stack area of the
+// callback frame. On Darwin ARM64, arguments are byte-packed on the stack.
+// On Linux ARM64, arguments are 8-byte aligned.
+func readStructFromStackArm64(inType reflect.Type, f *[callbackMaxFrame]uintptr, frame unsafe.Pointer, stackSlot *int, stackByteOffset *uintptr) reflect.Value {
+	if runtime.GOOS == "darwin" {
+		return callbackArgFromStack(frame, *stackSlot, stackByteOffset, inType)
+	}
+	// Linux ARM64: 8-byte aligned slots.
+	numSlots := int((inType.Size() + 7) / 8)
+	v := reflect.NewAt(inType, unsafe.Pointer(&f[*stackSlot])).Elem()
+	*stackSlot += numSlots
+	return v
+}
+
+func setStruct(a *callbackArgs, ret reflect.Value) {
+	outSize := ret.Type().Size()
+	switch {
+	case outSize == 0:
+		return
+	case outSize <= 8:
+		reflect.NewAt(ret.Type(), unsafe.Pointer(&a.result)).Elem().Set(ret)
+		if isAllFloats, numFields := isAllSameFloat(ret.Type()); isAllFloats && numFields == 2 {
+			a.result[1] = a.result[0] >> 32 // expanding two float32s into a.result[0] and a.result[1]
+			a.result[0] &= math.MaxUint32   // clear the top bits since they contain the second argument
+		}
+		return
+	case outSize <= 16:
+		reflect.NewAt(ret.Type(), unsafe.Pointer(&a.result)).Elem().Set(ret)
+		if isAllFloats, numFields := isAllSameFloat(ret.Type()); isAllFloats {
+			switch numFields {
+			case 4:
+				a.result[3] = a.result[1] >> 32
+				a.result[2] = a.result[1] & math.MaxUint32
+				a.result[1] = a.result[0] >> 32
+				a.result[0] &= math.MaxUint32
+			case 3:
+				a.result[2] = a.result[1] & math.MaxUint32
+				a.result[1] = a.result[0] >> 32
+				a.result[0] &= math.MaxUint32
+			case 2:
+				// two float64s are already in a.result[0] and a.result[1]
+			default:
+				panic("not reached")
+			}
+		}
+		return
+	default:
+		if isAllFloats, numFields := isAllSameFloat(ret.Type()); isAllFloats && numFields <= 4 {
+			reflect.NewAt(ret.Type(), unsafe.Pointer(&a.result)).Elem().Set(ret)
+			return
+		}
+		// The caller passed the address to place the return struct,
+		// so copy the Go struct into the provided memory.
+		reflect.NewAt(ret.Type(), *(*unsafe.Pointer)(unsafe.Pointer(&a.result[0]))).Elem().Set(ret)
+		return
+	}
 }

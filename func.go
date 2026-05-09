@@ -23,7 +23,7 @@ const (
 )
 
 var thePool = sync.Pool{New: func() any {
-	return new(syscall15Args)
+	return new(syscallArgs)
 }}
 
 // RegisterLibFunc is a wrapper around RegisterFunc that uses the C function returned from Dlsym(handle, name).
@@ -141,6 +141,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 		// to avoid crashing with too many arguments
 		var ints int
 		var floats int
+		floatArgRegs := numOfFloatRegisters()
 		var stack int
 		for i := 0; i < ty.NumIn(); i++ {
 			arg := ty.In(i)
@@ -159,7 +160,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 					}
 				}
 			case reflect.String, reflect.Uintptr, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
-				reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Ptr, reflect.UnsafePointer,
+				reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Pointer, reflect.UnsafePointer,
 				reflect.Slice, reflect.Bool:
 				if ints < numOfIntegerRegisters() {
 					ints++
@@ -167,13 +168,13 @@ func RegisterFunc(fptr any, cfn uintptr) {
 					stack++
 				}
 			case reflect.Float32, reflect.Float64:
-				if floats < numOfFloatRegisters() {
+				if floats < floatArgRegs {
 					floats++
 				} else {
 					stack++
 				}
 			case reflect.Struct:
-				ensureStructSupportedForRegisterFunc()
+				ensureStructSupported()
 				if arg.Size() == 0 {
 					continue
 				}
@@ -192,7 +193,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 			}
 		}
 		if ty.NumOut() == 1 && ty.Out(0).Kind() == reflect.Struct {
-			ensureStructSupportedForRegisterFunc()
+			ensureStructSupported()
 			outType := ty.Out(0)
 			checkStructFieldsSupported(outType)
 			if runtime.GOARCH == "amd64" && outType.Size() > maxRegAllocStructSize {
@@ -202,10 +203,15 @@ func RegisterFunc(fptr any, cfn uintptr) {
 			}
 		}
 
-		sizeOfStack := maxArgs - numOfIntegerRegisters()
-		// On Darwin ARM64, use byte-based validation since arguments pack efficiently.
-		// See https://developer.apple.com/documentation/xcode/writing-arm64-code-for-apple-platforms
-		if runtime.GOOS == "darwin" && runtime.GOARCH == "arm64" {
+		argsLimit := maxArgs
+		sizeOfStack := argsLimit - numOfIntegerRegisters()
+		if runtime.GOOS == "windows" {
+			if ints+floats+stack > argsLimit {
+				panic("purego: too many stack arguments")
+			}
+		} else if runtime.GOOS == "darwin" && runtime.GOARCH == "arm64" {
+			// On Darwin ARM64, use byte-based validation since arguments pack efficiently.
+			// See https://developer.apple.com/documentation/xcode/writing-arm64-code-for-apple-platforms
 			stackBytes := estimateStackBytes(ty)
 			maxStackBytes := sizeOfStack * 8
 			if stackBytes > maxStackBytes {
@@ -224,6 +230,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 		// since numOfFloatRegisters() is a function call, not a constant.
 		// maxArgs is always greater than or equal to numOfFloatRegisters() so this is safe.
 		var floats [maxArgs]uintptr
+		floatArgRegs := numOfFloatRegisters()
 		var numInts int
 		var numFloats int
 		var numStack int
@@ -243,7 +250,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 				}
 			}
 			addFloat = func(x uintptr) {
-				if numFloats < numOfFloatRegisters() {
+				if numFloats < floatArgRegs {
 					floats[numFloats] = x
 					numFloats++
 				} else {
@@ -257,6 +264,9 @@ func RegisterFunc(fptr any, cfn uintptr) {
 			// This is in contrast to how macOS and Linux pass arguments which
 			// tries to use as many registers as possible in the calling convention.
 			addStack = func(x uintptr) {
+				if numStack >= maxArgs {
+					panic("purego: too many stack arguments")
+				}
 				sysargs[numStack] = x
 				numStack++
 			}
@@ -310,24 +320,16 @@ func RegisterFunc(fptr any, cfn uintptr) {
 			keepAlive = addValue(v, keepAlive, addInt, addFloat, addStack, &numInts, &numFloats, &numStack)
 		}
 
-		syscall := thePool.Get().(*syscall15Args)
-		defer thePool.Put(syscall)
-
-		if runtime.GOARCH == "loong64" || runtime.GOARCH == "ppc64le" || runtime.GOARCH == "riscv64" || runtime.GOARCH == "s390x" {
-			syscall.Set(cfn, sysargs[:], floats[:], 0)
-			runtime_cgocall(syscall15XABI0, unsafe.Pointer(syscall))
-		} else if runtime.GOARCH == "arm64" || runtime.GOOS != "windows" {
-			// Use the normal arm64 calling convention even on Windows
-			syscall.Set(cfn, sysargs[:], floats[:], arm64_r8)
-			runtime_cgocall(syscall15XABI0, unsafe.Pointer(syscall))
-		} else {
-			*syscall = syscall15Args{}
-			// This is a fallback for Windows amd64, 386, and arm. Note this may not support floats
-			syscall.a1, syscall.a2, _ = syscall_syscall15X(cfn, sysargs[0], sysargs[1], sysargs[2], sysargs[3], sysargs[4],
-				sysargs[5], sysargs[6], sysargs[7], sysargs[8], sysargs[9], sysargs[10], sysargs[11],
-				sysargs[12], sysargs[13], sysargs[14])
+		var syscall *syscallArgs
+		if runtime.GOOS == "windows" && runtime.GOARCH != "arm64" {
+			// Windows amd64, 386, and arm use syscall.SyscallN.
+			syscall = thePool.Get().(*syscallArgs)
+			syscall.a1, syscall.a2, _ = syscall_syscallN(cfn, sysargs[:numStack]...)
 			syscall.f1 = syscall.a2 // on amd64 a2 stores the float return. On 32bit platforms floats aren't support
+		} else {
+			syscall = syscall_SyscallN(cfn, sysargs[:], floats[:], arm64_r8)
 		}
+		defer thePool.Put(syscall)
 		if ty.NumOut() == 0 {
 			return nil
 		}
@@ -343,7 +345,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 		case reflect.UnsafePointer:
 			// We take the address and then dereference it to trick go vet from creating a possible miss-use of unsafe.Pointer
 			v.SetPointer(*(*unsafe.Pointer)(unsafe.Pointer(&syscall.a1)))
-		case reflect.Ptr:
+		case reflect.Pointer:
 			v = reflect.NewAt(outType, unsafe.Pointer(&syscall.a1)).Elem()
 		case reflect.Func:
 			// wrap this C function in a nicely typed Go function
@@ -403,7 +405,7 @@ func addValue(v reflect.Value, keepAlive []any, addInt func(x uintptr), addFloat
 		addInt(uintptr(v.Uint()))
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		addInt(uintptr(v.Int()))
-	case reflect.Ptr, reflect.UnsafePointer, reflect.Slice:
+	case reflect.Pointer, reflect.UnsafePointer, reflect.Slice:
 		// There is no need to keepAlive this pointer separately because it is kept alive in the args variable
 		addInt(v.Pointer())
 	case reflect.Func:
@@ -482,7 +484,7 @@ func checkStructFieldsSupported(ty reflect.Type) {
 		switch f.Kind() {
 		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
 			reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
-			reflect.Uintptr, reflect.Ptr, reflect.UnsafePointer, reflect.Float64, reflect.Float32,
+			reflect.Uintptr, reflect.Pointer, reflect.UnsafePointer, reflect.Float64, reflect.Float32,
 			reflect.Bool:
 		default:
 			panic(fmt.Sprintf("purego: struct field type %s is not supported", f))
@@ -490,12 +492,12 @@ func checkStructFieldsSupported(ty reflect.Type) {
 	}
 }
 
-func ensureStructSupportedForRegisterFunc() {
+func ensureStructSupported() {
 	if runtime.GOARCH != "amd64" && runtime.GOARCH != "arm64" {
-		panic("purego: struct arguments are only supported on amd64 and arm64")
+		panic("purego: struct arguments/returns are only supported on amd64 and arm64")
 	}
 	if runtime.GOOS != "darwin" && runtime.GOOS != "linux" {
-		panic("purego: struct arguments are only supported on darwin and linux")
+		panic("purego: struct arguments/returns are only supported on darwin and linux")
 	}
 }
 

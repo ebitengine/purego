@@ -8,7 +8,7 @@ import (
 	"unsafe"
 )
 
-func getStruct(outType reflect.Type, syscall syscall15Args) reflect.Value {
+func getStruct(outType reflect.Type, syscall syscallArgs) reflect.Value {
 	outSize := outType.Size()
 
 	switch {
@@ -139,5 +139,13 @@ func collectStackArgs(
 }
 
 func bundleStackArgs(stackArgs []reflect.Value, addStack func(uintptr)) {
-	panic("bundleStackArgs not supported on RISCV64")
+	panic("purego: bundleStackArgs should not be called on riscv64")
+}
+
+func getCallbackStruct(inType reflect.Type, frame unsafe.Pointer, floatsN *int, intsN *int, stackSlot *int, stackByteOffset *uintptr) reflect.Value {
+	panic("purego: struct callback arguments are not supported on riscv64")
+}
+
+func setStruct(a *callbackArgs, ret reflect.Value) {
+	panic("purego: struct returns are not supported on riscv64")
 }

@@ -12,6 +12,7 @@ import (
 	"reflect"
 	"regexp"
 	"runtime"
+	stdstrings "strings"
 	"unicode"
 	"unsafe"
 
@@ -456,26 +457,27 @@ func encodeType(typ reflect.Type, insidePtr bool) (string, error) {
 		return encFloat, nil
 	case reflect.Float64:
 		return encDouble, nil
-	case reflect.Ptr:
+	case reflect.Pointer:
 		enc, err := encodeType(typ.Elem(), true)
 		return encPtr + enc, err
 	case reflect.Struct:
 		if insidePtr {
 			return encStructBegin + typ.Name() + encStructEnd, nil
 		}
-		encoding := encStructBegin
-		encoding += typ.Name()
-		encoding += "="
+		var encoding stdstrings.Builder
+		encoding.WriteString(encStructBegin)
+		encoding.WriteString(typ.Name())
+		encoding.WriteString("=")
 		for i := 0; i < typ.NumField(); i++ {
 			f := typ.Field(i)
 			tmp, err := encodeType(f.Type, false)
 			if err != nil {
 				return "", err
 			}
-			encoding += tmp
+			encoding.WriteString(tmp)
 		}
-		encoding += encStructEnd
-		return encoding, nil
+		encoding.WriteString(encStructEnd)
+		return encoding.String(), nil
 	case reflect.UnsafePointer:
 		return encUnsafePtr, nil
 	case reflect.String:
@@ -492,16 +494,16 @@ func encodeFunc(fn any) (string, error) {
 		return "", errors.New("not a func")
 	}
 
-	encoding := ""
+	var encoding stdstrings.Builder
 	switch typ.NumOut() {
 	case 0:
-		encoding += encVoid
+		encoding.WriteString(encVoid)
 	case 1:
 		tmp, err := encodeType(typ.Out(0), false)
 		if err != nil {
 			return "", err
 		}
-		encoding += tmp
+		encoding.WriteString(tmp)
 	default:
 		return "", errors.New("too many output parameters")
 	}
@@ -510,16 +512,16 @@ func encodeFunc(fn any) (string, error) {
 		return "", errors.New("func doesn't take ID and SEL as its first two parameters")
 	}
 
-	encoding += encId
+	encoding.WriteString(encId)
 
 	for i := 1; i < typ.NumIn(); i++ {
 		tmp, err := encodeType(typ.In(i), false)
 		if err != nil {
 			return "", err
 		}
-		encoding += tmp
+		encoding.WriteString(tmp)
 	}
-	return encoding, nil
+	return encoding.String(), nil
 }
 
 // SuperClass returns the superclass of a class.

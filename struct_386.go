@@ -3,13 +3,16 @@
 
 package purego
 
-import "reflect"
+import (
+	"reflect"
+	"unsafe"
+)
 
 func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFloat, addStack func(uintptr), keepAlive []any) []any {
 	panic("purego: struct arguments are not supported")
 }
 
-func getStruct(outType reflect.Type, syscall syscall15Args) (v reflect.Value) {
+func getStruct(outType reflect.Type, syscall syscallArgs) (v reflect.Value) {
 	panic("purego: struct returns are not supported")
 }
 
@@ -38,4 +41,12 @@ func collectStackArgs(args []reflect.Value, startIdx int, numInts, numFloats int
 // bundleStackArgs is not used on 386.
 func bundleStackArgs(stackArgs []reflect.Value, addStack func(uintptr)) {
 	panic("purego: bundleStackArgs should not be called on 386")
+}
+
+func getCallbackStruct(inType reflect.Type, frame unsafe.Pointer, floatsN *int, intsN *int, stackSlot *int, stackByteOffset *uintptr) reflect.Value {
+	panic("purego: struct callback arguments are not supported on 386")
+}
+
+func setStruct(a *callbackArgs, ret reflect.Value) {
+	panic("purego: struct returns are not supported on 386")
 }
