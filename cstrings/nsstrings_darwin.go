@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	sel_IsKindOf   objc.SEL
+	sel_isKindOf   objc.SEL
 	sel_UTF8String objc.SEL
 
 	class_NSString objc.Class
@@ -24,7 +24,7 @@ func init() {
 	if err != nil {
 		panic(fmt.Errorf("cstrings: %w", err))
 	}
-	sel_IsKindOf = objc.RegisterName("isKindOfClass:")
+	sel_isKindOf = objc.RegisterName("isKindOfClass:")
 	sel_UTF8String = objc.RegisterName("UTF8String")
 	class_NSString = objc.GetClass("NSString")
 }
@@ -37,7 +37,7 @@ func NSStringToString(str objc.ID) string {
 	if str == 0 {
 		return ""
 	}
-	if str.Send(sel_IsKindOf, class_NSString) == 0 {
+	if str.Send(sel_isKindOf, class_NSString) == 0 {
 		panic("cstrings: provided ID is not an NSString")
 	}
 	return strings.GoString(uintptr(str.Send(sel_UTF8String)))
