@@ -19,7 +19,7 @@ func init() {
 	// Must pull in Foundation to get the NSString class.
 	_, err := purego.Dlopen("/System/Library/Frameworks/Foundation.framework/Foundation", purego.RTLD_GLOBAL|purego.RTLD_NOW)
 	if err != nil {
-		panic(fmt.Errorf("nsstrings: %w", err))
+		panic(fmt.Errorf("cstrings: %w", err))
 	}
 	selIsKindOf = objc.RegisterName("isKindOfClass:")
 	selUTF8String = objc.RegisterName("UTF8String")
@@ -35,7 +35,7 @@ func NSStringToString(str objc.ID) string {
 		return ""
 	}
 	if str.Send(selIsKindOf, classNSString) == 0 {
-		panic("nsstrings: provided ID is not an NSString")
+		panic("cstrings: provided ID is not an NSString")
 	}
 	return strings.GoString(uintptr(str.Send(selUTF8String)))
 }
