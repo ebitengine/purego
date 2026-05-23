@@ -36,7 +36,7 @@ func getSystemLibrary() (string, error) {
 	}
 }
 
-func TestRegisterFunc_(t *testing.T) {
+func TestRegisterFunc_ConcurrentPointerReturn(t *testing.T) {
 	library, err := getSystemLibrary()
 	if err != nil {
 		t.Fatalf("couldn't get system library: %s", err)
