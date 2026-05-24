@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"sync"
 	"testing"
 	"unsafe"
 
@@ -33,6 +34,40 @@ func getSystemLibrary() (string, error) {
 	default:
 		return "", fmt.Errorf("GOOS=%s is not supported", runtime.GOOS)
 	}
+}
+
+func TestRegisterFunc_ConcurrentPointerReturn(t *testing.T) {
+	library, err := getSystemLibrary()
+	if err != nil {
+		t.Fatalf("couldn't get system library: %s", err)
+	}
+	libc, err := load.OpenLibrary(library)
+	if err != nil {
+		t.Fatalf("failed to dlopen: %s", err)
+	}
+
+	var alloc func(uint64) *byte
+	var free func(*byte)
+	purego.RegisterLibFunc(&alloc, libc, "malloc")
+	purego.RegisterLibFunc(&free, libc, "free")
+
+	var wg sync.WaitGroup
+
+	for i := 0; i < runtime.NumCPU(); i++ {
+		wg.Add(1)
+		go func(id int) {
+			defer wg.Done()
+			for j := 0; j < 400_000; j++ {
+				ptr := alloc(5)
+				if ptr == nil {
+					continue
+				}
+				free(ptr)
+			}
+		}(i)
+	}
+
+	wg.Wait()
 }
 
 func TestRegisterFunc(t *testing.T) {
