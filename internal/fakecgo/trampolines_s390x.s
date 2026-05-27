@@ -85,9 +85,13 @@ TEXT ·setg_trampoline(SB), NOSPLIT|NOFRAME, $0-16
 	SUB  $160, R15
 	MOVD R3, 0(R15)
 	MOVD R0, 112(R15)
+	MOVD R2, 120(R15)  // save newg before call
 
-	BL R1                 // call setg_gcc
-	BL runtime·load_g(SB)
+	BL R1 // call setg_gcc
+
+	// Assign g directly instead of calling runtime·load_g
+	// setg_gcc has already stored newg into TLS; put it in the g register too.
+	MOVD 120(R15), g
 
 	MOVD 112(R15), R14
 	ADD  $160, R15
