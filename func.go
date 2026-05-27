@@ -10,6 +10,7 @@ import (
 	"math"
 	"reflect"
 	"runtime"
+	"sync"
 	"unsafe"
 
 	"github.com/ebitengine/purego/internal/strings"
@@ -20,6 +21,10 @@ const (
 	align8ByteMask = 7 // Mask for 8-byte alignment: (val + 7) &^ 7
 	align8ByteSize = 8 // 8-byte alignment boundary
 )
+
+var thePool = sync.Pool{New: func() any {
+	return new(syscallArgs)
+}}
 
 // RegisterLibFunc is a wrapper around RegisterFunc that uses the C function returned from Dlsym(handle, name).
 // It panics if it can't find the name symbol.
@@ -318,12 +323,13 @@ func RegisterFunc(fptr any, cfn uintptr) {
 		var syscall *syscallArgs
 		if runtime.GOOS == "windows" && runtime.GOARCH != "arm64" {
 			// Windows amd64, 386, and arm use syscall.SyscallN.
-			syscall = &syscallArgs{}
+			syscall = thePool.Get().(*syscallArgs)
 			syscall.a1, syscall.a2, _ = syscall_syscallN(cfn, sysargs[:numStack]...)
 			syscall.f1 = syscall.a2 // on amd64 a2 stores the float return. On 32bit platforms floats aren't support
 		} else {
 			syscall = syscall_SyscallN(cfn, sysargs[:], floats[:], arm64_r8)
 		}
+		defer thePool.Put(syscall)
 		if ty.NumOut() == 0 {
 			return nil
 		}
@@ -340,7 +346,10 @@ func RegisterFunc(fptr any, cfn uintptr) {
 			// We take the address and then dereference it to trick go vet from creating a possible miss-use of unsafe.Pointer
 			v.SetPointer(*(*unsafe.Pointer)(unsafe.Pointer(&syscall.a1)))
 		case reflect.Pointer:
-			v = reflect.NewAt(outType, unsafe.Pointer(&syscall.a1)).Elem()
+			// Copy syscall.a1 into a local variable to prevent v
+			// from holding a pointer to the pooled syscallArgs field.
+			a1 := syscall.a1
+			v = reflect.NewAt(outType, unsafe.Pointer(&a1)).Elem()
 		case reflect.Func:
 			// wrap this C function in a nicely typed Go function
 			v = reflect.New(outType)
