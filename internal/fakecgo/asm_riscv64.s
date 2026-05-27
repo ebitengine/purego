@@ -25,7 +25,6 @@ TEXT crosscall2(SB), NOSPLIT|NOFRAME, $0
 	SAVE_FPR((8*17))
 
 	// Initialize Go ABI environment
-	CALL runtime·load_g(SB)
 	CALL runtime·cgocallback(SB)
 
 	RESTORE_GPR((8*4))
