@@ -83,6 +83,14 @@ jobs:
           env GOOS=linux GOARCH=ppc64le go build -v ./...
           env GOOS=linux GOARCH=riscv64 go build -v ./...
 
+      - name: go build (Linux mips, Cgo)
+        # mips builds only via the Cgo fallback (CGO_ENABLED=1). See #460.
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-mips-linux-gnu
+          env GOOS=linux GOARCH=mips CGO_ENABLED=1 CC=mips-linux-gnu-gcc go build -v ./...
+
       - name: go build (plugin)
         if: runner.os == 'Linux' || runner.os == 'macOS'
         run:
