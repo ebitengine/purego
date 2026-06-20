@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2024 The Ebitengine Authors
 
-//go:build (darwin || linux) && (amd64 || arm64)
+//go:build (darwin || linux || windows) && (amd64 || arm64)
 
 package purego_test
 
@@ -15,6 +15,7 @@ import (
 	"unsafe"
 
 	"github.com/ebitengine/purego"
+	"github.com/ebitengine/purego/internal/load"
 )
 
 func TestRegisterFunc_structArgs(t *testing.T) {
@@ -26,10 +27,15 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 	}
 	defer os.Remove(libFileName)
 
-	lib, err := purego.Dlopen(libFileName, purego.RTLD_NOW|purego.RTLD_GLOBAL)
+	lib, err := load.OpenLibrary(libFileName)
 	if err != nil {
-		t.Fatalf("Dlopen(%q) failed: %v", libFileName, err)
+		t.Fatalf("OpenLibrary(%q) failed: %v", libFileName, err)
 	}
+	defer func() {
+		if err := load.CloseLibrary(lib); err != nil {
+			t.Fatalf("failed to close library: %v", err)
+		}
+	}()
 
 	const (
 		expectedUnsigned         = 0xdeadbeef
@@ -41,8 +47,9 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 	)
 
 	implementations := []struct {
-		name     string
-		register func(fptr any, handle uintptr, name string, goFn any)
+		name          string
+		usesCallbacks bool
+		register      func(fptr any, handle uintptr, name string, goFn any)
 	}{
 		{
 			name: "RegisterLibFunc",
@@ -51,7 +58,8 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 			},
 		},
 		{
-			name: "GoCallbackFunc",
+			name:          "GoCallbackFunc",
+			usesCallbacks: true,
 			register: func(fptr any, handle uintptr, name string, goFn any) {
 				fnType := reflect.TypeOf(fptr).Elem()
 				if fnType.NumOut() > 0 {
@@ -69,6 +77,11 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 	}
 	for _, imp := range implementations {
 		imp := imp
+		if imp.usesCallbacks && runtime.GOOS == "windows" {
+			// Callbacks on Windows use the stdlib syscall.NewCallback, which does
+			// not support struct arguments or returns.
+			continue
+		}
 		t.Run(imp.name, func(t *testing.T) {
 			register := imp.register
 			{
@@ -865,20 +878,27 @@ func TestRegisterFunc_structReturns(t *testing.T) {
 	}
 	defer os.Remove(libFileName)
 
-	lib, err := purego.Dlopen(libFileName, purego.RTLD_NOW|purego.RTLD_GLOBAL)
+	lib, err := load.OpenLibrary(libFileName)
 	if err != nil {
-		t.Fatalf("Dlopen(%q) failed: %v", libFileName, err)
+		t.Fatalf("OpenLibrary(%q) failed: %v", libFileName, err)
 	}
+	defer func() {
+		if err := load.CloseLibrary(lib); err != nil {
+			t.Fatalf("failed to close library: %v", err)
+		}
+	}()
 	implementations := []struct {
-		name     string
-		register func(fptr any, handle uintptr, name string)
+		name          string
+		usesCallbacks bool
+		register      func(fptr any, handle uintptr, name string)
 	}{
 		{
 			name:     "RegisterLibFunc",
 			register: purego.RegisterLibFunc,
 		},
 		{
-			name: "GoCallbackFunc",
+			name:          "GoCallbackFunc",
+			usesCallbacks: true,
 			register: func(fptr any, _ uintptr, _ string) {
 				fn := reflect.MakeFunc(reflect.TypeOf(fptr).Elem(), func(args []reflect.Value) []reflect.Value {
 					retType := reflect.TypeOf(fptr).Elem().Out(0)
@@ -899,6 +919,11 @@ func TestRegisterFunc_structReturns(t *testing.T) {
 	}
 	for _, imp := range implementations {
 		imp := imp
+		if imp.usesCallbacks && runtime.GOOS == "windows" {
+			// Callbacks on Windows use the stdlib syscall.NewCallback, which does
+			// not support struct arguments or returns.
+			continue
+		}
 		t.Run(imp.name, func(t *testing.T) {
 			register := imp.register
 			{

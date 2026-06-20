@@ -30,28 +30,30 @@ except for float arguments and return values.
 
 Tier 1 platforms are the primary targets officially supported by PureGo. When a new version of PureGo is released, any critical bugs found on Tier 1 platforms are treated as release blockers. The release will be postponed until such issues are resolved.
 
-- **Android**: amd64<sup>1</sup>, arm64<sup>1</sup>
-- **iOS**: amd64<sup>1</sup>, arm64<sup>1</sup>
+- **Android**: amd64<sup>1,2</sup>, arm64<sup>1,2</sup>
+- **iOS**: amd64<sup>1,2</sup>, arm64<sup>1,2</sup>
 - **Linux**: amd64, arm64
 - **macOS**: amd64, arm64
-- **Windows**: amd64, arm64
+- **Windows**: amd64<sup>3</sup>, arm64<sup>3</sup>
 
 ### Tier 2
 
 Tier 2 platforms are supported by PureGo on a best-effort basis. Critical bugs on Tier 2 platforms do not block new PureGo releases. However, fixes contributed by external contributors are very welcome and encouraged.
 
-- **Android**: 386<sup>1</sup>, arm<sup>1</sup>
-- **FreeBSD**: amd64<sup>2</sup>, arm64<sup>2</sup>
-- **Linux**: 386, arm, loong64, ppc64le, riscv64, s390x<sup>1</sup>
-- **NetBSD**: amd64<sup>2</sup>, arm64<sup>2</sup>
-- **Windows**: 386<sup>3</sup>, arm<sup>3,4</sup>
+- **Android**: 386<sup>1,2</sup>, arm<sup>1,2</sup>
+- **FreeBSD**: amd64<sup>2,4</sup>, arm64<sup>2,4</sup>
+- **Linux**: 386<sup>2</sup>, arm<sup>2</sup>, loong64<sup>2</sup>, ppc64le<sup>2</sup>, riscv64<sup>2</sup>, s390x<sup>1,2</sup>
+- **NetBSD**: amd64<sup>2,4</sup>, arm64<sup>2,4</sup>
+- **Windows**: 386<sup>2,5</sup>, arm<sup>2,5,6</sup>
 
 #### Support Notes
 
 1. These architectures require CGO_ENABLED=1 to compile
-2. These architectures require the special flag `-gcflags="github.com/ebitengine/purego/internal/fakecgo=-std"` to compile with CGO_ENABLED=0
-3. These architectures only support `SyscallN` and `NewCallback`
-4. These architectures are no longer supported as of Go 1.26
+2. These architectures do not support passing structs by value as arguments or return values
+3. These architectures support passing structs by value as arguments and return values when calling C functions, but not in callbacks created with `NewCallback`
+4. These architectures require the special flag `-gcflags="github.com/ebitengine/purego/internal/fakecgo=-std"` to compile with CGO_ENABLED=0
+5. These architectures only support `SyscallN` and `NewCallback`
+6. These architectures are no longer supported as of Go 1.26
 
 ## Example
 

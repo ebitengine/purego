@@ -12,6 +12,19 @@ import (
 
 func getStruct(outType reflect.Type, syscall syscallArgs) (v reflect.Value) {
 	outSize := outType.Size()
+	if runtime.GOOS == "windows" {
+		switch {
+		case outSize == 0:
+			return reflect.New(outType).Elem()
+		case amd64StructReturnInMemory(outSize):
+			// Returned through the caller-allocated hidden pointer, which the
+			// callee also returns in RAX.
+			return reflect.NewAt(outType, *(*unsafe.Pointer)(unsafe.Pointer(&syscall.a1))).Elem()
+		default:
+			// 1, 2, 4, or 8 byte aggregates are returned in RAX.
+			return reflect.NewAt(outType, unsafe.Pointer(&struct{ a uintptr }{syscall.a1})).Elem()
+		}
+	}
 	switch {
 	case outSize == 0:
 		return reflect.New(outType).Elem()
@@ -87,6 +100,12 @@ const (
 )
 
 func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFloat, addStack func(uintptr), keepAlive []any) []any {
+	if runtime.GOOS == "windows" {
+		// Win64 still passes an empty struct as an argument slot, so this must
+		// run before the zero-size early return used by the System V path.
+		return addStructWindows(v, addInt, keepAlive)
+	}
+
 	if v.Type().Size() == 0 {
 		return keepAlive
 	}
@@ -108,6 +127,27 @@ func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFl
 		*numInts = savedNumInts
 		*numStack = savedNumStack
 		placeStack(v, addStack)
+	}
+	return keepAlive
+}
+
+// addStructWindows passes a struct argument under the Win64 ABI. Aggregates of
+// exactly 1, 2, 4, or 8 bytes are passed by value in a single integer slot; all
+// other sizes are passed as a pointer to a caller-allocated copy. Empty structs
+// fall in the latter group: unlike the System V ABI, Win64 still consumes an
+// argument slot for them.
+func addStructWindows(v reflect.Value, addInt func(uintptr), keepAlive []any) []any {
+	switch v.Type().Size() {
+	case 1, 2, 4, 8:
+		var val uintptr
+		reflect.NewAt(v.Type(), unsafe.Pointer(&val)).Elem().Set(v)
+		addInt(val)
+	default:
+		ptrStruct := reflect.New(v.Type())
+		ptrStruct.Elem().Set(v)
+		ptr := ptrStruct.Elem().Addr().UnsafePointer()
+		keepAlive = append(keepAlive, ptr)
+		addInt(uintptr(ptr))
 	}
 	return keepAlive
 }
