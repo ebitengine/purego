@@ -164,7 +164,7 @@ func callbackWrap(a *callbackArgs) {
 		case reflect.Float32, reflect.Float64:
 			slots = int((fnType.In(i).Size() + ptrSize - 1) / ptrSize)
 			if floatsN+slots > numOfFloatRegisters() {
-				if runtime.GOOS == "darwin" && runtime.GOARCH == "arm64" {
+				if isDarwin && runtime.GOARCH == "arm64" {
 					// Darwin ARM64: read from packed stack with proper alignment
 					args[i] = callbackArgFromStack(a.args, stackSlot, &stackByteOffset, inType)
 				} else if stackFrame != nil {
@@ -203,7 +203,7 @@ func callbackWrap(a *callbackArgs) {
 		default:
 			slots = int((inType.Size() + ptrSize - 1) / ptrSize)
 			if intsN+slots > numOfIntegerRegisters() {
-				if runtime.GOOS == "darwin" && runtime.GOARCH == "arm64" {
+				if isDarwin && runtime.GOARCH == "arm64" {
 					// Darwin ARM64: read from packed stack with proper alignment
 					args[i] = callbackArgFromStack(a.args, stackSlot, &stackByteOffset, inType)
 				} else if stackFrame != nil {

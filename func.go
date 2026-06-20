@@ -64,7 +64,7 @@ func RegisterLibFunc(fptr any, handle uintptr, name string) {
 //	int64 <=> int64_t
 //	float32 <=> float
 //	float64 <=> double
-//	struct <=> struct (darwin amd64/arm64, linux amd64/arm64, windows amd64/arm64)
+//	struct <=> struct (android, darwin, ios, linux, and windows on amd64/arm64)
 //	func <=> C function
 //	unsafe.Pointer, *T <=> void*
 //	[]T => void*
@@ -99,8 +99,8 @@ func RegisterLibFunc(fptr any, handle uintptr, name string) {
 // it does not support aligning fields properly. It is therefore the responsibility of the caller to ensure
 // that all padding is added to the Go struct to match the C one. See `BoolStructFn` in struct_test.go for an example.
 //
-// On Darwin ARM64, purego handles proper alignment of struct arguments when passing them on the stack,
-// following the C ABI's byte-level packing rules.
+// On Apple ARM64 platforms (macOS and iOS), purego handles proper alignment of struct arguments
+// when passing them on the stack, following the C ABI's byte-level packing rules.
 //
 // On Windows, struct arguments and returns are supported on amd64 and arm64 when calling C functions.
 // Passing or returning structs in callbacks created with [NewCallback] is not supported on Windows.
@@ -213,7 +213,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 			if ints+floats+stack > argsLimit {
 				panic("purego: too many stack arguments")
 			}
-		} else if runtime.GOOS == "darwin" && runtime.GOARCH == "arm64" {
+		} else if isDarwin && runtime.GOARCH == "arm64" {
 			// On Darwin ARM64, use byte-based validation since arguments pack efficiently.
 			// See https://developer.apple.com/documentation/xcode/writing-arm64-code-for-apple-platforms
 			stackBytes := estimateStackBytes(ty)
@@ -313,7 +313,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 				continue
 			}
 			// Check if we need to start Darwin ARM64 C-style stack packing
-			if runtime.GOARCH == "arm64" && runtime.GOOS == "darwin" && shouldBundleStackArgs(v, numInts, numFloats) {
+			if runtime.GOARCH == "arm64" && isDarwin && shouldBundleStackArgs(v, numInts, numFloats) {
 				// Collect and separate remaining args into register vs stack
 				stackArgs, newKeepAlive := collectStackArgs(args, i, numInts, numFloats,
 					keepAlive, addInt, addFloat, addStack, &numInts, &numFloats, &numStack)
@@ -505,10 +505,16 @@ func ensureStructSupported() {
 	if runtime.GOARCH != "amd64" && runtime.GOARCH != "arm64" {
 		panic("purego: struct arguments/returns are only supported on amd64 and arm64")
 	}
-	if runtime.GOOS != "darwin" && runtime.GOOS != "linux" && runtime.GOOS != "windows" {
-		panic("purego: struct arguments/returns are only supported on darwin, linux, and windows")
+	switch runtime.GOOS {
+	case "android", "darwin", "ios", "linux", "windows":
+	default:
+		panic("purego: struct arguments/returns are only supported on android, darwin, ios, linux, and windows")
 	}
 }
+
+// isDarwin is true on platforms that use Apple's calling convention.
+// iOS (GOOS=ios) shares it with macOS (GOOS=darwin).
+const isDarwin = runtime.GOOS == "darwin" || runtime.GOOS == "ios"
 
 // amd64StructReturnInMemory reports whether a struct return value of the given
 // size is returned through a caller-allocated hidden pointer (true) rather than

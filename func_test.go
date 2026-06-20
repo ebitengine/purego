@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
@@ -21,7 +22,9 @@ import (
 
 func getSystemLibrary() (string, error) {
 	switch runtime.GOOS {
-	case "darwin":
+	case "android":
+		return "libc.so", nil
+	case "darwin", "ios":
 		return "/usr/lib/libSystem.B.dylib", nil
 	case "freebsd":
 		return "libc.so.7", nil
@@ -601,6 +604,21 @@ func TestABI_TooManyArguments(t *testing.T) {
 }
 
 func buildSharedLib(compilerEnv, libFile string, sources ...string) error {
+	// When PUREGO_TEST_PREBUILT_LIBDIR is set, the shared library has been
+	// cross-compiled ahead of time and placed in that directory under the
+	// base name of libFile. This allows running the tests on a target that
+	// has no C toolchain, such as an Android emulator.
+	if dir := os.Getenv("PUREGO_TEST_PREBUILT_LIBDIR"); dir != "" {
+		data, err := os.ReadFile(filepath.Join(dir, filepath.Base(libFile)))
+		if err != nil {
+			return fmt.Errorf("prebuilt lib: %w", err)
+		}
+		if err := os.WriteFile(libFile, data, 0o755); err != nil {
+			return fmt.Errorf("prebuilt lib: %w", err)
+		}
+		return nil
+	}
+
 	out, err := exec.Command("go", "env", compilerEnv).Output()
 	if err != nil {
 		return fmt.Errorf("go env %s error: %w", compilerEnv, err)
