@@ -29,7 +29,7 @@ func NewCallback(fn any) uintptr {
 	ty := reflect.TypeOf(fn)
 	for i := 0; i < ty.NumIn(); i++ {
 		in := ty.In(i)
-		if !in.AssignableTo(reflect.TypeOf(CDecl{})) {
+		if !in.AssignableTo(reflect.TypeFor[CDecl]()) {
 			continue
 		}
 		if i != 0 {
@@ -62,7 +62,7 @@ func compileCallback(fn any) uintptr {
 		in := ty.In(i)
 		switch in.Kind() {
 		case reflect.Struct:
-			if i == 0 && in.AssignableTo(reflect.TypeOf(CDecl{})) {
+			if i == 0 && in.AssignableTo(reflect.TypeFor[CDecl]()) {
 				continue
 			}
 			ensureStructSupported()
@@ -190,7 +190,7 @@ func callbackWrap(a *callbackArgs) {
 			}
 			floatsN += slots
 		case reflect.Struct:
-			if i == 0 && inType.AssignableTo(reflect.TypeOf(CDecl{})) {
+			if i == 0 && inType.AssignableTo(reflect.TypeFor[CDecl]()) {
 				args[i] = reflect.Zero(inType)
 				continue
 			}

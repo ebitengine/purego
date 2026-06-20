@@ -43,7 +43,7 @@ func TestCallGoFromSharedLib(t *testing.T) {
 
 	const want = 10101
 	cb := purego.NewCallback(goFunc)
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		got := callCallback(cb, "a test string")
 		if got != want {
 			t.Fatalf("%d: callCallback() got %v want %v", i, got, want)

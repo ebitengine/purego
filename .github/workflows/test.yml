@@ -10,7 +10,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, windows-latest]
-        go: ['1.18.x', '1.19.x', '1.20.x', '1.21.x', '1.22.x', '1.23.x', '1.24.x', '1.25.x', '1.26.x']
+        go: ['1.25.x', '1.26.x']
     name: Test with Go ${{ matrix.go }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     defaults:
@@ -174,21 +174,18 @@ jobs:
            go env -u CXX
 
       - name: go test race (no Cgo)
-        if: ${{ runner.os == 'macOS' &&  !startsWith(matrix.go, '1.18.') && !startsWith(matrix.go, '1.19.') }}
+        if: runner.os == 'macOS'
         run: |
           # -race usually requires Cgo, but macOS is an exception. See https://go.dev/doc/articles/race_detector#Requirements
           env CGO_ENABLED=0 go test -race -shuffle=on -v -count=10 ./...
 
       - name: go test race (Cgo)
-        if: ${{ !startsWith(matrix.go, '1.18.') && !startsWith(matrix.go, '1.19.') }}
         run: |
           env CGO_ENABLED=1 go test -race -shuffle=on -v -count=10 ./...
 
   minor-arches:
     strategy:
       matrix:
-        # Test only the latest two Go versions to save CI time.
-        # See https://go.dev/doc/devel/release#policy
         go: ['1.25.x', '1.26.x']
     name: Test with Go ${{ matrix.go }} on Linux minor architectures
     runs-on: ubuntu-latest
@@ -285,8 +282,6 @@ jobs:
     strategy:
       matrix:
         os: ['FreeBSD', 'NetBSD']
-        # Test only the latest two Go versions to save CI time.
-        # See https://go.dev/doc/devel/release#policy
         go: ['1.25.8', '1.26.1']
     name: Test with Go ${{ matrix.go }} on ${{ matrix.os }}
     runs-on: ubuntu-22.04

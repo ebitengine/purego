@@ -311,7 +311,7 @@ func copyStruct8ByteChunks(ptr unsafe.Pointer, size uintptr, addChunk func(uintp
 			chunk = *(*uintptr)(unsafe.Add(ptr, offset))
 		} else {
 			// Read byte-by-byte to avoid reading beyond allocation
-			for i := uintptr(0); i < remaining; i++ {
+			for i := range remaining {
 				b := *(*byte)(unsafe.Add(ptr, offset+i))
 				chunk |= uintptr(b) << (i * 8)
 			}
@@ -514,7 +514,7 @@ func bundleStackArgs(stackArgs []reflect.Value, addStack func(uintptr)) {
 			paddingNeeded := uintptr(valAlign) - (currentOffset % uintptr(valAlign))
 			fields = append(fields, reflect.StructField{
 				Name: paddingFieldPrefix + strconv.Itoa(fieldIndex),
-				Type: reflect.ArrayOf(int(paddingNeeded), reflect.TypeOf(byte(0))),
+				Type: reflect.ArrayOf(int(paddingNeeded), reflect.TypeFor[byte]()),
 			})
 			currentOffset += paddingNeeded
 			fieldIndex++
@@ -610,7 +610,7 @@ func getCallbackStruct(inType reflect.Type, frame unsafe.Pointer, floatsN *int, 
 
 	// Pointer on stack (rare: all integer registers exhausted).
 	if isDarwin {
-		ptrVal := callbackArgFromStack(frame, *stackSlot, stackByteOffset, reflect.TypeOf(uintptr(0)))
+		ptrVal := callbackArgFromStack(frame, *stackSlot, stackByteOffset, reflect.TypeFor[uintptr]())
 		ptr := uintptr(ptrVal.Uint())
 		return reflect.NewAt(inType, *(*unsafe.Pointer)(unsafe.Pointer(&ptr))).Elem()
 	}

@@ -36,7 +36,7 @@ func main() {
 		[]objc.FieldDef{
 			{
 				Name:      "bar",
-				Type:      reflect.TypeOf(int(0)),
+				Type:      reflect.TypeFor[int](),
 				Attribute: objc.ReadWrite,
 			},
 		},
