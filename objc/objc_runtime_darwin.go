@@ -12,13 +12,13 @@ import (
 	"reflect"
 	"regexp"
 	"runtime"
+	"slices"
 	stdstrings "strings"
 	"unicode"
 	"unsafe"
 
 	"github.com/ebitengine/purego"
 	"github.com/ebitengine/purego/internal/strings"
-	"github.com/ebitengine/purego/internal/xreflect"
 )
 
 // TODO: support try/catch?
@@ -322,7 +322,7 @@ func RegisterClass(name string, superClass Class, protocols []*Protocol, ivars [
 		case ReadWrite:
 			ty := reflect.FuncOf(
 				[]reflect.Type{
-					reflect.TypeOf(ID(0)), reflect.TypeOf(SEL(0)), ivar.Type,
+					reflect.TypeFor[ID](), reflect.TypeFor[SEL](), ivar.Type,
 				},
 				nil, false,
 			)
@@ -343,7 +343,7 @@ func RegisterClass(name string, superClass Class, protocols []*Protocol, ivars [
 				//	})(unsafe.Pointer(args[0].Interface().(ID)))).v = 123
 				//
 				// However, since the type of the variable is unknown reflection is used to actually assign the value
-				id, ok := xreflect.TypeAssert[ID](args[0])
+				id, ok := reflect.TypeAssert[ID](args[0])
 				if !ok {
 					panic(fmt.Sprintf("objc: id argument is not a ID but %s", args[0].Type().String()))
 				}
@@ -358,7 +358,7 @@ func RegisterClass(name string, superClass Class, protocols []*Protocol, ivars [
 		case ReadOnly:
 			ty := reflect.FuncOf(
 				[]reflect.Type{
-					reflect.TypeOf(ID(0)), reflect.TypeOf(SEL(0)),
+					reflect.TypeFor[ID](), reflect.TypeFor[SEL](),
 				},
 				[]reflect.Type{ivar.Type}, false,
 			)
@@ -371,7 +371,7 @@ func RegisterClass(name string, superClass Class, protocols []*Protocol, ivars [
 				if len(args) != 2 {
 					panic(fmt.Sprintf("objc: incorrect number of args. expected 2 got %d", len(args)))
 				}
-				id, ok := xreflect.TypeAssert[ID](args[0])
+				id, ok := reflect.TypeAssert[ID](args[0])
 				if !ok {
 					panic(fmt.Sprintf("objc: id argument is not a ID but %s", args[0].Type().String()))
 				}
@@ -419,11 +419,11 @@ const (
 // Source: https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/ObjCRuntimeGuide/Articles/ocrtTypeEncodings.html#//apple_ref/doc/uid/TP40008048-CH100
 func encodeType(typ reflect.Type, insidePtr bool) (string, error) {
 	switch typ {
-	case reflect.TypeOf(Class(0)):
+	case reflect.TypeFor[Class]():
 		return encClass, nil
-	case reflect.TypeOf(ID(0)), reflect.TypeOf(Block(0)):
+	case reflect.TypeFor[ID](), reflect.TypeFor[Block]():
 		return encId, nil
-	case reflect.TypeOf(SEL(0)):
+	case reflect.TypeFor[SEL]():
 		return encSelector, nil
 	}
 
@@ -626,7 +626,7 @@ func (p *Protocol) Register() {
 func (p *Protocol) CopyMethodDescriptionList(isRequiredMethod, isInstanceMethod bool) []MethodDescription {
 	count := uint32(0)
 	desc := protocol_copyMethodDescriptionList(p, isRequiredMethod, isInstanceMethod, &count)
-	methods := clone(unsafe.Slice(desc, count))
+	methods := slices.Clone(unsafe.Slice(desc, count))
 	free(unsafe.Pointer(desc))
 	return methods
 }
@@ -635,7 +635,7 @@ func (p *Protocol) CopyMethodDescriptionList(isRequiredMethod, isInstanceMethod 
 func (p *Protocol) CopyProtocolList() []*Protocol {
 	count := uint32(0)
 	desc := protocol_copyProtocolList(p, &count)
-	protocols := clone(unsafe.Slice(desc, count))
+	protocols := slices.Clone(unsafe.Slice(desc, count))
 	free(unsafe.Pointer(desc))
 	return protocols
 }
@@ -644,7 +644,7 @@ func (p *Protocol) CopyProtocolList() []*Protocol {
 func (p *Protocol) CopyPropertyList(isRequiredProperty, isInstanceProperty bool) []Property {
 	count := uint32(0)
 	desc := protocol_copyPropertyList2(p, &count, isRequiredProperty, isInstanceProperty)
-	protocols := clone(unsafe.Slice(desc, count))
+	protocols := slices.Clone(unsafe.Slice(desc, count))
 	free(unsafe.Pointer(desc))
 	return protocols
 }
@@ -691,21 +691,10 @@ func NewIMP(fn any) IMP {
 	switch {
 	case ty.NumIn() < 2:
 		fallthrough
-	case ty.In(0) != reflect.TypeOf(ID(0)):
+	case ty.In(0) != reflect.TypeFor[ID]():
 		fallthrough
-	case ty.In(1) != reflect.TypeOf(SEL(0)):
+	case ty.In(1) != reflect.TypeFor[SEL]():
 		panic("objc: NewIMP must take a (id, SEL) as its first two arguments; got " + ty.String())
 	}
 	return IMP(purego.NewCallback(fn))
-}
-
-// TODO: remove and use slices.Clone when minimum version for purego is 1.21
-func clone[S ~[]E, E any](s S) S {
-	// Preserve nilness in case it matters.
-	if s == nil {
-		return nil
-	}
-	// Avoid s[:0:0] as it leads to unwanted liveness when cloning a
-	// zero-length slice of a large array; see https://go.dev/issue/68488.
-	return append(S{}, s...)
 }

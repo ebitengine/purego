@@ -60,7 +60,7 @@ func TestRegisterFunc_ConcurrentPointerReturn(t *testing.T) {
 		wg.Add(1)
 		go func(id int) {
 			defer wg.Done()
-			for j := 0; j < 400_000; j++ {
+			for range 400_000 {
 				ptr := alloc(5)
 				if ptr == nil {
 					continue

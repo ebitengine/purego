@@ -14,7 +14,6 @@ import (
 	"unsafe"
 
 	"github.com/ebitengine/purego/internal/strings"
-	"github.com/ebitengine/purego/internal/xreflect"
 )
 
 const (
@@ -155,7 +154,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 				// created in NewCallback.
 				for j := 0; j < arg.NumIn(); j++ {
 					in := arg.In(j)
-					if !in.AssignableTo(reflect.TypeOf(CDecl{})) {
+					if !in.AssignableTo(reflect.TypeFor[CDecl]()) {
 						continue
 					}
 					if j != 0 {
@@ -303,7 +302,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 			}
 		}
 		for i, v := range args {
-			if variadic, ok := xreflect.TypeAssert[[]any](args[i]); ok {
+			if variadic, ok := reflect.TypeAssert[[]any](args[i]); ok {
 				if i != len(args)-1 {
 					panic("purego: can only expand last parameter")
 				}
