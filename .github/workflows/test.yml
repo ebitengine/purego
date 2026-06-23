@@ -9,7 +9,7 @@ jobs:
   test:
     strategy:
       matrix:
-        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, windows-latest]
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, windows-latest, windows-11-arm]
         go: ['1.25.x', '1.26.x']
     name: Test with Go ${{ matrix.go }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
@@ -31,8 +31,8 @@ jobs:
         with:
           go-version: ${{ matrix.go }}
 
-      - name: Set up the prerequisites
-        if: runner.os == 'Windows'
+      - name: Set up Msys2
+        if: runner.os == 'Windows' && runner.arch != 'ARM64'
         uses: msys2/setup-msys2@v2
 
       - name: go vet
@@ -127,6 +127,10 @@ jobs:
         if: runner.os == 'Windows'
         run: |
           env CGO_ENABLED=0 GOARCH=386 go test -shuffle=on -v -count=10 ./...
+
+      - name: go test (Windows 386, Cgo)
+        if: runner.os == 'Windows' && runner.arch != 'ARM64'
+        run: |
           env CGO_ENABLED=1 GOARCH=386 go test -shuffle=on -v -count=10 ./...
 
       - name: go test (Linux 386)
@@ -180,6 +184,7 @@ jobs:
           env CGO_ENABLED=0 go test -race -shuffle=on -v -count=10 ./...
 
       - name: go test race (Cgo)
+        if: ${{ !(runner.os == 'Windows' && runner.arch == 'ARM64') }}
         run: |
           env CGO_ENABLED=1 go test -race -shuffle=on -v -count=10 ./...
 
