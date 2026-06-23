@@ -339,7 +339,7 @@ func bundleStackArgs(stackArgs []reflect.Value, addStack func(uintptr)) {
 //   - If not enough registers for all eightbytes: entire struct goes on the stack
 func getCallbackStruct(inType reflect.Type, frame unsafe.Pointer, floatsN *int, intsN *int, stackSlot *int, stackByteOffset *uintptr) reflect.Value {
 	switch runtime.GOOS {
-	case "darwin", "freebsd", "linux", "netbsd":
+	case "android", "darwin", "freebsd", "ios", "linux", "netbsd":
 	default:
 		panic("purego: getCallbackStruct is not supported on " + runtime.GOOS)
 	}

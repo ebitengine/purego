@@ -92,7 +92,7 @@ func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFl
 }
 
 func placeRegisters(v reflect.Value, addFloat func(uintptr), addInt func(uintptr)) {
-	if runtime.GOOS == "darwin" {
+	if isDarwin {
 		placeRegistersDarwin(v, addFloat, addInt)
 		return
 	}
@@ -301,7 +301,7 @@ func isHVA(t reflect.Type) bool {
 // copyStruct8ByteChunks copies struct memory in 8-byte chunks to the provided callback.
 // This is used for Darwin ARM64's byte-level packing of non-HFA/HVA structs.
 func copyStruct8ByteChunks(ptr unsafe.Pointer, size uintptr, addChunk func(uintptr)) {
-	if runtime.GOOS != "darwin" {
+	if !isDarwin {
 		panic("purego: should only be called on darwin")
 	}
 	for offset := uintptr(0); offset < size; offset += 8 {
@@ -328,7 +328,7 @@ func copyStruct8ByteChunks(ptr unsafe.Pointer, size uintptr, addChunk func(uintp
 // For non-HFA/HVA structs, Darwin uses byte-level packing. We copy the struct memory in
 // 8-byte chunks, which works correctly for both register and stack placement.
 func placeRegistersDarwin(v reflect.Value, addFloat func(uintptr), addInt func(uintptr)) {
-	if runtime.GOOS != "darwin" {
+	if !isDarwin {
 		panic("purego: placeRegistersDarwin should only be called on darwin")
 	}
 	// Check if this is an HFA/HVA
@@ -356,7 +356,7 @@ func placeRegistersDarwin(v reflect.Value, addFloat func(uintptr), addInt func(u
 // shouldBundleStackArgs determines if we need to start C-style packing for
 // Darwin ARM64 stack arguments. This happens when registers are exhausted.
 func shouldBundleStackArgs(v reflect.Value, numInts, numFloats int) bool {
-	if runtime.GOOS != "darwin" {
+	if !isDarwin {
 		return false
 	}
 
@@ -398,7 +398,7 @@ func shouldBundleStackArgs(v reflect.Value, numInts, numFloats int) bool {
 // registers, used during stack argument bundling to decide if a struct
 // should go through normal register allocation or be bundled with stack args.
 func structFitsInRegisters(val reflect.Value, tempNumInts, tempNumFloats int) (bool, int, int) {
-	if runtime.GOOS != "darwin" {
+	if !isDarwin {
 		panic("purego: structFitsInRegisters should only be called on darwin")
 	}
 	hfa := isHFA(val.Type())
@@ -431,7 +431,7 @@ func structFitsInRegisters(val reflect.Value, tempNumInts, tempNumFloats int) (b
 func collectStackArgs(args []reflect.Value, startIdx int, numInts, numFloats int,
 	keepAlive []any, addInt, addFloat, addStack func(uintptr),
 	pNumInts, pNumFloats, pNumStack *int) ([]reflect.Value, []any) {
-	if runtime.GOOS != "darwin" {
+	if !isDarwin {
 		panic("purego: collectStackArgs should only be called on darwin")
 	}
 
@@ -488,7 +488,7 @@ const (
 // bundleStackArgs bundles remaining arguments for Darwin ARM64 C-style stack packing.
 // It creates a packed struct with proper alignment and copies it to the stack in 8-byte chunks.
 func bundleStackArgs(stackArgs []reflect.Value, addStack func(uintptr)) {
-	if runtime.GOOS != "darwin" {
+	if !isDarwin {
 		panic("purego: bundleStackArgs should only be called on darwin")
 	}
 	if len(stackArgs) == 0 {
@@ -562,7 +562,7 @@ func bundleStackArgs(stackArgs []reflect.Value, addStack func(uintptr)) {
 //   - Darwin ARM64: byte-level packing on the stack
 func getCallbackStruct(inType reflect.Type, frame unsafe.Pointer, floatsN *int, intsN *int, stackSlot *int, stackByteOffset *uintptr) reflect.Value {
 	switch runtime.GOOS {
-	case "darwin", "freebsd", "linux", "netbsd":
+	case "android", "darwin", "freebsd", "ios", "linux", "netbsd":
 	default:
 		panic("purego: getCallbackStruct is not supported on " + runtime.GOOS)
 	}
@@ -609,7 +609,7 @@ func getCallbackStruct(inType reflect.Type, frame unsafe.Pointer, floatsN *int, 
 	}
 
 	// Pointer on stack (rare: all integer registers exhausted).
-	if runtime.GOOS == "darwin" {
+	if isDarwin {
 		ptrVal := callbackArgFromStack(frame, *stackSlot, stackByteOffset, reflect.TypeOf(uintptr(0)))
 		ptr := uintptr(ptrVal.Uint())
 		return reflect.NewAt(inType, *(*unsafe.Pointer)(unsafe.Pointer(&ptr))).Elem()
@@ -690,7 +690,7 @@ func readHFAFromRegisters(inType reflect.Type, f *[callbackMaxFrame]uintptr, flo
 // callback frame. On Darwin ARM64, arguments are byte-packed on the stack.
 // On Linux ARM64, arguments are 8-byte aligned.
 func readStructFromStackArm64(inType reflect.Type, f *[callbackMaxFrame]uintptr, frame unsafe.Pointer, stackSlot *int, stackByteOffset *uintptr) reflect.Value {
-	if runtime.GOOS == "darwin" {
+	if isDarwin {
 		return callbackArgFromStack(frame, *stackSlot, stackByteOffset, inType)
 	}
 	// Linux ARM64: 8-byte aligned slots.

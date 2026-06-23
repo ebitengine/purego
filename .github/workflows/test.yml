@@ -316,3 +316,77 @@ jobs:
             rm -fr /usr/local/go && tar -C /usr/local -xf go${{matrix.go}}.netbsd-amd64.tar.gz
             chmod +x $GITHUB_WORKSPACE/.github/scripts/bsd_tests.sh
           run: $GITHUB_WORKSPACE/.github/scripts/bsd_tests.sh
+
+  # Android is tested on amd64 only. The emulator requires the system image
+  # architecture to match the host, and GitHub's arm64 hosted runners do not
+  # provide a usable KVM device, so there is no hosted hardware-accelerated path
+  # to an Android arm64 emulator. The arm64 struct ABI is already covered by the
+  # linux/arm64 `test` job, and Android's Bionic/cgo integration by this job.
+  android:
+    strategy:
+      fail-fast: false
+      matrix:
+        go: ['1.25.x', '1.26.x']
+    name: Test with Go ${{ matrix.go }} on Android amd64
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: ${{ matrix.go }}
+
+      # The tests compile their C libraries at run time via `go env CC`, but the
+      # emulator has no C toolchain. Every library the tests load must therefore be
+      # cross-compiled here and loaded as a prebuilt library at run time instead.
+      - name: Cross-compile the test binary and C libraries
+        run: |
+          set -eux
+          NDK="$ANDROID_NDK_LATEST_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
+          CC="$NDK/x86_64-linux-android21-clang"
+          mkdir -p prebuilt
+          # Build every library the tests load. Keep this in sync with the
+          # buildSharedLib callers in the tests; a missing entry surfaces as a
+          # "prebuilt lib ... no such file" failure on the emulator.
+          "$CC" -shared -Wall -Werror -fPIC -o prebuilt/structtest.so testdata/structtest/struct_test.c
+          "$CC" -shared -Wall -Werror -fPIC -o prebuilt/structreturntest.so testdata/structtest/structreturn_test.c
+          "$CC" -shared -Wall -Werror -fPIC -o prebuilt/libcbtest.so testdata/libcbtest/callback_test.c
+          "$CC" -shared -Wall -Werror -fPIC -o prebuilt/abitest.so testdata/abitest/abi_test.c
+          env GOOS=android GOARCH=amd64 CGO_ENABLED=1 CC="$CC" go test -c -o purego.test .
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Run the test suite on the Android emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+          script: |
+            set -eux
+            adb push purego.test /data/local/tmp/purego.test
+            adb push prebuilt /data/local/tmp/prebuilt
+            adb shell "chmod 755 /data/local/tmp/purego.test"
+            # TestSetuidEtc needs root and glibc (not Bionic) semantics; TestNestedDlopenCall
+            # needs the C++ runtime present on the device. Both are covered by the Linux
+            # runners, so skip them here rather than special-casing the emulator.
+            adb shell "cd /data/local/tmp && TMPDIR=/data/local/tmp PUREGO_TEST_PREBUILT_LIBDIR=/data/local/tmp/prebuilt ./purego.test -test.v -test.skip 'TestSetuidEtc|TestNestedDlopenCall'" | tee result.txt
+            grep -q '^PASS' result.txt
+            ! grep -q '^FAIL' result.txt
+
+  # TODO: Add an iOS job that runs the test suite on the iOS Simulator.
+  # iOS has no emulator runner equivalent: on a macOS runner the test binary must
+  # be wrapped into a .app and launched via `xcrun simctl` (or x/mobile's
+  # go_ios_exec), with the C libraries cross-compiled against the iphonesimulator
+  # SDK and loaded through PUREGO_TEST_PREBUILT_LIBDIR (as the android job does).
+  # Deprioritized because the iOS arm64 ABI matches macOS arm64, which the `test`
+  # job already runs.
