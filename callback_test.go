@@ -22,7 +22,7 @@ func TestCallGoFromSharedLib(t *testing.T) {
 	libFileName := filepath.Join(t.TempDir(), "libcbtest.so")
 	t.Logf("Build %v", libFileName)
 
-	if err := buildSharedLib("CC", libFileName, filepath.Join("testdata", "libcbtest", "callback_test.c")); err != nil {
+	if err := buildSharedLib(t, "CC", libFileName, filepath.Join("testdata", "libcbtest", "callback_test.c")); err != nil {
 		t.Fatal(err)
 	}
 	defer os.Remove(libFileName)
@@ -186,7 +186,7 @@ func TestCallbackInt32Packing(t *testing.T) {
 	}
 
 	libFileName := filepath.Join(t.TempDir(), "libcbtest_packing.so")
-	if err := buildSharedLib("CC", libFileName, filepath.Join("testdata", "libcbtest", "callback_packing_test.c")); err != nil {
+	if err := buildSharedLib(t, "CC", libFileName, filepath.Join("testdata", "libcbtest", "callback_packing_test.c")); err != nil {
 		t.Fatal(err)
 	}
 	defer os.Remove(libFileName)
@@ -218,7 +218,7 @@ func TestCallbackMixedStackPacking(t *testing.T) {
 	}
 
 	libFileName := filepath.Join(t.TempDir(), "libcbtest_packing.so")
-	if err := buildSharedLib("CC", libFileName, filepath.Join("testdata", "libcbtest", "callback_packing_test.c")); err != nil {
+	if err := buildSharedLib(t, "CC", libFileName, filepath.Join("testdata", "libcbtest", "callback_packing_test.c")); err != nil {
 		t.Fatal(err)
 	}
 	defer os.Remove(libFileName)
@@ -251,7 +251,7 @@ func TestCallbackSmallTypesPacking(t *testing.T) {
 	}
 
 	libFileName := filepath.Join(t.TempDir(), "libcbtest_packing.so")
-	if err := buildSharedLib("CC", libFileName, filepath.Join("testdata", "libcbtest", "callback_packing_test.c")); err != nil {
+	if err := buildSharedLib(t, "CC", libFileName, filepath.Join("testdata", "libcbtest", "callback_packing_test.c")); err != nil {
 		t.Fatal(err)
 	}
 	defer os.Remove(libFileName)
@@ -319,7 +319,7 @@ func TestCallback10Int32Packing(t *testing.T) {
 	}
 
 	libFileName := filepath.Join(t.TempDir(), "libcbtest_packing.so")
-	if err := buildSharedLib("CC", libFileName, filepath.Join("testdata", "libcbtest", "callback_packing_test.c")); err != nil {
+	if err := buildSharedLib(t, "CC", libFileName, filepath.Join("testdata", "libcbtest", "callback_packing_test.c")); err != nil {
 		t.Fatal(err)
 	}
 	defer os.Remove(libFileName)
@@ -350,7 +350,7 @@ func TestCallbackFloat64StackPacking(t *testing.T) {
 	}
 
 	libFileName := filepath.Join(t.TempDir(), "libcbtest_packing.so")
-	if err := buildSharedLib("CC", libFileName, filepath.Join("testdata", "libcbtest", "callback_packing_test.c")); err != nil {
+	if err := buildSharedLib(t, "CC", libFileName, filepath.Join("testdata", "libcbtest", "callback_packing_test.c")); err != nil {
 		t.Fatal(err)
 	}
 	defer os.Remove(libFileName)
@@ -384,7 +384,7 @@ func TestCallbackFloat32StackPacking(t *testing.T) {
 	}
 
 	libFileName := filepath.Join(t.TempDir(), "libcbtest_packing.so")
-	if err := buildSharedLib("CC", libFileName, filepath.Join("testdata", "libcbtest", "callback_packing_test.c")); err != nil {
+	if err := buildSharedLib(t, "CC", libFileName, filepath.Join("testdata", "libcbtest", "callback_packing_test.c")); err != nil {
 		t.Fatal(err)
 	}
 	defer os.Remove(libFileName)
