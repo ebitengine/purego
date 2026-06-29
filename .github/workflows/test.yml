@@ -292,7 +292,7 @@ jobs:
     strategy:
       matrix:
         os: ['FreeBSD', 'NetBSD']
-        go: ['1.25.8', '1.26.1', '1.27.0-rc.1']
+        go: ['1.25.8', '1.26.1']
     name: Test with Go ${{ matrix.go }} on ${{ matrix.os }}
     runs-on: ubuntu-22.04
     defaults:
