@@ -75,7 +75,7 @@ jobs:
 
       - name: go build (Linux minor architectures)
         # Test them only on the latest Go to reduce CI time.
-        if: startsWith(matrix.go, '1.27.0-rc.1')
+        if: startsWith(matrix.go, '1.27.')
         run: |
           # Check cross-compiling Linux binaries for minor architectures.
           env GOOS=linux GOARCH=loong64 go build -v ./...
@@ -279,7 +279,7 @@ jobs:
           go env -w CC=s390x-linux-gnu-gcc
           go env -w CXX=s390x-linux-gnu-g++
           # CGO_ENABLED=0 is only supported on Go 1.27+ for s390x.
-          if [[ "${{ matrix.go }}" != '1.25.x' && "${{ matrix.go }}" != '1.26.x' ]]; then
+          if [[ "${{ matrix.go }}" != 1.25.* && "${{ matrix.go }}" != 1.26.* ]]; then
             env GOOS=linux GOARCH=s390x CGO_ENABLED=0 go test -c -o=purego-test-nocgo .
             env QEMU_LD_PREFIX=/usr/s390x-linux-gnu qemu-s390x ./purego-test-nocgo -test.shuffle=on -test.v -test.count=10
           fi
