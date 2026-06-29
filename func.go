@@ -10,16 +10,20 @@ import (
 	"math"
 	"reflect"
 	"runtime"
+	"sync"
 	"unsafe"
 
 	"github.com/ebitengine/purego/internal/strings"
-	"github.com/ebitengine/purego/internal/xreflect"
 )
 
 const (
 	align8ByteMask = 7 // Mask for 8-byte alignment: (val + 7) &^ 7
 	align8ByteSize = 8 // 8-byte alignment boundary
 )
+
+var thePool = sync.Pool{New: func() any {
+	return new(syscallArgs)
+}}
 
 // RegisterLibFunc is a wrapper around RegisterFunc that uses the C function returned from Dlsym(handle, name).
 // It panics if it can't find the name symbol.
@@ -59,7 +63,7 @@ func RegisterLibFunc(fptr any, handle uintptr, name string) {
 //	int64 <=> int64_t
 //	float32 <=> float
 //	float64 <=> double
-//	struct <=> struct (darwin amd64/arm64, linux amd64/arm64)
+//	struct <=> struct (android, darwin, ios, linux, and windows on amd64/arm64)
 //	func <=> C function
 //	unsafe.Pointer, *T <=> void*
 //	[]T => void*
@@ -94,8 +98,11 @@ func RegisterLibFunc(fptr any, handle uintptr, name string) {
 // it does not support aligning fields properly. It is therefore the responsibility of the caller to ensure
 // that all padding is added to the Go struct to match the C one. See `BoolStructFn` in struct_test.go for an example.
 //
-// On Darwin ARM64, purego handles proper alignment of struct arguments when passing them on the stack,
-// following the C ABI's byte-level packing rules.
+// On Apple ARM64 platforms (macOS and iOS), purego handles proper alignment of struct arguments
+// when passing them on the stack, following the C ABI's byte-level packing rules.
+//
+// On Windows, struct arguments and returns are supported on amd64 and arm64 when calling C functions.
+// Passing or returning structs in callbacks created with [NewCallback] is not supported on Windows.
 //
 // # Example
 //
@@ -147,7 +154,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 				// created in NewCallback.
 				for j := 0; j < arg.NumIn(); j++ {
 					in := arg.In(j)
-					if !in.AssignableTo(reflect.TypeOf(CDecl{})) {
+					if !in.AssignableTo(reflect.TypeFor[CDecl]()) {
 						continue
 					}
 					if j != 0 {
@@ -170,7 +177,8 @@ func RegisterFunc(fptr any, cfn uintptr) {
 				}
 			case reflect.Struct:
 				ensureStructSupported()
-				if arg.Size() == 0 {
+				if arg.Size() == 0 && runtime.GOOS != "windows" {
+					// On Windows an empty struct still consumes one argument slot.
 					continue
 				}
 				addInt := func(u uintptr) {
@@ -191,9 +199,9 @@ func RegisterFunc(fptr any, cfn uintptr) {
 			ensureStructSupported()
 			outType := ty.Out(0)
 			checkStructFieldsSupported(outType)
-			if runtime.GOARCH == "amd64" && outType.Size() > maxRegAllocStructSize {
-				// on amd64 if struct is bigger than 16 bytes allocate the return struct
-				// and pass it in as a hidden first argument.
+			if runtime.GOARCH == "amd64" && amd64StructReturnInMemory(outType.Size()) {
+				// on amd64 a struct returned in memory is allocated by the caller
+				// and its pointer is passed as a hidden first argument.
 				ints++
 			}
 		}
@@ -204,7 +212,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 			if ints+floats+stack > argsLimit {
 				panic("purego: too many stack arguments")
 			}
-		} else if runtime.GOOS == "darwin" && runtime.GOARCH == "arm64" {
+		} else if isDarwin && runtime.GOARCH == "arm64" {
 			// On Darwin ARM64, use byte-based validation since arguments pack efficiently.
 			// See https://developer.apple.com/documentation/xcode/writing-arm64-code-for-apple-platforms
 			stackBytes := estimateStackBytes(ty)
@@ -278,7 +286,9 @@ func RegisterFunc(fptr any, cfn uintptr) {
 		var arm64_r8 uintptr
 		if ty.NumOut() == 1 && ty.Out(0).Kind() == reflect.Struct {
 			outType := ty.Out(0)
-			if (runtime.GOARCH == "amd64" || runtime.GOARCH == "loong64" || runtime.GOARCH == "ppc64le" || runtime.GOARCH == "riscv64" || runtime.GOARCH == "s390x") && outType.Size() > maxRegAllocStructSize {
+			amd64InMemory := runtime.GOARCH == "amd64" && amd64StructReturnInMemory(outType.Size())
+			otherInMemory := (runtime.GOARCH == "loong64" || runtime.GOARCH == "ppc64le" || runtime.GOARCH == "riscv64" || runtime.GOARCH == "s390x") && outType.Size() > maxRegAllocStructSize
+			if amd64InMemory || otherInMemory {
 				val := reflect.New(outType)
 				keepAlive = append(keepAlive, val)
 				addInt(val.Pointer())
@@ -292,7 +302,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 			}
 		}
 		for i, v := range args {
-			if variadic, ok := xreflect.TypeAssert[[]any](args[i]); ok {
+			if variadic, ok := reflect.TypeAssert[[]any](args[i]); ok {
 				if i != len(args)-1 {
 					panic("purego: can only expand last parameter")
 				}
@@ -302,7 +312,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 				continue
 			}
 			// Check if we need to start Darwin ARM64 C-style stack packing
-			if runtime.GOARCH == "arm64" && runtime.GOOS == "darwin" && shouldBundleStackArgs(v, numInts, numFloats) {
+			if runtime.GOARCH == "arm64" && isDarwin && shouldBundleStackArgs(v, numInts, numFloats) {
 				// Collect and separate remaining args into register vs stack
 				stackArgs, newKeepAlive := collectStackArgs(args, i, numInts, numFloats,
 					keepAlive, addInt, addFloat, addStack, &numInts, &numFloats, &numStack)
@@ -318,12 +328,13 @@ func RegisterFunc(fptr any, cfn uintptr) {
 		var syscall *syscallArgs
 		if runtime.GOOS == "windows" && runtime.GOARCH != "arm64" {
 			// Windows amd64, 386, and arm use syscall.SyscallN.
-			syscall = &syscallArgs{}
+			syscall = thePool.Get().(*syscallArgs)
 			syscall.a1, syscall.a2, _ = syscall_syscallN(cfn, sysargs[:numStack]...)
 			syscall.f1 = syscall.a2 // on amd64 a2 stores the float return. On 32bit platforms floats aren't support
 		} else {
 			syscall = syscall_SyscallN(cfn, sysargs[:], floats[:], arm64_r8)
 		}
+		defer thePool.Put(syscall)
 		if ty.NumOut() == 0 {
 			return nil
 		}
@@ -340,7 +351,10 @@ func RegisterFunc(fptr any, cfn uintptr) {
 			// We take the address and then dereference it to trick go vet from creating a possible miss-use of unsafe.Pointer
 			v.SetPointer(*(*unsafe.Pointer)(unsafe.Pointer(&syscall.a1)))
 		case reflect.Pointer:
-			v = reflect.NewAt(outType, unsafe.Pointer(&syscall.a1)).Elem()
+			// Copy syscall.a1 into a local variable to prevent v
+			// from holding a pointer to the pooled syscallArgs field.
+			a1 := syscall.a1
+			v = reflect.NewAt(outType, unsafe.Pointer(&a1)).Elem()
 		case reflect.Func:
 			// wrap this C function in a nicely typed Go function
 			v = reflect.New(outType)
@@ -490,9 +504,37 @@ func ensureStructSupported() {
 	if runtime.GOARCH != "amd64" && runtime.GOARCH != "arm64" {
 		panic("purego: struct arguments/returns are only supported on amd64 and arm64")
 	}
-	if runtime.GOOS != "darwin" && runtime.GOOS != "linux" {
-		panic("purego: struct arguments/returns are only supported on darwin and linux")
+	switch runtime.GOOS {
+	case "android", "darwin", "ios", "linux", "windows":
+	default:
+		panic("purego: struct arguments/returns are only supported on android, darwin, ios, linux, and windows")
 	}
+}
+
+// isDarwin is true on platforms that use Apple's calling convention.
+// iOS (GOOS=ios) shares it with macOS (GOOS=darwin).
+const isDarwin = runtime.GOOS == "darwin" || runtime.GOOS == "ios"
+
+// amd64StructReturnInMemory reports whether a struct return value of the given
+// size is returned through a caller-allocated hidden pointer (true) rather than
+// in registers (false). It must only be consulted on amd64.
+func amd64StructReturnInMemory(size uintptr) bool {
+	if size == 0 {
+		return false
+	}
+	if runtime.GOOS == "windows" {
+		// The Win64 ABI returns aggregates of exactly 1, 2, 4, or 8 bytes in
+		// RAX. Every other size is returned through a caller-allocated hidden
+		// pointer that the callee also returns in RAX.
+		switch size {
+		case 1, 2, 4, 8:
+			return false
+		default:
+			return true
+		}
+	}
+	// The System V ABI returns aggregates of up to two eightbytes in registers.
+	return size > maxRegAllocStructSize
 }
 
 func roundUpTo8(val uintptr) uintptr {

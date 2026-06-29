@@ -32,8 +32,6 @@ TEXT crosscall2(SB), NOSPLIT|NOFRAME, $0
 	MOVD F14, (13*4+8*7)(R13)
 	MOVD F15, (13*4+8*8)(R13)
 
-	BL runtime·load_g(SB)
-
 	// We set up the arguments to cgocallback when saving registers above.
 	BL runtime·cgocallback(SB)
 

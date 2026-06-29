@@ -37,7 +37,7 @@ func BenchmarkCallingMethods(b *testing.B) {
 
 	// Build C library for benchmarking
 	libFileName := filepath.Join(b.TempDir(), "libbenchmark.so")
-	if err := buildSharedLib("CC", libFileName, filepath.Join("testdata", "benchmarktest", "benchmark.c")); err != nil {
+	if err := buildSharedLib(b, "CC", libFileName, filepath.Join("testdata", "benchmarktest", "benchmark.c")); err != nil {
 		b.Fatalf("Failed to build C library: %v", err)
 	}
 	b.Cleanup(func() {
@@ -205,40 +205,40 @@ func callRegisterFunc(registerFn any, n int, args []int64, iterations int) int64
 	switch n {
 	case 1:
 		f := registerFn.(*func(int64) int64)
-		for i := 0; i < iterations; i++ {
+		for range iterations {
 			result = (*f)(args[0])
 		}
 	case 2:
 		f := registerFn.(*func(int64, int64) int64)
-		for i := 0; i < iterations; i++ {
+		for range iterations {
 			result = (*f)(args[0], args[1])
 		}
 	case 3:
 		f := registerFn.(*func(int64, int64, int64) int64)
-		for i := 0; i < iterations; i++ {
+		for range iterations {
 			result = (*f)(args[0], args[1], args[2])
 		}
 	case 5:
 		f := registerFn.(*func(int64, int64, int64, int64, int64) int64)
-		for i := 0; i < iterations; i++ {
+		for range iterations {
 			result = (*f)(args[0], args[1], args[2], args[3], args[4])
 		}
 	case 10:
 		f := registerFn.(*func(int64, int64, int64, int64, int64, int64, int64, int64, int64, int64) int64)
-		for i := 0; i < iterations; i++ {
+		for range iterations {
 			result = (*f)(args[0], args[1], args[2], args[3], args[4],
 				args[5], args[6], args[7], args[8], args[9])
 		}
 	case 14:
 		f := registerFn.(*func(int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64) int64)
-		for i := 0; i < iterations; i++ {
+		for range iterations {
 			result = (*f)(args[0], args[1], args[2], args[3], args[4],
 				args[5], args[6], args[7], args[8], args[9],
 				args[10], args[11], args[12], args[13])
 		}
 	case 15:
 		f := registerFn.(*func(int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64, int64) int64)
-		for i := 0; i < iterations; i++ {
+		for range iterations {
 			result = (*f)(args[0], args[1], args[2], args[3], args[4],
 				args[5], args[6], args[7], args[8], args[9],
 				args[10], args[11], args[12], args[13], args[14])

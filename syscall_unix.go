@@ -28,7 +28,7 @@ func NewCallback(fn any) uintptr {
 	ty := reflect.TypeOf(fn)
 	for i := 0; i < ty.NumIn(); i++ {
 		in := ty.In(i)
-		if !in.AssignableTo(reflect.TypeOf(CDecl{})) {
+		if !in.AssignableTo(reflect.TypeFor[CDecl]()) {
 			continue
 		}
 		if i != 0 {
@@ -61,7 +61,7 @@ func compileCallback(fn any) uintptr {
 		in := ty.In(i)
 		switch in.Kind() {
 		case reflect.Struct:
-			if i == 0 && in.AssignableTo(reflect.TypeOf(CDecl{})) {
+			if i == 0 && in.AssignableTo(reflect.TypeFor[CDecl]()) {
 				continue
 			}
 			ensureStructSupported()
@@ -163,7 +163,7 @@ func callbackWrap(a *callbackArgs) {
 		case reflect.Float32, reflect.Float64:
 			slots = int((fnType.In(i).Size() + ptrSize - 1) / ptrSize)
 			if floatsN+slots > numOfFloatRegisters() {
-				if runtime.GOOS == "darwin" && runtime.GOARCH == "arm64" {
+				if isDarwin && runtime.GOARCH == "arm64" {
 					// Darwin ARM64: read from packed stack with proper alignment
 					args[i] = callbackArgFromStack(a.args, stackSlot, &stackByteOffset, inType)
 				} else if stackFrame != nil {
@@ -189,7 +189,7 @@ func callbackWrap(a *callbackArgs) {
 			}
 			floatsN += slots
 		case reflect.Struct:
-			if i == 0 && inType.AssignableTo(reflect.TypeOf(CDecl{})) {
+			if i == 0 && inType.AssignableTo(reflect.TypeFor[CDecl]()) {
 				args[i] = reflect.Zero(inType)
 				continue
 			}
@@ -202,7 +202,7 @@ func callbackWrap(a *callbackArgs) {
 		default:
 			slots = int((inType.Size() + ptrSize - 1) / ptrSize)
 			if intsN+slots > numOfIntegerRegisters() {
-				if runtime.GOOS == "darwin" && runtime.GOARCH == "arm64" {
+				if isDarwin && runtime.GOARCH == "arm64" {
 					// Darwin ARM64: read from packed stack with proper alignment
 					args[i] = callbackArgFromStack(a.args, stackSlot, &stackByteOffset, inType)
 				} else if stackFrame != nil {

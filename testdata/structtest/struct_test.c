@@ -5,16 +5,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#if defined(__x86_64__) || defined(__aarch64__)
-typedef int64_t GoInt;
-typedef uint64_t GoUint;
-#endif
-
 // Empty is empty
 struct Empty {};
 
 // NoStruct tests that an empty struct doesn't cause issues
-unsigned long NoStruct(struct Empty e) {
+uint64_t NoStruct(struct Empty e) {
     return 0xdeadbeef;
 }
 
@@ -22,28 +17,28 @@ struct EmptyEmpty {
     struct Empty x;
 };
 
-unsigned long EmptyEmpty(struct EmptyEmpty e) {
+uint64_t EmptyEmpty(struct EmptyEmpty e) {
     return 0xdeadbeef;
 }
 
-unsigned long EmptyEmptyWithReg(unsigned int x, struct EmptyEmpty e, unsigned int y) {
+uint64_t EmptyEmptyWithReg(unsigned int x, struct EmptyEmpty e, unsigned int y) {
     return (x << 16) | y;
 }
 
 // GreaterThan16Bytes is 24 bytes on 64 bit systems
 struct GreaterThan16Bytes {
-   long  *x, *y, *z;
+   int64_t  *x, *y, *z;
 };
 
 // GreaterThan16Bytes is a basic test for structs bigger than 16 bytes
-unsigned long GreaterThan16Bytes(struct GreaterThan16Bytes g) {
+uint64_t GreaterThan16Bytes(struct GreaterThan16Bytes g) {
     return *g.x + *g.y + *g.z;
 }
 
 // AfterRegisters tests to make sure that structs placed on the stack work properly
-unsigned long AfterRegisters(long a, long b, long c, long d, long e, long f, long g, long h, struct GreaterThan16Bytes bytes) {
-    long registers = a + b + c + d + e + f + g + h;
-    long stack =  *bytes.x + *bytes.y + *bytes.z;
+uint64_t AfterRegisters(intptr_t a, intptr_t b, intptr_t c, intptr_t d, intptr_t e, intptr_t f, intptr_t g, intptr_t h, struct GreaterThan16Bytes bytes) {
+    intptr_t registers = a + b + c + d + e + f + g + h;
+    int64_t stack =  *bytes.x + *bytes.y + *bytes.z;
     if (registers != stack) {
         return 0xbadbad;
     }
@@ -53,25 +48,25 @@ unsigned long AfterRegisters(long a, long b, long c, long d, long e, long f, lon
     return stack;
 }
 
-unsigned long BeforeRegisters(struct GreaterThan16Bytes bytes, long a, long b) {
+uint64_t BeforeRegisters(struct GreaterThan16Bytes bytes, int64_t a, int64_t b) {
     return *bytes.x + *bytes.y + *bytes.z + a + b;
 }
 
 struct GreaterThan16BytesStruct {
     struct {
-        long  *x, *y, *z;
+        int64_t  *x, *y, *z;
     } a ;
 };
 
-unsigned long GreaterThan16BytesStruct(struct GreaterThan16BytesStruct g) {
+uint64_t GreaterThan16BytesStruct(struct GreaterThan16BytesStruct g) {
     return *(g.a.x) + *(g.a.y) + *(g.a.z);
 }
 
 struct IntLessThan16Bytes {
-    long x, y;
+    int64_t x, y;
 };
 
-unsigned long IntLessThan16Bytes(struct IntLessThan16Bytes l) {
+uint64_t IntLessThan16Bytes(struct IntLessThan16Bytes l) {
     return l.x + l.y;
 }
 
@@ -201,23 +196,23 @@ struct Short {
     unsigned short a, b, c, d;
 };
 
-unsigned long Short(struct Short s) {
-    return (long)s.a << 48 | (long)s.b << 32 | (long)s.c << 16 | (long)s.d << 0;
+uint64_t Short(struct Short s) {
+    return (uint64_t)s.a << 48 | (uint64_t)s.b << 32 | (uint64_t)s.c << 16 | (uint64_t)s.d << 0;
 }
 
 struct Int {
     unsigned int a, b;
 };
 
-unsigned long Int(struct Int i) {
-    return (long)i.a << 32 | (long)i.b << 0;
+uint64_t Int(struct Int i) {
+    return (uint64_t)i.a << 32 | (uint64_t)i.b << 0;
 }
 
 struct Long {
-    unsigned long a;
+    uint64_t a;
 };
 
-unsigned long Long(struct Long l) {
+uint64_t Long(struct Long l) {
     return l.a;
 }
 
@@ -327,31 +322,31 @@ struct Content {
       struct { double width, height; } size;
 };
 
-unsigned long InitWithContentRect(int *win, struct Content c, int style, int backing, _Bool flag) {
+uint64_t InitWithContentRect(int *win, struct Content c, int style, int backing, _Bool flag) {
   if (win == 0)
       return 0xBAD;
   if (!flag)
       return 0xF1A6; // FLAG
-  return (unsigned long)(c.point.x + c.point.y + c.size.width + c.size.height) / (style - backing);
+  return (uint64_t)(c.point.x + c.point.y + c.size.width + c.size.height) / (style - backing);
 }
 
 struct GoInt4 {
-    GoInt a, b, c, d;
+    intptr_t a, b, c, d;
 };
 
-GoInt GoInt4(struct GoInt4 g) {
+intptr_t GoInt4(struct GoInt4 g) {
     return g.a + g.b - g.c + g.d;
 }
 
 struct GoUint4 {
-    GoUint a, b, c, d;
+    uintptr_t a, b, c, d;
 };
 
-GoUint GoUint4(struct GoUint4 g) {
+uintptr_t GoUint4(struct GoUint4 g) {
     return g.a + g.b + g.c + g.d;
 }
 
-GoUint TakeGoUintAndReturn(GoUint a) {
+uintptr_t TakeGoUintAndReturn(uintptr_t a) {
     return a;
 }
 
@@ -395,7 +390,7 @@ uintptr_t AddPointers(struct TwoPointers wrapper) {
 // Identity functions for round-trip testing of struct arguments
 
 struct OneInt64 {
-    long long a;
+    int64_t a;
 };
 
 struct OneInt64 IdentityOneInt64(struct OneInt64 s) {
@@ -423,7 +418,7 @@ struct FloatAndInt IdentityFloatAndInt(struct FloatAndInt s) {
 }
 
 struct ThreeInt64 {
-    long long a, b, c;
+    int64_t a, b, c;
 };
 
 struct ThreeInt64 IdentityThreeInt64(struct ThreeInt64 s) {
@@ -431,16 +426,16 @@ struct ThreeInt64 IdentityThreeInt64(struct ThreeInt64 s) {
 }
 
 struct PtrInt64Ptr {
-    long long *a;
-    long long b;
-    long long *c;
+    int64_t *a;
+    int64_t b;
+    int64_t *c;
 };
 
 struct PtrInt64Ptr IdentityPtrInt64Ptr(struct PtrInt64Ptr s) {
     return s;
 }
 
-struct IntLessThan16Bytes IdentityTwoInt64AfterPrims(long long x, double y, struct IntLessThan16Bytes s) {
+struct IntLessThan16Bytes IdentityTwoInt64AfterPrims(int64_t x, double y, struct IntLessThan16Bytes s) {
     return s;
 }
 
@@ -449,7 +444,7 @@ struct FloatLessThan16Bytes IdentityTwoFloat32AfterFloats(double x, double y, st
 }
 
 struct Mixed5Args {
-    long long *a;
+    int64_t *a;
     int32_t b;
     float c;
     int32_t d;

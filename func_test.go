@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
@@ -21,7 +22,9 @@ import (
 
 func getSystemLibrary() (string, error) {
 	switch runtime.GOOS {
-	case "darwin":
+	case "android":
+		return "libc.so", nil
+	case "darwin", "ios":
 		return "/usr/lib/libSystem.B.dylib", nil
 	case "freebsd":
 		return "libc.so.7", nil
@@ -57,7 +60,7 @@ func TestRegisterFunc_ConcurrentPointerReturn(t *testing.T) {
 		wg.Add(1)
 		go func(id int) {
 			defer wg.Done()
-			for j := 0; j < 400_000; j++ {
+			for range 400_000 {
 				ptr := alloc(5)
 				if ptr == nil {
 					continue
@@ -175,13 +178,10 @@ func TestRegisterLibFunc_Bool(t *testing.T) {
 }
 
 func TestABI(t *testing.T) {
-	if runtime.GOOS == "windows" && runtime.GOARCH == "386" {
-		t.Skip("need a 32bit gcc to run this test") // TODO: find 32bit gcc for test
-	}
 	libFileName := filepath.Join(t.TempDir(), "abitest.so")
 	t.Logf("Build %v", libFileName)
 
-	if err := buildSharedLib("CC", libFileName, filepath.Join("testdata", "abitest", "abi_test.c")); err != nil {
+	if err := buildSharedLib(t, "CC", libFileName, filepath.Join("testdata", "abitest", "abi_test.c")); err != nil {
 		t.Fatal(err)
 	}
 
@@ -239,11 +239,8 @@ func TestABI(t *testing.T) {
 }
 
 func TestABI_ArgumentPassing(t *testing.T) {
-	if runtime.GOOS == "windows" && runtime.GOARCH == "386" {
-		t.Skip("need a 32bit gcc to run this test") // TODO: find 32bit gcc for test
-	}
 	libFileName := filepath.Join(t.TempDir(), "abitest.so")
-	if err := buildSharedLib("CC", libFileName, filepath.Join("testdata", "abitest", "abi_test.c")); err != nil {
+	if err := buildSharedLib(t, "CC", libFileName, filepath.Join("testdata", "abitest", "abi_test.c")); err != nil {
 		t.Fatal(err)
 	}
 	lib, err := load.OpenLibrary(libFileName)
@@ -600,7 +597,35 @@ func TestABI_TooManyArguments(t *testing.T) {
 	})
 }
 
-func buildSharedLib(compilerEnv, libFile string, sources ...string) error {
+func buildSharedLib(tb testing.TB, compilerEnv, libFile string, sources ...string) error {
+	tb.Helper()
+	// When PUREGO_TEST_PREBUILT_LIBDIR is set, the shared library has been
+	// cross-compiled ahead of time and placed in that directory under the
+	// base name of libFile. This allows running the tests on a target that
+	// has no C toolchain, such as an Android emulator.
+	if dir := os.Getenv("PUREGO_TEST_PREBUILT_LIBDIR"); dir != "" {
+		data, err := os.ReadFile(filepath.Join(dir, filepath.Base(libFile)))
+		if err != nil {
+			return fmt.Errorf("prebuilt lib: %w", err)
+		}
+		if err := os.WriteFile(libFile, data, 0o755); err != nil {
+			return fmt.Errorf("prebuilt lib: %w", err)
+		}
+		return nil
+	}
+
+	// Compiling the library needs a C toolchain targeting GOARCH. CI has none
+	// for Windows on 386 or arm64, so skip those (the prebuilt path above
+	// avoids the toolchain).
+	if runtime.GOOS == "windows" {
+		switch runtime.GOARCH {
+		case "386":
+			tb.Skip("need a 386 C toolchain to run this test") // TODO: find a 386 C toolchain for test
+		case "arm64":
+			tb.Skip("need an arm64 C toolchain to run this test")
+		}
+	}
+
 	out, err := exec.Command("go", "env", compilerEnv).Output()
 	if err != nil {
 		return fmt.Errorf("go env %s error: %w", compilerEnv, err)

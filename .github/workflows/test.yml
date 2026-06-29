@@ -9,8 +9,8 @@ jobs:
   test:
     strategy:
       matrix:
-        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, windows-latest]
-        go: ['1.18.x', '1.19.x', '1.20.x', '1.21.x', '1.22.x', '1.23.x', '1.24.x', '1.25.x', '1.26.x']
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, windows-latest, windows-11-arm]
+        go: ['1.25.x', '1.26.x']
     name: Test with Go ${{ matrix.go }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     defaults:
@@ -31,8 +31,8 @@ jobs:
         with:
           go-version: ${{ matrix.go }}
 
-      - name: Set up the prerequisites
-        if: runner.os == 'Windows'
+      - name: Set up Msys2
+        if: runner.os == 'Windows' && runner.arch != 'ARM64'
         uses: msys2/setup-msys2@v2
 
       - name: go vet
@@ -83,6 +83,14 @@ jobs:
           env GOOS=linux GOARCH=ppc64le go build -v ./...
           env GOOS=linux GOARCH=riscv64 go build -v ./...
 
+      - name: go build (Linux mips, Cgo)
+        # mips builds only via the Cgo fallback (CGO_ENABLED=1). See #460.
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-mips-linux-gnu
+          env GOOS=linux GOARCH=mips CGO_ENABLED=1 CC=mips-linux-gnu-gcc go build -v ./...
+
       - name: go build (plugin)
         if: runner.os == 'Linux' || runner.os == 'macOS'
         run:
@@ -119,68 +127,70 @@ jobs:
         if: runner.os == 'Windows'
         run: |
           env CGO_ENABLED=0 GOARCH=386 go test -shuffle=on -v -count=10 ./...
+
+      - name: go test (Windows 386, Cgo)
+        if: runner.os == 'Windows' && runner.arch != 'ARM64'
+        run: |
           env CGO_ENABLED=1 GOARCH=386 go test -shuffle=on -v -count=10 ./...
 
       - name: go test (Linux 386)
         if: ${{ runner.os == 'Linux' && runner.arch != 'ARM64' }}
         run: |
-           sudo apt-get update
-           sudo apt-get install gcc-multilib
-           sudo apt-get install g++-multilib
-           env CGO_ENABLED=0 GOARCH=386 go test -shuffle=on -v -count=10 ./...
-           env CGO_ENABLED=1 GOARCH=386 go test -shuffle=on -v -count=10 ./...
+          sudo apt-get update
+          sudo apt-get install gcc-multilib
+          sudo apt-get install g++-multilib
+          env CGO_ENABLED=0 GOARCH=386 go test -shuffle=on -v -count=10 ./...
+          env CGO_ENABLED=1 GOARCH=386 go test -shuffle=on -v -count=10 ./...
       
       - name: go test (Linux arm)
         if: ${{ runner.os == 'Linux' && runner.arch == 'ARM64' }}
         run: |
-           sudo apt-get update
-           sudo apt-get install -y gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf libc6-armhf-cross
+          sudo apt-get update
+          sudo apt-get install -y gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf libc6-armhf-cross
 
-           # Install the latest QEMU 10.x package from Debian. Ubuntu 24.04 ships QEMU 8.2
-           # which has a bug where inter-thread signal delivery (tgkill) hangs,
-           # causing TestSetuidEtc to deadlock.
-           arch=$(dpkg --print-architecture)
-           qemu_user_deb=$(
-             curl -fsSL https://ftp.debian.org/debian/pool/main/q/qemu/ |
-               grep -Eo "qemu-user_${QEMU_MAJOR_VERSION}\.[0-9.]+\+ds-[0-9]+([+~][A-Za-z0-9.+:~-]+)*_${arch}\.deb" |
-               sort -V |
-               tail -n 1
-           )
-           if [ -z "${qemu_user_deb}" ]; then
-             echo "missing qemu-user ${QEMU_MAJOR_VERSION}.x package for ${arch}" >&2
-             exit 1
-           fi
-           wget -q "https://ftp.debian.org/debian/pool/main/q/qemu/${qemu_user_deb}" -O /tmp/qemu-user.deb
-           sudo dpkg --force-depends -i /tmp/qemu-user.deb
-           sudo apt-get -f install -y
+          # Install the latest QEMU 10.x package from Debian. Ubuntu 24.04 ships QEMU 8.2
+          # which has a bug where inter-thread signal delivery (tgkill) hangs,
+          # causing TestSetuidEtc to deadlock.
+          arch=$(dpkg --print-architecture)
+          qemu_user_deb=$(
+            curl -fsSL https://ftp.debian.org/debian/pool/main/q/qemu/ |
+              grep -Eo "qemu-user_${QEMU_MAJOR_VERSION}\.[0-9.]+\+ds-[0-9]+([+~][A-Za-z0-9.+:~-]+)*_${arch}\.deb" |
+              sort -V |
+              tail -n 1
+          )
+          if [ -z "${qemu_user_deb}" ]; then
+            echo "missing qemu-user ${QEMU_MAJOR_VERSION}.x package for ${arch}" >&2
+            exit 1
+          fi
+          wget -q "https://ftp.debian.org/debian/pool/main/q/qemu/${qemu_user_deb}" -O /tmp/qemu-user.deb
+          sudo dpkg --force-depends -i /tmp/qemu-user.deb
+          sudo apt-get -f install -y
 
-           # Create symlink for the dynamic linker that QEMU expects
-           sudo ln -sf /usr/arm-linux-gnueabihf/lib/ld-linux-armhf.so.3 /lib/ld-linux.so.3
-           go env -w CC=arm-linux-gnueabihf-gcc
-           go env -w CXX=arm-linux-gnueabihf-g++
-           env GOOS=linux GOARCH=arm CGO_ENABLED=0 go test -c -o=purego-test-nocgo .
-           env QEMU_LD_PREFIX=/usr/arm-linux-gnueabihf qemu-arm ./purego-test-nocgo -test.shuffle=on -test.v -test.count=10
-           env GOOS=linux GOARCH=arm CGO_ENABLED=1 go test -c -o=purego-test-cgo .
-           env QEMU_LD_PREFIX=/usr/arm-linux-gnueabihf qemu-arm ./purego-test-cgo -test.shuffle=on -test.v -test.count=10
-           go env -u CC
-           go env -u CXX
+          # Create symlink for the dynamic linker that QEMU expects
+          sudo ln -sf /usr/arm-linux-gnueabihf/lib/ld-linux-armhf.so.3 /lib/ld-linux.so.3
+          go env -w CC=arm-linux-gnueabihf-gcc
+          go env -w CXX=arm-linux-gnueabihf-g++
+          env GOOS=linux GOARCH=arm CGO_ENABLED=0 go test -c -o=purego-test-nocgo .
+          env QEMU_LD_PREFIX=/usr/arm-linux-gnueabihf qemu-arm ./purego-test-nocgo -test.shuffle=on -test.v -test.count=10
+          env GOOS=linux GOARCH=arm CGO_ENABLED=1 go test -c -o=purego-test-cgo .
+          env QEMU_LD_PREFIX=/usr/arm-linux-gnueabihf qemu-arm ./purego-test-cgo -test.shuffle=on -test.v -test.count=10
+          go env -u CC
+          go env -u CXX
 
       - name: go test race (no Cgo)
-        if: ${{ runner.os == 'macOS' &&  !startsWith(matrix.go, '1.18.') && !startsWith(matrix.go, '1.19.') }}
+        if: runner.os == 'macOS'
         run: |
           # -race usually requires Cgo, but macOS is an exception. See https://go.dev/doc/articles/race_detector#Requirements
           env CGO_ENABLED=0 go test -race -shuffle=on -v -count=10 ./...
 
       - name: go test race (Cgo)
-        if: ${{ !startsWith(matrix.go, '1.18.') && !startsWith(matrix.go, '1.19.') }}
+        if: ${{ !(runner.os == 'Windows' && runner.arch == 'ARM64') }}
         run: |
           env CGO_ENABLED=1 go test -race -shuffle=on -v -count=10 ./...
 
   minor-arches:
     strategy:
       matrix:
-        # Test only the latest two Go versions to save CI time.
-        # See https://go.dev/doc/devel/release#policy
         go: ['1.25.x', '1.26.x']
     name: Test with Go ${{ matrix.go }} on Linux minor architectures
     runs-on: ubuntu-latest
@@ -277,8 +287,6 @@ jobs:
     strategy:
       matrix:
         os: ['FreeBSD', 'NetBSD']
-        # Test only the latest two Go versions to save CI time.
-        # See https://go.dev/doc/devel/release#policy
         go: ['1.25.8', '1.26.1']
     name: Test with Go ${{ matrix.go }} on ${{ matrix.os }}
     runs-on: ubuntu-22.04
@@ -308,3 +316,77 @@ jobs:
             rm -fr /usr/local/go && tar -C /usr/local -xf go${{matrix.go}}.netbsd-amd64.tar.gz
             chmod +x $GITHUB_WORKSPACE/.github/scripts/bsd_tests.sh
           run: $GITHUB_WORKSPACE/.github/scripts/bsd_tests.sh
+
+  # Android is tested on amd64 only. The emulator requires the system image
+  # architecture to match the host, and GitHub's arm64 hosted runners do not
+  # provide a usable KVM device, so there is no hosted hardware-accelerated path
+  # to an Android arm64 emulator. The arm64 struct ABI is already covered by the
+  # linux/arm64 `test` job, and Android's Bionic/cgo integration by this job.
+  android:
+    strategy:
+      fail-fast: false
+      matrix:
+        go: ['1.25.x', '1.26.x']
+    name: Test with Go ${{ matrix.go }} on Android amd64
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: ${{ matrix.go }}
+
+      # The tests compile their C libraries at run time via `go env CC`, but the
+      # emulator has no C toolchain. Every library the tests load must therefore be
+      # cross-compiled here and loaded as a prebuilt library at run time instead.
+      - name: Cross-compile the test binary and C libraries
+        run: |
+          set -eux
+          NDK="$ANDROID_NDK_LATEST_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
+          CC="$NDK/x86_64-linux-android21-clang"
+          mkdir -p prebuilt
+          # Build every library the tests load. Keep this in sync with the
+          # buildSharedLib callers in the tests; a missing entry surfaces as a
+          # "prebuilt lib ... no such file" failure on the emulator.
+          "$CC" -shared -Wall -Werror -fPIC -o prebuilt/structtest.so testdata/structtest/struct_test.c
+          "$CC" -shared -Wall -Werror -fPIC -o prebuilt/structreturntest.so testdata/structtest/structreturn_test.c
+          "$CC" -shared -Wall -Werror -fPIC -o prebuilt/libcbtest.so testdata/libcbtest/callback_test.c
+          "$CC" -shared -Wall -Werror -fPIC -o prebuilt/abitest.so testdata/abitest/abi_test.c
+          env GOOS=android GOARCH=amd64 CGO_ENABLED=1 CC="$CC" go test -c -o purego.test .
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Run the test suite on the Android emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+          script: |
+            set -eux
+            adb push purego.test /data/local/tmp/purego.test
+            adb push prebuilt /data/local/tmp/prebuilt
+            adb shell "chmod 755 /data/local/tmp/purego.test"
+            # TestSetuidEtc needs root and glibc (not Bionic) semantics; TestNestedDlopenCall
+            # needs the C++ runtime present on the device. Both are covered by the Linux
+            # runners, so skip them here rather than special-casing the emulator.
+            adb shell "cd /data/local/tmp && TMPDIR=/data/local/tmp PUREGO_TEST_PREBUILT_LIBDIR=/data/local/tmp/prebuilt ./purego.test -test.v -test.skip 'TestSetuidEtc|TestNestedDlopenCall'" | tee result.txt
+            grep -q '^PASS' result.txt
+            ! grep -q '^FAIL' result.txt
+
+  # TODO: Add an iOS job that runs the test suite on the iOS Simulator.
+  # iOS has no emulator runner equivalent: on a macOS runner the test binary must
+  # be wrapped into a .app and launched via `xcrun simctl` (or x/mobile's
+  # go_ios_exec), with the C libraries cross-compiled against the iphonesimulator
+  # SDK and loaded through PUREGO_TEST_PREBUILT_LIBDIR (as the android job does).
+  # Deprioritized because the iOS arm64 ABI matches macOS arm64, which the `test`
+  # job already runs.

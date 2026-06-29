@@ -34,25 +34,27 @@ Tier 1 platforms are the primary targets officially supported by PureGo. When a 
 - **iOS**: amd64<sup>1</sup>, arm64<sup>1</sup>
 - **Linux**: amd64, arm64
 - **macOS**: amd64, arm64
-- **Windows**: amd64, arm64
+- **Windows**: amd64<sup>2</sup>, arm64<sup>2</sup>
 
 ### Tier 2
 
 Tier 2 platforms are supported by PureGo on a best-effort basis. Critical bugs on Tier 2 platforms do not block new PureGo releases. However, fixes contributed by external contributors are very welcome and encouraged.
 
-- **Android**: 386<sup>1</sup>, arm<sup>1</sup>
-- **FreeBSD**: amd64<sup>2</sup>, arm64<sup>2</sup>
-- **Linux**: 386, arm, loong64, ppc64le, riscv64, s390x<sup>5</sup>
-- **NetBSD**: amd64<sup>2</sup>, arm64<sup>2</sup>
-- **Windows**: 386<sup>3</sup>, arm<sup>3,4</sup>
+- **Android**: 386<sup>1,3</sup>, arm<sup>1,3</sup>
+- **FreeBSD**: amd64<sup>3,4</sup>, arm64<sup>3,4</sup>
+- **Linux**: 386<sup>3</sup>, arm<sup>3</sup>, loong64<sup>3</sup>, ppc64le<sup>3</sup>, riscv64<sup>3</sup>, s390x<sup>3, 7</sup>
+- **NetBSD**: amd64<sup>3,4</sup>, arm64<sup>3,4</sup>
+- **Windows**: 386<sup>3,5</sup>, arm<sup>3,5,6</sup>
 
 #### Support Notes
 
 1. These architectures require CGO_ENABLED=1 to compile
-2. These architectures require the special flag `-gcflags="github.com/ebitengine/purego/internal/fakecgo=-std"` to compile with CGO_ENABLED=0
-3. These architectures only support `SyscallN` and `NewCallback`
-4. These architectures are no longer supported as of Go 1.26
-5. These architectures require CGO_ENABLED=1 to compile in versions before Go 1.27, but will be supported without Cgo in Go 1.27 and later
+2. These architectures support passing structs by value as arguments and return values when calling C functions, but not in callbacks created with `NewCallback`
+3. These architectures do not support passing structs by value as arguments or return values
+4. These architectures require the special flag `-gcflags="github.com/ebitengine/purego/internal/fakecgo=-std"` to compile with CGO_ENABLED=0
+5. These architectures only support `SyscallN` and `NewCallback`
+6. These architectures are no longer supported as of Go 1.26
+7. These architectures require CGO_ENABLED=1 to compile in versions before Go 1.27, but will be supported without Cgo in Go 1.27 and later
 
 ## Example
 

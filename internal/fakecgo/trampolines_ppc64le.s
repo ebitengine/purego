@@ -47,15 +47,19 @@ TEXT x_cgo_bindm_trampoline(SB), NOSPLIT, $0-0
 
 // func setg_trampoline(setg uintptr, g uintptr)
 TEXT ·setg_trampoline(SB), NOSPLIT, $16-16
-	MOVD R31, 8(R1) // save R31 (load_g clobbers it)
+	MOVD R31, 8(R1) // save R31
 
 	MOVD setg+0(FP), R12
 	MOVD newg+8(FP), R3
 
+	MOVD R3, 16(R1) // save newg before call
+
 	MOVD R12, CTR
 	CALL CTR
 
-	CALL runtime·load_g(SB)
+	// Assign g directly instead of calling runtime·load_g
+	// setg_gcc has already stored newg into TLS; put it in the g register too.
+	MOVD 16(R1), g
 
 	MOVD 8(R1), R31
 	XOR  R0, R0, R0
