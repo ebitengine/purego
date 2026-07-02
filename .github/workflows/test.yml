@@ -10,7 +10,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, windows-latest, windows-11-arm]
-        go: ['1.25.x', '1.26.x']
+        go: ['1.25.x', '1.26.x', '1.27.0-rc.1']
     name: Test with Go ${{ matrix.go }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     defaults:
@@ -75,13 +75,13 @@ jobs:
 
       - name: go build (Linux minor architectures)
         # Test them only on the latest Go to reduce CI time.
-        # s390x cannot be tested here as it requires Cgo.
-        if: startsWith(matrix.go, '1.26.')
+        if: startsWith(matrix.go, '1.27.')
         run: |
           # Check cross-compiling Linux binaries for minor architectures.
           env GOOS=linux GOARCH=loong64 go build -v ./...
           env GOOS=linux GOARCH=ppc64le go build -v ./...
           env GOOS=linux GOARCH=riscv64 go build -v ./...
+          env GOOS=linux GOARCH=s390x go build -v ./...
 
       - name: go build (Linux mips, Cgo)
         # mips builds only via the Cgo fallback (CGO_ENABLED=1). See #460.
@@ -191,7 +191,7 @@ jobs:
   minor-arches:
     strategy:
       matrix:
-        go: ['1.25.x', '1.26.x']
+        go: ['1.25.x', '1.26.x', '1.27.0-rc.1']
     name: Test with Go ${{ matrix.go }} on Linux minor architectures
     runs-on: ubuntu-latest
     defaults:
@@ -278,6 +278,11 @@ jobs:
         run: |
           go env -w CC=s390x-linux-gnu-gcc
           go env -w CXX=s390x-linux-gnu-g++
+          # CGO_ENABLED=0 is only supported on Go 1.27+ for s390x.
+          if [[ "${{ matrix.go }}" != 1.25.* && "${{ matrix.go }}" != 1.26.* ]]; then
+            env GOOS=linux GOARCH=s390x CGO_ENABLED=0 go test -c -o=purego-test-nocgo .
+            env QEMU_LD_PREFIX=/usr/s390x-linux-gnu qemu-s390x ./purego-test-nocgo -test.shuffle=on -test.v -test.count=10
+          fi
           env GOOS=linux GOARCH=s390x CGO_ENABLED=1 go test -c -o=purego-test-cgo .
           env QEMU_LD_PREFIX=/usr/s390x-linux-gnu qemu-s390x ./purego-test-cgo -test.shuffle=on -test.v -test.count=10
           go env -u CC
@@ -326,7 +331,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        go: ['1.25.x', '1.26.x']
+        go: ['1.25.x', '1.26.x', '1.27.0-rc.1']
     name: Test with Go ${{ matrix.go }} on Android amd64
     runs-on: ubuntu-latest
     defaults:
