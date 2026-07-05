@@ -64,7 +64,7 @@ func compileCallback(fn any) uintptr {
 			if i == 0 && in.AssignableTo(reflect.TypeFor[CDecl]()) {
 				continue
 			}
-			ensureStructSupported()
+			ensureCallbackStructSupported()
 			checkStructFieldsSupported(in)
 			continue
 		case reflect.Interface, reflect.Func, reflect.Slice,
