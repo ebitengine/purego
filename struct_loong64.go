@@ -8,18 +8,18 @@ import (
 	"unsafe"
 )
 
-// loongLeaf is a scalar member of an aggregate after flattening nested structs
+// loong64Leaf is a scalar member of an aggregate after flattening nested structs
 // and arrays. offset is the byte offset of the member within the aggregate.
-type loongLeaf struct {
+type loong64Leaf struct {
 	isFloat bool
 	kind    reflect.Kind
 	offset  uintptr
 	size    uintptr
 }
 
-// loongFlatten appends the scalar leaves of t to leaves, offsetting each member
+// loong64Flatten appends the scalar leaves of t to leaves, offsetting each member
 // by base. Nested structs and arrays are expanded into their members.
-func loongFlatten(t reflect.Type, base uintptr, leaves *[]loongLeaf) {
+func loong64Flatten(t reflect.Type, base uintptr, leaves *[]loong64Leaf) {
 	switch t.Kind() {
 	case reflect.Struct:
 		for i := 0; i < t.NumField(); i++ {
@@ -29,16 +29,16 @@ func loongFlatten(t reflect.Type, base uintptr, leaves *[]loongLeaf) {
 				// members that the calling convention counts.
 				continue
 			}
-			loongFlatten(f.Type, base+f.Offset, leaves)
+			loong64Flatten(f.Type, base+f.Offset, leaves)
 		}
 	case reflect.Array:
 		elem := t.Elem()
 		for i := 0; i < t.Len(); i++ {
-			loongFlatten(elem, base+uintptr(i)*elem.Size(), leaves)
+			loong64Flatten(elem, base+uintptr(i)*elem.Size(), leaves)
 		}
 	default:
 		k := t.Kind()
-		*leaves = append(*leaves, loongLeaf{
+		*leaves = append(*leaves, loong64Leaf{
 			isFloat: k == reflect.Float32 || k == reflect.Float64,
 			kind:    k,
 			offset:  base,
@@ -47,13 +47,13 @@ func loongFlatten(t reflect.Type, base uintptr, leaves *[]loongLeaf) {
 	}
 }
 
-// loongClassify flattens t and reports whether it is passed and returned through
+// loong64Classify flattens t and reports whether it is passed and returned through
 // the floating-point calling convention. Under the LoongArch hard-float ABI an
 // aggregate uses FP registers only when, after flattening, it has one or two
 // floating-point members and nothing else, or exactly one floating-point member
 // together with one integer member.
-func loongClassify(t reflect.Type) (leaves []loongLeaf, useFP bool) {
-	loongFlatten(t, 0, &leaves)
+func loong64Classify(t reflect.Type) (leaves []loong64Leaf, useFP bool) {
+	loong64Flatten(t, 0, &leaves)
 	var floats, ints int
 	for _, l := range leaves {
 		if l.isFloat {
@@ -84,7 +84,7 @@ func getStruct(outType reflect.Type, syscall syscallArgs) reflect.Value {
 
 	var buf [16]byte
 	base := unsafe.Pointer(&buf[0])
-	if leaves, useFP := loongClassify(outType); useFP {
+	if leaves, useFP := loong64Classify(outType); useFP {
 		floatRegs := [2]uintptr{syscall.f1, syscall.f2}
 		intRegs := [2]uintptr{syscall.a1, syscall.a2}
 		var fi, ii int
@@ -100,7 +100,7 @@ func getStruct(outType reflect.Type, syscall syscallArgs) reflect.Value {
 					*(*uint64)(dst) = uint64(r)
 				}
 			} else {
-				loongStoreInt(dst, l.size, intRegs[ii])
+				loong64StoreInt(dst, l.size, intRegs[ii])
 				ii++
 			}
 		}
@@ -113,7 +113,7 @@ func getStruct(outType reflect.Type, syscall syscallArgs) reflect.Value {
 	return reflect.NewAt(outType, base).Elem()
 }
 
-func loongStoreInt(dst unsafe.Pointer, size uintptr, r uintptr) {
+func loong64StoreInt(dst unsafe.Pointer, size uintptr, r uintptr) {
 	switch size {
 	case 1:
 		*(*uint8)(dst) = uint8(r)
@@ -145,7 +145,7 @@ func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFl
 		keepAlive = append(keepAlive, tmp.Interface())
 	}
 
-	if leaves, useFP := loongClassify(v.Type()); useFP {
+	if leaves, useFP := loong64Classify(v.Type()); useFP {
 		for _, l := range leaves {
 			src := unsafe.Add(ptr, l.offset)
 			switch {
@@ -155,7 +155,7 @@ func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFl
 			case l.isFloat:
 				addFloat(uintptr(*(*uint64)(src)))
 			default:
-				addInt(loongLoadInt(src, l))
+				addInt(loong64LoadInt(src, l))
 			}
 		}
 		return keepAlive
@@ -171,9 +171,9 @@ func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFl
 	return keepAlive
 }
 
-// loongLoadInt reads an integer leaf into a register value, sign-extending
+// loong64LoadInt reads an integer leaf into a register value, sign-extending
 // signed members and zero-extending the rest.
-func loongLoadInt(src unsafe.Pointer, l loongLeaf) uintptr {
+func loong64LoadInt(src unsafe.Pointer, l loong64Leaf) uintptr {
 	switch l.kind {
 	case reflect.Int8:
 		return uintptr(int64(*(*int8)(src)))
