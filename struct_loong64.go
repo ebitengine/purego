@@ -24,6 +24,11 @@ func loongFlatten(t reflect.Type, base uintptr, leaves *[]loongLeaf) {
 	case reflect.Struct:
 		for i := 0; i < t.NumField(); i++ {
 			f := t.Field(i)
+			if f.Name == "_" {
+				// Blank fields are explicit padding to match the C layout, not
+				// members that the calling convention counts.
+				continue
+			}
 			loongFlatten(f.Type, base+f.Offset, leaves)
 		}
 	case reflect.Array:
