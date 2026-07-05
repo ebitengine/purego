@@ -504,9 +504,9 @@ func checkStructFieldsSupported(ty reflect.Type) {
 // a C function is unsupported on the current platform.
 func ensureStructSupported() {
 	switch runtime.GOARCH {
-	case "amd64", "arm64", "loong64", "ppc64le", "riscv64", "s390x":
+	case "amd64", "arm64", "loong64":
 	default:
-		panic("purego: struct arguments/returns are only supported on amd64, arm64, loong64, ppc64le, riscv64, and s390x")
+		panic("purego: struct arguments/returns are only supported on amd64, arm64, and loong64")
 	}
 	switch runtime.GOOS {
 	case "android", "darwin", "ios", "linux", "windows":
