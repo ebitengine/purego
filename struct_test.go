@@ -84,8 +84,6 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 			continue
 		}
 		if imp.usesCallbacks && runtime.GOARCH != "amd64" && runtime.GOARCH != "arm64" {
-			// Struct arguments and returns in callbacks are only supported on
-			// amd64 and arm64.
 			continue
 		}
 		t.Run(imp.name, func(t *testing.T) {
@@ -914,8 +912,6 @@ func TestRegisterFunc_structReturns(t *testing.T) {
 			continue
 		}
 		if imp.usesCallbacks && runtime.GOARCH != "amd64" && runtime.GOARCH != "arm64" {
-			// Struct arguments and returns in callbacks are only supported on
-			// amd64 and arm64.
 			continue
 		}
 		t.Run(imp.name, func(t *testing.T) {

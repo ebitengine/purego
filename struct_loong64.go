@@ -22,7 +22,7 @@ type loong64Leaf struct {
 func loong64Flatten(t reflect.Type, base uintptr, leaves *[]loong64Leaf) {
 	switch t.Kind() {
 	case reflect.Struct:
-		for i := 0; i < t.NumField(); i++ {
+		for i := range t.NumField() {
 			f := t.Field(i)
 			if f.Name == "_" {
 				// Blank fields are explicit padding to match the C layout, not
@@ -33,7 +33,7 @@ func loong64Flatten(t reflect.Type, base uintptr, leaves *[]loong64Leaf) {
 		}
 	case reflect.Array:
 		elem := t.Elem()
-		for i := 0; i < t.Len(); i++ {
+		for i := range t.Len() {
 			loong64Flatten(elem, base+uintptr(i)*elem.Size(), leaves)
 		}
 	default:
@@ -79,7 +79,10 @@ func getStruct(outType reflect.Type, syscall syscallArgs) reflect.Value {
 	}
 	if outSize > 16 {
 		// Returned indirectly through a pointer in the first integer register.
-		return reflect.NewAt(outType, *(*unsafe.Pointer)(unsafe.Pointer(&syscall.a1))).Elem()
+		// Read it from a local copy so the address does not alias the pooled
+		// syscallArgs.
+		a1 := syscall.a1
+		return reflect.NewAt(outType, *(*unsafe.Pointer)(unsafe.Pointer(&a1))).Elem()
 	}
 
 	var buf [16]byte
@@ -90,18 +93,18 @@ func getStruct(outType reflect.Type, syscall syscallArgs) reflect.Value {
 		var fi, ii int
 		for _, l := range leaves {
 			dst := unsafe.Add(base, l.offset)
-			if l.isFloat {
-				r := floatRegs[fi]
-				fi++
-				if l.kind == reflect.Float32 {
-					// A single-precision value is NaN-boxed in the register.
-					*(*uint32)(dst) = uint32(r)
-				} else {
-					*(*uint64)(dst) = uint64(r)
-				}
-			} else {
+			if !l.isFloat {
 				loong64StoreInt(dst, l.size, intRegs[ii])
 				ii++
+				continue
+			}
+			r := floatRegs[fi]
+			fi++
+			if l.kind == reflect.Float32 {
+				// A single-precision value is NaN-boxed in the register.
+				*(*uint32)(dst) = uint32(r)
+			} else {
+				*(*uint64)(dst) = uint64(r)
 			}
 		}
 	} else {
