@@ -79,10 +79,7 @@ func getStruct(outType reflect.Type, syscall syscallArgs) reflect.Value {
 	}
 	if outSize > 16 {
 		// Returned indirectly through a pointer in the first integer register.
-		// Read it from a local copy so the address does not alias the pooled
-		// syscallArgs.
-		a1 := syscall.a1
-		return reflect.NewAt(outType, *(*unsafe.Pointer)(unsafe.Pointer(&a1))).Elem()
+		return reflect.NewAt(outType, *(*unsafe.Pointer)(unsafe.Pointer(&syscall.a1))).Elem()
 	}
 
 	var buf [16]byte
