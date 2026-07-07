@@ -64,7 +64,7 @@ func compileCallback(fn any) uintptr {
 			if i == 0 && in.AssignableTo(reflect.TypeFor[CDecl]()) {
 				continue
 			}
-			ensureStructSupported()
+			ensureCallbackStructSupported()
 			checkStructFieldsSupported(in)
 			continue
 		case reflect.Interface, reflect.Func, reflect.Slice,
@@ -77,9 +77,13 @@ output:
 	switch {
 	case ty.NumOut() == 1:
 		switch ty.Out(0).Kind() {
+		case reflect.Struct:
+			ensureCallbackStructSupported()
+			checkStructFieldsSupported(ty.Out(0))
+			break output
 		case reflect.Pointer, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
 			reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr,
-			reflect.Bool, reflect.UnsafePointer, reflect.Struct:
+			reflect.Bool, reflect.UnsafePointer:
 			break output
 		}
 		panic("purego: unsupported return type: " + ty.String())

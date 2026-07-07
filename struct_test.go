@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2024 The Ebitengine Authors
 
-//go:build (darwin || linux || windows) && (amd64 || arm64)
+//go:build (darwin || linux || windows) && (amd64 || arm64 || loong64)
 
 package purego_test
 
@@ -81,6 +81,9 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 		if imp.usesCallbacks && runtime.GOOS == "windows" {
 			// Callbacks on Windows use the stdlib syscall.NewCallback, which does
 			// not support struct arguments or returns.
+			continue
+		}
+		if imp.usesCallbacks && runtime.GOARCH != "amd64" && runtime.GOARCH != "arm64" {
 			continue
 		}
 		t.Run(imp.name, func(t *testing.T) {
@@ -906,6 +909,9 @@ func TestRegisterFunc_structReturns(t *testing.T) {
 		if imp.usesCallbacks && runtime.GOOS == "windows" {
 			// Callbacks on Windows use the stdlib syscall.NewCallback, which does
 			// not support struct arguments or returns.
+			continue
+		}
+		if imp.usesCallbacks && runtime.GOARCH != "amd64" && runtime.GOARCH != "arm64" {
 			continue
 		}
 		t.Run(imp.name, func(t *testing.T) {

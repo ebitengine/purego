@@ -42,7 +42,7 @@ Tier 2 platforms are supported by PureGo on a best-effort basis. Critical bugs o
 
 - **Android**: 386<sup>1,3</sup>, arm<sup>1,3</sup>
 - **FreeBSD**: amd64<sup>3,4</sup>, arm64<sup>3,4</sup>
-- **Linux**: 386<sup>3</sup>, arm<sup>3</sup>, loong64<sup>3</sup>, ppc64le<sup>3</sup>, riscv64<sup>3</sup>, s390x<sup>3, 5</sup>
+- **Linux**: 386<sup>3</sup>, arm<sup>3</sup>, loong64<sup>2</sup>, ppc64le<sup>3</sup>, riscv64<sup>3</sup>, s390x<sup>3, 5</sup>
 - **NetBSD**: amd64<sup>3,4</sup>, arm64<sup>3,4</sup>
 - **Windows**: 386<sup>3,6</sup>, arm<sup>3,6,7</sup>
 

@@ -500,14 +500,32 @@ func checkStructFieldsSupported(ty reflect.Type) {
 	}
 }
 
+// ensureStructSupported panics if passing or returning structs through a call to
+// a C function is unsupported on the current platform.
 func ensureStructSupported() {
-	if runtime.GOARCH != "amd64" && runtime.GOARCH != "arm64" {
-		panic("purego: struct arguments/returns are only supported on amd64 and arm64")
+	switch runtime.GOARCH {
+	case "amd64", "arm64", "loong64":
+	default:
+		panic("purego: struct arguments/returns are only supported on amd64, arm64, and loong64")
 	}
 	switch runtime.GOOS {
 	case "android", "darwin", "ios", "linux", "windows":
 	default:
 		panic("purego: struct arguments/returns are only supported on android, darwin, ios, linux, and windows")
+	}
+}
+
+// ensureCallbackStructSupported panics if passing or returning structs through a
+// callback is unsupported on the current platform. Callbacks support structs on
+// fewer architectures than a direct call to a C function.
+func ensureCallbackStructSupported() {
+	if runtime.GOARCH != "amd64" && runtime.GOARCH != "arm64" {
+		panic("purego: struct arguments/returns in callbacks are only supported on amd64 and arm64")
+	}
+	switch runtime.GOOS {
+	case "android", "darwin", "ios", "linux", "windows":
+	default:
+		panic("purego: struct arguments/returns in callbacks are only supported on android, darwin, ios, linux, and windows")
 	}
 }
 
