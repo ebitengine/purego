@@ -28,6 +28,13 @@ func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFl
 	return keepAlive
 }
 
+// structReturnInMemory always reports false on arm: an indirect struct return
+// is recovered from the pointer the callee leaves in a1 (see getStruct) rather
+// than through a caller-allocated hidden first argument.
+func structReturnInMemory(size uintptr) bool {
+	return false
+}
+
 func getStruct(outType reflect.Type, syscall syscallArgs) (v reflect.Value) {
 	outSize := outType.Size()
 	if outSize == 0 {

@@ -10,13 +10,35 @@ import (
 	"unsafe"
 )
 
+// structReturnInMemory reports whether a struct return value of the given size
+// is returned through a caller-allocated hidden pointer passed as the first
+// integer argument (true) rather than in registers (false).
+func structReturnInMemory(size uintptr) bool {
+	if size == 0 {
+		return false
+	}
+	if runtime.GOOS == "windows" {
+		// The Win64 ABI returns aggregates of exactly 1, 2, 4, or 8 bytes in
+		// RAX. Every other size is returned through a caller-allocated hidden
+		// pointer that the callee also returns in RAX.
+		switch size {
+		case 1, 2, 4, 8:
+			return false
+		default:
+			return true
+		}
+	}
+	// The System V ABI returns aggregates of up to two eightbytes in registers.
+	return size > maxRegAllocStructSize
+}
+
 func getStruct(outType reflect.Type, syscall syscallArgs) (v reflect.Value) {
 	outSize := outType.Size()
 	if runtime.GOOS == "windows" {
 		switch {
 		case outSize == 0:
 			return reflect.New(outType).Elem()
-		case amd64StructReturnInMemory(outSize):
+		case structReturnInMemory(outSize):
 			// Returned through the caller-allocated hidden pointer, which the
 			// callee also returns in RAX.
 			return reflect.NewAt(outType, *(*unsafe.Pointer)(unsafe.Pointer(&syscall.a1))).Elem()

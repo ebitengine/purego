@@ -14,6 +14,13 @@ import (
 	"github.com/ebitengine/purego/internal/strings"
 )
 
+// structReturnInMemory always reports false on arm64: a struct returned in
+// memory is passed through the dedicated indirect result register (R8), not as
+// an ordinary integer argument, so it is handled separately.
+func structReturnInMemory(size uintptr) bool {
+	return false
+}
+
 func getStruct(outType reflect.Type, syscall syscallArgs) (v reflect.Value) {
 	outSize := outType.Size()
 	switch {

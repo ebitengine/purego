@@ -199,10 +199,16 @@ func RegisterFunc(fptr any, cfn uintptr) {
 			ensureStructSupported()
 			outType := ty.Out(0)
 			checkStructFieldsSupported(outType)
-			if runtime.GOARCH == "amd64" && amd64StructReturnInMemory(outType.Size()) {
-				// on amd64 a struct returned in memory is allocated by the caller
-				// and its pointer is passed as a hidden first argument.
-				ints++
+			if structReturnInMemory(outType.Size()) {
+				// A struct returned in memory is allocated by the caller and its
+				// pointer is passed as a hidden first integer argument. When the
+				// integer registers are already full, prepending it spills a
+				// regular argument onto the stack.
+				if ints < numOfIntegerRegisters() {
+					ints++
+				} else {
+					stack++
+				}
 			}
 		}
 
@@ -286,9 +292,9 @@ func RegisterFunc(fptr any, cfn uintptr) {
 		var arm64_r8 uintptr
 		if ty.NumOut() == 1 && ty.Out(0).Kind() == reflect.Struct {
 			outType := ty.Out(0)
-			amd64InMemory := runtime.GOARCH == "amd64" && amd64StructReturnInMemory(outType.Size())
-			otherInMemory := (runtime.GOARCH == "loong64" || runtime.GOARCH == "ppc64le" || runtime.GOARCH == "riscv64" || runtime.GOARCH == "s390x") && outType.Size() > maxRegAllocStructSize
-			if amd64InMemory || otherInMemory {
+			if structReturnInMemory(outType.Size()) {
+				// The caller allocates the return value and passes its pointer
+				// as a hidden first integer argument.
 				val := reflect.New(outType)
 				keepAlive = append(keepAlive, val)
 				addInt(val.Pointer())
@@ -532,28 +538,6 @@ func ensureCallbackStructSupported() {
 // isDarwin is true on platforms that use Apple's calling convention.
 // iOS (GOOS=ios) shares it with macOS (GOOS=darwin).
 const isDarwin = runtime.GOOS == "darwin" || runtime.GOOS == "ios"
-
-// amd64StructReturnInMemory reports whether a struct return value of the given
-// size is returned through a caller-allocated hidden pointer (true) rather than
-// in registers (false). It must only be consulted on amd64.
-func amd64StructReturnInMemory(size uintptr) bool {
-	if size == 0 {
-		return false
-	}
-	if runtime.GOOS == "windows" {
-		// The Win64 ABI returns aggregates of exactly 1, 2, 4, or 8 bytes in
-		// RAX. Every other size is returned through a caller-allocated hidden
-		// pointer that the callee also returns in RAX.
-		switch size {
-		case 1, 2, 4, 8:
-			return false
-		default:
-			return true
-		}
-	}
-	// The System V ABI returns aggregates of up to two eightbytes in registers.
-	return size > maxRegAllocStructSize
-}
 
 func roundUpTo8(val uintptr) uintptr {
 	return (val + align8ByteMask) &^ align8ByteMask
