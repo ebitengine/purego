@@ -8,6 +8,13 @@ import (
 	"unsafe"
 )
 
+// structReturnInMemory reports whether a struct return value of the given size
+// is returned through a caller-allocated hidden pointer passed as the first
+// integer argument. Aggregates larger than two eightbytes are returned in memory.
+func structReturnInMemory(size uintptr) bool {
+	return size > maxRegAllocStructSize
+}
+
 func getStruct(outType reflect.Type, syscall syscallArgs) reflect.Value {
 	outSize := outType.Size()
 

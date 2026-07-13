@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
 	"runtime"
 	"strings"
 	"sync"
@@ -595,6 +596,41 @@ func TestABI_TooManyArguments(t *testing.T) {
 			)
 		})
 	})
+}
+
+func TestABI_StructReturnHiddenPointer(t *testing.T) {
+	// A struct returned in memory is passed a hidden pointer as the first
+	// integer argument, so maxArgs integer arguments plus it need one more slot
+	// than sysargs holds and RegisterFunc must reject the registration.
+	type bigStruct struct{ A, B, C uint64 } // larger than two eightbytes
+
+	if !purego.StructReturnInMemory(reflect.TypeFor[bigStruct]().Size()) {
+		t.Skipf("GOARCH=%s does not return large structs via a hidden integer argument", runtime.GOARCH)
+	}
+
+	in := make([]reflect.Type, purego.MaxArgs)
+	for i := range in {
+		in[i] = reflect.TypeFor[uintptr]()
+	}
+	fnType := reflect.FuncOf(in, []reflect.Type{reflect.TypeFor[bigStruct]()}, false)
+	fptr := reflect.New(fnType)
+
+	defer func() {
+		switch r := recover(); {
+		case r == nil:
+			t.Fatal("RegisterFunc accepted the call; the hidden struct-return pointer was not counted against the stack limit")
+		case strings.Contains(fmt.Sprint(r), "too many stack arguments"):
+			// Expected: the guard fired.
+		case strings.Contains(fmt.Sprint(r), "only supported on"):
+			t.Skipf("struct returns are unsupported on this platform: %v", r)
+		default:
+			t.Fatalf("unexpected panic: %v", r)
+		}
+	}()
+
+	// A non-zero cfn passes the nil check; the panic fires during the preflight
+	// argument count, before the function is ever called.
+	purego.RegisterFunc(fptr.Interface(), uintptr(1))
 }
 
 func buildSharedLib(tb testing.TB, compilerEnv, libFile string, sources ...string) error {

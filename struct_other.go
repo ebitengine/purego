@@ -22,6 +22,13 @@ func getStruct(outType reflect.Type, syscall syscallArgs) reflect.Value {
 	panic("purego: struct returns are not supported on this architecture")
 }
 
+// structReturnInMemory reports whether a struct return value of the given size
+// is returned through a caller-allocated hidden pointer. Structs are unsupported
+// on this architecture, so it always reports false.
+func structReturnInMemory(size uintptr) bool {
+	return false
+}
+
 // shouldBundleStackArgs always returns false because C-style stack argument
 // bundling is only needed on Darwin ARM64.
 func shouldBundleStackArgs(v reflect.Value, numInts, numFloats int) bool {
