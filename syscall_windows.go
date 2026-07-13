@@ -17,15 +17,18 @@ func syscall_syscallN(fn uintptr, args ...uintptr) (r1, r2, err uintptr) {
 }
 
 // NewCallback converts a Go function to a function pointer conforming to the stdcall calling convention.
-// This is useful when interoperating with Windows code requiring callbacks. The argument is expected to be a
-// function with one uintptr-sized result. The function must not have arguments with size larger than the
-// size of uintptr. Only a limited number of callbacks may be created in a single Go process, and any memory
-// allocated for these callbacks is never released. Between NewCallback and NewCallbackCDecl, at least 1024
-// callbacks can always be created. Although this function is similiar to the darwin version it may act
+// This is useful when interoperating with Windows code requiring callbacks. On 386 it supports scalar
+// integer, pointer, bool, float32, and float64 arguments and results, including 64-bit values occupying two
+// stack slots. On other Windows architectures, the standard library's callback restrictions apply.
+// Only a limited number of callbacks may be created in a single Go process, and any memory allocated for
+// these callbacks is never released. Although this function is similar to the Unix version it may act
 // differently.
 func NewCallback(fn any) uintptr {
 	isCDecl := false
 	ty := reflect.TypeOf(fn)
+	if ty == nil || ty.Kind() != reflect.Func {
+		panic("purego: the type must be a function")
+	}
 	for i := 0; i < ty.NumIn(); i++ {
 		in := ty.In(i)
 		if !in.AssignableTo(reflect.TypeOf(CDecl{})) {
@@ -36,10 +39,7 @@ func NewCallback(fn any) uintptr {
 		}
 		isCDecl = true
 	}
-	if isCDecl {
-		return syscall.NewCallbackCDecl(fn)
-	}
-	return syscall.NewCallback(fn)
+	return newCallback(fn, isCDecl)
 }
 
 func loadSymbol(handle uintptr, name string) (uintptr, error) {

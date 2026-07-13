@@ -167,3 +167,204 @@ double stack_32_mixed_int_float(
            f9 * 25 + f10 * 26 + f11 * 27 + f12 * 28 +
            f13 * 29 + f14 * 30 + f15 * 31 + f16 * 32;
 }
+
+#if defined(_WIN32) && defined(__i386__)
+
+#include <windows.h>
+
+#define STDCALL __attribute__((stdcall))
+
+static uint32_t win386_pointer_value = UINT32_C(0x89abcdef);
+
+uint64_t win386_direct_mixed(
+    int8_t i8, uint16_t u16, int32_t i32, uint64_t u64,
+    float f32, double f64, uintptr_t pointer, bool boolean, const char *string
+) {
+    if (i8 != -101 || u16 != 60000 || i32 != INT32_C(-2000000000) ||
+        u64 != UINT64_C(0xfedcba9876543210) || f32 != 1.25f || f64 != -2.5 ||
+        pointer != (uintptr_t)&win386_pointer_value || !boolean ||
+        strcmp(string, "purego-win386") != 0) {
+        return 0;
+    }
+    return u64;
+}
+
+int64_t win386_return_int64(void) {
+    return INT64_C(-0x123456789abcdef);
+}
+
+uint64_t win386_return_uint64(void) {
+    return UINT64_C(0xfedcba9876543210);
+}
+
+float win386_return_float32(float value) {
+    return value * 1.5f;
+}
+
+double win386_return_float64(double value) {
+    return value * -2.25;
+}
+
+float win386_identity_float32(float value) {
+    return value;
+}
+
+double win386_identity_float64(double value) {
+    return value;
+}
+
+typedef struct {
+    float value;
+} win386_one_float32;
+
+typedef struct {
+    double value;
+} win386_one_float64;
+
+win386_one_float32 win386_identity_struct_float32(win386_one_float32 value) {
+    return value;
+}
+
+win386_one_float64 win386_identity_struct_float64(win386_one_float64 value) {
+    return value;
+}
+
+uint64_t win386_16_uint64(
+    uint64_t a1, uint64_t a2, uint64_t a3, uint64_t a4,
+    uint64_t a5, uint64_t a6, uint64_t a7, uint64_t a8,
+    uint64_t a9, uint64_t a10, uint64_t a11, uint64_t a12,
+    uint64_t a13, uint64_t a14, uint64_t a15, uint64_t a16
+) {
+    return a1 + a2 + a3 + a4 + a5 + a6 + a7 + a8 +
+           a9 + a10 + a11 + a12 + a13 + a14 + a15 + a16;
+}
+
+double win386_16_float64(
+    double a1, double a2, double a3, double a4,
+    double a5, double a6, double a7, double a8,
+    double a9, double a10, double a11, double a12,
+    double a13, double a14, double a15, double a16
+) {
+    return a1 + a2 + a3 + a4 + a5 + a6 + a7 + a8 +
+           a9 + a10 + a11 + a12 + a13 + a14 + a15 + a16;
+}
+
+uintptr_t win386_pointer(void) {
+    return (uintptr_t)&win386_pointer_value;
+}
+
+typedef uint64_t (STDCALL *win386_stdcall_u64_callback)(
+    int8_t, uint16_t, int32_t, uint64_t, float, double, uint32_t *, bool
+);
+typedef uint64_t (*win386_cdecl_u64_callback)(
+    int8_t, uint16_t, int32_t, uint64_t, float, double, uint32_t *, bool
+);
+typedef int64_t (STDCALL *win386_stdcall_i64_callback)(int64_t, double);
+typedef float (STDCALL *win386_stdcall_f32_callback)(uint64_t, float, double);
+typedef double (*win386_cdecl_f64_callback)(uint64_t, float, double);
+typedef uint64_t (STDCALL *win386_stdcall_16_u64_callback)(
+    uint64_t, uint64_t, uint64_t, uint64_t,
+    uint64_t, uint64_t, uint64_t, uint64_t,
+    uint64_t, uint64_t, uint64_t, uint64_t,
+    uint64_t, uint64_t, uint64_t, uint64_t
+);
+typedef float (STDCALL *win386_stdcall_identity_f32_callback)(float);
+typedef double (*win386_cdecl_identity_f64_callback)(double);
+typedef uint32_t (STDCALL *win386_stdcall_u32_callback)(uint32_t);
+typedef uint64_t (STDCALL *win386_stdcall_reentrant_callback)(uint32_t);
+typedef uint64_t (*win386_cdecl_reentrant_callback)(uint32_t);
+typedef uint64_t (STDCALL *win386_stdcall_thread_callback)(uint64_t, float, double);
+
+uint64_t win386_call_stdcall_u64(uintptr_t callback) {
+    return ((win386_stdcall_u64_callback)callback)(
+        -101, 60000, INT32_C(-2000000000), UINT64_C(0xfedcba9876543210),
+        1.25f, -2.5, &win386_pointer_value, true
+    );
+}
+
+uint64_t win386_call_cdecl_u64(uintptr_t callback) {
+    return ((win386_cdecl_u64_callback)callback)(
+        -101, 60000, INT32_C(-2000000000), UINT64_C(0xfedcba9876543210),
+        1.25f, -2.5, &win386_pointer_value, true
+    );
+}
+
+int64_t win386_call_stdcall_i64(uintptr_t callback) {
+    return ((win386_stdcall_i64_callback)callback)(INT64_C(-0x123456789abcdef), 3.5);
+}
+
+float win386_call_stdcall_f32(uintptr_t callback) {
+    return ((win386_stdcall_f32_callback)callback)(UINT64_C(0x123456789abcdef0), 1.25f, -2.5);
+}
+
+double win386_call_cdecl_f64(uintptr_t callback) {
+    return ((win386_cdecl_f64_callback)callback)(UINT64_C(0x123456789abcdef0), 1.25f, -2.5);
+}
+
+uint64_t win386_call_stdcall_16_u64(uintptr_t callback) {
+    return ((win386_stdcall_16_u64_callback)callback)(
+        UINT64_C(0x100000001), UINT64_C(0x100000002), UINT64_C(0x100000003), UINT64_C(0x100000004),
+        UINT64_C(0x100000005), UINT64_C(0x100000006), UINT64_C(0x100000007), UINT64_C(0x100000008),
+        UINT64_C(0x100000009), UINT64_C(0x10000000a), UINT64_C(0x10000000b), UINT64_C(0x10000000c),
+        UINT64_C(0x10000000d), UINT64_C(0x10000000e), UINT64_C(0x10000000f), UINT64_C(0x100000010)
+    );
+}
+
+float win386_call_stdcall_identity_f32(uintptr_t callback, float value) {
+    return ((win386_stdcall_identity_f32_callback)callback)(value);
+}
+
+double win386_call_cdecl_identity_f64(uintptr_t callback, double value) {
+    return ((win386_cdecl_identity_f64_callback)callback)(value);
+}
+
+uint32_t win386_call_stdcall_u32(uintptr_t callback, uint32_t value) {
+    return ((win386_stdcall_u32_callback)callback)(value);
+}
+
+uint64_t win386_call_stdcall_reentrant(uintptr_t callback, uint32_t depth) {
+    return ((win386_stdcall_reentrant_callback)callback)(depth);
+}
+
+uint64_t win386_call_cdecl_reentrant(uintptr_t callback, uint32_t depth) {
+    return ((win386_cdecl_reentrant_callback)callback)(depth);
+}
+
+typedef struct {
+    win386_stdcall_thread_callback callback;
+    uint64_t result;
+} win386_thread_call;
+
+static DWORD WINAPI win386_thread_entry(void *opaque) {
+    win386_thread_call *call = (win386_thread_call *)opaque;
+    call->result = call->callback(UINT64_C(0xfedcba9876543210), 1.25f, -2.5);
+    return 0;
+}
+
+uint64_t win386_call_stdcall_on_thread(uintptr_t callback) {
+    win386_thread_call call = {(win386_stdcall_thread_callback)callback, 0};
+    HANDLE thread = CreateThread(NULL, 0, win386_thread_entry, &call, 0, NULL);
+    if (thread == NULL) {
+        return 0;
+    }
+    if (WaitForSingleObject(thread, INFINITE) != WAIT_OBJECT_0) {
+        CloseHandle(thread);
+        return 0;
+    }
+    CloseHandle(thread);
+    return call.result;
+}
+
+typedef struct {
+    uint32_t slots[32];
+} win386_struct_32_slots;
+
+uint32_t win386_take_struct_32_slots(win386_struct_32_slots value) {
+    uint32_t sum = 0;
+    for (size_t i = 0; i < 32; i++) {
+        sum += value.slots[i];
+    }
+    return sum;
+}
+
+#endif

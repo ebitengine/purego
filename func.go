@@ -63,7 +63,7 @@ func RegisterLibFunc(fptr any, handle uintptr, name string) {
 //	int64 <=> int64_t
 //	float32 <=> float
 //	float64 <=> double
-//	struct <=> struct (android, darwin, ios, linux, and windows on amd64/arm64)
+//	struct <=> struct (android, darwin, ios, linux, and windows on amd64/arm64/386)
 //	func <=> C function
 //	unsafe.Pointer, *T <=> void*
 //	[]T => void*
@@ -101,7 +101,7 @@ func RegisterLibFunc(fptr any, handle uintptr, name string) {
 // On Apple ARM64 platforms (macOS and iOS), purego handles proper alignment of struct arguments
 // when passing them on the stack, following the C ABI's byte-level packing rules.
 //
-// On Windows, struct arguments and returns are supported on amd64 and arm64 when calling C functions.
+// On Windows, struct arguments and returns are supported on amd64, arm64, and 386 when calling C functions.
 // Passing or returning structs in callbacks created with [NewCallback] is not supported on Windows.
 //
 // # Example
@@ -164,21 +164,34 @@ func RegisterFunc(fptr any, cfn uintptr) {
 			case reflect.String, reflect.Uintptr, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
 				reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Pointer, reflect.UnsafePointer,
 				reflect.Slice, reflect.Bool:
-				if ints < numOfIntegerRegisters() {
-					ints++
-				} else {
-					stack++
+				slots := 1
+				if runtime.GOOS == "windows" && runtime.GOARCH == "386" && arg.Size() == 8 {
+					slots = 2
+				}
+				for range slots {
+					if ints < numOfIntegerRegisters() {
+						ints++
+					} else {
+						stack++
+					}
 				}
 			case reflect.Float32, reflect.Float64:
-				if floats < floatArgRegs {
-					floats++
-				} else {
-					stack++
+				slots := 1
+				if runtime.GOOS == "windows" && runtime.GOARCH == "386" && arg.Size() == 8 {
+					slots = 2
+				}
+				for range slots {
+					if floats < floatArgRegs {
+						floats++
+					} else {
+						stack++
+					}
 				}
 			case reflect.Struct:
 				ensureStructSupported()
-				if arg.Size() == 0 && runtime.GOOS != "windows" {
-					// On Windows an empty struct still consumes one argument slot.
+				if arg.Size() == 0 && (runtime.GOOS != "windows" || runtime.GOARCH == "386") {
+					// The System V ABI and the Windows/386 GNU ABI do not
+					// consume an argument slot for an empty struct.
 					continue
 				}
 				addInt := func(u uintptr) {
@@ -290,8 +303,21 @@ func RegisterFunc(fptr any, cfn uintptr) {
 		}()
 
 		var arm64_r8 uintptr
+		if runtime.GOARCH == "386" && ty.NumOut() == 1 &&
+			(ty.Out(0).Kind() == reflect.Float32 || ty.Out(0).Kind() == reflect.Float64) {
+			// The 386 bridge uses this to avoid popping x87 ST(0) after
+			// non-floating calls.
+			arm64_r8 = 1
+		}
 		if ty.NumOut() == 1 && ty.Out(0).Kind() == reflect.Struct {
 			outType := ty.Out(0)
+			if runtime.GOOS == "windows" && runtime.GOARCH == "386" && isSingleFloatStruct(outType) {
+				// MinGW follows the GNU i386 convention for a struct whose
+				// only field is a float: it returns the value in x87 ST(0).
+				// MSVC returns the same struct in EAX/EDX, so mode 2 asks the
+				// assembly bridge to detect which form the callee used.
+				arm64_r8 = 2
+			}
 			if structReturnInMemory(outType) {
 				// The caller allocates the return value and passes its pointer
 				// as a hidden first integer argument.
@@ -332,11 +358,11 @@ func RegisterFunc(fptr any, cfn uintptr) {
 		}
 
 		var syscall *syscallArgs
-		if runtime.GOOS == "windows" && runtime.GOARCH != "arm64" {
-			// Windows amd64, 386, and arm use syscall.SyscallN.
+		if runtime.GOOS == "windows" && runtime.GOARCH != "arm64" && runtime.GOARCH != "386" {
+			// Windows amd64 and arm use syscall.SyscallN.
 			syscall = thePool.Get().(*syscallArgs)
 			syscall.a1, syscall.a2, _ = syscall_syscallN(cfn, sysargs[:numStack]...)
-			syscall.f1 = syscall.a2 // on amd64 a2 stores the float return. On 32bit platforms floats aren't support
+			syscall.f1 = syscall.a2 // on amd64 a2 stores the float return
 		} else {
 			syscall = syscall_SyscallN(cfn, sysargs[:], floats[:], arm64_r8)
 		}
@@ -348,9 +374,17 @@ func RegisterFunc(fptr any, cfn uintptr) {
 		v := reflect.New(outType).Elem()
 		switch outType.Kind() {
 		case reflect.Uintptr, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-			v.SetUint(uint64(syscall.a1))
+			bits := uint64(syscall.a1)
+			if is32bit && outType.Size() == 8 {
+				bits |= uint64(syscall.a2) << 32
+			}
+			v.SetUint(bits)
 		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-			v.SetInt(int64(syscall.a1))
+			bits := uint64(syscall.a1)
+			if is32bit && outType.Size() == 8 {
+				bits |= uint64(syscall.a2) << 32
+			}
+			v.SetInt(int64(bits))
 		case reflect.Bool:
 			v.SetBool(byte(syscall.a1) != 0)
 		case reflect.UnsafePointer:
@@ -380,7 +414,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 				v.SetFloat(math.Float64frombits(uint64(syscall.f1)))
 			case "s390x":
 				// S390X is big-endian: float32 in upper 32 bits of 64-bit register
-				v.SetFloat(float64(math.Float32frombits(uint32(syscall.f1 >> 32))))
+				v.SetFloat(float64(math.Float32frombits(uint32(uint64(syscall.f1) >> 32))))
 			default:
 				v.SetFloat(float64(math.Float32frombits(uint32(syscall.f1))))
 			}
@@ -408,6 +442,14 @@ func RegisterFunc(fptr any, cfn uintptr) {
 	fn.Set(v)
 }
 
+func isSingleFloatStruct(ty reflect.Type) bool {
+	if ty.Kind() != reflect.Struct || ty.NumField() != 1 {
+		return false
+	}
+	kind := ty.Field(0).Type.Kind()
+	return kind == reflect.Float32 || kind == reflect.Float64
+}
+
 func addValue(v reflect.Value, keepAlive []any, addInt func(x uintptr), addFloat func(x uintptr), addStack func(x uintptr), numInts *int, numFloats *int, numStack *int) []any {
 	const is32bit = unsafe.Sizeof(uintptr(0)) == 4
 	switch v.Kind() {
@@ -416,9 +458,17 @@ func addValue(v reflect.Value, keepAlive []any, addInt func(x uintptr), addFloat
 		keepAlive = append(keepAlive, ptr)
 		addInt(uintptr(unsafe.Pointer(ptr)))
 	case reflect.Uintptr, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		addInt(uintptr(v.Uint()))
+		bits := v.Uint()
+		addInt(uintptr(bits))
+		if runtime.GOOS == "windows" && runtime.GOARCH == "386" && v.Type().Size() == 8 {
+			addInt(uintptr(bits >> 32))
+		}
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		addInt(uintptr(v.Int()))
+		bits := uint64(v.Int())
+		addInt(uintptr(bits))
+		if runtime.GOOS == "windows" && runtime.GOARCH == "386" && v.Type().Size() == 8 {
+			addInt(uintptr(bits >> 32))
+		}
 	case reflect.Pointer, reflect.UnsafePointer, reflect.Slice:
 		// There is no need to keepAlive this pointer separately because it is kept alive in the args variable
 		addInt(v.Pointer())
@@ -513,10 +563,13 @@ func checkStructFieldsSupported(ty reflect.Type) {
 // ensureStructSupported panics if passing or returning structs through a call to
 // a C function is unsupported on the current platform.
 func ensureStructSupported() {
+	if runtime.GOOS == "windows" && runtime.GOARCH == "386" {
+		return
+	}
 	switch runtime.GOARCH {
 	case "amd64", "arm64", "loong64", "ppc64le":
 	default:
-		panic("purego: struct arguments/returns are only supported on amd64, arm64, loong64, and ppc64le")
+		panic("purego: struct arguments/returns are only supported on amd64, arm64, loong64, ppc64le, and windows/386")
 	}
 	switch runtime.GOOS {
 	case "android", "darwin", "ios", "linux", "windows":

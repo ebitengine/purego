@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2024 The Ebitengine Authors
 
-//go:build (darwin || linux || windows) && (amd64 || arm64 || loong64 || ppc64le)
+//go:build (darwin || linux || windows) && (amd64 || arm64 || loong64 || ppc64le || (windows && 386))
 
 package purego_test
 
@@ -79,8 +79,7 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 	}
 	for _, imp := range implementations {
 		if imp.usesCallbacks && runtime.GOOS == "windows" {
-			// Callbacks on Windows use the stdlib syscall.NewCallback, which does
-			// not support struct arguments or returns.
+			// Windows callbacks do not support struct arguments or returns.
 			continue
 		}
 		if imp.usesCallbacks && runtime.GOARCH != "amd64" && runtime.GOARCH != "arm64" {
@@ -95,7 +94,7 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 					return 0xdeadbeef
 				})
 				if ret := NoStruct(Empty{}); ret != expectedUnsigned {
-					t.Fatalf("NoStruct returned %#x wanted %#x", ret, expectedUnsigned)
+					t.Fatalf("NoStruct returned %#x wanted %#x", ret, uint64(expectedUnsigned))
 				}
 			}
 			{
@@ -105,14 +104,14 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 					return 0xdeadbeef
 				})
 				if ret := EmptyEmptyFn(EmptyEmpty{}); ret != expectedUnsigned {
-					t.Fatalf("EmptyEmpty returned %#x wanted %#x", ret, expectedUnsigned)
+					t.Fatalf("EmptyEmpty returned %#x wanted %#x", ret, uint64(expectedUnsigned))
 				}
 				var EmptyEmptyWithReg func(uint32, EmptyEmpty, uint32) int64
 				register(&EmptyEmptyWithReg, lib, "EmptyEmptyWithReg", func(x uint32, _ EmptyEmpty, y uint32) int64 {
 					return int64(x)<<16 | int64(y)
 				})
 				if ret := EmptyEmptyWithReg(0xdead, EmptyEmpty{}, 0xbeef); ret != expectedUnsigned {
-					t.Fatalf("EmptyEmptyWithReg returned %#x wanted %#x", ret, expectedUnsigned)
+					t.Fatalf("EmptyEmptyWithReg returned %#x wanted %#x", ret, uint64(expectedUnsigned))
 				}
 			}
 			{
@@ -125,7 +124,7 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 					return *g.x + *g.y + *g.z
 				})
 				if ret := GreaterThan16BytesFn(GreaterThan16Bytes{x: &x, y: &y, z: &z}); ret != expectedUnsigned {
-					t.Fatalf("GreaterThan16Bytes returned %#x wanted %#x", ret, expectedUnsigned)
+					t.Fatalf("GreaterThan16Bytes returned %#x wanted %#x", ret, uint64(expectedUnsigned))
 				}
 			}
 			{
@@ -140,7 +139,7 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 					return *g.a.x + *g.a.y + *g.a.z
 				})
 				if ret := GreaterThan16BytesStructFn(GreaterThan16BytesStruct{a: struct{ x, y, z *int64 }{x: &x, y: &y, z: &z}}); ret != expectedUnsigned {
-					t.Fatalf("GreaterThan16BytesStructFn returned %#x wanted %#x", ret, expectedUnsigned)
+					t.Fatalf("GreaterThan16BytesStructFn returned %#x wanted %#x", ret, uint64(expectedUnsigned))
 				}
 			}
 			{
@@ -160,8 +159,9 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 					}
 					return stack
 				})
-				if ret := AfterRegisters(0xD0000000, 0xE000000, 0xA00000, 0xD0000, 0xB000, 0xE00, 0xE0, 0xF, GreaterThan16Bytes{x: &x, y: &y, z: &z}); ret != expectedUnsigned {
-					t.Fatalf("AfterRegisters returned %#x wanted %#x", ret, expectedUnsigned)
+				firstRegisterBits := uint32(0xD0000000)
+				if ret := AfterRegisters(int(firstRegisterBits), 0xE000000, 0xA00000, 0xD0000, 0xB000, 0xE00, 0xE0, 0xF, GreaterThan16Bytes{x: &x, y: &y, z: &z}); ret != expectedUnsigned {
+					t.Fatalf("AfterRegisters returned %#x wanted %#x", ret, uint64(expectedUnsigned))
 				}
 				var BeforeRegisters func(bytes GreaterThan16Bytes, a, b int64) uint64
 				z -= 0xFF
@@ -169,7 +169,7 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 					return uint64(*bytes.x + *bytes.y + *bytes.z + a + b)
 				})
 				if ret := BeforeRegisters(GreaterThan16Bytes{&x, &y, &z}, 0x0F, 0xF0); ret != expectedUnsigned {
-					t.Fatalf("BeforeRegisters returned %#x wanted %#x", ret, expectedUnsigned)
+					t.Fatalf("BeforeRegisters returned %#x wanted %#x", ret, uint64(expectedUnsigned))
 				}
 			}
 			{
@@ -181,7 +181,7 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 					return l.x + l.y
 				})
 				if ret := IntLessThan16BytesFn(IntLessThan16Bytes{0xDEAD0000, 0xBEEF}); ret != expectedUnsigned {
-					t.Fatalf("IntLessThan16BytesFn returned %#x wanted %#x", ret, expectedUnsigned)
+					t.Fatalf("IntLessThan16BytesFn returned %#x wanted %#x", ret, uint64(expectedUnsigned))
 				}
 			}
 			{
@@ -345,7 +345,7 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 					return uint32(b.a)<<24 | uint32(b.b)<<16 | uint32(b.c)<<8 | uint32(b.d)
 				})
 				if ret := UnsignedChar4BytesFn(UnsignedChar4Bytes{a: 0xDE, b: 0xAD, c: 0xBE, d: 0xEF}); ret != expectedUnsigned {
-					t.Fatalf("UnsignedChar4BytesFn returned %#x wanted %#x", ret, expectedUnsigned)
+					t.Fatalf("UnsignedChar4BytesFn returned %#x wanted %#x", ret, uint64(expectedUnsigned))
 				}
 			}
 			{
@@ -373,7 +373,7 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 					z: struct{ c byte }{c: 0xBE},
 					w: struct{ d byte }{d: 0xEF},
 				}); ret != expectedUnsigned {
-					t.Fatalf("UnsignedChar4BytesStructFn returned %#x wanted %#x", ret, expectedUnsigned)
+					t.Fatalf("UnsignedChar4BytesStructFn returned %#x wanted %#x", ret, uint64(expectedUnsigned))
 				}
 			}
 			{
@@ -471,7 +471,7 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 					return uint32(a.a[0])<<24 | uint32(a.a[1])<<16 | uint32(a.a[2])<<8 | uint32(a.a[3])
 				})
 				if ret := Array4UnsignedCharsFn(Array4UnsignedChars{a: [...]uint8{0xDE, 0xAD, 0xBE, 0xEF}}); ret != expectedUnsigned {
-					t.Fatalf("Array4UnsignedCharsFn returned %#x wanted %#x", ret, expectedUnsigned)
+					t.Fatalf("Array4UnsignedCharsFn returned %#x wanted %#x", ret, uint64(expectedUnsigned))
 				}
 			}
 			{
@@ -483,7 +483,7 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 					return uint32(a.a[0])<<24 | uint32(a.a[1])<<16 | uint32(a.a[2])<<8 | 0xef
 				})
 				if ret := Array3UnsignedChars(Array3UnsignedChar{a: [...]uint8{0xDE, 0xAD, 0xBE}}); ret != expectedUnsigned {
-					t.Fatalf("Array4UnsignedCharsFn returned %#x wanted %#x", ret, expectedUnsigned)
+					t.Fatalf("Array4UnsignedCharsFn returned %#x wanted %#x", ret, uint64(expectedUnsigned))
 				}
 			}
 			{
@@ -495,7 +495,7 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 					return uint32(a.a[0])<<16 | uint32(a.a[1])
 				})
 				if ret := Array2UnsignedShorts(Array2UnsignedShort{a: [...]uint16{0xDEAD, 0xBEEF}}); ret != expectedUnsigned {
-					t.Fatalf("Array4UnsignedCharsFn returned %#x wanted %#x", ret, expectedUnsigned)
+					t.Fatalf("Array4UnsignedCharsFn returned %#x wanted %#x", ret, uint64(expectedUnsigned))
 				}
 			}
 			{
@@ -591,7 +591,7 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 					// These numbers are created so that when added together and then divided by 11 it produces 0xdeadbeef
 					Content{point{x: 41_000_000_000, y: 95_000_000}, size{width: 214_000, height: 149}},
 					15, 4, true); ret != expectedUnsigned {
-					t.Fatalf("InitWithContentRect returned %d wanted %#x", ret, expectedUnsigned)
+					t.Fatalf("InitWithContentRect returned %d wanted %#x", ret, uint64(expectedUnsigned))
 				}
 			}
 			{
@@ -622,11 +622,11 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 			}
 			{
 				type OneLong struct{ a uintptr }
-				var TakeGoUintAndReturn func(a OneLong) uint64
-				register(&TakeGoUintAndReturn, lib, "TakeGoUintAndReturn", func(a OneLong) uint64 {
-					return uint64(a.a)
+				var TakeGoUintAndReturn func(a OneLong) uintptr
+				register(&TakeGoUintAndReturn, lib, "TakeGoUintAndReturn", func(a OneLong) uintptr {
+					return a.a
 				})
-				expected := uint64(7)
+				expected := uintptr(7)
 				if ret := TakeGoUintAndReturn(OneLong{7}); ret != expected {
 					t.Fatalf("TakeGoUintAndReturn returned %+v wanted %+v", ret, expected)
 				}
@@ -917,8 +917,7 @@ func TestRegisterFunc_structReturns(t *testing.T) {
 	}
 	for _, imp := range implementations {
 		if imp.usesCallbacks && runtime.GOOS == "windows" {
-			// Callbacks on Windows use the stdlib syscall.NewCallback, which does
-			// not support struct arguments or returns.
+			// Windows callbacks do not support struct arguments or returns.
 			continue
 		}
 		if imp.usesCallbacks && runtime.GOARCH != "amd64" && runtime.GOARCH != "arm64" {
