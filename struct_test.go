@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2024 The Ebitengine Authors
 
-//go:build (darwin || linux || windows) && (amd64 || arm64 || loong64)
+//go:build (darwin || linux || windows) && (amd64 || arm64 || loong64 || ppc64le)
 
 package purego_test
 
@@ -282,24 +282,32 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 				if ret := LargeFloatStructFn(LargeFloatStruct{1, 2, 3, 4, 5, -5}); ret != expectedDouble {
 					t.Fatalf("LargeFloatStructFn returned %f wanted %f", ret, expectedFloat)
 				}
-				var LargeFloatStructWithRegs func(a, b, c float64, s LargeFloatStruct) float64
-				register(&LargeFloatStructWithRegs, lib, "LargeFloatStructWithRegs", func(a, b, c float64, s LargeFloatStruct) float64 {
-					return a + b + c + s.a + s.b + s.c + s.d + s.e + s.f
-				})
-				if ret := LargeFloatStructWithRegs(1, -1, 0, LargeFloatStruct{1, 2, 3, 4, 5, -5}); ret != expectedDouble {
-					t.Fatalf("LargeFloatStructWithRegs returned %f wanted %f", ret, expectedFloat)
+				if runtime.GOARCH != "ppc64le" {
+					// Needs 9 float argument registers (3 doubles + a 6-double HFA);
+					// ppc64le wires 8.
+					var LargeFloatStructWithRegs func(a, b, c float64, s LargeFloatStruct) float64
+					register(&LargeFloatStructWithRegs, lib, "LargeFloatStructWithRegs", func(a, b, c float64, s LargeFloatStruct) float64 {
+						return a + b + c + s.a + s.b + s.c + s.d + s.e + s.f
+					})
+					if ret := LargeFloatStructWithRegs(1, -1, 0, LargeFloatStruct{1, 2, 3, 4, 5, -5}); ret != expectedDouble {
+						t.Fatalf("LargeFloatStructWithRegs returned %f wanted %f", ret, expectedFloat)
+					}
 				}
 			}
 			{
 				type Rect struct {
 					x, y, w, h float64
 				}
-				var RectangleWithRegs func(a, b, c, d, e float64, rect Rect) float64
-				register(&RectangleWithRegs, lib, "RectangleWithRegs", func(a, b, c, d, e float64, rect Rect) float64 {
-					return a + b + c + d + e + rect.x + rect.y + rect.w + rect.h
-				})
-				if ret := RectangleWithRegs(1, 2, 3, 4, -2, Rect{1, 2, 3, -4}); ret != expectedDouble {
-					t.Fatalf("RectangleWithRegs returned %f wanted %f", ret, expectedDouble)
+				if runtime.GOARCH != "ppc64le" {
+					// Needs 9 float argument registers (5 doubles + a 4-double HFA);
+					// ppc64le wires 8.
+					var RectangleWithRegs func(a, b, c, d, e float64, rect Rect) float64
+					register(&RectangleWithRegs, lib, "RectangleWithRegs", func(a, b, c, d, e float64, rect Rect) float64 {
+						return a + b + c + d + e + rect.x + rect.y + rect.w + rect.h
+					})
+					if ret := RectangleWithRegs(1, 2, 3, 4, -2, Rect{1, 2, 3, -4}); ret != expectedDouble {
+						t.Fatalf("RectangleWithRegs returned %f wanted %f", ret, expectedDouble)
+					}
 				}
 				var RectangleSubtract func(rect Rect) float64
 				register(&RectangleSubtract, lib, "RectangleSubtract", func(rect Rect) float64 {
@@ -789,8 +797,10 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 				runtime.KeepAlive(a)
 				runtime.KeepAlive(c)
 			}
-			{
+			if runtime.GOARCH != "ppc64le" {
 				// Struct arg after some primitive args: register offset correctness.
+				// ppc64le is skipped: a float argument shadows a GPR, which purego
+				// does not model for scalars, so the trailing struct is misplaced.
 				type IntLessThan16Bytes struct{ X, Y int64 }
 				var fn func(int64, float64, IntLessThan16Bytes) IntLessThan16Bytes
 				register(&fn, lib, "IdentityTwoInt64AfterPrims", func(x int64, y float64, s IntLessThan16Bytes) IntLessThan16Bytes {
@@ -1116,73 +1126,79 @@ func TestRegisterFunc_structReturns(t *testing.T) {
 				}
 			}
 
-			{
-				type Mixed1 struct {
-					A float32
-					B int32
+			if runtime.GOARCH != "ppc64le" {
+				// ppc64le is skipped: a float argument shadows a GPR, which purego
+				// does not model for scalars, so a trailing integer arg is misplaced.
+				// TODO: Support mixed scalar floating-point and integer arguments on
+				// ppc64le by modeling the ELFv2 general-purpose register shadowing.
+				{
+					type Mixed1 struct {
+						A float32
+						B int32
+					}
+					var ReturnMixed1 func(a float32, b int32) Mixed1
+					register(&ReturnMixed1, lib, "ReturnMixed1")
+					expected := Mixed1{1, 2}
+					if ret := ReturnMixed1(1, 2); ret != expected {
+						t.Fatalf("ReturnMixed1 returned %+v wanted %+v", ret, expected)
+					}
 				}
-				var ReturnMixed1 func(a float32, b int32) Mixed1
-				register(&ReturnMixed1, lib, "ReturnMixed1")
-				expected := Mixed1{1, 2}
-				if ret := ReturnMixed1(1, 2); ret != expected {
-					t.Fatalf("ReturnMixed1 returned %+v wanted %+v", ret, expected)
+				{
+					type Mixed2 struct {
+						A float32
+						B int32
+						C float32
+						D int32
+					}
+					var ReturnMixed2 func(a float32, b int32, c float32, d int32) Mixed2
+					register(&ReturnMixed2, lib, "ReturnMixed2")
+					expected := Mixed2{1, 2, 3, 4}
+					if ret := ReturnMixed2(1, 2, 3, 4); ret != expected {
+						t.Fatalf("ReturnMixed2 returned %+v wanted %+v", ret, expected)
+					}
 				}
-			}
-			{
-				type Mixed2 struct {
-					A float32
-					B int32
-					C float32
-					D int32
+				{
+					type Mixed3 struct {
+						A float32
+						B uint32
+						C float64
+					}
+					var ReturnMixed3 func(a float32, b uint32, c float64) Mixed3
+					register(&ReturnMixed3, lib, "ReturnMixed3")
+					expected := Mixed3{1, 2, 3}
+					if ret := ReturnMixed3(1, 2, 3); ret != expected {
+						t.Fatalf("ReturnMixed3 returned %+v wanted %+v", ret, expected)
+					}
 				}
-				var ReturnMixed2 func(a float32, b int32, c float32, d int32) Mixed2
-				register(&ReturnMixed2, lib, "ReturnMixed2")
-				expected := Mixed2{1, 2, 3, 4}
-				if ret := ReturnMixed2(1, 2, 3, 4); ret != expected {
-					t.Fatalf("ReturnMixed2 returned %+v wanted %+v", ret, expected)
+				{
+					type Mixed4 struct {
+						A float64
+						B uint32
+						C float32
+					}
+					var ReturnMixed4 func(a float64, b uint32, c float32) Mixed4
+					register(&ReturnMixed4, lib, "ReturnMixed4")
+					expected := Mixed4{1, 2, 3}
+					if ret := ReturnMixed4(1, 2, 3); ret != expected {
+						t.Fatalf("ReturnMixed4 returned %+v wanted %+v", ret, expected)
+					}
 				}
-			}
-			{
-				type Mixed3 struct {
-					A float32
-					B uint32
-					C float64
+				{
+					type Mixed5 struct {
+						A *int64
+						B int32
+						C float32
+						D int32
+					}
+					var ReturnMixed5 func(a *int64, b int32, c float32, d int32) Mixed5
+					register(&ReturnMixed5, lib, "ReturnMixed5")
+					ptr := new(int64)
+					expected := Mixed5{ptr, 1, 7.2, 9}
+					if ret := ReturnMixed5(ptr, 1, 7.2, 9); ret != expected {
+						t.Fatalf("ReturnMixed5 returned %+v wanted %+v", ret, expected)
+					}
+					runtime.KeepAlive(ptr)
 				}
-				var ReturnMixed3 func(a float32, b uint32, c float64) Mixed3
-				register(&ReturnMixed3, lib, "ReturnMixed3")
-				expected := Mixed3{1, 2, 3}
-				if ret := ReturnMixed3(1, 2, 3); ret != expected {
-					t.Fatalf("ReturnMixed3 returned %+v wanted %+v", ret, expected)
-				}
-			}
-			{
-				type Mixed4 struct {
-					A float64
-					B uint32
-					C float32
-				}
-				var ReturnMixed4 func(a float64, b uint32, c float32) Mixed4
-				register(&ReturnMixed4, lib, "ReturnMixed4")
-				expected := Mixed4{1, 2, 3}
-				if ret := ReturnMixed4(1, 2, 3); ret != expected {
-					t.Fatalf("ReturnMixed4 returned %+v wanted %+v", ret, expected)
-				}
-			}
-			{
-				type Mixed5 struct {
-					A *int64
-					B int32
-					C float32
-					D int32
-				}
-				var ReturnMixed5 func(a *int64, b int32, c float32, d int32) Mixed5
-				register(&ReturnMixed5, lib, "ReturnMixed5")
-				ptr := new(int64)
-				expected := Mixed5{ptr, 1, 7.2, 9}
-				if ret := ReturnMixed5(ptr, 1, 7.2, 9); ret != expected {
-					t.Fatalf("ReturnMixed5 returned %+v wanted %+v", ret, expected)
-				}
-				runtime.KeepAlive(ptr)
 			}
 			{
 				type Mixed5 struct {

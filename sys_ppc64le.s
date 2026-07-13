@@ -107,11 +107,15 @@ TEXT syscallX(SB), NOSPLIT, $0
 	MOVD R3, syscallArgs_a1(R11)
 	MOVD R4, syscallArgs_a2(R11)
 
-	// Store float return values (F1-F4)
+	// Store float return values F1-F8 (an HFA may span up to eight).
 	FMOVD F1, syscallArgs_f1(R11)
 	FMOVD F2, syscallArgs_f2(R11)
 	FMOVD F3, syscallArgs_f3(R11)
 	FMOVD F4, syscallArgs_f4(R11)
+	FMOVD F5, syscallArgs_f5(R11)
+	FMOVD F6, syscallArgs_f6(R11)
+	FMOVD F7, syscallArgs_f7(R11)
+	FMOVD F8, syscallArgs_f8(R11)
 
 	// Epilogue: restore and return
 	MOVD LR_SAVE(R1), R12

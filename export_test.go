@@ -5,10 +5,12 @@
 
 package purego
 
+import "reflect"
+
 // MaxArgs re-exports maxArgs for external tests.
 const MaxArgs = maxArgs
 
 // StructReturnInMemory re-exports structReturnInMemory for external tests.
-func StructReturnInMemory(size uintptr) bool {
-	return structReturnInMemory(size)
+func StructReturnInMemory(outType reflect.Type) bool {
+	return structReturnInMemory(outType)
 }

@@ -604,7 +604,7 @@ func TestABI_StructReturnHiddenPointer(t *testing.T) {
 	// than sysargs holds and RegisterFunc must reject the registration.
 	type bigStruct struct{ A, B, C uint64 } // larger than two eightbytes
 
-	if !purego.StructReturnInMemory(reflect.TypeFor[bigStruct]().Size()) {
+	if !purego.StructReturnInMemory(reflect.TypeFor[bigStruct]()) {
 		t.Skipf("GOARCH=%s does not return large structs via a hidden integer argument", runtime.GOARCH)
 	}
 

@@ -17,7 +17,7 @@ import (
 // structReturnInMemory always reports false on arm64: a struct returned in
 // memory is passed through the dedicated indirect result register (R8), not as
 // an ordinary integer argument, so it is handled separately.
-func structReturnInMemory(size uintptr) bool {
+func structReturnInMemory(reflect.Type) bool {
 	return false
 }
 
