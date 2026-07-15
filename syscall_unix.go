@@ -6,6 +6,7 @@
 package purego
 
 import (
+	"math"
 	"reflect"
 	"runtime"
 	"sync"
@@ -172,10 +173,13 @@ func callbackWrap(a *callbackArgs) {
 					args[i] = callbackArgFromStack(a.args, stackSlot, &stackByteOffset, inType)
 				} else if stackFrame != nil {
 					// ppc64le/s390x: stack args are in separate stackFrame
-					if runtime.GOARCH == "s390x" {
+					switch runtime.GOARCH {
+					case "ppc64le":
+						args[i] = callbackFloatFromDoubleSlot(unsafe.Pointer(&stackFrame[stackSlot]), inType)
+					case "s390x":
 						// s390x big-endian: sub-8-byte values are right-justified
 						args[i] = callbackArgFromSlotBigEndian(unsafe.Pointer(&stackFrame[stackSlot]), inType)
-					} else {
+					default:
 						args[i] = reflect.NewAt(inType, unsafe.Pointer(&stackFrame[stackSlot])).Elem()
 					}
 					stackSlot += slots
@@ -184,10 +188,13 @@ func callbackWrap(a *callbackArgs) {
 					stackSlot += slots
 				}
 			} else {
-				if runtime.GOARCH == "s390x" {
+				switch runtime.GOARCH {
+				case "ppc64le":
+					args[i] = callbackFloatFromDoubleSlot(unsafe.Pointer(&frame[floatsN]), inType)
+				case "s390x":
 					// s390x big-endian: float32 is right-justified in 8-byte FPR slot
 					args[i] = callbackArgFromSlotBigEndian(unsafe.Pointer(&frame[floatsN]), inType)
-				} else {
+				default:
 					args[i] = reflect.NewAt(inType, unsafe.Pointer(&frame[floatsN])).Elem()
 				}
 			}
@@ -285,6 +292,18 @@ func callbackArgFromStack(argsBase unsafe.Pointer, stackSlot int, stackByteOffse
 	*stackByteOffset += size
 
 	return reflect.NewAt(inType, ptr).Elem()
+}
+
+// callbackFloatFromDoubleSlot reads a floating-point callback argument from an
+// 8-byte register or stack slot on ppc64le, where a single-precision value is
+// held in double-precision format.
+func callbackFloatFromDoubleSlot(slotPtr unsafe.Pointer, inType reflect.Type) reflect.Value {
+	if inType.Kind() != reflect.Float32 {
+		return reflect.NewAt(inType, slotPtr).Elem()
+	}
+	v := reflect.New(inType).Elem()
+	v.SetFloat(math.Float64frombits(*(*uint64)(slotPtr)))
+	return v
 }
 
 // callbackArgFromSlotBigEndian reads an argument from an 8-byte slot on big-endian architectures.

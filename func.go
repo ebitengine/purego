@@ -199,7 +199,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 			ensureStructSupported()
 			outType := ty.Out(0)
 			checkStructFieldsSupported(outType)
-			if structReturnInMemory(outType.Size()) {
+			if structReturnInMemory(outType) {
 				// A struct returned in memory is allocated by the caller and its
 				// pointer is passed as a hidden first integer argument. When the
 				// integer registers are already full, prepending it spills a
@@ -292,7 +292,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 		var arm64_r8 uintptr
 		if ty.NumOut() == 1 && ty.Out(0).Kind() == reflect.Struct {
 			outType := ty.Out(0)
-			if structReturnInMemory(outType.Size()) {
+			if structReturnInMemory(outType) {
 				// The caller allocates the return value and passes its pointer
 				// as a hidden first integer argument.
 				val := reflect.New(outType)
@@ -431,10 +431,14 @@ func addValue(v reflect.Value, keepAlive []any, addInt func(x uintptr), addFloat
 			addInt(0)
 		}
 	case reflect.Float32:
-		// On S390X big-endian, float32 goes in upper 32 bits of 64-bit FP register
-		if runtime.GOARCH == "s390x" {
+		switch runtime.GOARCH {
+		case "ppc64le":
+			// A single-precision argument occupies a floating-point register in double format on Power.
+			addFloat(uintptr(math.Float64bits(v.Float())))
+		case "s390x":
+			// S390X big-endian: float32 goes in the upper 32 bits of the 64-bit FP register.
 			addFloat(uintptr(math.Float32bits(float32(v.Float()))) << 32)
-		} else {
+		default:
 			addFloat(uintptr(math.Float32bits(float32(v.Float()))))
 		}
 	case reflect.Float64:
@@ -510,9 +514,9 @@ func checkStructFieldsSupported(ty reflect.Type) {
 // a C function is unsupported on the current platform.
 func ensureStructSupported() {
 	switch runtime.GOARCH {
-	case "amd64", "arm64", "loong64":
+	case "amd64", "arm64", "loong64", "ppc64le":
 	default:
-		panic("purego: struct arguments/returns are only supported on amd64, arm64, and loong64")
+		panic("purego: struct arguments/returns are only supported on amd64, arm64, loong64, and ppc64le")
 	}
 	switch runtime.GOOS {
 	case "android", "darwin", "ios", "linux", "windows":

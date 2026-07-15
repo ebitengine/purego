@@ -22,10 +22,10 @@ func getStruct(outType reflect.Type, syscall syscallArgs) reflect.Value {
 	panic("purego: struct returns are not supported on this architecture")
 }
 
-// structReturnInMemory reports whether a struct return value of the given size
-// is returned through a caller-allocated hidden pointer. Structs are unsupported
-// on this architecture, so it always reports false.
-func structReturnInMemory(size uintptr) bool {
+// structReturnInMemory reports whether a struct return value is returned through
+// a caller-allocated hidden pointer. Structs are unsupported on this
+// architecture, so it always reports false.
+func structReturnInMemory(reflect.Type) bool {
 	return false
 }
 

@@ -13,7 +13,8 @@ import (
 // structReturnInMemory reports whether a struct return value of the given size
 // is returned through a caller-allocated hidden pointer passed as the first
 // integer argument (true) rather than in registers (false).
-func structReturnInMemory(size uintptr) bool {
+func structReturnInMemory(outType reflect.Type) bool {
+	size := outType.Size()
 	if size == 0 {
 		return false
 	}
@@ -38,7 +39,7 @@ func getStruct(outType reflect.Type, syscall syscallArgs) (v reflect.Value) {
 		switch {
 		case outSize == 0:
 			return reflect.New(outType).Elem()
-		case structReturnInMemory(outSize):
+		case structReturnInMemory(outType):
 			// Returned through the caller-allocated hidden pointer, which the
 			// callee also returns in RAX.
 			return reflect.NewAt(outType, *(*unsafe.Pointer)(unsafe.Pointer(&syscall.a1))).Elem()
