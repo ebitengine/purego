@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2026 The Ebitengine Authors
 
-//go:build windows && 386
-
 #include "textflag.h"
 
 // callbackasm1 receives an index in CX from the callbackasm table. It calls a
