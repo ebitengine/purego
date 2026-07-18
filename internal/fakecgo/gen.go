@@ -268,7 +268,7 @@ func run() error {
 			pthreadSO = "/usr/lib/libSystem.B.dylib"
 		case "freebsd":
 			libcSO = "libc.so.7"
-			pthreadSO = "libpthread.so"
+			pthreadSO = "libthr.so.3"
 		case "linux":
 			libcSO = "libc.so.6"
 			pthreadSO = "libpthread.so.0"
