@@ -6,7 +6,10 @@ jobs:
   test:
     strategy:
       matrix:
-        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, windows-latest]
+        # macos-15 is used instead of macos-latest. On macOS 26, dyld refuses to
+        # run a binary without an LC_UUID load command, which the Go linker emits
+        # only since Go 1.24. See #482.
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-15, windows-latest]
         go: ['1.18.x', '1.19.x', '1.20.x', '1.21.x', '1.22.x', '1.23.x', '1.24.x', '1.25.x', '1.26.x']
     name: Test with Go ${{ matrix.go }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
