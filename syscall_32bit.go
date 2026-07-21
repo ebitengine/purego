@@ -18,10 +18,10 @@ type syscallArgs struct {
 	fn, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15                uintptr
 	a16, a17, a18, a19, a20, a21, a22, a23, a24, a25, a26, a27, a28, a29, a30, a31, a32 uintptr
 	f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16               uintptr
-	arm64_r8                                                                            uintptr
+	floatReturn                                                                         uintptr
 }
 
-func syscall_SyscallN(fn uintptr, sysargs []uintptr, floats []uintptr, r8 uintptr) *syscallArgs {
+func syscall_SyscallN(fn uintptr, sysargs []uintptr, floats []uintptr, floatReturn uintptr) *syscallArgs {
 	s := thePool.Get().(*syscallArgs)
 	*s = syscallArgs{
 		fn: fn,
@@ -37,7 +37,7 @@ func syscall_SyscallN(fn uintptr, sysargs []uintptr, floats []uintptr, r8 uintpt
 		f5: floats[4], f6: floats[5], f7: floats[6], f8: floats[7],
 		f9: floats[8], f10: floats[9], f11: floats[10], f12: floats[11],
 		f13: floats[12], f14: floats[13], f15: floats[14], f16: floats[15],
-		arm64_r8: r8,
+		floatReturn: floatReturn,
 	}
 	runtime_cgocall(syscallXABI0, unsafe.Pointer(s))
 	return s

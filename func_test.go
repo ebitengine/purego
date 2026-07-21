@@ -122,9 +122,6 @@ func TestRegisterFunc_Floats(t *testing.T) {
 		t.Skip("Platform doesn't support Floats")
 		return
 	}
-	if runtime.GOOS == "windows" && runtime.GOARCH == "386" {
-		t.Skip("need a 32bit gcc to run this test") // TODO: find 32bit gcc for test
-	}
 	library, err := getSystemLibrary()
 	if err != nil {
 		t.Fatalf("couldn't get system library: %s", err)
@@ -651,12 +648,9 @@ func buildSharedLib(tb testing.TB, compilerEnv, libFile string, sources ...strin
 	}
 
 	// Compiling the library needs a C toolchain targeting GOARCH. CI has none
-	// for Windows on 386 or arm64, so skip those (the prebuilt path above
-	// avoids the toolchain).
+	// for Windows on arm64 (the prebuilt path above avoids the toolchain).
 	if runtime.GOOS == "windows" {
 		switch runtime.GOARCH {
-		case "386":
-			tb.Skip("need a 386 C toolchain to run this test") // TODO: find a 386 C toolchain for test
 		case "arm64":
 			tb.Skip("need an arm64 C toolchain to run this test")
 		}

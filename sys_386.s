@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2026 The Ebitengine Authors
 
-//go:build linux
+//go:build linux || windows
 
 #include "textflag.h"
 #include "go_asm.h"
@@ -20,12 +20,12 @@
 //	f1    uintptr
 //	...
 //	f16   uintptr
-//	arm64_r8 uintptr
+//	floatReturn uintptr
 // }
 // syscallX must be called on the g0 stack with the
 // C calling convention (use libcCall).
 //
-// On i386 System V ABI, all arguments are passed on the stack.
+// On the i386 System V and Windows ABIs, all arguments are passed on the stack.
 // Return value is in EAX (and EDX for 64-bit values).
 GLOBL ·syscallXABI0(SB), NOPTR|RODATA, $4
 DATA ·syscallXABI0(SB)/4, $syscallX(SB)
@@ -44,17 +44,17 @@ TEXT syscallX(SB), NOSPLIT|NOFRAME, $0-0
 	MOVL AX, BX // save args pointer in BX
 
 	// Allocate stack space for C function arguments
-	// i386 SysV: all 32 args on stack = 32 * 4 = 128 bytes
+	// i386: all 32 args on stack = 32 * 4 = 128 bytes
 	// Plus 16 bytes for alignment and local storage
 	SUBL $STACK_SIZE, SP
-	MOVL BX, PTR_ADDRESS(SP) // save args pointer
+	MOVL SP, DI // save the stack pointer; the target may use cdecl or stdcall
 
 	// Load function pointer
 	MOVL syscallArgs_fn(BX), AX
 	MOVL AX, (PTR_ADDRESS-4)(SP)  // save fn pointer
 
 	// Push all integer arguments onto the stack (a1-a32)
-	// i386 SysV ABI: arguments pushed right-to-left, but we're
+	// i386 ABIs pass arguments right-to-left, but we're
 	// setting up the stack from low to high addresses
 	MOVL syscallArgs_a1(BX), AX
 	MOVL AX, 0(SP)
@@ -123,19 +123,38 @@ TEXT syscallX(SB), NOSPLIT|NOFRAME, $0-0
 
 	// Call the C function
 	MOVL (PTR_ADDRESS-4)(SP), AX
+	CLD
 	CALL AX
 
-	// Get args pointer back and save results
-	MOVL PTR_ADDRESS(SP), BX
+	// BX and DI are callee-saved in both the i386 SysV and Windows ABIs.
+	// Restore SP explicitly because a stdcall target may have popped its args.
 	MOVL AX, syscallArgs_a1(BX) // return value r1
 	MOVL DX, syscallArgs_a2(BX) // return value r2 (for 64-bit returns)
 
-	// Save x87 FPU return value (ST0) to f1 field
-	// On i386 System V ABI, float/double returns are in ST(0)
-	// We save as float64 (8 bytes) to preserve precision
+	// Save an x87 return only when RegisterFunc requested one. Mode 1 is a
+	// scalar float result and therefore requires ST(0). Mode 2 is a one-field
+	// float struct: MinGW returns it in ST(0), while MSVC uses EAX/EDX, so first
+	// use FXAM to distinguish an x87 result from an empty register stack.
+	CMPL syscallArgs_floatReturn(BX), $0
+	JE no_float_return
+	CMPL syscallArgs_floatReturn(BX), $2
+	JNE save_float_return
+	FXAM
+	FSTSW AX
+	ANDL $0x4500, AX // C3, C2, C0
+	CMPL AX, $0x4100 // empty x87 register
+	JNE save_float_return
+	MOVL $0, syscallArgs_floatReturn(BX)
+	JMP no_float_return
+
+save_float_return:
 	FMOVDP F0, syscallArgs_f1(BX)
+	MOVL $1, syscallArgs_floatReturn(BX)
+
+no_float_return:
 
 	// Clean up stack
+	MOVL DI, SP
 	ADDL $STACK_SIZE, SP
 
 	// Restore callee-saved registers

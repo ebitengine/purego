@@ -37,7 +37,8 @@ uint64_t GreaterThan16Bytes(struct GreaterThan16Bytes g) {
 
 // AfterRegisters tests to make sure that structs placed on the stack work properly
 uint64_t AfterRegisters(intptr_t a, intptr_t b, intptr_t c, intptr_t d, intptr_t e, intptr_t f, intptr_t g, intptr_t h, struct GreaterThan16Bytes bytes) {
-    intptr_t registers = a + b + c + d + e + f + g + h;
+    uint64_t registers = (uintptr_t)a + (uintptr_t)b + (uintptr_t)c + (uintptr_t)d +
+                         (uintptr_t)e + (uintptr_t)f + (uintptr_t)g + (uintptr_t)h;
     int64_t stack =  *bytes.x + *bytes.y + *bytes.z;
     if (registers != stack) {
         return 0xbadbad;
