@@ -302,12 +302,15 @@ func RegisterFunc(fptr any, cfn uintptr) {
 			runtime.KeepAlive(args)
 		}()
 
-		var arm64_r8 uintptr
+		// aux is passed out-of-band to the assembly bridge: on arm64 it is the
+		// hidden struct-return pointer placed in R8, and on 386 it selects the
+		// x87 float-return mode.
+		var aux uintptr
 		if runtime.GOARCH == "386" && ty.NumOut() == 1 &&
 			(ty.Out(0).Kind() == reflect.Float32 || ty.Out(0).Kind() == reflect.Float64) {
 			// The 386 bridge uses this to avoid popping x87 ST(0) after
 			// non-floating calls.
-			arm64_r8 = 1
+			aux = 1
 		}
 		if ty.NumOut() == 1 && ty.Out(0).Kind() == reflect.Struct {
 			outType := ty.Out(0)
@@ -316,7 +319,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 				// only field is a float: it returns the value in x87 ST(0).
 				// MSVC returns the same struct in EAX/EDX, so mode 2 asks the
 				// assembly bridge to detect which form the callee used.
-				arm64_r8 = 2
+				aux = 2
 			}
 			if structReturnInMemory(outType) {
 				// The caller allocates the return value and passes its pointer
@@ -329,7 +332,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 				if !isAllFloats || numFields > 4 {
 					val := reflect.New(outType)
 					keepAlive = append(keepAlive, val)
-					arm64_r8 = val.Pointer()
+					aux = val.Pointer()
 				}
 			}
 		}
@@ -364,7 +367,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 			syscall.a1, syscall.a2, _ = syscall_syscallN(cfn, sysargs[:numStack]...)
 			syscall.f1 = syscall.a2 // on amd64 a2 stores the float return
 		} else {
-			syscall = syscall_SyscallN(cfn, sysargs[:], floats[:], arm64_r8)
+			syscall = syscall_SyscallN(cfn, sysargs[:], floats[:], aux)
 		}
 		defer thePool.Put(syscall)
 		if ty.NumOut() == 0 {
