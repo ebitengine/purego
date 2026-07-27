@@ -7,11 +7,13 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"math"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"reflect"
 	"runtime"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -402,6 +404,63 @@ func TestABI_ArgumentPassing(t *testing.T) {
 			},
 			want: "1:2:3:4:5:6:7:8:9:10.0",
 		},
+		{
+			// check if unaligned 64bit argument and 64bit returned value is properly passed via registers
+			// arm-specific but must work everywhere
+			name: "arm_int64_unaligned_in_registers",
+			fn:   new(func(uintptr, int64) int64),
+			cFn:  "arm_int64_unaligned_in_registers",
+			call: func(f any) string {
+				fn := *(f).(*func(x uintptr, y int64) int64)
+				return strconv.FormatInt(fn(456, math.MaxInt32+1500), 10)
+			},
+			want: strconv.FormatInt(456*123+math.MaxInt32+1500, 10),
+		},
+		{
+			// check if unaligned 64bit argument and 64bit returned value is properly passed via stack
+			// arm-specific but must work everywhere
+			name: "arm_int64_unaligned_on_stack",
+			fn:   new(func(uintptr, uintptr, uintptr, uintptr, uintptr, int64) int64),
+			cFn:  "arm_int64_unaligned_on_stack",
+			call: func(f any) string {
+				fn := *(f).(*func(a1, a2, a3, a4, a5 uintptr, a6 int64) int64)
+				return strconv.FormatInt(fn(12, 34, 56, 78, 90, math.MaxInt32+1500), 10)
+			},
+			want: strconv.FormatInt(12*1+34*2+56*3+78*4+90*5+math.MaxInt32+1500, 10),
+		},
+		{
+			// check if unaligned 64bit argument and 64bit returned value is properly passed via stack when it's occupied by floats
+			// arm-specific but must work everywhere
+			name: "arm_int64_unaligned_on_stack_after_floats",
+			fn: new(func(
+				uintptr, uintptr, uintptr, uintptr,
+				float32, float32, float32, float32,
+				float32, float32, float32, float32,
+				float32, float32, float32, float32,
+				float32, float32, float32, float32,
+				float32, int64,
+			) int64),
+			cFn: "arm_int64_unaligned_on_stack_after_floats",
+			call: func(f any) string {
+				fn := *(f).(*func(
+					a1, a2, a3, a4 uintptr,
+					f1, f2, f3, f4 float32,
+					f5, f6, f7, f8 float32,
+					f9, f10, f11, f12 float32,
+					f13, f14, f15, f16 float32,
+					f17 float32, a5 int64,
+				) int64)
+				return strconv.FormatInt(fn(
+					12, 34, 56, 78,
+					0, 0, 0, 0,
+					0, 0, 0, 0,
+					0, 0, 0, 0,
+					0, 0, 0, 0,
+					0, math.MaxInt32+1500,
+				), 10)
+			},
+			want: strconv.FormatInt(12*1+34*2+56*3+78*4+math.MaxInt32+1500, 10),
+		},
 	}
 
 	for _, tt := range tests {
@@ -409,7 +468,8 @@ func TestABI_ArgumentPassing(t *testing.T) {
 			if tt.name == "20_int32" && runtime.GOARCH == "ppc64le" {
 				t.Skip("ppc64le retains the 15-argument limit")
 			}
-			if tt.name == "10_float32" && (runtime.GOARCH == "loong64" || runtime.GOARCH == "ppc64le" || runtime.GOARCH == "riscv64" || runtime.GOARCH == "s390x") {
+			if (tt.name == "10_float32" || tt.name == "arm_int64_unaligned_on_stack_after_floats") &&
+				(runtime.GOARCH == "loong64" || runtime.GOARCH == "ppc64le" || runtime.GOARCH == "riscv64" || runtime.GOARCH == "s390x") {
 				t.Skip("float32 stack arguments not yet supported on this platform")
 			}
 			// Struct tests require Darwin ARM64 or AMD64
