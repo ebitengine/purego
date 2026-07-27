@@ -167,3 +167,21 @@ double stack_32_mixed_int_float(
            f9 * 25 + f10 * 26 + f11 * 27 + f12 * 28 +
            f13 * 29 + f14 * 30 + f15 * 31 + f16 * 32;
 }
+
+int64_t arm_int64_unaligned_in_registers(uintptr_t a1, int64_t a2) {
+    return (int64_t)a1 * 123 + a2;
+}
+
+double arm_float64_unaligned_in_registers(uintptr_t a1, double a2) {
+    return (double)a1 * 123.5 + a2;
+}
+
+int64_t arm_int64_unaligned_on_stack(uintptr_t a1, uintptr_t a2, uintptr_t a3, uintptr_t a4, uintptr_t a5, int64_t a6) {
+    return (int64_t)a1 * 1 + (int64_t)a2 * 2 + (int64_t)a3 * 3 + (int64_t)a4 * 4 +
+           (int64_t)a5 * 5 + a6;
+}
+
+double arm_float64_unaligned_on_stack(uintptr_t a1, uintptr_t a2, uintptr_t a3, uintptr_t a4, uintptr_t a5, double a6) {
+    return (double)a1 * 1 + (double)a2 * 2 + (double)a3 * 3 + (double)a4 * 4 +
+           (double)a5 * 5 + a6;
+}

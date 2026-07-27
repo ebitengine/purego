@@ -21,6 +21,10 @@ const (
 	align8ByteSize = 8 // 8-byte alignment boundary
 )
 
+func isARMSoftFloat() bool {
+	return runtime.GOARCH == "arm" && *(*uint8)(unsafe.Pointer(&runtime_goarmsoftfp)) != 0
+}
+
 var thePool = sync.Pool{New: func() any {
 	return new(syscallArgs)
 }}
@@ -164,16 +168,37 @@ func RegisterFunc(fptr any, cfn uintptr) {
 			case reflect.String, reflect.Uintptr, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
 				reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Pointer, reflect.UnsafePointer,
 				reflect.Slice, reflect.Bool:
+				usesSlots := min(1, int(ty.Size()/unsafe.Sizeof(uintptr(0))))
+				if isARMPaddingNeeded(ty, ints+stack) {
+					usesSlots++
+				}
+
 				if ints < numOfIntegerRegisters() {
-					ints++
+					ints += usesSlots
 				} else {
-					stack++
+					stack += usesSlots
 				}
 			case reflect.Float32, reflect.Float64:
+				usesSlots := int(ty.Size() / unsafe.Sizeof(uintptr(0)))
+				if isARMSoftFloat() {
+					// float64 for arm with softfloat uses same rules as int64
+					if isARMPaddingNeeded(ty, ints+stack) {
+						usesSlots++
+					}
+					if ints+usesSlots < numOfIntegerRegisters() {
+						ints += usesSlots
+					} else {
+						stack += usesSlots
+					}
+					continue
+				}
+
 				if floats < floatArgRegs {
 					floats++
+				} else if isARMPaddingNeeded(ty, floats+stack) {
+					stack += usesSlots + 1
 				} else {
-					stack++
+					stack += usesSlots
 				}
 			case reflect.Struct:
 				ensureStructSupported()
@@ -347,9 +372,22 @@ func RegisterFunc(fptr any, cfn uintptr) {
 		outType := ty.Out(0)
 		v := reflect.New(outType).Elem()
 		switch outType.Kind() {
-		case reflect.Uintptr, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		case reflect.Uint64:
+			if is32bit {
+				// high-word is recorded at a2 for 32-bit platforms and 64-bit returns
+				v.SetUint(uint64(syscall.a1) | (uint64(syscall.a2) << 32))
+			} else {
+				v.SetUint(uint64(syscall.a1))
+			}
+		case reflect.Uintptr, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32:
 			v.SetUint(uint64(syscall.a1))
-		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		case reflect.Int64:
+			if is32bit {
+				v.SetInt(int64(syscall.a1) | (int64(syscall.a2) << 32))
+			} else {
+				v.SetInt(int64(syscall.a1))
+			}
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32:
 			v.SetInt(int64(syscall.a1))
 		case reflect.Bool:
 			v.SetBool(byte(syscall.a1) != 0)
@@ -373,6 +411,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 			// On 386, x87 FPU returns floats as float64 in ST(0), so we read as float64 and convert.
 			// On PPC64LE, C ABI converts float32 to double in FPR, so we read as float64.
 			// On S390X (big-endian), float32 is in upper 32 bits of the 64-bit FP register.
+			// On 32bit ARM with softfloat float32 returned as integer
 			switch runtime.GOARCH {
 			case "386":
 				v.SetFloat(math.Float64frombits(uint64(syscall.f1) | (uint64(syscall.f2) << 32)))
@@ -381,13 +420,22 @@ func RegisterFunc(fptr any, cfn uintptr) {
 			case "s390x":
 				// S390X is big-endian: float32 in upper 32 bits of 64-bit register
 				v.SetFloat(float64(math.Float32frombits(uint32(syscall.f1 >> 32))))
+			case "arm":
+				if isARMSoftFloat() {
+					v.SetFloat(float64(math.Float32frombits(uint32(syscall.a1))))
+				} else {
+					v.SetFloat(float64(math.Float32frombits(uint32(syscall.f1))))
+				}
 			default:
 				v.SetFloat(float64(math.Float32frombits(uint32(syscall.f1))))
 			}
 		case reflect.Float64:
 			// NOTE: syscall.r2 is only the floating return value on 64bit platforms.
 			// On 32bit platforms syscall.r2 is the upper part of a 64bit return.
-			if is32bit {
+			if isARMSoftFloat() {
+				// a1,a2 are populated in this case
+				v.SetFloat(math.Float64frombits(uint64(syscall.a1) | (uint64(syscall.a2) << 32)))
+			} else if is32bit {
 				v.SetFloat(math.Float64frombits(uint64(syscall.f1) | (uint64(syscall.f2) << 32)))
 			} else {
 				v.SetFloat(math.Float64frombits(uint64(syscall.f1)))
@@ -415,9 +463,25 @@ func addValue(v reflect.Value, keepAlive []any, addInt func(x uintptr), addFloat
 		ptr := strings.CString(v.String())
 		keepAlive = append(keepAlive, ptr)
 		addInt(uintptr(unsafe.Pointer(ptr)))
-	case reflect.Uintptr, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+	case reflect.Uint64:
+		if isARMPaddingNeeded(v.Type(), *numInts+*numStack) {
+			addInt(0)
+		}
 		addInt(uintptr(v.Uint()))
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		if is32bit {
+			addInt(uintptr(v.Uint() >> 32)) // on 32bit we must add high word too
+		}
+	case reflect.Uintptr, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32:
+		addInt(uintptr(v.Uint()))
+	case reflect.Int64:
+		if isARMPaddingNeeded(v.Type(), *numInts+*numStack) {
+			addInt(0)
+		}
+		addInt(uintptr(v.Int()))
+		if is32bit {
+			addInt(uintptr(v.Int() >> 32))
+		}
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32:
 		addInt(uintptr(v.Int()))
 	case reflect.Pointer, reflect.UnsafePointer, reflect.Slice:
 		// There is no need to keepAlive this pointer separately because it is kept alive in the args variable
@@ -438,16 +502,30 @@ func addValue(v reflect.Value, keepAlive []any, addInt func(x uintptr), addFloat
 		case "s390x":
 			// S390X big-endian: float32 goes in the upper 32 bits of the 64-bit FP register.
 			addFloat(uintptr(math.Float32bits(float32(v.Float()))) << 32)
+		case "arm":
+			if isARMSoftFloat() {
+				// 32-bit ARM with softfloat: float32 goes as integer
+				addInt(uintptr(math.Float32bits(float32(v.Float()))))
+			} else {
+				addFloat(uintptr(math.Float32bits(float32(v.Float()))))
+			}
 		default:
 			addFloat(uintptr(math.Float32bits(float32(v.Float()))))
 		}
 	case reflect.Float64:
-		if is32bit {
-			bits := math.Float64bits(v.Float())
+		bits := math.Float64bits(v.Float())
+		if isARMSoftFloat() {
+			// add as uint64
+			if isARMPaddingNeeded(v.Type(), *numInts+*numStack) {
+				addInt(0)
+			}
+			addInt(uintptr(bits))
+			addInt(uintptr(bits >> 32))
+		} else if is32bit {
 			addFloat(uintptr(bits))
 			addFloat(uintptr(bits >> 32))
 		} else {
-			addFloat(uintptr(math.Float64bits(v.Float())))
+			addFloat(uintptr(bits))
 		}
 	case reflect.Struct:
 		keepAlive = addStruct(v, numInts, numFloats, numStack, addInt, addFloat, addStack, keepAlive)
@@ -554,6 +632,7 @@ func numOfFloatRegisters() int {
 	case "s390x":
 		return 4
 	case "arm":
+		// 8 doubles (16 words) are always reserved by asm trampolines, even if softfloat is used
 		return 16
 	case "386":
 		// i386 SysV ABI passes all arguments on the stack, including floats
@@ -592,18 +671,25 @@ func estimateStackBytes(ty reflect.Type) int {
 	var numInts, numFloats int
 	var stackBytes int
 
+	ptrSize := int(unsafe.Sizeof(uintptr(0)))
 	for i := 0; i < ty.NumIn(); i++ {
 		arg := ty.In(i)
 		size := int(arg.Size())
 
 		// Check if this goes to register or stack
-		usesInt := arg.Kind() != reflect.Float32 && arg.Kind() != reflect.Float64
+		usesInt := (arg.Kind() != reflect.Float32 && arg.Kind() != reflect.Float64) || isARMSoftFloat()
 		if usesInt && numInts < numOfIntegerRegisters() {
+			if isARMPaddingNeeded(arg, numInts) {
+				numInts++
+			}
 			numInts++
 		} else if !usesInt && numFloats < numOfFloatRegisters() {
 			numFloats++
 		} else {
 			// Goes to stack - accumulate total bytes
+			if isARMPaddingNeeded(arg, stackBytes/ptrSize) {
+				stackBytes += ptrSize
+			}
 			stackBytes += size
 		}
 	}
@@ -612,4 +698,12 @@ func estimateStackBytes(ty reflect.Type) int {
 		stackBytes = int(roundUpTo8(uintptr(stackBytes)))
 	}
 	return stackBytes
+}
+
+func isARMPaddingNeeded(ty reflect.Type, numValues int) bool {
+	// ARM EABI (AAPCS): 8-byte-aligned types (int64/uint64) start on an
+	// even core register (C.3); if they then spill, the stack slot is
+	// 8-byte aligned too (C.7).
+	// https://github.com/ARM-software/abi-aa/blob/main/aapcs32/aapcs32.rst#6111handling-values-larger-than-32-bits
+	return runtime.GOARCH == "arm" && ty.Size() == 8 && numValues%2 != 0
 }

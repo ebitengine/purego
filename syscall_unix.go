@@ -162,11 +162,30 @@ func callbackWrap(a *callbackArgs) {
 	stackByteOffset := uintptr(0)
 	for i := range args {
 		// slots is the number of pointer-sized slots the argument takes
-		var slots int
 		inType := fnType.In(i)
+		slots := int((inType.Size() + ptrSize - 1) / ptrSize)
 		switch inType.Kind() {
 		case reflect.Float32, reflect.Float64:
-			slots = int((fnType.In(i).Size() + ptrSize - 1) / ptrSize)
+			if isARMSoftFloat() {
+				// we should restore from integer slot, can skip unnecessary branching here
+				if isARMPaddingNeeded(inType, intsN) {
+					intsN++
+				}
+				if intsN+slots <= numOfIntegerRegisters() {
+					// the integers begin after the floats in frame
+					args[i] = reflect.NewAt(inType, unsafe.Pointer(&frame[intsN+numOfFloatRegisters()])).Elem()
+					intsN += slots
+					continue
+				}
+				if isARMPaddingNeeded(inType, stackSlot) {
+					stackSlot++
+				}
+				args[i] = reflect.NewAt(inType, unsafe.Pointer(&frame[stackSlot])).Elem()
+				stackSlot += slots
+				intsN += slots
+				continue
+			}
+
 			if floatsN+slots > numOfFloatRegisters() {
 				if isDarwin && runtime.GOARCH == "arm64" {
 					// Darwin ARM64: read from packed stack with proper alignment
@@ -211,7 +230,9 @@ func callbackWrap(a *callbackArgs) {
 			args[i] = getCallbackStruct(inType, a.args, &floatsN, &intsN, &stackSlot, &stackByteOffset)
 			continue
 		default:
-			slots = int((inType.Size() + ptrSize - 1) / ptrSize)
+			if isARMPaddingNeeded(inType, intsN) {
+				intsN++
+			}
 			if intsN+slots > numOfIntegerRegisters() {
 				if isDarwin && runtime.GOARCH == "arm64" {
 					// Darwin ARM64: read from packed stack with proper alignment
@@ -224,6 +245,10 @@ func callbackWrap(a *callbackArgs) {
 					} else {
 						args[i] = reflect.NewAt(inType, unsafe.Pointer(&stackFrame[stackSlot])).Elem()
 					}
+					stackSlot += slots
+				} else if isARMPaddingNeeded(inType, stackSlot) {
+					stackSlot++
+					args[i] = reflect.NewAt(inType, unsafe.Pointer(&frame[stackSlot])).Elem()
 					stackSlot += slots
 				} else {
 					args[i] = reflect.NewAt(inType, unsafe.Pointer(&frame[stackSlot])).Elem()
@@ -249,9 +274,13 @@ func callbackWrap(a *callbackArgs) {
 	ret := fn.Call(args)
 	if len(ret) > 0 {
 		switch k := ret[0].Kind(); k {
-		case reflect.Uint, reflect.Uint64, reflect.Uint32, reflect.Uint16, reflect.Uint8, reflect.Uintptr:
+		case reflect.Uint64:
+			a.setUint64Result(ret[0].Uint())
+		case reflect.Uint, reflect.Uint32, reflect.Uint16, reflect.Uint8, reflect.Uintptr:
 			a.result[0] = uintptr(ret[0].Uint())
-		case reflect.Int, reflect.Int64, reflect.Int32, reflect.Int16, reflect.Int8:
+		case reflect.Int64:
+			a.setInt64Result(ret[0].Int())
+		case reflect.Int, reflect.Int32, reflect.Int16, reflect.Int8:
 			a.result[0] = uintptr(ret[0].Int())
 		case reflect.Bool:
 			if ret[0].Bool() {

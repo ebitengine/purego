@@ -7,11 +7,13 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"math"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"reflect"
 	"runtime"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -401,6 +403,54 @@ func TestABI_ArgumentPassing(t *testing.T) {
 				return string(buf[:bytes.IndexByte(buf, 0)])
 			},
 			want: "1:2:3:4:5:6:7:8:9:10.0",
+		},
+		{
+			// check if unaligned 64bit argument and 64bit returned value is properly passed via registers
+			// arm-specific but must work everywhere
+			name: "arm_int64_unaligned_in_registers",
+			fn:   new(func(uintptr, int64) int64),
+			cFn:  "arm_int64_unaligned_in_registers",
+			call: func(f any) string {
+				fn := *(f).(*func(x uintptr, y int64) int64)
+				return strconv.FormatInt(fn(456, math.MaxInt32+1500), 10)
+			},
+			want: strconv.FormatInt(456*123+math.MaxInt32+1500, 10),
+		},
+		{
+			// check if unaligned float 64bit argument and float 64bit returned value is properly passed via registers
+			// arm-softfloat-specific but must work everywhere
+			name: "arm_float64_unaligned_in_registers",
+			fn:   new(func(uintptr, float64) float64),
+			cFn:  "arm_float64_unaligned_in_registers",
+			call: func(f any) string {
+				fn := *(f).(*func(x uintptr, y float64) float64)
+				return strconv.FormatFloat(fn(456, math.MaxFloat32+1500), 'b', 10, 64)
+			},
+			want: strconv.FormatFloat(456*123.5+math.MaxFloat32+1500, 'b', 10, 64),
+		},
+		{
+			// check if unaligned 64bit argument and 64bit returned value is properly passed via stack
+			// arm-specific but must work everywhere
+			name: "arm_int64_unaligned_on_stack",
+			fn:   new(func(uintptr, uintptr, uintptr, uintptr, uintptr, int64) int64),
+			cFn:  "arm_int64_unaligned_on_stack",
+			call: func(f any) string {
+				fn := *(f).(*func(a1, a2, a3, a4, a5 uintptr, a6 int64) int64)
+				return strconv.FormatInt(fn(12, 34, 56, 78, 90, math.MaxInt32+1500), 10)
+			},
+			want: strconv.FormatInt(12*1+34*2+56*3+78*4+90*5+math.MaxInt32+1500, 10),
+		},
+		{
+			// check if unaligned float 64bit argument and float 64bit returned value is properly passed via stack
+			// arm-softfloat-specific but must work everywhere
+			name: "arm_float64_unaligned_on_stack",
+			fn:   new(func(uintptr, uintptr, uintptr, uintptr, uintptr, float64) float64),
+			cFn:  "arm_float64_unaligned_on_stack",
+			call: func(f any) string {
+				fn := *(f).(*func(a1, a2, a3, a4, a5 uintptr, a6 float64) float64)
+				return strconv.FormatFloat(fn(12, 34, 56, 78, 90, math.MaxFloat32+1500), 'b', 10, 64)
+			},
+			want: strconv.FormatFloat(12*1+34*2+56*3+78*4+90*5+math.MaxFloat32+1500, 'b', 10, 64),
 		},
 	}
 
