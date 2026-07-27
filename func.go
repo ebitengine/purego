@@ -21,6 +21,10 @@ const (
 	align8ByteSize = 8 // 8-byte alignment boundary
 )
 
+func isARMSoftFloat() bool {
+	return runtime.GOARCH == "arm" && *(*uint8)(unsafe.Pointer(&runtime_goarmsoftfp)) != 0
+}
+
 var thePool = sync.Pool{New: func() any {
 	return new(syscallArgs)
 }}
@@ -183,6 +187,19 @@ func RegisterFunc(fptr any, cfn uintptr) {
 				}
 			case reflect.Float32, reflect.Float64:
 				usesSlots := max(1, int(arg.Size()/ptrSize))
+				if isARMSoftFloat() {
+					// float64 for arm with softfloat uses same rules as int64
+					if isARMPaddingNeeded(arg, ints, stack) {
+						usesSlots++
+					}
+					if ints < numOfIntegerRegisters() {
+						ints += usesSlots
+					} else {
+						stack += usesSlots
+					}
+					continue
+				}
+
 				if isARMFloatPaddingNeeded(arg, floats, stack) {
 					usesSlots++
 				}
@@ -402,6 +419,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 			// On 386, x87 FPU returns floats as float64 in ST(0), so we read as float64 and convert.
 			// On PPC64LE, C ABI converts float32 to double in FPR, so we read as float64.
 			// On S390X (big-endian), float32 is in upper 32 bits of the 64-bit FP register.
+			// On 32bit ARM with softfloat float32 returned as integer
 			switch runtime.GOARCH {
 			case "386":
 				v.SetFloat(math.Float64frombits(uint64(syscall.f1) | (uint64(syscall.f2) << 32)))
@@ -410,13 +428,22 @@ func RegisterFunc(fptr any, cfn uintptr) {
 			case "s390x":
 				// S390X is big-endian: float32 in upper 32 bits of 64-bit register
 				v.SetFloat(float64(math.Float32frombits(uint32(syscall.f1 >> 32))))
+			case "arm":
+				if isARMSoftFloat() {
+					v.SetFloat(float64(math.Float32frombits(uint32(syscall.a1))))
+				} else {
+					v.SetFloat(float64(math.Float32frombits(uint32(syscall.f1))))
+				}
 			default:
 				v.SetFloat(float64(math.Float32frombits(uint32(syscall.f1))))
 			}
 		case reflect.Float64:
 			// NOTE: syscall.r2 is only the floating return value on 64bit platforms.
 			// On 32bit platforms syscall.r2 is the upper part of a 64bit return.
-			if is32bit {
+			if isARMSoftFloat() {
+				// a1,a2 are populated in this case
+				v.SetFloat(math.Float64frombits(uint64(syscall.a1) | (uint64(syscall.a2) << 32)))
+			} else if is32bit {
 				v.SetFloat(math.Float64frombits(uint64(syscall.f1) | (uint64(syscall.f2) << 32)))
 			} else {
 				v.SetFloat(math.Float64frombits(uint64(syscall.f1)))
@@ -483,6 +510,13 @@ func addValue(v reflect.Value, keepAlive []any, addInt func(x uintptr), addFloat
 		case "s390x":
 			// S390X big-endian: float32 goes in the upper 32 bits of the 64-bit FP register.
 			addFloat(uintptr(math.Float32bits(float32(v.Float()))) << 32)
+		case "arm":
+			if isARMSoftFloat() {
+				// 32-bit ARM with softfloat: float32 goes as integer
+				addInt(uintptr(math.Float32bits(float32(v.Float()))))
+			} else {
+				addFloat(uintptr(math.Float32bits(float32(v.Float()))))
+			}
 		default:
 			addFloat(uintptr(math.Float32bits(float32(v.Float()))))
 		}
@@ -492,7 +526,14 @@ func addValue(v reflect.Value, keepAlive []any, addInt func(x uintptr), addFloat
 			// if floats are spilled onto stack on ARM than we must follow AAPCS C.7
 			addFloat(0)
 		}
-		if is32bit {
+		if isARMSoftFloat() {
+			// add as uint64
+			if isARMPaddingNeeded(v.Type(), *numInts, *numStack) {
+				addInt(0)
+			}
+			addInt(uintptr(bits))
+			addInt(uintptr(bits >> 32))
+		} else if is32bit {
 			addFloat(uintptr(bits))
 			addFloat(uintptr(bits >> 32))
 		} else {
@@ -603,6 +644,7 @@ func numOfFloatRegisters() int {
 	case "s390x":
 		return 4
 	case "arm":
+		// 8 doubles (16 words) are always reserved by asm trampolines, even if softfloat is used
 		return 16
 	case "386":
 		// i386 SysV ABI passes all arguments on the stack, including floats

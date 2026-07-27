@@ -41,6 +41,10 @@ TEXT syscallX(SB), NOSPLIT|NOFRAME, $0-0
 	MOVW syscallArgs_fn(R8), R5
 	MOVW R5, (PTR_ADDRESS-4)(R13) // save fn at offset 56
 
+	// Skip floating point registers if runtime.goarmsoftfp!=0.
+	MOVB    runtime·goarmsoftfp(SB), R11
+	CMP     $0, R11
+	BNE     skipfpload
 	// Load floating point arguments
 	// Each float64 spans 2 uintptr slots (8 bytes) on ARM32, so we skip by 2
 	MOVD syscallArgs_f1(R8), F0  // f1+f2 -> D0
@@ -52,6 +56,7 @@ TEXT syscallX(SB), NOSPLIT|NOFRAME, $0-0
 	MOVD syscallArgs_f13(R8), F6 // f13+f14 -> D6
 	MOVD syscallArgs_f15(R8), F7 // f15+f16 -> D7
 
+skipfpload:
 	// Load integer arguments into registers (R0-R3 for ARM EABI)
 	MOVW syscallArgs_a1(R8), R0 // a1
 	MOVW syscallArgs_a2(R8), R1 // a2
@@ -131,12 +136,16 @@ TEXT syscallX(SB), NOSPLIT|NOFRAME, $0-0
 	MOVW R0, syscallArgs_a1(R8)
 	MOVW R1, syscallArgs_a2(R8)
 
+	MOVB    runtime·goarmsoftfp(SB), R11
+	CMP     $0, R11
+	BNE     skipfpsave
 	// save f0-f3 (each float64 spans 2 uintptr slots on ARM32)
 	MOVD F0, syscallArgs_f1(R8)
 	MOVD F1, syscallArgs_f3(R8)
 	MOVD F2, syscallArgs_f5(R8)
 	MOVD F3, syscallArgs_f7(R8)
 
+skipfpsave:
 	// Restore callee-saved registers and return
 	MOVM.IA.W (R13), [R4, R5, R6, R7, R8, R9, R11]
 	MOVW.P    4(R13), R15                          // pop LR into PC (return)

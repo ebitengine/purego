@@ -166,6 +166,26 @@ func callbackWrap(a *callbackArgs) {
 		slots := int((inType.Size() + ptrSize - 1) / ptrSize)
 		switch inType.Kind() {
 		case reflect.Float32, reflect.Float64:
+			if isARMSoftFloat() {
+				// we should restore from integer slot, can skip unnecessary branching here
+				if isARMPaddingNeeded(inType, -1, intsN) {
+					intsN++
+				}
+				if intsN+slots <= numOfIntegerRegisters() {
+					// the integers begin after the floats in frame
+					args[i] = reflect.NewAt(inType, unsafe.Pointer(&frame[intsN+numOfFloatRegisters()])).Elem()
+					intsN += slots
+					continue
+				}
+				if isARMPaddingNeeded(inType, -1, stackSlot) {
+					stackSlot++
+				}
+				args[i] = reflect.NewAt(inType, unsafe.Pointer(&frame[stackSlot])).Elem()
+				stackSlot += slots
+				intsN += slots
+				continue
+			}
+
 			if floatsN+slots > numOfFloatRegisters() {
 				if isDarwin && runtime.GOARCH == "arm64" {
 					// Darwin ARM64: read from packed stack with proper alignment
