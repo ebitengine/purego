@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2026 The Ebitengine Authors
 
-//go:build !(amd64 || arm || arm64 || loong64 || ppc64le || riscv64 || s390x)
+//go:build !(amd64 || arm || arm64 || loong64 || ppc64le || riscv64 || s390x || (windows && 386))
 
 package purego
 
@@ -11,8 +11,7 @@ import (
 )
 
 // This file provides the struct-handling helpers for architectures that do
-// not support struct arguments or returns: 386, and any architecture reachable
-// only through the integer-only cgo fallback. Every struct operation panics.
+// not support struct arguments or returns. Every struct operation panics.
 
 func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFloat, addStack func(uintptr), keepAlive []any) []any {
 	panic("purego: struct arguments are not supported on this architecture")

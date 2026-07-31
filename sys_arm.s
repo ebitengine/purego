@@ -20,7 +20,7 @@
 //	f1    uintptr
 //	...
 //	f16   uintptr
-//	arm64_r8 uintptr
+//	floatReturn uintptr
 // }
 // syscallX must be called on the g0 stack with the
 // C calling convention (use libcCall).

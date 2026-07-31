@@ -34,6 +34,18 @@ jobs:
       - name: Set up Msys2
         if: runner.os == 'Windows' && runner.arch != 'ARM64'
         uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW32
+          install: mingw-w64-i686-gcc
+          path-type: inherit
+
+      - name: Verify Windows 386 compiler
+        if: runner.os == 'Windows' && runner.arch != 'ARM64'
+        shell: msys2 {0}
+        run: |
+          gcc --version
+          printf 'int purego_ci_probe(void) { return 0; }\n' |
+            gcc -shared -Wall -Werror -fPIC -m32 -x c - -o /tmp/purego-ci-probe.dll
 
       - name: go vet
         run: |
@@ -124,14 +136,20 @@ jobs:
           env CGO_ENABLED=1 go test "-gcflags=all=-N -l" -v ./...
 
       - name: go test (Windows 386)
-        if: runner.os == 'Windows'
+        if: runner.os == 'Windows' && runner.arch != 'ARM64'
+        shell: msys2 {0}
         run: |
-          env CGO_ENABLED=0 GOARCH=386 go test -shuffle=on -v -count=10 ./...
+          CC="$(cygpath -w "$(command -v gcc)")"
+          env CGO_ENABLED=0 GOARCH=386 CC="$CC" go test -shuffle=on -v -count=10 ./...
+          env CGO_ENABLED=0 GOARCH=386 CC="$CC" go test "-gcflags=all=-N -l" -v ./...
 
       - name: go test (Windows 386, Cgo)
         if: runner.os == 'Windows' && runner.arch != 'ARM64'
+        shell: msys2 {0}
         run: |
-          env CGO_ENABLED=1 GOARCH=386 go test -shuffle=on -v -count=10 ./...
+          CC="$(cygpath -w "$(command -v gcc)")"
+          env CGO_ENABLED=1 GOARCH=386 CC="$CC" go test -shuffle=on -v -count=10 ./...
+          env CGO_ENABLED=1 GOARCH=386 CC="$CC" go test "-gcflags=all=-N -l" -v ./...
 
       - name: go test (Linux 386)
         if: ${{ runner.os == 'Linux' && runner.arch != 'ARM64' }}
