@@ -33,10 +33,10 @@ func TestThreadEntryReturn(t *testing.T) {
 	// enough to catch a broken teardown while staying quick under emulation.
 	const rounds = 10
 	const workers = 16
-	for range rounds {
+	for i := 0; i < rounds; i++ {
 		var wg sync.WaitGroup
 		wg.Add(workers)
-		for range workers {
+		for j := 0; j < workers; j++ {
 			go func() {
 				defer wg.Done()
 				runtime.LockOSThread()
