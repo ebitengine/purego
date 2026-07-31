@@ -83,6 +83,23 @@ TEXT threadentry_trampoline(SB), NOSPLIT, $0
 	POP_REGS_HOST_TO_ABI0()
 	RET
 
+// func callThreadEntryFn(fn uintptr)
+// Calls fn (runtime.mstart) with the frame pointer and other callee-saved
+// registers saved on the stack across the call. mstart returns with BP
+// clobbered (BP==0); saving/restoring BP here (as real cgo's crosscall does)
+// keeps the caller's frame-pointer LEAVE epilogue valid on return.
+TEXT ·callThreadEntryFn(SB), NOSPLIT, $0-8
+	MOVQ fn+0(FP), R11
+	PUSH_REGS_HOST_TO_ABI0()
+
+	// X15 is designated by Go as a fixed zero register.
+	PXOR X15, X15
+
+	CALL R11
+
+	POP_REGS_HOST_TO_ABI0()
+	RET
+
 TEXT ·call5(SB), NOSPLIT, $0-56
 	MOVQ fn+0(FP), R11
 	MOVQ a1+8(FP), DI
