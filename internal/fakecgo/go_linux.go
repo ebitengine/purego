@@ -49,9 +49,7 @@ func threadentry(v unsafe.Pointer) unsafe.Pointer {
 
 	setg_trampoline(setg_func, uintptr(unsafe.Pointer(ts.g)))
 
-	// faking funcs in go is a bit a... involved - but the following works :)
-	fn := uintptr(unsafe.Pointer(&ts.fn))
-	(*(*func())(unsafe.Pointer(&fn)))()
+	callThreadEntryFn(ts.fn)
 
 	return nil
 }
