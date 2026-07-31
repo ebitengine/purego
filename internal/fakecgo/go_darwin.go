@@ -55,9 +55,11 @@ func threadentry(v unsafe.Pointer) unsafe.Pointer {
 	//#endif
 	setg_trampoline(setg_func, uintptr(unsafe.Pointer(ts.g)))
 
-	// faking funcs in go is a bit a... involved - but the following works :)
-	fn := uintptr(unsafe.Pointer(&ts.fn))
-	(*(*func())(unsafe.Pointer(&fn)))()
+	// Call ts.fn (runtime.mstart) through an assembly shim that saves and
+	// restores the frame pointer around the call. mstart returns with BP
+	// clobbered, which would otherwise make this function's frame-pointer
+	// epilogue (LEAVE on amd64) fault when it returns.
+	callThreadEntryFn(ts.fn)
 
 	return nil
 }
