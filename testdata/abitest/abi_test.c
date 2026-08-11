@@ -167,3 +167,24 @@ double stack_32_mixed_int_float(
            f9 * 25 + f10 * 26 + f11 * 27 + f12 * 28 +
            f13 * 29 + f14 * 30 + f15 * 31 + f16 * 32;
 }
+
+int64_t arm_int64_unaligned_in_registers(uintptr_t a1, int64_t a2) {
+    return (int64_t)a1 * 123 + a2;
+}
+
+int64_t arm_int64_unaligned_on_stack(uintptr_t a1, uintptr_t a2, uintptr_t a3, uintptr_t a4, uintptr_t a5, int64_t a6) {
+    return (int64_t)a1 * 1 + (int64_t)a2 * 2 + (int64_t)a3 * 3 + (int64_t)a4 * 4 +
+           (int64_t)a5 * 5 + a6;
+}
+
+int64_t arm_int64_unaligned_on_stack_after_floats(
+    uintptr_t a1, uintptr_t a2, uintptr_t a3, uintptr_t a4, /* these args are going to integer registers */
+    float f1, float f2, float f3, float f4, /* these args are going to float registers */
+    float f5, float f6, float f7, float f8,
+    float f9, float f10, float f11, float f12,
+    float f13, float f14, float f15, float f16,
+    float f17, /* this is a first arg on stack */
+    int64_t a5 /* this arg must be padded */
+) {
+    return (int64_t)a1 * 1 + (int64_t)a2 * 2 + (int64_t)a3 * 3 + (int64_t)a4 * 4 + a5;
+}

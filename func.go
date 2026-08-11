@@ -144,6 +144,7 @@ func RegisterFunc(fptr any, cfn uintptr) {
 		var ints int
 		var floats int
 		floatArgRegs := numOfFloatRegisters()
+		ptrSize := unsafe.Sizeof(uintptr(0))
 		var stack int
 		for i := 0; i < ty.NumIn(); i++ {
 			arg := ty.In(i)
@@ -161,19 +162,34 @@ func RegisterFunc(fptr any, cfn uintptr) {
 						panic("purego: CDecl must be the first argument")
 					}
 				}
-			case reflect.String, reflect.Uintptr, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
-				reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Pointer, reflect.UnsafePointer,
+			case reflect.String, reflect.Uintptr, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32,
+				reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Pointer, reflect.UnsafePointer,
 				reflect.Slice, reflect.Bool:
 				if ints < numOfIntegerRegisters() {
 					ints++
 				} else {
 					stack++
 				}
+			case reflect.Uint64, reflect.Int64:
+				usesSlots := max(1, int(arg.Size()/ptrSize))
+				if isARMPaddingNeeded(arg, ints, stack) {
+					usesSlots++
+				}
+
+				if ints < numOfIntegerRegisters() {
+					ints += usesSlots
+				} else {
+					stack += usesSlots
+				}
 			case reflect.Float32, reflect.Float64:
+				usesSlots := max(1, int(arg.Size()/ptrSize))
+				if isARMFloatPaddingNeeded(arg, floats, stack) {
+					usesSlots++
+				}
 				if floats < floatArgRegs {
 					floats++
 				} else {
-					stack++
+					stack += usesSlots
 				}
 			case reflect.Struct:
 				ensureStructSupported()
@@ -347,9 +363,22 @@ func RegisterFunc(fptr any, cfn uintptr) {
 		outType := ty.Out(0)
 		v := reflect.New(outType).Elem()
 		switch outType.Kind() {
-		case reflect.Uintptr, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		case reflect.Uint64:
+			if is32bit {
+				// high-word is recorded at a2 for 32-bit platforms and 64-bit returns
+				v.SetUint(uint64(syscall.a1) | (uint64(syscall.a2) << 32))
+			} else {
+				v.SetUint(uint64(syscall.a1))
+			}
+		case reflect.Uintptr, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32:
 			v.SetUint(uint64(syscall.a1))
-		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		case reflect.Int64:
+			if is32bit {
+				v.SetInt(int64(syscall.a1) | (int64(syscall.a2) << 32))
+			} else {
+				v.SetInt(int64(syscall.a1))
+			}
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32:
 			v.SetInt(int64(syscall.a1))
 		case reflect.Bool:
 			v.SetBool(byte(syscall.a1) != 0)
@@ -415,9 +444,25 @@ func addValue(v reflect.Value, keepAlive []any, addInt func(x uintptr), addFloat
 		ptr := strings.CString(v.String())
 		keepAlive = append(keepAlive, ptr)
 		addInt(uintptr(unsafe.Pointer(ptr)))
-	case reflect.Uintptr, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+	case reflect.Uint64:
+		if isARMPaddingNeeded(v.Type(), *numInts, *numStack) {
+			addInt(0)
+		}
 		addInt(uintptr(v.Uint()))
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		if is32bit {
+			addInt(uintptr(v.Uint() >> 32)) // on 32bit we must add high word too
+		}
+	case reflect.Uintptr, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32:
+		addInt(uintptr(v.Uint()))
+	case reflect.Int64:
+		if isARMPaddingNeeded(v.Type(), *numInts, *numStack) {
+			addInt(0)
+		}
+		addInt(uintptr(v.Int()))
+		if is32bit {
+			addInt(uintptr(v.Int() >> 32))
+		}
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32:
 		addInt(uintptr(v.Int()))
 	case reflect.Pointer, reflect.UnsafePointer, reflect.Slice:
 		// There is no need to keepAlive this pointer separately because it is kept alive in the args variable
@@ -442,12 +487,16 @@ func addValue(v reflect.Value, keepAlive []any, addInt func(x uintptr), addFloat
 			addFloat(uintptr(math.Float32bits(float32(v.Float()))))
 		}
 	case reflect.Float64:
+		bits := math.Float64bits(v.Float())
+		if isARMFloatPaddingNeeded(v.Type(), *numFloats, *numStack) {
+			// if floats are spilled onto stack on ARM than we must follow AAPCS C.7
+			addFloat(0)
+		}
 		if is32bit {
-			bits := math.Float64bits(v.Float())
 			addFloat(uintptr(bits))
 			addFloat(uintptr(bits >> 32))
 		} else {
-			addFloat(uintptr(math.Float64bits(v.Float())))
+			addFloat(uintptr(bits))
 		}
 	case reflect.Struct:
 		keepAlive = addStruct(v, numInts, numFloats, numStack, addInt, addFloat, addStack, keepAlive)
@@ -603,7 +652,6 @@ func estimateStackBytes(ty reflect.Type) int {
 		} else if !usesInt && numFloats < numOfFloatRegisters() {
 			numFloats++
 		} else {
-			// Goes to stack - accumulate total bytes
 			stackBytes += size
 		}
 	}
@@ -612,4 +660,30 @@ func estimateStackBytes(ty reflect.Type) int {
 		stackBytes = int(roundUpTo8(uintptr(stackBytes)))
 	}
 	return stackBytes
+}
+
+func isARMPaddingNeeded(ty reflect.Type, numInts, numStack int) bool {
+	// ARM EABI (AAPCS): 8-byte-aligned types (int64/uint64) start on an
+	// even core register (C.3); if they then spill, the stack slot is
+	// 8-byte aligned too (C.7).
+	// https://github.com/ARM-software/abi-aa/blob/main/aapcs32/aapcs32.rst#6111handling-values-larger-than-32-bits
+	if runtime.GOARCH != "arm" || ty.Size() != 8 {
+		return false
+	}
+	if numInts >= 0 && numInts < numOfIntegerRegisters() {
+		return numInts%2 != 0
+	}
+	return numStack%2 != 0
+}
+
+func isARMFloatPaddingNeeded(ty reflect.Type, numFloats, numStack int) bool {
+	if runtime.GOARCH != "arm" || ty.Size() != 8 {
+		return false
+	}
+	if numFloats >= 0 && numFloats < numOfFloatRegisters() {
+		// float registers are 64bit so alignment never needed for args in registers
+		return false
+	}
+	// Only check if AAPCS C.7 is applicable here
+	return numStack%2 != 0
 }

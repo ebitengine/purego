@@ -51,6 +51,7 @@ TEXT callbackasm1(SB), NOSPLIT|NOFRAME, $0
 	MOVW R4, 52(R13)
 	MOVW $0, R4
 	MOVW R4, 56(R13)
+	MOVW R4, 60(R13) // high word of a 64-bit return
 
 	// Call crosscall2(fn, frame, 0, ctxt)
 	MOVW ·callbackWrap_call(SB), R0
@@ -63,6 +64,7 @@ TEXT callbackasm1(SB), NOSPLIT|NOFRAME, $0
 
 	// Get result
 	MOVW 56(R13), R0
+	MOVW 60(R13), R1 // high word of a 64-bit return
 
 	// Restore float registers
 	MOVD 64(R13), F0
