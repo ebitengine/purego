@@ -108,7 +108,6 @@ This is a list of the copied files:
 
 * `abi_*.h` from package `runtime/cgo`
 * `wincallback.go` from package `runtime`
-* `zcallback_*.s` from package `runtime`
 * `internal/fakecgo/abi_*.h` from package `runtime/cgo`
 * `internal/fakecgo/asm_GOARCH.s` from package `runtime/cgo`
 * `internal/fakecgo/callbacks.go` from package `runtime/cgo`
