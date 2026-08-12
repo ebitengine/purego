@@ -146,7 +146,9 @@ jobs:
         if: ${{ runner.os == 'Linux' && runner.arch == 'ARM64' }}
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf libc6-armhf-cross
+          sudo apt-get install -y \
+            gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf libc6-armhf-cross \
+            gcc-arm-linux-gnueabi g++-arm-linux-gnueabi libc6-armel-cross
 
           # Install the latest QEMU 10.x package from Debian. Ubuntu 24.04 ships QEMU 8.2
           # which has a bug where inter-thread signal delivery (tgkill) hangs,
@@ -174,6 +176,17 @@ jobs:
           env QEMU_LD_PREFIX=/usr/arm-linux-gnueabihf qemu-arm ./purego-test-nocgo -test.shuffle=on -test.v -test.count=10
           env GOOS=linux GOARCH=arm CGO_ENABLED=1 go test -c -o=purego-test-cgo .
           env QEMU_LD_PREFIX=/usr/arm-linux-gnueabihf qemu-arm ./purego-test-cgo -test.shuffle=on -test.v -test.count=10
+          go env -u CC
+          go env -u CXX
+
+          # Repeat the same for ARMv5 target (soft-float)
+          sudo ln -sf /usr/arm-linux-gnueabi/lib/ld-linux.so.3 /lib/ld-linux.so.3
+          go env -w CC=arm-linux-gnueabi-gcc
+          go env -w CXX=arm-linux-gnueabi-g++
+          env GOOS=linux GOARCH=arm GOARM=5 CGO_ENABLED=0 go test -c -o=purego-test-nocgo .
+          env QEMU_LD_PREFIX=/usr/arm-linux-gnueabi qemu-arm ./purego-test-nocgo -test.shuffle=on -test.v -test.count=10
+          env GOOS=linux GOARCH=arm GOARM=5 CGO_ENABLED=1 go test -c -o=purego-test-cgo .
+          env QEMU_LD_PREFIX=/usr/arm-linux-gnueabi qemu-arm ./purego-test-cgo -test.shuffle=on -test.v -test.count=10
           go env -u CC
           go env -u CXX
 
