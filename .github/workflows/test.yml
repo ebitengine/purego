@@ -10,7 +10,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, windows-latest, windows-11-arm]
-        go: ['1.25.x', '1.26.x', '1.27.0-rc.2']
+        go: ['1.25.x', '1.26.x', '1.27.x']
     name: Test with Go ${{ matrix.go }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     defaults:
@@ -204,7 +204,7 @@ jobs:
   minor-arches:
     strategy:
       matrix:
-        go: ['1.25.x', '1.26.x', '1.27.0-rc.2']
+        go: ['1.25.x', '1.26.x', '1.27.x']
     name: Test with Go ${{ matrix.go }} on Linux minor architectures
     runs-on: ubuntu-latest
     defaults:
@@ -344,7 +344,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        go: ['1.25.x', '1.26.x', '1.27.0-rc.2']
+        go: ['1.25.x', '1.26.x', '1.27.x']
     name: Test with Go ${{ matrix.go }} on Android amd64
     runs-on: ubuntu-latest
     defaults:
