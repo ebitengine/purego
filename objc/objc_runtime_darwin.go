@@ -402,8 +402,8 @@ const (
 	encUShort      = "S"
 	encInt         = "i"
 	encUInt        = "I"
-	encLong        = "l"
-	encULong       = "L"
+	encLongLong    = "q"
+	encULongLong   = "Q"
 	encFloat       = "f"
 	encDouble      = "d"
 	encBool        = "B"
@@ -432,7 +432,7 @@ func encodeType(typ reflect.Type, insidePtr bool) (string, error) {
 	case reflect.Bool:
 		return encBool, nil
 	case reflect.Int:
-		return encLong, nil
+		return encLongLong, nil
 	case reflect.Int8:
 		return encChar, nil
 	case reflect.Int16:
@@ -440,9 +440,9 @@ func encodeType(typ reflect.Type, insidePtr bool) (string, error) {
 	case reflect.Int32:
 		return encInt, nil
 	case reflect.Int64:
-		return encULong, nil
+		return encLongLong, nil
 	case reflect.Uint:
-		return encULong, nil
+		return encULongLong, nil
 	case reflect.Uint8:
 		return encUChar, nil
 	case reflect.Uint16:
@@ -450,7 +450,7 @@ func encodeType(typ reflect.Type, insidePtr bool) (string, error) {
 	case reflect.Uint32:
 		return encUInt, nil
 	case reflect.Uint64:
-		return encULong, nil
+		return encULongLong, nil
 	case reflect.Uintptr:
 		return encPtr, nil
 	case reflect.Float32:
