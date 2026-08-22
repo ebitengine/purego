@@ -197,3 +197,13 @@ double arm_float64_unaligned_on_stack(uintptr_t a1, uintptr_t a2, uintptr_t a3, 
     return (double)a1 * 1 + (double)a2 * 2 + (double)a3 * 3 + (double)a4 * 4 +
            (double)a5 * 5 + a6;
 }
+
+typedef int32_t (*AddFunc)(int32_t, int32_t);
+
+int32_t returned_add(int32_t a, int32_t b) {
+    return a + b;
+}
+
+AddFunc return_func_ptr(void) {
+    return returned_add;
+}

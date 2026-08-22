@@ -239,6 +239,16 @@ func TestABI(t *testing.T) {
 			t.Fatalf("%s: got %q, want %q", cName, res, want)
 		}
 	}
+	{
+		const cName = "return_func_ptr"
+		var fn func() func(a, b int32) int32
+		purego.RegisterLibFunc(&fn, lib, cName)
+		add := fn()
+		const expect = 5
+		if res := add(2, 3); res != expect {
+			t.Fatalf("%s: got %d, want %d", cName, res, expect)
+		}
+	}
 }
 
 func TestABI_ArgumentPassing(t *testing.T) {
