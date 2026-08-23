@@ -249,6 +249,14 @@ func TestABI(t *testing.T) {
 			t.Fatalf("%s: got %d, want %d", cName, res, expect)
 		}
 	}
+	{
+		const cName = "return_null_func_ptr"
+		var fn func() func(a, b int32) int32
+		purego.RegisterLibFunc(&fn, lib, cName)
+		if fn() != nil {
+			t.Fatalf("%s: got a non-nil func, want nil", cName)
+		}
+	}
 }
 
 func TestABI_ArgumentPassing(t *testing.T) {

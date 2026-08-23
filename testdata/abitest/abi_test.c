@@ -207,3 +207,7 @@ int32_t returned_add(int32_t a, int32_t b) {
 AddFunc return_func_ptr(void) {
     return returned_add;
 }
+
+AddFunc return_null_func_ptr(void) {
+    return NULL;
+}

@@ -409,7 +409,9 @@ func RegisterFunc(fptr any, cfn uintptr) {
 			v = reflect.NewAt(outType, unsafe.Pointer(&a1)).Elem()
 		case reflect.Func:
 			// wrap this C function in a nicely typed Go function
-			RegisterFunc(v.Addr().Interface(), syscall.a1)
+			if syscall.a1 != 0 {
+				RegisterFunc(v.Addr().Interface(), syscall.a1)
+			}
 		case reflect.String:
 			v.SetString(strings.GoString(syscall.a1))
 		case reflect.Float32:
