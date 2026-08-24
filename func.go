@@ -10,6 +10,7 @@ import (
 	"math"
 	"reflect"
 	"runtime"
+	"structs"
 	"sync"
 	"unsafe"
 
@@ -555,12 +556,12 @@ func addValue(v reflect.Value, keepAlive []any, addInt func(x uintptr), addFloat
 // If you change this make sure to update it in objc_runtime_darwin.go
 const maxRegAllocStructSize = 16
 
+var hostLayoutType = reflect.TypeFor[structs.HostLayout]()
+
 // isABIField reports whether f takes part in the C ABI of the struct that
-// contains it. Zero-sized fields occupy no storage, so a C compiler never sees
-// them as members. The structs.HostLayout marker that a C-representative
-// struct declares is the usual example.
+// contains it. Only the structs.HostLayout marker does not.
 func isABIField(f reflect.StructField) bool {
-	return f.Type.Size() != 0
+	return !f.Type.ConvertibleTo(hostLayoutType)
 }
 
 // numABIFields returns how many of ty's fields take part in the C ABI.

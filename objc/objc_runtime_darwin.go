@@ -22,6 +22,8 @@ import (
 	"github.com/ebitengine/purego/internal/strings"
 )
 
+var hostLayoutType = reflect.TypeFor[structs.HostLayout]()
+
 // TODO: support try/catch?
 // https://stackoverflow.com/questions/7062599/example-of-how-objective-cs-try-catch-implementation-is-executed-at-runtime
 var (
@@ -472,10 +474,11 @@ func encodeType(typ reflect.Type, insidePtr bool) (string, error) {
 		encoding.WriteString("=")
 		for i := 0; i < typ.NumField(); i++ {
 			f := typ.Field(i)
-			if f.Type.Size() == 0 {
-				// Zero-sized fields, such as the structs.HostLayout marker a
-				// C-representative struct declares, occupy no storage and so
-				// are not members as far as @encode is concerned.
+			if f.Type.ConvertibleTo(hostLayoutType) {
+				// The structs.HostLayout marker is a signal to the Go compiler
+				// with no counterpart in C, so it is not a member as far as
+				// @encode is concerned. Other zero-sized fields are: clang
+				// encodes a zero-length array member as [0c].
 				continue
 			}
 			tmp, err := encodeType(f.Type, false)
