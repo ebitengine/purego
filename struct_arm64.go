@@ -85,9 +85,9 @@ func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFl
 	if hva, hfa, size := isHVA(v.Type()), isHFA(v.Type()), v.Type().Size(); hva || hfa || size <= 16 {
 		// if this doesn't fit entirely in registers then
 		// each element goes onto the stack
-		if hfa && *numFloats+v.NumField() > numOfFloatRegisters() {
+		if hfa && *numFloats+numABIFields(v.Type()) > numOfFloatRegisters() {
 			*numFloats = numOfFloatRegisters()
-		} else if hva && *numInts+v.NumField() > numOfIntegerRegisters() {
+		} else if hva && *numInts+numABIFields(v.Type()) > numOfIntegerRegisters() {
 			*numInts = numOfIntegerRegisters()
 		}
 
@@ -120,6 +120,9 @@ func placeRegistersArm64(v reflect.Value, addFloat func(uintptr), addInt func(ui
 			numFields = v.Type().Len()
 		}
 		for k := 0; k < numFields; k++ {
+			if v.Kind() == reflect.Struct && !isABIField(v.Type().Field(k)) {
+				continue
+			}
 			flushed = false
 			var f reflect.Value
 			if v.Kind() == reflect.Struct {
@@ -238,15 +241,16 @@ func placeStack(v reflect.Value, keepAlive []any, addInt func(uintptr)) []any {
 func isHFA(t reflect.Type) bool {
 	// round up struct size to nearest 8 see section B.4
 	structSize := roundUpTo8(t.Size())
-	if structSize == 0 || t.NumField() > 4 {
+	numFields := numABIFields(t)
+	if structSize == 0 || numFields > 4 {
 		return false
 	}
-	first := t.Field(0)
+	first := abiField(t, 0)
 	switch first.Type.Kind() {
 	case reflect.Float32, reflect.Float64:
 		firstKind := first.Type.Kind()
-		for i := 0; i < t.NumField(); i++ {
-			if t.Field(i).Type.Kind() != firstKind {
+		for i := 0; i < numFields; i++ {
+			if abiField(t, i).Type.Kind() != firstKind {
 				return false
 			}
 		}
@@ -259,7 +263,7 @@ func isHFA(t reflect.Type) bool {
 			return false
 		}
 	case reflect.Struct:
-		for i := 0; i < first.Type.NumField(); i++ {
+		for i := 0; i < numABIFields(first.Type); i++ {
 			if !isHFA(first.Type) {
 				return false
 			}
@@ -283,12 +287,13 @@ func isHVA(t reflect.Type) bool {
 	if structSize == 0 || (structSize != 8 && structSize != 16) {
 		return false
 	}
-	first := t.Field(0)
+	numFields := numABIFields(t)
+	first := abiField(t, 0)
 	switch first.Type.Kind() {
 	case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Int8, reflect.Int16, reflect.Int32:
 		firstKind := first.Type.Kind()
-		for i := 0; i < t.NumField(); i++ {
-			if t.Field(i).Type.Kind() != firstKind {
+		for i := 0; i < numFields; i++ {
+			if abiField(t, i).Type.Kind() != firstKind {
 				return false
 			}
 		}
@@ -388,12 +393,12 @@ func shouldBundleStackArgs(v reflect.Value, numInts, numFloats int) bool {
 	}
 
 	if hfa {
-		need := v.NumField()
+		need := numABIFields(v.Type())
 		return numFloats+need > numOfFloatRegisters()
 	}
 
 	if hva {
-		need := v.NumField()
+		need := numABIFields(v.Type())
 		return numInts+need > numOfIntegerRegisters()
 	}
 
@@ -414,13 +419,13 @@ func structFitsInRegisters(val reflect.Value, tempNumInts, tempNumFloats int) (b
 
 	if hfa {
 		// HFA: check if elements fit in float registers
-		if tempNumFloats+val.NumField() <= numOfFloatRegisters() {
-			return true, tempNumInts, tempNumFloats + val.NumField()
+		if numFields := numABIFields(val.Type()); tempNumFloats+numFields <= numOfFloatRegisters() {
+			return true, tempNumInts, tempNumFloats + numFields
 		}
 	} else if hva {
 		// HVA: check if elements fit in int registers
-		if tempNumInts+val.NumField() <= numOfIntegerRegisters() {
-			return true, tempNumInts + val.NumField(), tempNumFloats
+		if numFields := numABIFields(val.Type()); tempNumInts+numFields <= numOfIntegerRegisters() {
+			return true, tempNumInts + numFields, tempNumFloats
 		}
 	} else if size <= 16 {
 		// Non-HFA/HVA small structs use int registers for byte-packing
@@ -633,9 +638,9 @@ func readHFAFromRegisters(inType reflect.Type, f *[callbackMaxFrame]uintptr, flo
 	size := inType.Size()
 
 	// Determine the element type
-	root := inType.Field(0).Type
+	root := abiField(inType, 0).Type
 	for root.Kind() == reflect.Struct {
-		root = root.Field(0).Type
+		root = abiField(root, 0).Type
 	}
 	isFloat32 := root.Kind() == reflect.Float32
 

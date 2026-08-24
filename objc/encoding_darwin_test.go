@@ -10,11 +10,13 @@ import (
 	"path/filepath"
 	"reflect"
 	"strings"
+	"structs"
 	"testing"
 	"unsafe"
 )
 
 type encodeTypeTestStruct struct {
+	_ structs.HostLayout
 	A int32
 	B float64
 }

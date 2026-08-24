@@ -14,6 +14,7 @@ import (
 	"runtime"
 	"slices"
 	stdstrings "strings"
+	"structs"
 	"unicode"
 	"unsafe"
 
@@ -172,6 +173,7 @@ func Send[T any](id ID, sel SEL, args ...any) T {
 // as the receiver of a message. It specifies the class definition of the particular superclass that should
 // be messaged.
 type objc_super struct {
+	_          structs.HostLayout
 	receiver   ID
 	superClass Class
 }
@@ -470,6 +472,12 @@ func encodeType(typ reflect.Type, insidePtr bool) (string, error) {
 		encoding.WriteString("=")
 		for i := 0; i < typ.NumField(); i++ {
 			f := typ.Field(i)
+			if f.Type.Size() == 0 {
+				// Zero-sized fields, such as the structs.HostLayout marker a
+				// C-representative struct declares, occupy no storage and so
+				// are not members as far as @encode is concerned.
+				continue
+			}
 			tmp, err := encodeType(f.Type, false)
 			if err != nil {
 				return "", err
@@ -571,7 +579,9 @@ func (i Ivar) Name() string {
 }
 
 // MethodDescription holds the name and type definition of a method.
+// It matches the Objective-C runtime's struct objc_method_description.
 type MethodDescription struct {
+	_           structs.HostLayout
 	name, types uintptr
 }
 
@@ -586,7 +596,9 @@ func (m MethodDescription) Types() string {
 }
 
 // PropertyAttribute contains the null-terminated Name and Value pair of a Properties internal description.
+// It matches the Objective-C runtime's objc_property_attribute_t.
 type PropertyAttribute struct {
+	_           structs.HostLayout
 	Name, Value *byte
 }
 

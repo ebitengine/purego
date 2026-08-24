@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"reflect"
+	"structs"
 	"testing"
 
 	"github.com/ebitengine/purego"
@@ -155,6 +156,7 @@ func TestSend(t *testing.T) {
 
 func ExampleSend() {
 	type NSRange struct {
+		_               structs.HostLayout
 		Location, Range uint
 	}
 	class_NSString := objc.GetClass("NSString")
@@ -164,8 +166,8 @@ func ExampleSend() {
 	subString := objc.ID(class_NSString).Send(sel_stringWithUTF8String, "lo, Wor\x00")
 
 	r := objc.Send[NSRange](fullString, objc.RegisterName("rangeOfString:"), subString)
-	fmt.Println(r)
-	// Output: {3 7}
+	fmt.Println(r.Location, r.Range)
+	// Output: 3 7
 }
 
 func ExampleSendSuper() {

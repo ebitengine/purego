@@ -66,23 +66,24 @@ func getStruct(outType reflect.Type, syscall syscallArgs) (v reflect.Value) {
 		} else {
 			// check first 8 bytes if it's floats
 			hasFirstFloat := false
-			f1 := outType.Field(0).Type
-			if f1.Kind() == reflect.Float64 || f1.Kind() == reflect.Float32 && outType.Field(1).Type.Kind() == reflect.Float32 {
+			numFields := numABIFields(outType)
+			f1 := abiField(outType, 0).Type
+			if f1.Kind() == reflect.Float64 || f1.Kind() == reflect.Float32 && abiField(outType, 1).Type.Kind() == reflect.Float32 {
 				r1 = syscall.f1
 				hasFirstFloat = true
 			}
 
 			// find index of the field that starts the second 8 bytes
 			var i int
-			for i = 0; i < outType.NumField(); i++ {
-				if outType.Field(i).Offset == 8 {
+			for i = 0; i < numFields; i++ {
+				if abiField(outType, i).Offset == 8 {
 					break
 				}
 			}
 
 			// check last 8 bytes if they are floats
-			f1 = outType.Field(i).Type
-			if f1.Kind() == reflect.Float64 || f1.Kind() == reflect.Float32 && i+1 == outType.NumField() {
+			f1 = abiField(outType, i).Type
+			if f1.Kind() == reflect.Float64 || f1.Kind() == reflect.Float32 && i+1 == numFields {
 				r2 = syscall.f1
 			} else if hasFirstFloat {
 				// if the first field was a float then that means the second integer field
@@ -101,6 +102,9 @@ func getStruct(outType reflect.Type, syscall syscallArgs) (v reflect.Value) {
 func isAllFloats(ty reflect.Type) bool {
 	for i := 0; i < ty.NumField(); i++ {
 		f := ty.Field(i)
+		if !isABIField(f) {
+			continue
+		}
 		switch f.Type.Kind() {
 		case reflect.Float64, reflect.Float32:
 		default:
@@ -217,6 +221,9 @@ func tryPlaceRegister(v reflect.Value, addFloat func(uintptr), addInt func(uintp
 		}
 
 		for i := 0; i < numFields; i++ {
+			if v.Kind() == reflect.Struct && !isABIField(v.Type().Field(i)) {
+				continue
+			}
 			flushed = false
 			var f reflect.Value
 			if v.Kind() == reflect.Struct {

@@ -6,6 +6,7 @@ package objc
 import (
 	"fmt"
 	"reflect"
+	"structs"
 	"sync"
 	"unsafe"
 
@@ -34,6 +35,7 @@ const (
 //
 // The layout of this struct matches Block_literal_1 described in https://clang.llvm.org/docs/Block-ABI-Apple.html#high-level
 type blockDescriptor struct {
+	_         structs.HostLayout
 	_         uintptr
 	size      uintptr
 	_         uintptr
@@ -47,6 +49,7 @@ type blockDescriptor struct {
 //
 // The layout of this struct matches __block_literal_1 described in https://clang.llvm.org/docs/Block-ABI-Apple.html#high-level
 type blockLayout struct {
+	_          structs.HostLayout
 	isa        Class
 	flags      uint32
 	_          uint32

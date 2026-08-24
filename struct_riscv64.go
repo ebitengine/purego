@@ -34,7 +34,7 @@ func getStruct(outType reflect.Type, syscall syscallArgs) reflect.Value {
 
 		// Homogeneous float aggregates override integer regs
 		if isAllFloats, numFields := isAllSameFloat(outType); isAllFloats {
-			if outType.Field(0).Type.Kind() == reflect.Float32 {
+			if abiField(outType, 0).Type.Kind() == reflect.Float32 {
 				// float32 values are NaN-boxed in FP regs; use low 32 bits only
 				f := []uintptr{syscall.f1, syscall.f2, syscall.f3, syscall.f4}
 				for i := 0; i < numFields; i++ {
