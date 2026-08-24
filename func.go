@@ -566,7 +566,7 @@ func isABIField(f reflect.StructField) bool {
 // numABIFields returns how many of ty's fields take part in the C ABI.
 func numABIFields(ty reflect.Type) int {
 	var n int
-	for i := 0; i < ty.NumField(); i++ {
+	for i := range ty.NumField() {
 		if isABIField(ty.Field(i)) {
 			n++
 		}
@@ -577,7 +577,7 @@ func numABIFields(ty reflect.Type) int {
 // abiField returns the i'th field of ty that takes part in the C ABI. It panics
 // if ty has fewer than i+1 such fields.
 func abiField(ty reflect.Type, i int) reflect.StructField {
-	for j := 0; j < ty.NumField(); j++ {
+	for j := range ty.NumField() {
 		f := ty.Field(j)
 		if !isABIField(f) {
 			continue
