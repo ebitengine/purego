@@ -6,10 +6,15 @@
 
 package fakecgo
 
-import "unsafe"
+import (
+	"structs"
+	"unsafe"
+)
 
-// argset matches runtime/cgocall.go:argset.
+// argset matches runtime/cgocall.go:argset, which in turn matches
+// runtime/cgo/linux_syscall.c:argset_t.
 type argset struct {
+	_      structs.HostLayout
 	args   *uintptr
 	retval uintptr
 }

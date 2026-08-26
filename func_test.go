@@ -15,6 +15,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"structs"
 	"sync"
 	"testing"
 	"unsafe"
@@ -393,11 +394,20 @@ func TestABI_ArgumentPassing(t *testing.T) {
 		},
 		{
 			name: "8int_hfa4_stack",
-			fn:   new(func(*byte, uintptr, int32, int32, int32, int32, int32, int32, int32, int32, struct{ x, y, z, w float32 })),
-			cFn:  "stack_8int_hfa4_stack",
+			fn: new(func(*byte, uintptr, int32, int32, int32, int32, int32, int32, int32, int32, struct {
+				_          structs.HostLayout
+				x, y, z, w float32
+			})),
+			cFn: "stack_8int_hfa4_stack",
 			call: func(f any) string {
 				buf := make([]byte, 256)
-				(*f.(*func(*byte, uintptr, int32, int32, int32, int32, int32, int32, int32, int32, struct{ x, y, z, w float32 })))(&buf[0], 256, 1, 2, 3, 4, 5, 6, 7, 8, struct{ x, y, z, w float32 }{10.0, 20.0, 30.0, 40.0})
+				(*f.(*func(*byte, uintptr, int32, int32, int32, int32, int32, int32, int32, int32, struct {
+					_          structs.HostLayout
+					x, y, z, w float32
+				})))(&buf[0], 256, 1, 2, 3, 4, 5, 6, 7, 8, struct {
+					_          structs.HostLayout
+					x, y, z, w float32
+				}{x: 10.0, y: 20.0, z: 30.0, w: 40.0})
 				return string(buf[:bytes.IndexByte(buf, 0)])
 			},
 			want: "1:2:3:4:5:6:7:8:10.0:20.0:30.0:40.0",
@@ -405,6 +415,7 @@ func TestABI_ArgumentPassing(t *testing.T) {
 		{
 			name: "8int_mixed_struct",
 			fn: new(func(*byte, uintptr, int32, int32, int32, int32, int32, int32, int32, int32, struct {
+				_ structs.HostLayout
 				a int32
 				b float32
 			})),
@@ -412,12 +423,14 @@ func TestABI_ArgumentPassing(t *testing.T) {
 			call: func(f any) string {
 				buf := make([]byte, 256)
 				(*f.(*func(*byte, uintptr, int32, int32, int32, int32, int32, int32, int32, int32, struct {
+					_ structs.HostLayout
 					a int32
 					b float32
 				})))(&buf[0], 256, 1, 2, 3, 4, 5, 6, 7, 8, struct {
+					_ structs.HostLayout
 					a int32
 					b float32
-				}{9, 10.0})
+				}{a: 9, b: 10.0})
 				return string(buf[:bytes.IndexByte(buf, 0)])
 			},
 			want: "1:2:3:4:5:6:7:8:9:10.0",

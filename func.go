@@ -10,6 +10,7 @@ import (
 	"math"
 	"reflect"
 	"runtime"
+	"structs"
 	"sync"
 	"unsafe"
 
@@ -555,17 +556,61 @@ func addValue(v reflect.Value, keepAlive []any, addInt func(x uintptr), addFloat
 // If you change this make sure to update it in objc_runtime_darwin.go
 const maxRegAllocStructSize = 16
 
+var hostLayoutType = reflect.TypeFor[structs.HostLayout]()
+
+// isABIField reports whether f takes part in the C ABI of the struct that
+// contains it. Only the structs.HostLayout marker does not.
+func isABIField(f reflect.StructField) bool {
+	return !f.Type.ConvertibleTo(hostLayoutType)
+}
+
+// numABIFields returns how many of ty's fields take part in the C ABI.
+func numABIFields(ty reflect.Type) int {
+	var n int
+	for i := range ty.NumField() {
+		if isABIField(ty.Field(i)) {
+			n++
+		}
+	}
+	return n
+}
+
+// abiField returns the i'th field of ty that takes part in the C ABI. It panics
+// if ty has fewer than i+1 such fields.
+func abiField(ty reflect.Type, i int) reflect.StructField {
+	for j := range ty.NumField() {
+		f := ty.Field(j)
+		if !isABIField(f) {
+			continue
+		}
+		if i == 0 {
+			return f
+		}
+		i--
+	}
+	panic("purego: struct field index out of range")
+}
+
 func isAllSameFloat(ty reflect.Type) (allFloats bool, numFields int) {
 	allFloats = true
-	root := ty.Field(0).Type
+	if numABIFields(ty) == 0 {
+		return false, 0
+	}
+	root := abiField(ty, 0).Type
 	for root.Kind() == reflect.Struct {
-		root = root.Field(0).Type
+		if numABIFields(root) == 0 {
+			return false, 0
+		}
+		root = abiField(root, 0).Type
 	}
 	first := root.Kind()
 	if first != reflect.Float32 && first != reflect.Float64 {
 		allFloats = false
 	}
 	for i := 0; i < ty.NumField(); i++ {
+		if !isABIField(ty.Field(i)) {
+			continue
+		}
 		f := ty.Field(i).Type
 		if f.Kind() == reflect.Struct {
 			var structNumFields int
@@ -583,6 +628,9 @@ func isAllSameFloat(ty reflect.Type) (allFloats bool, numFields int) {
 
 func checkStructFieldsSupported(ty reflect.Type) {
 	for i := 0; i < ty.NumField(); i++ {
+		if !isABIField(ty.Field(i)) {
+			continue
+		}
 		f := ty.Field(i).Type
 		if f.Kind() == reflect.Array {
 			f = f.Elem()
