@@ -35,7 +35,7 @@ func genasm386() {
 
 TEXT callbackasm(SB), NOSPLIT|NOFRAME, $0
 `)
-	for i := 0; i < maxCallback; i++ {
+	for i := range maxCallback {
 		fmt.Fprintf(&buf, "\tMOVL $%d, CX\n", i)
 		buf.WriteString("\tJMP  callbackasm1(SB)\n")
 	}
@@ -63,7 +63,7 @@ func genasmAmd64() {
 
 TEXT callbackasm(SB), NOSPLIT|NOFRAME, $0
 `)
-	for i := 0; i < maxCallback; i++ {
+	for range maxCallback {
 		buf.WriteString("\tCALL callbackasm1(SB)\n")
 	}
 	if err := os.WriteFile("zcallback_amd64.s", buf.Bytes(), 0644); err != nil {
@@ -90,7 +90,7 @@ func genasmArm() {
 
 TEXT callbackasm(SB), NOSPLIT|NOFRAME, $0
 `)
-	for i := 0; i < maxCallback; i++ {
+	for i := range maxCallback {
 		fmt.Fprintf(&buf, "\tMOVW $%d, R12\n", i)
 		buf.WriteString("\tB    callbackasm1(SB)\n")
 	}
@@ -118,7 +118,7 @@ func genasmArm64() {
 
 TEXT callbackasm(SB), NOSPLIT|NOFRAME, $0
 `)
-	for i := 0; i < maxCallback; i++ {
+	for i := range maxCallback {
 		fmt.Fprintf(&buf, "\tMOVD $%d, R12\n", i)
 		buf.WriteString("\tB    callbackasm1(SB)\n")
 	}
@@ -146,7 +146,7 @@ func genasmLoong64() {
 
 TEXT callbackasm(SB), NOSPLIT|NOFRAME, $0
 `)
-	for i := 0; i < maxCallback; i++ {
+	for i := range maxCallback {
 		fmt.Fprintf(&buf, "\tMOVV $%d, R12\n", i)
 		buf.WriteString("\tJMP  callbackasm1(SB)\n")
 	}
@@ -174,7 +174,7 @@ func genasmPpc64le() {
 
 TEXT callbackasm(SB), NOSPLIT|NOFRAME, $0
 `)
-	for i := 0; i < maxCallback; i++ {
+	for i := range maxCallback {
 		fmt.Fprintf(&buf, "\tMOVD $%d, R11\n", i)
 		buf.WriteString("\tBR   callbackasm1(SB)\n")
 	}
@@ -206,7 +206,7 @@ func genasmRiscv64() {
 
 TEXT callbackasm(SB), NOSPLIT|NOFRAME, $0
 `)
-	for i := 0; i < maxCallback; i++ {
+	for i := range maxCallback {
 		space := " "
 		if i <= 32 {
 			fmt.Fprintf(&buf, "\tPCALIGN $8\n")
@@ -240,7 +240,7 @@ func genasmS390x() {
 
 TEXT callbackasm(SB), NOSPLIT|NOFRAME, $0
 `)
-	for i := 0; i < maxCallback; i++ {
+	for i := range maxCallback {
 		fmt.Fprintf(&buf, "\tMOVD $%d, R0\n", i)
 		buf.WriteString("\tBR   callbackasm1(SB)\n")
 	}

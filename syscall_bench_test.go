@@ -116,7 +116,7 @@ func BenchmarkCallingMethods(b *testing.B) {
 				args := int64sToUintptrs(tc.args)
 				var result uintptr
 				b.ResetTimer()
-				for i := 0; i < b.N; i++ {
+				for range b.N {
 					result, _, _ = purego.SyscallN(tc.goFnPtr, args...)
 				}
 				b.StopTimer()
@@ -135,7 +135,7 @@ func BenchmarkCallingMethods(b *testing.B) {
 				args := int64sToUintptrs(tc.args)
 				var result uintptr
 				b.ResetTimer()
-				for i := 0; i < b.N; i++ {
+				for range b.N {
 					result, _, _ = purego.SyscallN(tc.cFnPtr, args...)
 				}
 				b.StopTimer()
@@ -165,7 +165,7 @@ func BenchmarkCallingMethods(b *testing.B) {
 
 				var result uintptr
 				b.ResetTimer()
-				for i := 0; i < b.N; i++ {
+				for range b.N {
 					result, _, _ = purego.SyscallN(tc.cCallbackPtr, callbackArgs...)
 				}
 				b.StopTimer()

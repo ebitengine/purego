@@ -60,7 +60,7 @@ func TestRegisterFunc_ConcurrentPointerReturn(t *testing.T) {
 
 	var wg sync.WaitGroup
 
-	for i := 0; i < runtime.NumCPU(); i++ {
+	for i := range runtime.NumCPU() {
 		wg.Add(1)
 		go func(id int) {
 			defer wg.Done()

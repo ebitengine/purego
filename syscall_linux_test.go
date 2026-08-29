@@ -192,12 +192,12 @@ func TestDlopenThenAllThreadsSyscall(t *testing.T) {
 	}
 
 	cb := purego.NewCallback(goFunc)
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		callCallback(cb, "hello")
 	}
 
 	// Step 2: Generate thread churn + AllThreadsSyscall (via Setuid).
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		c := make(chan struct{})
 		go func() {
 			runtime.LockOSThread()

@@ -100,7 +100,7 @@ func getStruct(outType reflect.Type, syscall syscallArgs) (v reflect.Value) {
 }
 
 func isAllFloats(ty reflect.Type) bool {
-	for i := 0; i < ty.NumField(); i++ {
+	for i := range ty.NumField() {
 		f := ty.Field(i)
 		if !isABIField(f) {
 			continue
@@ -220,7 +220,7 @@ func tryPlaceRegister(v reflect.Value, addFloat func(uintptr), addInt func(uintp
 			numFields = v.Type().Len()
 		}
 
-		for i := 0; i < numFields; i++ {
+		for i := range numFields {
 			if v.Kind() == reflect.Struct && !isABIField(v.Type().Field(i)) {
 				continue
 			}
@@ -390,7 +390,7 @@ func getCallbackStruct(inType reflect.Type, frame unsafe.Pointer, floatsN *int, 
 
 	// Count how many integer and SSE registers this struct needs.
 	var needInts, needFloats int
-	for i := 0; i < numEightbytes; i++ {
+	for i := range numEightbytes {
 		class := classifyEightbyte(inType, uintptr(i)*8, uintptr(i)*8+8)
 		if class == _SSE {
 			needFloats++
@@ -408,7 +408,7 @@ func getCallbackStruct(inType reflect.Type, frame unsafe.Pointer, floatsN *int, 
 
 	// Read each eightbyte from its appropriate register class.
 	var r1, r2 uintptr
-	for i := 0; i < numEightbytes; i++ {
+	for i := range numEightbytes {
 		class := classifyEightbyte(inType, uintptr(i)*8, uintptr(i)*8+8)
 		if class == _SSE {
 			if i == 0 {
@@ -490,7 +490,7 @@ func doClassifyEightbyte(t reflect.Type, base, start, end uintptr) int {
 	switch t.Kind() {
 	case reflect.Struct:
 		class := _NO_CLASS
-		for i := 0; i < t.NumField(); i++ {
+		for i := range t.NumField() {
 			f := t.Field(i)
 			class |= doClassifyEightbyte(f.Type, base+f.Offset, start, end)
 		}
@@ -498,7 +498,7 @@ func doClassifyEightbyte(t reflect.Type, base, start, end uintptr) int {
 	case reflect.Array:
 		class := _NO_CLASS
 		elemSize := t.Elem().Size()
-		for i := 0; i < t.Len(); i++ {
+		for i := range t.Len() {
 			class |= doClassifyEightbyte(t.Elem(), base+uintptr(i)*elemSize, start, end)
 		}
 		return class
