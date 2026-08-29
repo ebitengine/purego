@@ -27,7 +27,7 @@ func syscall_syscallN(fn uintptr, args ...uintptr) (r1, r2, err uintptr) {
 // provides similar functionality to windows.NewCallback it is distinct.
 func NewCallback(fn any) uintptr {
 	ty := reflect.TypeOf(fn)
-	for i := 0; i < ty.NumIn(); i++ {
+	for i := range ty.NumIn() {
 		in := ty.In(i)
 		if !in.AssignableTo(reflect.TypeFor[CDecl]()) {
 			continue
@@ -58,7 +58,7 @@ func compileCallback(fn any) uintptr {
 		panic("purego: function must not be nil")
 	}
 	ty := val.Type()
-	for i := 0; i < ty.NumIn(); i++ {
+	for i := range ty.NumIn() {
 		in := ty.In(i)
 		switch in.Kind() {
 		case reflect.Struct:

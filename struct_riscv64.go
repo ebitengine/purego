@@ -37,7 +37,7 @@ func getStruct(outType reflect.Type, syscall syscallArgs) reflect.Value {
 			if abiField(outType, 0).Type.Kind() == reflect.Float32 {
 				// float32 values are NaN-boxed in FP regs; use low 32 bits only
 				f := []uintptr{syscall.f1, syscall.f2, syscall.f3, syscall.f4}
-				for i := 0; i < numFields; i++ {
+				for i := range numFields {
 					*(*uint32)(unsafe.Pointer(&buf[i*4])) = uint32(f[i])
 				}
 			} else {

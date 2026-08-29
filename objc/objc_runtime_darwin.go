@@ -472,7 +472,7 @@ func encodeType(typ reflect.Type, insidePtr bool) (string, error) {
 		encoding.WriteString(encStructBegin)
 		encoding.WriteString(typ.Name())
 		encoding.WriteString("=")
-		for i := 0; i < typ.NumField(); i++ {
+		for i := range typ.NumField() {
 			f := typ.Field(i)
 			if f.Type.ConvertibleTo(hostLayoutType) {
 				// The structs.HostLayout marker is a signal to the Go compiler

@@ -119,7 +119,7 @@ func placeRegistersArm64(v reflect.Value, addFloat func(uintptr), addInt func(ui
 		} else {
 			numFields = v.Type().Len()
 		}
-		for k := 0; k < numFields; k++ {
+		for k := range numFields {
 			if v.Kind() == reflect.Struct && !isABIField(v.Type().Field(k)) {
 				continue
 			}
@@ -249,7 +249,7 @@ func isHFA(t reflect.Type) bool {
 	switch first.Type.Kind() {
 	case reflect.Float32, reflect.Float64:
 		firstKind := first.Type.Kind()
-		for i := 0; i < numFields; i++ {
+		for i := range numFields {
 			if abiField(t, i).Type.Kind() != firstKind {
 				return false
 			}
@@ -263,7 +263,7 @@ func isHFA(t reflect.Type) bool {
 			return false
 		}
 	case reflect.Struct:
-		for i := 0; i < numABIFields(first.Type); i++ {
+		for range numABIFields(first.Type) {
 			if !isHFA(first.Type) {
 				return false
 			}
@@ -292,7 +292,7 @@ func isHVA(t reflect.Type) bool {
 	switch first.Type.Kind() {
 	case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Int8, reflect.Int16, reflect.Int32:
 		firstKind := first.Type.Kind()
-		for i := 0; i < numFields; i++ {
+		for i := range numFields {
 			if abiField(t, i).Type.Kind() != firstKind {
 				return false
 			}
@@ -546,7 +546,7 @@ func bundleStackArgs(stackArgs []reflect.Value, addStack func(uintptr)) {
 
 	// Set values (skip padding fields)
 	argIndex := 0
-	for j := 0; j < structInstance.NumField(); j++ {
+	for j := range structInstance.NumField() {
 		fieldName := structType.Field(j).Name
 		if stdstrings.HasPrefix(fieldName, paddingFieldPrefix) {
 			continue

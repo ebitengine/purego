@@ -26,7 +26,7 @@ func syscall_syscallN(fn uintptr, args ...uintptr) (r1, r2, err uintptr) {
 func NewCallback(fn any) uintptr {
 	isCDecl := false
 	ty := reflect.TypeOf(fn)
-	for i := 0; i < ty.NumIn(); i++ {
+	for i := range ty.NumIn() {
 		in := ty.In(i)
 		if !in.AssignableTo(reflect.TypeOf(CDecl{})) {
 			continue

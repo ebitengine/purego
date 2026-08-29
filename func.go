@@ -151,14 +151,14 @@ func RegisterFunc(fptr any, cfn uintptr) {
 		floatArgRegs := numOfFloatRegisters()
 		ptrSize := unsafe.Sizeof(uintptr(0))
 		var stack int
-		for i := 0; i < ty.NumIn(); i++ {
+		for i := range ty.NumIn() {
 			arg := ty.In(i)
 			switch arg.Kind() {
 			case reflect.Func:
 				// This only does preliminary testing to ensure the CDecl argument
 				// is the first argument. Full testing is done when the callback is actually
 				// created in NewCallback.
-				for j := 0; j < arg.NumIn(); j++ {
+				for j := range arg.NumIn() {
 					in := arg.In(j)
 					if !in.AssignableTo(reflect.TypeFor[CDecl]()) {
 						continue
@@ -607,7 +607,7 @@ func isAllSameFloat(ty reflect.Type) (allFloats bool, numFields int) {
 	if first != reflect.Float32 && first != reflect.Float64 {
 		allFloats = false
 	}
-	for i := 0; i < ty.NumField(); i++ {
+	for i := range ty.NumField() {
 		if !isABIField(ty.Field(i)) {
 			continue
 		}
@@ -627,7 +627,7 @@ func isAllSameFloat(ty reflect.Type) (allFloats bool, numFields int) {
 }
 
 func checkStructFieldsSupported(ty reflect.Type) {
-	for i := 0; i < ty.NumField(); i++ {
+	for i := range ty.NumField() {
 		if !isABIField(ty.Field(i)) {
 			continue
 		}
@@ -732,7 +732,7 @@ func estimateStackBytes(ty reflect.Type) int {
 	var numInts, numFloats int
 	var stackBytes int
 
-	for i := 0; i < ty.NumIn(); i++ {
+	for i := range ty.NumIn() {
 		arg := ty.In(i)
 		size := int(arg.Size())
 
