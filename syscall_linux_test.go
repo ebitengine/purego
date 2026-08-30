@@ -10,7 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"sort"
+	"slices"
 	"strings"
 	"syscall"
 	"testing"
@@ -119,8 +119,8 @@ func compareStatus(filter, expect string) error {
 			//    "... : bad file descriptor.
 			continue
 		}
-		lines := strings.Split(string(d), "\n")
-		for _, line := range lines {
+		lines := strings.SplitSeq(string(d), "\n")
+		for line := range lines {
 			// Different kernel vintages pad differently.
 			line = strings.TrimSpace(line)
 			if strings.HasPrefix(line, "Pid:\t") {
@@ -149,7 +149,7 @@ func compareStatus(filter, expect string) error {
 					// https://github.com/golang/go/issues/46145
 					// Containers don't reliably output this line in sorted order so manually sort and compare that.
 					a := strings.Split(line[8:], " ")
-					sort.Slice(a, func(i, j int) bool { return a[i] < a[j] })
+					slices.Sort(a)
 					got := strings.Join(a, " ")
 					if got == expected[8:] {
 						foundAThread = true
