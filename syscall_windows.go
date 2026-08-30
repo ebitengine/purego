@@ -28,7 +28,7 @@ func NewCallback(fn any) uintptr {
 	ty := reflect.TypeOf(fn)
 	for i := range ty.NumIn() {
 		in := ty.In(i)
-		if !in.AssignableTo(reflect.TypeOf(CDecl{})) {
+		if !in.AssignableTo(reflect.TypeFor[CDecl]()) {
 			continue
 		}
 		if i != 0 {
