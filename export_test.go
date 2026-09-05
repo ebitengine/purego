@@ -10,6 +10,9 @@ import "reflect"
 // MaxArgs re-exports maxArgs for external tests.
 const MaxArgs = maxArgs
 
+// CapturesErrno re-exports capturesErrno for external tests.
+const CapturesErrno = capturesErrno
+
 // StructReturnInMemory re-exports structReturnInMemory for external tests.
 func StructReturnInMemory(outType reflect.Type) bool {
 	return structReturnInMemory(outType)
