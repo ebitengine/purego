@@ -8,6 +8,7 @@ package purego_test
 import (
 	"os"
 	"path/filepath"
+	"syscall"
 	"testing"
 	"unsafe"
 
@@ -49,9 +50,6 @@ func TestSyscallN(t *testing.T) {
 	}
 }
 
-// TestSyscallNErrnoIsNotAnInputArgument checks that SyscallN doesn't return the
-// caller's third argument as an error code on platforms where the trampoline
-// doesn't save errno. See https://github.com/ebitengine/purego/issues/505.
 func TestSyscallNErrnoIsNotAnInputArgument(t *testing.T) {
 	if purego.CapturesErrno {
 		t.Skip("this platform saves errno; see TestErrno")
@@ -62,10 +60,15 @@ func TestSyscallNErrnoIsNotAnInputArgument(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	path, err := syscall.BytePtrFromString("_file_that_does_not_exist_")
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	// The third argument is non-zero so that echoing it back as errno is visible.
 	const third = uintptr(0o600)
 	r1, _, errno := purego.SyscallN(openSym,
-		uintptr(unsafe.Pointer(&[]byte("_file_that_does_not_exist_\x00")[0])),
+		uintptr(unsafe.Pointer(path)),
 		uintptr(os.O_RDWR),
 		third)
 	if int32(r1) != -1 {
