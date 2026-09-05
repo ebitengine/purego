@@ -23,8 +23,13 @@ func syscall_syscallN(fn uintptr, args ...uintptr) (r1, r2, err uintptr) {
 // This is useful when interoperating with C code requiring callbacks. The argument is expected to be a
 // function with zero or one uintptr-sized result. The function must not have arguments with size larger than the size
 // of uintptr. Only a limited number of callbacks may be created in a single Go process, and any memory allocated
-// for these callbacks is never released. At least 2000 callbacks can always be created. Although this function
+// for these callbacks is never released. At least 1024 callbacks can always be created. Although this function
 // provides similar functionality to windows.NewCallback it is distinct.
+//
+// Every call to NewCallback creates a new callback even for the same function value, so passing a Go callback to C
+// inside a loop (e.g. a qsort comparator) keeps consuming callbacks and eventually panics once they are exhausted.
+// The same happens when a func value is passed to a C function, as [RegisterFunc] creates a new callback for each
+// call. Create the callback once with NewCallback and reuse the returned pointer instead.
 func NewCallback(fn any) uintptr {
 	ty := reflect.TypeOf(fn)
 	for i := range ty.NumIn() {
