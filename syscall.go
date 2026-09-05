@@ -49,7 +49,9 @@ func syscall_SyscallN(fn uintptr, sysargs []uintptr, floats []uintptr, r8 uintpt
 
 // SyscallN takes fn, a C function pointer and a list of arguments as uintptr.
 // There is an internal maximum number of arguments that SyscallN can take. It panics
-// when the maximum is exceeded. It returns the result and the libc error code if there is one.
+// when the maximum is exceeded. It returns the result and, on darwin and
+// Windows, the libc error code if there is one. On other platforms errno is
+// not captured so err is always 0.
 //
 // In order to call this function properly make sure to follow all the rules specified in [unsafe.Pointer]
 // especially point 4.
@@ -86,5 +88,10 @@ func SyscallN(fn uintptr, args ...uintptr) (r1, r2, err uintptr) {
 	copy(floats[:], tmp[:])
 	s := syscall_SyscallN(fn, tmp[:], floats[:], 0)
 	defer thePool.Put(s)
-	return s.a1, s.a2, s.a3
+	if runtime.GOOS == "darwin" {
+		return s.a1, s.a2, s.a3
+	}
+	// The trampolines only save errno on darwin. Returning s.a3 here
+	// would echo the caller's third argument back as a fake error code.
+	return s.a1, s.a2, 0
 }
