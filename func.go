@@ -128,7 +128,11 @@ func RegisterLibFunc(fptr any, handle uintptr, name string) {
 // [Cgo rules]: https://pkg.go.dev/cmd/cgo#hdr-Go_references_to_C
 func RegisterFunc(fptr any, cfn uintptr) {
 	const is32bit = unsafe.Sizeof(uintptr(0)) == 4
-	fn := reflect.ValueOf(fptr).Elem()
+	rv := reflect.ValueOf(fptr)
+	if rv.Kind() != reflect.Ptr || rv.IsNil() {
+		panic("purego: fptr must be a non-nil function pointer")
+	}
+	fn := rv.Elem()
 	ty := fn.Type()
 	if ty.Kind() != reflect.Func {
 		panic("purego: fptr must be a function pointer")

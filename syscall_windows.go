@@ -26,6 +26,9 @@ func syscall_syscallN(fn uintptr, args ...uintptr) (r1, r2, err uintptr) {
 func NewCallback(fn any) uintptr {
 	isCDecl := false
 	ty := reflect.TypeOf(fn)
+	if ty == nil || ty.Kind() != reflect.Func {
+		panic("purego: the type must be a function but was not")
+	}
 	for i := range ty.NumIn() {
 		in := ty.In(i)
 		if !in.AssignableTo(reflect.TypeFor[CDecl]()) {
