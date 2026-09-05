@@ -25,6 +25,12 @@ func syscall_syscallN(fn uintptr, args ...uintptr) (r1, r2, err uintptr) {
 // of uintptr. Only a limited number of callbacks may be created in a single Go process, and any memory allocated
 // for these callbacks is never released. At least 2000 callbacks can always be created. Although this function
 // provides similar functionality to windows.NewCallback it is distinct.
+//
+// Each call to NewCallback consumes one entry of the fixed callback table,
+// even for the same function value: passing a Go callback to C inside a
+// loop (e.g. a qsort comparator) exhausts the table after 2000 calls and
+// panics. Resolve the callback once with NewCallback and reuse the returned
+// pointer instead of letting RegisterFunc create a new one per call.
 func NewCallback(fn any) uintptr {
 	ty := reflect.TypeOf(fn)
 	for i := range ty.NumIn() {
