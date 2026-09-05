@@ -28,7 +28,7 @@ func syscall_syscallN(fn uintptr, args ...uintptr) (r1, r2, err uintptr) {
 //
 // Every call to NewCallback creates a new callback even for the same function value, so passing a Go callback to C
 // inside a loop (e.g. a qsort comparator) keeps consuming callbacks and eventually panics once they are exhausted.
-// The same happens when a func value is passed to a C function, as RegisterFunc creates a new callback for each
+// The same happens when a func value is passed to a C function, as [RegisterFunc] creates a new callback for each
 // call. Create the callback once with NewCallback and reuse the returned pointer instead.
 func NewCallback(fn any) uintptr {
 	ty := reflect.TypeOf(fn)
