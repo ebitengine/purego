@@ -186,7 +186,7 @@ type objc_super struct {
 func (id ID) SendSuper(sel SEL, args ...any) ID {
 	super := &objc_super{
 		receiver:   id,
-		superClass: id.Class(),
+		superClass: id.Class().SuperClass(),
 	}
 	return objc_msgSendSuper2(super, sel, args...)
 }
@@ -197,7 +197,7 @@ func (id ID) SendSuper(sel SEL, args ...any) ID {
 func SendSuper[T any](id ID, sel SEL, args ...any) T {
 	super := &objc_super{
 		receiver:   id,
-		superClass: id.Class(),
+		superClass: id.Class().SuperClass(),
 	}
 	var fn func(objcSuper *objc_super, sel SEL, args ...any) T
 	var zero T
