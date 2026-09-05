@@ -107,6 +107,35 @@ func placeRegisters(v reflect.Value, addFloat func(uintptr), addInt func(uintptr
 }
 
 func placeRegistersArm64(v reflect.Value, addFloat func(uintptr), addInt func(uintptr)) {
+	// Non-HFA composites of 16 bytes or less are passed packed into
+	// 1-2 general-purpose registers (AAPCS64 C.7; mirrors
+	// getCallbackStruct). Copy the in-memory image eightbyte by
+	// eightbyte instead of routing members by kind, so mixed structs
+	// such as {int64; float64} land in x0/x1 rather than x0/v0.
+	if !isHFA(v.Type()) && !isHVA(v.Type()) && v.Type().Size() <= 16 {
+		if !v.CanAddr() {
+			tmp := reflect.New(v.Type()).Elem()
+			tmp.Set(v)
+			v = tmp
+		}
+		ptr := v.Addr().UnsafePointer()
+		size := v.Type().Size()
+		for off := uintptr(0); off < size; off += 8 {
+			var chunk uintptr
+			if remaining := size - off; remaining >= 8 {
+				chunk = *(*uintptr)(unsafe.Add(ptr, off))
+			} else {
+				// Final partial chunk: read byte-by-byte to avoid
+				// reading beyond the value's allocation.
+				for i := range remaining {
+					b := *(*byte)(unsafe.Add(ptr, off+i))
+					chunk |= uintptr(b) << (i * 8)
+				}
+			}
+			addInt(chunk)
+		}
+		return
+	}
 	var val uint64
 	var shift byte
 	var flushed bool
