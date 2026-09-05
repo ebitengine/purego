@@ -414,8 +414,7 @@ func TestCallbackFloat32StackPacking(t *testing.T) {
 
 func TestRegisterFuncExpandFinalAnyArgument(t *testing.T) {
 	// The last argument is expanded into the C arguments held in it,
-	// whether it is declared as ...any or as []any.
-	// https://github.com/ebitengine/purego/issues/506
+	// whether it is declared as ...any or as []any (#506).
 	cb := purego.NewCallback(func(a, b, c uintptr) uintptr {
 		return a*100 + b*10 + c
 	})
@@ -438,8 +437,7 @@ func TestRegisterFuncExpandFinalAnyArgument(t *testing.T) {
 
 func TestRegisterFuncKeepNonFinalAnyArgument(t *testing.T) {
 	// A []any that isn't the last argument is a regular argument:
-	// it is passed as one value and must not panic.
-	// https://github.com/ebitengine/purego/issues/506
+	// it is passed as one value and must not panic (#506).
 	var first any
 	var second uintptr
 	cb := purego.NewCallback(func(args *any, b uintptr) uintptr {
