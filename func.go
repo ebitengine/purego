@@ -342,14 +342,17 @@ func RegisterFunc(fptr any, cfn uintptr) {
 			}
 		}
 		for i, v := range args {
-			if variadic, ok := reflect.TypeAssert[[]any](args[i]); ok {
-				if i != len(args)-1 {
-					panic("purego: can only expand last parameter")
+			// Only splat a []any value when the declared signature is
+			// variadic and this is its final parameter. A []any in any
+			// other position is an ordinary single argument holding a
+			// slice, and must go through addValue as one pointer.
+			if ty.IsVariadic() && i == len(args)-1 {
+				if variadic, ok := reflect.TypeAssert[[]any](args[i]); ok {
+					for _, x := range variadic {
+						keepAlive = addValue(reflect.ValueOf(x), keepAlive, addInt, addFloat, addStack, &numInts, &numFloats, &numStack)
+					}
+					continue
 				}
-				for _, x := range variadic {
-					keepAlive = addValue(reflect.ValueOf(x), keepAlive, addInt, addFloat, addStack, &numInts, &numFloats, &numStack)
-				}
-				continue
 			}
 			// Check if we need to start Darwin ARM64 C-style stack packing
 			if runtime.GOARCH == "arm64" && isDarwin && shouldBundleStackArgs(v, numInts, numFloats) {
