@@ -453,3 +453,39 @@ struct Mixed5Args {
 struct Mixed5Args IdentityMixed5Args(struct Mixed5Args s) {
     return s;
 }
+
+struct CharLong {
+    int8_t a;
+    int64_t b;
+};
+
+struct CharLong IdentityCharLong(struct CharLong s) {
+    return s;
+}
+
+struct CharLong IdentityCharLongBetweenPrims(int64_t x, struct CharLong s, int64_t y) {
+    (void) x;
+    (void) y;
+    return s;
+}
+
+struct CharInt {
+    int8_t a;
+    int32_t b;
+};
+
+struct CharInt IdentityCharInt(struct CharInt s) {
+    return s;
+}
+
+struct NestedSmallTail {
+    struct {
+        int8_t a;
+        int32_t b;
+    } i;
+    int8_t c;
+};
+
+struct NestedSmallTail IdentityNestedSmallTail(struct NestedSmallTail s) {
+    return s;
+}
