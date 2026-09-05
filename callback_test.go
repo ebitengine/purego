@@ -411,3 +411,51 @@ func TestCallbackFloat32StackPacking(t *testing.T) {
 		t.Errorf("callCallback12Float32() = %d, want %d", got, want)
 	}
 }
+
+func TestRegisterFuncExpandFinalAnyArgument(t *testing.T) {
+	// The last argument is expanded into the C arguments held in it,
+	// whether it is declared as ...any or as []any.
+	// https://github.com/ebitengine/purego/issues/506
+	cb := purego.NewCallback(func(a, b, c uintptr) uintptr {
+		return a*100 + b*10 + c
+	})
+	const want = uintptr(123)
+	t.Run("Variadic", func(t *testing.T) {
+		var fn func(a uintptr, args ...any) uintptr
+		purego.RegisterFunc(&fn, cb)
+		if got := fn(1, uintptr(2), uintptr(3)); got != want {
+			t.Errorf("func(uintptr, ...any) = %d, want %d", got, want)
+		}
+	})
+	t.Run("Slice", func(t *testing.T) {
+		var fn func(a uintptr, args []any) uintptr
+		purego.RegisterFunc(&fn, cb)
+		if got := fn(1, []any{uintptr(2), uintptr(3)}); got != want {
+			t.Errorf("func(uintptr, []any) = %d, want %d", got, want)
+		}
+	})
+}
+
+func TestRegisterFuncKeepNonFinalAnyArgument(t *testing.T) {
+	// A []any that isn't the last argument is a regular argument:
+	// it is passed as one value and must not panic.
+	// https://github.com/ebitengine/purego/issues/506
+	var first any
+	var second uintptr
+	cb := purego.NewCallback(func(args *any, b uintptr) uintptr {
+		first = *args
+		second = b
+		return 0
+	})
+	var fn func(args []any, b uintptr) uintptr
+	purego.RegisterFunc(&fn, cb)
+	s := []any{uintptr(2), uintptr(3)}
+	fn(s, 7)
+	runtime.KeepAlive(s)
+	if want := any(uintptr(2)); first != want {
+		t.Errorf("the first C argument = %v, want %v", first, want)
+	}
+	if second != 7 {
+		t.Errorf("the second C argument = %d, want 7", second)
+	}
+}
