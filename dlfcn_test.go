@@ -48,3 +48,30 @@ func TestSyscallN(t *testing.T) {
 		t.Fatalf("SyscallN didn't return the same result as purego.Dlsym: %d", err2)
 	}
 }
+
+// TestSyscallNErrnoIsNotAnInputArgument checks that SyscallN doesn't return the
+// caller's third argument as an error code on platforms where the trampoline
+// doesn't save errno. See https://github.com/ebitengine/purego/issues/505.
+func TestSyscallNErrnoIsNotAnInputArgument(t *testing.T) {
+	if purego.CapturesErrno {
+		t.Skip("this platform saves errno; see TestErrno")
+	}
+
+	openSym, err := purego.Dlsym(purego.RTLD_DEFAULT, "open")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// The third argument is non-zero so that echoing it back as errno is visible.
+	const third = uintptr(0o600)
+	r1, _, errno := purego.SyscallN(openSym,
+		uintptr(unsafe.Pointer(&[]byte("_file_that_does_not_exist_\x00")[0])),
+		uintptr(os.O_RDWR),
+		third)
+	if int32(r1) != -1 {
+		t.Fatalf("open returned %d, wanted -1", r1)
+	}
+	if errno != 0 {
+		t.Errorf("SyscallN returned %d as errno where errno is not captured, wanted 0", errno)
+	}
+}

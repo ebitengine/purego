@@ -26,11 +26,18 @@ func TestOS(t *testing.T) {
 }
 
 func TestErrno(t *testing.T) {
-	if runtime.GOOS != "darwin" {
+	if !purego.CapturesErrno {
 		t.Skip("platform does not support returning errno from syscall")
 	}
 
-	libc, err := load.OpenLibrary("/usr/lib/libSystem.B.dylib")
+	name := "/usr/lib/libSystem.B.dylib"
+	if runtime.GOOS == "linux" {
+		// Reaching here on Linux means that this architecture has no assembly
+		// trampoline and goes through the C fallback in internal/cgo, which does
+		// report the libc errno.
+		name = "libc.so.6"
+	}
+	libc, err := load.OpenLibrary(name)
 	if err != nil {
 		t.Fatal(err)
 	}
