@@ -260,9 +260,12 @@ func tryPlaceRegister(v reflect.Value, addFloat func(uintptr), addInt func(uintp
 			}
 			switch f.Kind() {
 			case reflect.Struct:
-				savedEight := curEight
+				// Recursion shares the accumulator, so it must also share
+				// curEight: when a nested struct spans eightbytes its tail
+				// is pending in the last one it touched, and the next
+				// sibling field belongs to that same eightbyte. Restoring
+				// the outer index would flush the tail prematurely.
 				place(f, fieldOff)
-				curEight = savedEight
 			case reflect.Bool:
 				alignTo(fieldOff)
 				if f.Bool() {
@@ -350,9 +353,7 @@ func tryPlaceRegister(v reflect.Value, addFloat func(uintptr), addInt func(uintp
 				}
 				class = _SSE
 			case reflect.Array:
-				savedArrEight := curEight
 				place(f, fieldOff)
-				curEight = savedArrEight
 			default:
 				panic("purego: unsupported kind " + f.Kind().String())
 			}

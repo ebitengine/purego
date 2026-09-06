@@ -1026,6 +1026,48 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 					t.Fatalf("IdentityNestedSmallTail returned %+v wanted %+v", ret, expected)
 				}
 			})
+			t.Run("NestedIntsPlusOne", func(t *testing.T) {
+				// A nested struct whose tail remains pending in the second
+				// eightbyte followed by a sibling field in that same
+				// eightbyte. Recursion must leave the pending eightbyte
+				// index consistent with the accumulator so the sibling is
+				// merged into it instead of dropping it.
+				type inner struct {
+					_ structs.HostLayout
+					X int32
+					Y int32
+					Z int32
+				}
+				type NestedIntsPlusOne struct {
+					_ structs.HostLayout
+					A inner
+					B int32
+				}
+				var sum func(NestedIntsPlusOne) int64
+				register(&sum, lib, "SumNestedIntsPlusOne", func(s NestedIntsPlusOne) int64 {
+					return int64(s.A.X) + int64(s.A.Y) + int64(s.A.Z) + int64(s.B)
+				})
+				if ret := sum(NestedIntsPlusOne{A: inner{X: 1, Y: 2, Z: 3}, B: 4}); ret != 10 {
+					t.Fatalf("SumNestedIntsPlusOne returned %d wanted 10", ret)
+				}
+			})
+			t.Run("ArrayIntsPlusOne", func(t *testing.T) {
+				// The array counterpart of NestedIntsPlusOne: the trailing
+				// element of [3]int32 is pending in the second eightbyte
+				// when the sibling field must be merged into it.
+				type ArrayIntsPlusOne struct {
+					_ structs.HostLayout
+					A [3]int32
+					B int32
+				}
+				var sum func(ArrayIntsPlusOne) int64
+				register(&sum, lib, "SumArrayIntsPlusOne", func(s ArrayIntsPlusOne) int64 {
+					return int64(s.A[0]) + int64(s.A[1]) + int64(s.A[2]) + int64(s.B)
+				})
+				if ret := sum(ArrayIntsPlusOne{A: [3]int32{1, 2, 3}, B: 4}); ret != 10 {
+					t.Fatalf("SumArrayIntsPlusOne returned %d wanted 10", ret)
+				}
+			})
 		})
 	}
 }

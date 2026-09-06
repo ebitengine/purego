@@ -489,3 +489,25 @@ struct NestedSmallTail {
 struct NestedSmallTail IdentityNestedSmallTail(struct NestedSmallTail s) {
     return s;
 }
+
+struct NestedIntsPlusOne {
+    struct {
+        int32_t x;
+        int32_t y;
+        int32_t z;
+    } a;
+    int32_t b;
+};
+
+int64_t SumNestedIntsPlusOne(struct NestedIntsPlusOne s) {
+    return (int64_t) s.a.x + s.a.y + s.a.z + s.b;
+}
+
+struct ArrayIntsPlusOne {
+    int32_t a[3];
+    int32_t b;
+};
+
+int64_t SumArrayIntsPlusOne(struct ArrayIntsPlusOne s) {
+    return (int64_t) s.a[0] + s.a[1] + s.a[2] + s.b;
+}
