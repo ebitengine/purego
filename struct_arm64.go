@@ -89,6 +89,13 @@ func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFl
 			*numFloats = numOfFloatRegisters()
 		} else if hva && *numInts+numABIFields(v.Type()) > numOfIntegerRegisters() {
 			*numInts = numOfIntegerRegisters()
+		} else if !hfa && !hva && !isDarwin && *numInts+int(roundUpTo8(size)/8) > numOfIntegerRegisters() {
+			// A non-HFA/HVA composite packed into integer registers is
+			// passed entirely on the stack when the remaining integer
+			// registers cannot hold all of its eightbytes (AAPCS64;
+			// mirrors getCallbackStruct). Darwin may instead split it
+			// between registers and the stack.
+			*numInts = numOfIntegerRegisters()
 		}
 
 		placeRegisters(v, addFloat, addInt)

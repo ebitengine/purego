@@ -853,6 +853,35 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 					t.Fatalf("IdentityFloatAndInt returned %+v wanted %+v", ret, expected)
 				}
 			}
+			if runtime.GOARCH == "arm64" {
+				// Mixed int64 + float64: non-HFA, so it must be packed
+				// into x0/x1 instead of being split across x0/v0 (AAPCS64).
+				type Int64AndDouble struct {
+					_ structs.HostLayout
+					A int64
+					B float64
+				}
+				var fn func(Int64AndDouble) Int64AndDouble
+				register(&fn, lib, "IdentityInt64AndDouble", func(s Int64AndDouble) Int64AndDouble {
+					return s
+				})
+				expected := Int64AndDouble{A: -1234, B: 5.25}
+				if ret := fn(expected); ret != expected {
+					t.Fatalf("IdentityInt64AndDouble returned %+v wanted %+v", ret, expected)
+				}
+				if runtime.GOOS != "darwin" {
+					// Only one integer register is left, so the whole
+					// struct must go on the stack rather than being split
+					// between a register and the stack.
+					var fn func(int64, int64, int64, int64, int64, int64, int64, Int64AndDouble) Int64AndDouble
+					register(&fn, lib, "IdentityInt64AndDoubleAfterRegisters", func(a, b, c, d, e, f, g int64, s Int64AndDouble) Int64AndDouble {
+						return s
+					})
+					if ret := fn(1, 2, 3, 4, 5, 6, 7, expected); ret != expected {
+						t.Fatalf("IdentityInt64AndDoubleAfterRegisters returned %+v wanted %+v", ret, expected)
+					}
+				}
+			}
 			{
 				// Struct > 16 bytes: hidden pointer on amd64, pointer in int register on arm64.
 				type ThreeInt64 struct {
