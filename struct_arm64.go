@@ -134,7 +134,9 @@ func placeRegistersArm64(v reflect.Value, addFloat func(uintptr), addInt func(ui
 			shift = (shift + align) &^ align
 			if shift >= 64 {
 				shift = 0
-				flushed = true
+				// Leave flushed false: the field placed below may
+				// accumulate into val and still needs the final flush.
+				flushed = false
 				if class == _FLOAT {
 					addFloat(uintptr(val))
 				} else {
