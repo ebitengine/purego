@@ -127,22 +127,7 @@ func placeRegistersArm64(v reflect.Value, addFloat func(uintptr), addInt func(ui
 			tmp.Set(v)
 			v = tmp
 		}
-		ptr := v.Addr().UnsafePointer()
-		size := v.Type().Size()
-		for off := uintptr(0); off < size; off += 8 {
-			var chunk uintptr
-			if remaining := size - off; remaining >= 8 {
-				chunk = *(*uintptr)(unsafe.Add(ptr, off))
-			} else {
-				// Final partial chunk: read byte-by-byte to avoid
-				// reading beyond the value's allocation.
-				for i := range remaining {
-					b := *(*byte)(unsafe.Add(ptr, off+i))
-					chunk |= uintptr(b) << (i * 8)
-				}
-			}
-			addInt(chunk)
-		}
+		copyStruct8ByteChunks(v.Addr().UnsafePointer(), v.Type().Size(), addInt)
 		return
 	}
 	var val uint64
@@ -348,12 +333,14 @@ func isHVA(t reflect.Type) bool {
 	}
 }
 
-// copyStruct8ByteChunks copies struct memory in 8-byte chunks to the provided callback.
-// This is used for Darwin ARM64's byte-level packing of non-HFA/HVA structs.
+// copyStruct8ByteChunks copies struct memory in 8-byte chunks to the provided
+// callback. The final partial chunk is read byte-by-byte so that nothing beyond
+// the value's allocation is touched, and is zero-extended.
+//
+// Both Darwin ARM64's byte-level packing and the AAPCS64 rule for non-HFA/HVA
+// composites of 16 bytes or less pass such an argument as consecutive chunks of
+// its in-memory image, so the two paths share this helper.
 func copyStruct8ByteChunks(ptr unsafe.Pointer, size uintptr, addChunk func(uintptr)) {
-	if !isDarwin {
-		panic("purego: should only be called on darwin")
-	}
 	for offset := uintptr(0); offset < size; offset += 8 {
 		var chunk uintptr
 		remaining := size - offset
