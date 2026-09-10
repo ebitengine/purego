@@ -246,6 +246,12 @@ func tryPlaceRegister(v reflect.Value, addFloat func(uintptr), addInt func(uintp
 			needFresh := shift != 0 && fieldOff/8 != curEight
 			if needFresh {
 				flushIfNeeded()
+				// The intermediate flush above ended the pending eightbyte;
+				// the field placed below starts a fresh accumulator that
+				// must still reach the flush at the end of this iteration or
+				// at the end of place(). Leave the flag clear until a field
+				// is actually emitted.
+				flushed = false
 			}
 			curEight = fieldOff / 8
 			// Small fields accumulate at the in-memory offset within the

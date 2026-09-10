@@ -1051,6 +1051,30 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 					t.Fatalf("SumNestedIntsPlusOne returned %d wanted 10", ret)
 				}
 			})
+			t.Run("NestedPadTail", func(t *testing.T) {
+				// The nested struct has trailing padding, so the sibling
+				// field starts in the next eightbyte while the first one is
+				// still pending. The boundary flush must not mark the
+				// accumulator as final: the sibling accumulated afterwards
+				// still needs the final flush.
+				type inner struct {
+					_ structs.HostLayout
+					X int32
+					Y int8
+				}
+				type NestedPadTail struct {
+					_ structs.HostLayout
+					A inner
+					B int8
+				}
+				var sum func(NestedPadTail) int64
+				register(&sum, lib, "SumNestedPadTail", func(s NestedPadTail) int64 {
+					return int64(s.A.X) + int64(s.A.Y) + int64(s.B)
+				})
+				if ret := sum(NestedPadTail{A: inner{X: 1, Y: 2}, B: 3}); ret != 6 {
+					t.Fatalf("SumNestedPadTail returned %d wanted 6", ret)
+				}
+			})
 			t.Run("ArrayIntsPlusOne", func(t *testing.T) {
 				// The array counterpart of NestedIntsPlusOne: the trailing
 				// element of [3]int32 is pending in the second eightbyte

@@ -111,8 +111,24 @@ func placeRegistersArm64(v reflect.Value, addFloat func(uintptr), addInt func(ui
 	var shift byte
 	var flushed bool
 	class := _NO_CLASS
-	var place func(v reflect.Value)
-	place = func(v reflect.Value) {
+	// slotOff is the in-memory offset that bit 0 of val corresponds to, so
+	// the cursor can be realigned to a field's true offset after recursion
+	// into a composite that carries trailing padding.
+	var slotOff uintptr
+	advanceSlot := func() {
+		if class == _FLOAT {
+			addFloat(uintptr(val))
+		} else {
+			addInt(uintptr(val))
+		}
+		val = 0
+		shift = 0
+		class = _NO_CLASS
+		slotOff += 8
+		flushed = true
+	}
+	var place func(v reflect.Value, base uintptr)
+	place = func(v reflect.Value, base uintptr) {
 		var numFields int
 		if v.Kind() == reflect.Struct {
 			numFields = v.Type().NumField()
@@ -125,10 +141,13 @@ func placeRegistersArm64(v reflect.Value, addFloat func(uintptr), addInt func(ui
 			}
 			flushed = false
 			var f reflect.Value
+			var fieldOff uintptr
 			if v.Kind() == reflect.Struct {
 				f = v.Field(k)
+				fieldOff = base + v.Type().Field(k).Offset
 			} else {
 				f = v.Index(k)
+				fieldOff = base + uintptr(k)*f.Type().Size()
 			}
 			align := byte(f.Type().Align()*8 - 1)
 			shift = (shift + align) &^ align
@@ -144,10 +163,22 @@ func placeRegistersArm64(v reflect.Value, addFloat func(uintptr), addInt func(ui
 				}
 				val = 0
 				class = _NO_CLASS
+				slotOff += 8
 			}
 			switch f.Type().Kind() {
-			case reflect.Struct:
-				place(f)
+			case reflect.Struct, reflect.Array:
+				place(f, fieldOff)
+				// A composite occupies its full in-memory size: skip its
+				// trailing padding so the next sibling is placed at its
+				// own offset, emitting the pending register whenever that
+				// carries past the current slot.
+				for end := fieldOff + f.Type().Size(); end > slotOff+uintptr(shift)/8; {
+					if bits := (end - slotOff) * 8; bits < 64 {
+						shift = byte(bits)
+						break
+					}
+					advanceSlot()
+				}
 			case reflect.Bool:
 				if f.Bool() {
 					val |= 1 << shift
@@ -170,6 +201,7 @@ func placeRegistersArm64(v reflect.Value, addFloat func(uintptr), addInt func(ui
 				addInt(uintptr(f.Uint()))
 				shift = 0
 				flushed = true
+				slotOff += 8
 				class = _NO_CLASS
 			case reflect.Int8:
 				val |= uint64(f.Int()&0xFF) << shift
@@ -187,12 +219,14 @@ func placeRegistersArm64(v reflect.Value, addFloat func(uintptr), addInt func(ui
 				addInt(uintptr(f.Int()))
 				shift = 0
 				flushed = true
+				slotOff += 8
 				class = _NO_CLASS
 			case reflect.Float32:
 				if class == _FLOAT {
 					addFloat(uintptr(val))
 					val = 0
 					shift = 0
+					slotOff += 4
 				}
 				val |= uint64(math.Float32bits(float32(f.Float()))) << shift
 				shift += 32
@@ -201,20 +235,20 @@ func placeRegistersArm64(v reflect.Value, addFloat func(uintptr), addInt func(ui
 				addFloat(uintptr(math.Float64bits(float64(f.Float()))))
 				shift = 0
 				flushed = true
+				slotOff += 8
 				class = _NO_CLASS
 			case reflect.Pointer, reflect.UnsafePointer:
 				addInt(f.Pointer())
 				shift = 0
 				flushed = true
+				slotOff += 8
 				class = _NO_CLASS
-			case reflect.Array:
-				place(f)
 			default:
 				panic("purego: unsupported kind " + f.Kind().String())
 			}
 		}
 	}
-	place(v)
+	place(v, 0)
 	if !flushed {
 		if class == _FLOAT {
 			addFloat(uintptr(val))

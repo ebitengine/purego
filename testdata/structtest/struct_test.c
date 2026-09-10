@@ -511,3 +511,15 @@ struct ArrayIntsPlusOne {
 int64_t SumArrayIntsPlusOne(struct ArrayIntsPlusOne s) {
     return (int64_t) s.a[0] + s.a[1] + s.a[2] + s.b;
 }
+
+struct NestedPadTail {
+    struct {
+        int32_t x;
+        int8_t y;
+    } a;
+    int8_t b;
+};
+
+int64_t SumNestedPadTail(struct NestedPadTail s) {
+    return (int64_t) s.a.x + s.a.y + s.b;
+}
