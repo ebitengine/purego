@@ -869,10 +869,12 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 				if ret := fn(expected); ret != expected {
 					t.Fatalf("IdentityInt64AndDouble returned %+v wanted %+v", ret, expected)
 				}
-				if runtime.GOOS != "darwin" {
-					// Only one integer register is left, so the whole
-					// struct must go on the stack rather than being split
-					// between a register and the stack.
+				{
+					// Only one integer register is left, so the whole struct
+					// must go on the stack rather than being split between
+					// a register and the stack. Darwin's ABI agrees: clang
+					// spills both eightbytes to the stack and consumes the
+					// remaining integer register.
 					var fn func(int64, int64, int64, int64, int64, int64, int64, Int64AndDouble) Int64AndDouble
 					register(&fn, lib, "IdentityInt64AndDoubleAfterRegisters", func(a, b, c, d, e, f, g int64, s Int64AndDouble) Int64AndDouble {
 						return s
