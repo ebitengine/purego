@@ -211,8 +211,10 @@ func tryPlaceRegister(v reflect.Value, addFloat func(uintptr), addInt func(uintp
 		shift = 0
 		class = _NO_CLASS
 	}
-	var place func(v reflect.Value)
-	place = func(v reflect.Value) {
+	var place func(v reflect.Value, base uintptr)
+	// curEight tracks the eightbyte index of the pending accumulator.
+	var curEight uintptr
+	place = func(v reflect.Value, base uintptr) {
 		var numFields int
 		if v.Kind() == reflect.Struct {
 			numFields = v.Type().NumField()
@@ -226,57 +228,119 @@ func tryPlaceRegister(v reflect.Value, addFloat func(uintptr), addInt func(uintp
 			}
 			flushed = false
 			var f reflect.Value
+			var fieldOff uintptr
 			if v.Kind() == reflect.Struct {
 				f = v.Field(i)
+				fieldOff = base + v.Type().Field(i).Offset
 			} else {
 				f = v.Index(i)
+				fieldOff = base + uintptr(i)*f.Type().Size()
+			}
+			// The System V ABI classifies eightbytes from the in-memory
+			// image: a field starting in a later eightbyte than the pending
+			// accumulator ends it. Flush first so a wide field (e.g. the
+			// int64 in {int8; int64}) never overwrites accumulated smaller
+			// fields. A field wider than 4 bytes always starts a fresh
+			// eightbyte in practice (its alignment > remaining space), so
+			// after flushing we can place it directly without shifting.
+			needFresh := shift != 0 && fieldOff/8 != curEight
+			if needFresh {
+				flushIfNeeded()
+				// The intermediate flush above ended the pending eightbyte;
+				// the field placed below starts a fresh accumulator that
+				// must still reach the flush at the end of this iteration or
+				// at the end of place(). Leave the flag clear until a field
+				// is actually emitted.
+				flushed = false
+			}
+			curEight = fieldOff / 8
+			// Small fields accumulate at the in-memory offset within the
+			// current eightbyte. Realign the bit cursor when the field
+			// starts later (padding), e.g. the int32 at offset 4 in
+			// {int8; int32}.
+			alignTo := func(off uintptr) {
+				want := byte((off % 8) * 8)
+				if want > shift {
+					shift = want
+				}
 			}
 			switch f.Kind() {
 			case reflect.Struct:
-				place(f)
+				// Recursion shares the accumulator, so it must also share
+				// curEight: when a nested struct spans eightbytes its tail
+				// is pending in the last one it touched, and the next
+				// sibling field belongs to that same eightbyte. Restoring
+				// the outer index would flush the tail prematurely.
+				place(f, fieldOff)
 			case reflect.Bool:
+				alignTo(fieldOff)
 				if f.Bool() {
 					val |= 1 << shift
 				}
 				shift += 8
 				class |= _INTEGER
 			case reflect.Pointer, reflect.UnsafePointer:
-				val = uint64(f.Pointer())
-				shift = 64
+				if !needFresh {
+					val = uint64(f.Pointer())
+					shift = 64
+				} else {
+					flushed = false
+					addInt(uintptr(f.Pointer()))
+					flushed = true
+				}
 				class = _INTEGER
 			case reflect.Int8:
+				alignTo(fieldOff)
 				val |= uint64(f.Int()&0xFF) << shift
 				shift += 8
 				class |= _INTEGER
 			case reflect.Int16:
+				alignTo(fieldOff)
 				val |= uint64(f.Int()&0xFFFF) << shift
 				shift += 16
 				class |= _INTEGER
 			case reflect.Int32:
+				alignTo(fieldOff)
 				val |= uint64(f.Int()&0xFFFF_FFFF) << shift
 				shift += 32
 				class |= _INTEGER
 			case reflect.Int64, reflect.Int:
-				val = uint64(f.Int())
-				shift = 64
+				if !needFresh {
+					val = uint64(f.Int())
+					shift = 64
+				} else {
+					flushed = false
+					addInt(uintptr(f.Int()))
+					flushed = true
+				}
 				class = _INTEGER
 			case reflect.Uint8:
+				alignTo(fieldOff)
 				val |= f.Uint() << shift
 				shift += 8
 				class |= _INTEGER
 			case reflect.Uint16:
+				alignTo(fieldOff)
 				val |= f.Uint() << shift
 				shift += 16
 				class |= _INTEGER
 			case reflect.Uint32:
+				alignTo(fieldOff)
 				val |= f.Uint() << shift
 				shift += 32
 				class |= _INTEGER
 			case reflect.Uint64, reflect.Uint, reflect.Uintptr:
-				val = f.Uint()
-				shift = 64
+				if !needFresh {
+					val = f.Uint()
+					shift = 64
+				} else {
+					flushed = false
+					addInt(uintptr(f.Uint()))
+					flushed = true
+				}
 				class = _INTEGER
 			case reflect.Float32:
+				alignTo(fieldOff)
 				val |= uint64(math.Float32bits(float32(f.Float()))) << shift
 				shift += 32
 				class |= _SSE
@@ -285,11 +349,17 @@ func tryPlaceRegister(v reflect.Value, addFloat func(uintptr), addInt func(uintp
 					ok = false
 					return
 				}
-				val = uint64(math.Float64bits(f.Float()))
-				shift = 64
+				if !needFresh {
+					val = uint64(math.Float64bits(f.Float()))
+					shift = 64
+				} else {
+					flushed = false
+					addFloat(uintptr(math.Float64bits(f.Float())))
+					flushed = true
+				}
 				class = _SSE
 			case reflect.Array:
-				place(f)
+				place(f, fieldOff)
 			default:
 				panic("purego: unsupported kind " + f.Kind().String())
 			}
@@ -304,7 +374,7 @@ func tryPlaceRegister(v reflect.Value, addFloat func(uintptr), addInt func(uintp
 		}
 	}
 
-	place(v)
+	place(v, 0)
 	flushIfNeeded()
 	return ok
 }

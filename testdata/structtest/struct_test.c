@@ -453,3 +453,73 @@ struct Mixed5Args {
 struct Mixed5Args IdentityMixed5Args(struct Mixed5Args s) {
     return s;
 }
+
+struct CharLong {
+    int8_t a;
+    int64_t b;
+};
+
+struct CharLong IdentityCharLong(struct CharLong s) {
+    return s;
+}
+
+struct CharLong IdentityCharLongBetweenPrims(int64_t x, struct CharLong s, int64_t y) {
+    (void) x;
+    (void) y;
+    return s;
+}
+
+struct CharInt {
+    int8_t a;
+    int32_t b;
+};
+
+struct CharInt IdentityCharInt(struct CharInt s) {
+    return s;
+}
+
+struct NestedSmallTail {
+    struct {
+        int8_t a;
+        int32_t b;
+    } i;
+    int8_t c;
+};
+
+struct NestedSmallTail IdentityNestedSmallTail(struct NestedSmallTail s) {
+    return s;
+}
+
+struct NestedIntsPlusOne {
+    struct {
+        int32_t x;
+        int32_t y;
+        int32_t z;
+    } a;
+    int32_t b;
+};
+
+int64_t SumNestedIntsPlusOne(struct NestedIntsPlusOne s) {
+    return (int64_t) s.a.x + s.a.y + s.a.z + s.b;
+}
+
+struct ArrayIntsPlusOne {
+    int32_t a[3];
+    int32_t b;
+};
+
+int64_t SumArrayIntsPlusOne(struct ArrayIntsPlusOne s) {
+    return (int64_t) s.a[0] + s.a[1] + s.a[2] + s.b;
+}
+
+struct NestedPadTail {
+    struct {
+        int32_t x;
+        int8_t y;
+    } a;
+    int8_t b;
+};
+
+int64_t SumNestedPadTail(struct NestedPadTail s) {
+    return (int64_t) s.a.x + s.a.y + s.b;
+}
