@@ -18,6 +18,12 @@ const (
 // syscallArgs is the argument block handed to the syscall15 trampoline. On
 // platforms that go through internal/cgo it is passed to C as a
 // struct syscallArgs, so its layout must match the C ABI.
+//
+// The trampoline reports its results through this block: the return values go
+// to a1 and a2 and, where the platform captures errno, the error code goes to
+// a3. A trampoline that cannot capture errno must clear a3, which still holds
+// the caller's third argument, so that SyscallN never returns an input
+// argument as an error.
 type syscallArgs struct {
 	_ structs.HostLayout
 
@@ -51,7 +57,10 @@ func syscall_SyscallN(fn uintptr, sysargs []uintptr, floats []uintptr, r8 uintpt
 
 // SyscallN takes fn, a C function pointer and a list of arguments as uintptr.
 // There is an internal maximum number of arguments that SyscallN can take. It panics
-// when the maximum is exceeded. It returns the result and the libc error code if there is one.
+// when the maximum is exceeded. It returns the result and, on Windows, the error
+// code that syscall.SyscallN returns as its error, which is a GetLastError-style
+// code rather than a libc errno. On the other platforms this file builds for,
+// errno is not captured so err is always 0.
 //
 // In order to call this function properly make sure to follow all the rules specified in [unsafe.Pointer]
 // especially point 4.
