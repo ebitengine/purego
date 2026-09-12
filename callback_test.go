@@ -154,6 +154,53 @@ func TestNewCallbackFloat32AndFloat64(t *testing.T) {
 	}
 }
 
+func TestNewCallbackInt64Result(t *testing.T) {
+	// A 64-bit result needs two words: EDX:EAX on 386 and R1:R0 on arm.
+	// The trampoline must forward both halves of the value.
+	const mask = int64(0x0123456789abcdef)
+	imp := purego.NewCallback(func(v int64) int64 { return v ^ mask })
+	var fn func(v int64) int64
+	purego.RegisterFunc(&fn, imp)
+	for _, v := range []int64{
+		0,
+		-1,
+		1 << 32,
+		-0x7edcba9876543210,
+	} {
+		if got, want := fn(v), v^mask; got != want {
+			t.Errorf("callback(%#x) = %#x, want %#x", uint64(v), uint64(got), uint64(want))
+		}
+	}
+}
+
+func TestNewCallbackUint64Result(t *testing.T) {
+	// The upper half of a uint64 result must not be dropped by the trampoline.
+	imp := purego.NewCallback(func(lo, hi uint32) uint64 { return uint64(hi)<<32 | uint64(lo) })
+	var fn func(lo, hi uint32) uint64
+	purego.RegisterFunc(&fn, imp)
+	const want = uint64(0x0123456789abcdef)
+	if got := fn(0x89abcdef, 0x01234567); got != want {
+		t.Errorf("callback() = %#x, want %#x", got, want)
+	}
+}
+
+func TestNewCallbackInt64ResultWithStackArgs(t *testing.T) {
+	// On 386 all the arguments are passed on the stack, so this also checks
+	// that the copied arguments do not overlap the result of the callback.
+	// The number of arguments is kept small enough for ppc64le, which only
+	// has maxArgs(15) slots in total, 8 of them in integer registers.
+	const wantSum = 1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9 + 10 + 11 + 12
+	imp := purego.NewCallback(func(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12 int) int64 {
+		return int64(a1+a2+a3+a4+a5+a6+a7+a8+a9+a10+a11+a12)<<32 | 0x0badf00d
+	})
+	var fn func(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12 int) int64
+	purego.RegisterFunc(&fn, imp)
+	const want = int64(wantSum)<<32 | 0x0badf00d
+	if got := fn(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12); got != want {
+		t.Errorf("callback() = %#x, want %#x", uint64(got), uint64(want))
+	}
+}
+
 func ExampleNewCallback() {
 	cb := purego.NewCallback(func(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15 int) int {
 		fmt.Println(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15)
