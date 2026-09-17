@@ -111,9 +111,8 @@ func placeRegistersArm64(v reflect.Value, addFloat func(uintptr), addInt func(ui
 	var shift byte
 	var flushed bool
 	class := _NO_CLASS
-	// slotOff is the in-memory offset that bit 0 of val corresponds to, so
-	// the cursor can be realigned to a field's true offset after recursion
-	// into a composite that carries trailing padding.
+	// slotOff is the in-memory offset bit 0 of val corresponds to, so that
+	// the cursor can be realigned after a composite with trailing padding.
 	var slotOff uintptr
 	advanceSlot := func() {
 		if class == _FLOAT {
@@ -153,8 +152,8 @@ func placeRegistersArm64(v reflect.Value, addFloat func(uintptr), addInt func(ui
 			shift = (shift + align) &^ align
 			if shift >= 64 {
 				shift = 0
-				// Leave flushed false: the field placed below may
-				// accumulate into val and still needs the final flush.
+				// Keep flushed false so the field placed below is still
+				// emitted by the final flush.
 				flushed = false
 				if class == _FLOAT {
 					addFloat(uintptr(val))
@@ -168,10 +167,8 @@ func placeRegistersArm64(v reflect.Value, addFloat func(uintptr), addInt func(ui
 			switch f.Type().Kind() {
 			case reflect.Struct, reflect.Array:
 				place(f, fieldOff)
-				// A composite occupies its full in-memory size: skip its
-				// trailing padding so the next sibling is placed at its
-				// own offset, emitting the pending register whenever that
-				// carries past the current slot.
+				// Skip the composite's trailing padding so that the next
+				// sibling lands at its own in-memory offset.
 				for end := fieldOff + f.Type().Size(); end > slotOff+uintptr(shift)/8; {
 					if bits := (end - slotOff) * 8; bits < 64 {
 						shift = byte(bits)

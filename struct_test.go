@@ -613,7 +613,7 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 				type BoolFloat struct {
 					_ structs.HostLayout
 					b bool
-					_ [3]byte // purego won't do padding for you so make sure it aligns properly with C struct
+					_ [3]byte // redundant with the padding Go inserts, but mirrors the C layout
 					f float32
 				}
 				var BoolFloatFn func(BoolFloat) float32
@@ -945,9 +945,7 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 				runtime.KeepAlive(ptr)
 			}
 			t.Run("CharLong", func(t *testing.T) {
-				// Small field followed by a wide field crossing the eightbyte
-				// boundary: the wide field must not overwrite the pending
-				// small fields.
+				// The wide field must not overwrite the pending small field.
 				type CharLong struct {
 					_ structs.HostLayout
 					A int8
@@ -963,9 +961,8 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 				}
 			})
 			t.Run("CharLongBetweenPrims", func(t *testing.T) {
-				// Same as above but with scalar arguments before and after
-				// the struct: the struct must consume exactly two register
-				// slots so the trailing scalar is not shifted.
+				// The struct must consume exactly two register slots so the
+				// trailing scalar is not shifted.
 				type CharLong struct {
 					_ structs.HostLayout
 					A int8
@@ -981,9 +978,8 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 				}
 			})
 			t.Run("CharInt", func(t *testing.T) {
-				// Small field after padding: the int32 at offset 4 must be
-				// placed at its in-memory offset, not back-to-back with the
-				// int8.
+				// The int32 must be placed at its padded offset, not back-to-back
+				// with the int8.
 				type CharInt struct {
 					_ structs.HostLayout
 					A int8
@@ -999,8 +995,7 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 				}
 			})
 			t.Run("NestedSmallTail", func(t *testing.T) {
-				// Nested struct with padding followed by a sibling field in
-				// the next eightbyte.
+				// A sibling in the next eightbyte after a padded nested struct.
 				type NestedSmallTail struct {
 					_ structs.HostLayout
 					I struct {
@@ -1027,11 +1022,8 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 				}
 			})
 			t.Run("NestedIntsPlusOne", func(t *testing.T) {
-				// A nested struct whose tail remains pending in the second
-				// eightbyte followed by a sibling field in that same
-				// eightbyte. Recursion must leave the pending eightbyte
-				// index consistent with the accumulator so the sibling is
-				// merged into it instead of dropping it.
+				// The sibling must be merged into the eightbyte the nested
+				// struct left pending.
 				type inner struct {
 					_ structs.HostLayout
 					X int32
@@ -1052,11 +1044,8 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 				}
 			})
 			t.Run("NestedPadTail", func(t *testing.T) {
-				// The nested struct has trailing padding, so the sibling
-				// field starts in the next eightbyte while the first one is
-				// still pending. The boundary flush must not mark the
-				// accumulator as final: the sibling accumulated afterwards
-				// still needs the final flush.
+				// The sibling after the nested struct's trailing padding must
+				// still be flushed.
 				type inner struct {
 					_ structs.HostLayout
 					X int32
@@ -1076,9 +1065,7 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 				}
 			})
 			t.Run("ArrayIntsPlusOne", func(t *testing.T) {
-				// The array counterpart of NestedIntsPlusOne: the trailing
-				// element of [3]int32 is pending in the second eightbyte
-				// when the sibling field must be merged into it.
+				// The array counterpart of NestedIntsPlusOne.
 				type ArrayIntsPlusOne struct {
 					_ structs.HostLayout
 					A [3]int32
@@ -1090,6 +1077,28 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 				})
 				if ret := sum(ArrayIntsPlusOne{A: [3]int32{1, 2, 3}, B: 4}); ret != 10 {
 					t.Fatalf("SumArrayIntsPlusOne returned %d wanted 10", ret)
+				}
+			})
+			t.Run("BoolFloatNoPadding", func(t *testing.T) {
+				// Fields are placed at their in-memory offsets, so no
+				// explicit padding is needed after the bool.
+				type BoolFloat struct {
+					_ structs.HostLayout
+					b bool
+					f float32
+				}
+				var fn func(BoolFloat) float32
+				register(&fn, lib, "BoolFloat", func(s BoolFloat) float32 {
+					if s.b {
+						return s.f
+					}
+					return -s.f
+				})
+				if ret := fn(BoolFloat{b: true, f: 10}); ret != expectedFloat {
+					t.Fatalf("BoolFloat returned %f wanted %f", ret, expectedFloat)
+				}
+				if ret := fn(BoolFloat{b: false, f: 10}); ret != -expectedFloat {
+					t.Fatalf("BoolFloat returned %f wanted %f", ret, -expectedFloat)
 				}
 			})
 		})

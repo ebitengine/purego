@@ -236,28 +236,18 @@ func tryPlaceRegister(v reflect.Value, addFloat func(uintptr), addInt func(uintp
 				f = v.Index(i)
 				fieldOff = base + uintptr(i)*f.Type().Size()
 			}
-			// The System V ABI classifies eightbytes from the in-memory
-			// image: a field starting in a later eightbyte than the pending
-			// accumulator ends it. Flush first so a wide field (e.g. the
-			// int64 in {int8; int64}) never overwrites accumulated smaller
-			// fields. A field wider than 4 bytes always starts a fresh
-			// eightbyte in practice (its alignment > remaining space), so
-			// after flushing we can place it directly without shifting.
+			// A field in a later eightbyte than the pending accumulator ends
+			// it, so flush before a wide field overwrites the small fields
+			// accumulated so far (e.g. the int64 in {int8; int64}).
 			needFresh := shift != 0 && fieldOff/8 != curEight
 			if needFresh {
 				flushIfNeeded()
-				// The intermediate flush above ended the pending eightbyte;
-				// the field placed below starts a fresh accumulator that
-				// must still reach the flush at the end of this iteration or
-				// at the end of place(). Leave the flag clear until a field
-				// is actually emitted.
+				// The fresh accumulator must still be flushed.
 				flushed = false
 			}
 			curEight = fieldOff / 8
-			// Small fields accumulate at the in-memory offset within the
-			// current eightbyte. Realign the bit cursor when the field
-			// starts later (padding), e.g. the int32 at offset 4 in
-			// {int8; int32}.
+			// Realign the bit cursor over padding, e.g. for the int32 at
+			// offset 4 in {int8; int32}.
 			alignTo := func(off uintptr) {
 				want := byte((off % 8) * 8)
 				if want > shift {
@@ -266,11 +256,8 @@ func tryPlaceRegister(v reflect.Value, addFloat func(uintptr), addInt func(uintp
 			}
 			switch f.Kind() {
 			case reflect.Struct:
-				// Recursion shares the accumulator, so it must also share
-				// curEight: when a nested struct spans eightbytes its tail
-				// is pending in the last one it touched, and the next
-				// sibling field belongs to that same eightbyte. Restoring
-				// the outer index would flush the tail prematurely.
+				// The nested tail stays pending in the accumulator, so
+				// curEight must not be restored here.
 				place(f, fieldOff)
 			case reflect.Bool:
 				alignTo(fieldOff)
