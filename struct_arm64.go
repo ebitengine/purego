@@ -90,13 +90,9 @@ func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFl
 		} else if hva && *numInts+numABIFields(v.Type()) > numOfIntegerRegisters() {
 			*numInts = numOfIntegerRegisters()
 		} else if !hfa && !hva && !isDarwin && *numInts+int(roundUpTo8(size)/8) > numOfIntegerRegisters() {
-			// A non-HFA/HVA composite packed into integer registers is
-			// passed entirely on the stack, consuming the remaining
-			// integer registers, when they cannot hold all of its
-			// eightbytes (AAPCS64; mirrors getCallbackStruct). Darwin
-			// enforces the same all-or-nothing rule earlier, in the
-			// stack-argument bundling path (see shouldBundleStackArgs),
-			// so there is nothing to do here.
+			// Not enough integer registers for all of the eightbytes,
+			// so the whole struct goes on the stack (AAPCS64). Darwin
+			// makes the same decision in shouldBundleStackArgs.
 			*numInts = numOfIntegerRegisters()
 		}
 
@@ -116,11 +112,9 @@ func placeRegisters(v reflect.Value, addFloat func(uintptr), addInt func(uintptr
 }
 
 func placeRegistersArm64(v reflect.Value, addFloat func(uintptr), addInt func(uintptr)) {
-	// Non-HFA composites of 16 bytes or less are passed packed into
-	// 1-2 general-purpose registers (AAPCS64 C.7; mirrors
-	// getCallbackStruct). Copy the in-memory image eightbyte by
-	// eightbyte instead of routing members by kind, so mixed structs
-	// such as {int64; float64} land in x0/x1 rather than x0/v0.
+	// A non-HFA/HVA composite of 16 bytes or less is passed as
+	// consecutive chunks of its in-memory image, not routed by
+	// member kind (AAPCS64; mirrors getCallbackStruct).
 	if !isHFA(v.Type()) && !isHVA(v.Type()) && v.Type().Size() <= 16 {
 		if !v.CanAddr() {
 			tmp := reflect.New(v.Type()).Elem()
@@ -336,11 +330,10 @@ func isHVA(t reflect.Type) bool {
 // copyStruct8ByteChunks copies struct memory in 8-byte chunks to the provided
 // callback. The final partial chunk is read byte-by-byte so that nothing beyond
 // the value's allocation is touched, and is zero-extended.
-//
-// Both Darwin ARM64's byte-level packing and the AAPCS64 rule for non-HFA/HVA
-// composites of 16 bytes or less pass such an argument as consecutive chunks of
-// its in-memory image, so the two paths share this helper.
 func copyStruct8ByteChunks(ptr unsafe.Pointer, size uintptr, addChunk func(uintptr)) {
+	// Darwin's byte-level packing and the AAPCS64 rule for non-HFA/HVA
+	// composites of 16 bytes or less both pass consecutive chunks of the
+	// in-memory image, so the two paths share this helper.
 	for offset := uintptr(0); offset < size; offset += 8 {
 		var chunk uintptr
 		remaining := size - offset

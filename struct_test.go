@@ -853,9 +853,10 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 					t.Fatalf("IdentityFloatAndInt returned %+v wanted %+v", ret, expected)
 				}
 			}
-			if runtime.GOARCH == "arm64" {
-				// Mixed int64 + float64: non-HFA, so it must be packed
-				// into x0/x1 instead of being split across x0/v0 (AAPCS64).
+			{
+				// A mixed {int64; float64}: on arm64 both eightbytes
+				// must reach the callee in integer registers, never
+				// x0/v0 (AAPCS64); other ABIs split them by class.
 				type Int64AndDouble struct {
 					_ structs.HostLayout
 					A int64
@@ -869,12 +870,9 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 				if ret := fn(expected); ret != expected {
 					t.Fatalf("IdentityInt64AndDouble returned %+v wanted %+v", ret, expected)
 				}
-				{
-					// Only one integer register is left, so the whole struct
-					// must go on the stack rather than being split between
-					// a register and the stack. Darwin's ABI agrees: clang
-					// spills both eightbytes to the stack and consumes the
-					// remaining integer register.
+				if runtime.GOARCH == "arm64" {
+					// Only x7 is left, so the whole struct goes
+					// on the stack, also on Darwin.
 					var fn func(int64, int64, int64, int64, int64, int64, int64, Int64AndDouble) Int64AndDouble
 					register(&fn, lib, "IdentityInt64AndDoubleAfterRegisters", func(a, b, c, d, e, f, g int64, s Int64AndDouble) Int64AndDouble {
 						return s
