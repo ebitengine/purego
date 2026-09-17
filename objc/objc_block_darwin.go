@@ -19,9 +19,9 @@ const (
 	// when the reference count drops to zero, so the associated function is also unreferenced.
 
 	// blockBaseClass is the name of the class that block objects will be initialized with.
-	// New blocks start on the stack so that Block_copy moves them to the
-	// heap; starting from __NSMallocBlock__ would make Copy a no-op retain
-	// of the Go-side allocation.
+	// A new block is a template that Block_copy always relocates to the
+	// Objective-C heap, so the stack-block class is the accurate name here,
+	// as the isa of the copied block becomes __NSMallocBlock__ anyway.
 	blockBaseClass = "__NSStackBlock__"
 	// blockFlags is the set of flags that block objects will be initialized with.
 	blockFlags = blockHasCopyDispose | blockHasSignature
