@@ -26,10 +26,7 @@ func TestOS(t *testing.T) {
 }
 
 // errnoIsCaptured reports whether SyscallN returns the libc errno as its third
-// value on this platform. The darwin trampolines save errno into the args
-// block and so does the C fallback in internal/cgo, which the Linux
-// architectures that have no assembly trampoline have to use. The other
-// trampolines cannot, and clear the field instead, so SyscallN returns 0 there.
+// value on this platform.
 func errnoIsCaptured() bool {
 	switch runtime.GOOS {
 	case "darwin":
@@ -48,11 +45,6 @@ func TestErrno(t *testing.T) {
 		t.Skip("platform does not support returning errno from syscall")
 	}
 
-	// setErrno is called without arguments on purpose. SyscallN mirrors every
-	// integer argument into the float slots and the C fallback in internal/cgo,
-	// which is used on the Linux architectures that have no assembly trampoline,
-	// asserts that those slots are zero. Calling open here would therefore abort
-	// on those architectures before the errno check could run.
 	libFileName := filepath.Join(t.TempDir(), "liberrnotest.so")
 	if err := buildSharedLib(t, "CC", libFileName, filepath.Join("testdata", "liberrnotest", "errno_test.c")); err != nil {
 		t.Fatal(err)
