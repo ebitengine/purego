@@ -5,9 +5,9 @@ package purego_test
 
 import (
 	"os"
+	"path/filepath"
 	"runtime"
 	"testing"
-	"unsafe"
 
 	"github.com/ebitengine/purego"
 	"github.com/ebitengine/purego/internal/load"
@@ -25,24 +25,54 @@ func TestOS(t *testing.T) {
 	}
 }
 
+// errnoIsCaptured reports whether SyscallN returns the libc errno as its third
+// value on this platform.
+func errnoIsCaptured() bool {
+	switch runtime.GOOS {
+	case "darwin":
+		return true
+	case "linux":
+		switch runtime.GOARCH {
+		case "mips", "mipsle", "mips64", "mips64le", "ppc64":
+			return true
+		}
+	}
+	return false
+}
+
 func TestErrno(t *testing.T) {
-	if runtime.GOOS != "darwin" {
+	if !errnoIsCaptured() {
 		t.Skip("platform does not support returning errno from syscall")
 	}
 
-	libc, err := load.OpenLibrary("/usr/lib/libSystem.B.dylib")
+	libFileName := filepath.Join(t.TempDir(), "liberrnotest.so")
+	if err := buildSharedLib(t, "CC", libFileName, filepath.Join("testdata", "liberrnotest", "errno_test.c")); err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove(libFileName)
+
+	lib, err := load.OpenLibrary(libFileName)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	openSym, err := load.OpenSymbol(libc, "open")
+	setErrno, err := load.OpenSymbol(lib, "setErrno")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	r1, _, errno := purego.SyscallN(openSym, uintptr(unsafe.Pointer(&[]byte("_file_that_does_not_exist_\x00")[0])), uintptr(os.O_RDWR))
+	r1, _, errno := purego.SyscallN(setErrno)
 	if int32(r1) != -1 {
-		t.Errorf("open returned %d, wanted -1", r1)
+		t.Errorf("setErrno returned %d, wanted -1", r1)
+	}
+
+	libcName, err := getSystemLibrary()
+	if err != nil {
+		t.Fatal(err)
+	}
+	libc, err := load.OpenLibrary(libcName)
+	if err != nil {
+		t.Fatal(err)
 	}
 
 	var strerror func(int32) string
