@@ -98,8 +98,79 @@ func ExampleIMP() {
 }
 
 // With Base <- Child1 <- Child2, a super call in Child1's method starts at Base,
-// even when the receiver is a Child2 instance. SendSuper1 takes Base, while
-// SendSuper2 takes Child1, the class defining the method.
+// even when the receiver is a Child2 instance. SendSuper1 takes Base,
+// the superclass of the class defining the method.
+func ExampleID_SendSuper1() {
+	_, err := purego.Dlopen("/System/Library/Frameworks/Foundation.framework/Foundation", purego.RTLD_GLOBAL|purego.RTLD_NOW)
+	if err != nil {
+		panic(err)
+	}
+
+	sel := objc.RegisterName("run")
+	base, err := objc.RegisterClass(
+		"Super1ExampleBase",
+		objc.GetClass("NSObject"),
+		nil,
+		nil,
+		[]objc.MethodDef{
+			{
+				Cmd: sel,
+				Fn: func(self objc.ID, cmd objc.SEL) {
+					fmt.Println("Base")
+				},
+			},
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	child1, err := objc.RegisterClass(
+		"Super1ExampleChild1",
+		base,
+		nil,
+		nil,
+		[]objc.MethodDef{
+			{
+				Cmd: sel,
+				Fn: func(self objc.ID, cmd objc.SEL) {
+					// Start lookup in Base, the superclass of Child1.
+					fmt.Print("SendSuper1: ")
+					self.SendSuper1(base, cmd)
+				},
+			},
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	// Child2 inherits Child1's implementation of run.
+	child2, err := objc.RegisterClass("Super1ExampleChild2", child1, nil, nil, nil)
+	if err != nil {
+		panic(err)
+	}
+
+	for _, class := range []objc.Class{child1, child2} {
+		object := objc.ID(class).Send(objc.RegisterName("new"))
+		defer object.Send(objc.RegisterName("release"))
+		if class == child1 {
+			fmt.Println("Child1 instance")
+		} else {
+			fmt.Println("Child2 instance")
+		}
+		object.Send(sel)
+	}
+	// Output:
+	// Child1 instance
+	// SendSuper1: Base
+	// Child2 instance
+	// SendSuper1: Base
+}
+
+// With Base <- Child1 <- Child2, a super call in Child1's method starts at Base,
+// even when the receiver is a Child2 instance. SendSuper2 takes Child1,
+// the class defining the method.
 func ExampleID_SendSuper2() {
 	_, err := purego.Dlopen("/System/Library/Frameworks/Foundation.framework/Foundation", purego.RTLD_GLOBAL|purego.RTLD_NOW)
 	if err != nil {
@@ -135,10 +206,6 @@ func ExampleID_SendSuper2() {
 			{
 				Cmd: sel,
 				Fn: func(self objc.ID, cmd objc.SEL) {
-					// Start lookup in Base, Child1's superclass.
-					fmt.Print("SendSuper1: ")
-					self.SendSuper1(base, cmd)
-
 					// Start lookup in the superclass of Child1.
 					fmt.Print("SendSuper2: ")
 					self.SendSuper2(child1, cmd)
@@ -168,10 +235,8 @@ func ExampleID_SendSuper2() {
 	}
 	// Output:
 	// Child1 instance
-	// SendSuper1: Base
 	// SendSuper2: Base
 	// Child2 instance
-	// SendSuper1: Base
 	// SendSuper2: Base
 }
 
