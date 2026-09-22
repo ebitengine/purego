@@ -18,7 +18,7 @@ var (
 )
 
 func BarInit(id objc.ID, cmd objc.SEL) objc.ID {
-	return id.SendSuper(cmd)
+	return id.SendSuper1(objc.GetClass("BarObject").SuperClass(), cmd)
 }
 
 func main() {
