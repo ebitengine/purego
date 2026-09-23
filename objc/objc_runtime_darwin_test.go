@@ -97,9 +97,8 @@ func ExampleIMP() {
 	// Output: IMP: 105 567 9 2 3 -5 4 8 9
 }
 
-// With Base <- Child1 <- Child2, a super call in Child1's method starts at Base,
-// even when the receiver is a Child2 instance. SendSuper2 takes Child1,
-// the class defining the method.
+// This example shows three-level inheritance with Base <- Child1 <- Child2.
+// SendSuper2 takes Child1, the class defining the method.
 func ExampleID_SendSuper2() {
 	_, err := purego.Dlopen("/System/Library/Frameworks/Foundation.framework/Foundation", purego.RTLD_GLOBAL|purego.RTLD_NOW)
 	if err != nil {
