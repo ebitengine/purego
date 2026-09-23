@@ -30,9 +30,6 @@ var (
 	objc_msgSend_fn                    uintptr
 	objc_msgSend_stret_fn              uintptr
 	objc_msgSend                       func(obj ID, cmd SEL, args ...any) ID
-	objc_msgSendSuper_fn               uintptr
-	objc_msgSendSuper_stret_fn         uintptr
-	objc_msgSendSuper                  func(super *objc_super, cmd SEL, args ...any) ID
 	objc_msgSendSuper2_fn              uintptr
 	objc_msgSendSuper2_stret_fn        uintptr
 	objc_msgSendSuper2                 func(super *objc_super, cmd SEL, args ...any) ID
@@ -84,21 +81,12 @@ func init() {
 		if err != nil {
 			panic(fmt.Errorf("objc: %w", err))
 		}
-		objc_msgSendSuper_stret_fn, err = purego.Dlsym(objc, "objc_msgSendSuper_stret")
-		if err != nil {
-			panic(fmt.Errorf("objc: %w", err))
-		}
 		objc_msgSendSuper2_stret_fn, err = purego.Dlsym(objc, "objc_msgSendSuper2_stret")
 		if err != nil {
 			panic(fmt.Errorf("objc: %w", err))
 		}
 	}
 	purego.RegisterFunc(&objc_msgSend, objc_msgSend_fn)
-	objc_msgSendSuper_fn, err = purego.Dlsym(objc, "objc_msgSendSuper")
-	if err != nil {
-		panic(fmt.Errorf("objc: %w", err))
-	}
-	purego.RegisterFunc(&objc_msgSendSuper, objc_msgSendSuper_fn)
 	objc_msgSendSuper2_fn, err = purego.Dlsym(objc, "objc_msgSendSuper2")
 	if err != nil {
 		panic(fmt.Errorf("objc: %w", err))
@@ -183,8 +171,8 @@ func Send[T any](id ID, sel SEL, args ...any) T {
 	return fn(id, sel, args...)
 }
 
-// objc_super supplies the receiver and class for super dispatch.
-// objc_msgSendSuper starts lookup in superClass; objc_msgSendSuper2 starts in its superclass.
+// objc_super supplies the receiver and defining class to objc_msgSendSuper2,
+// which begins method lookup in that class's superclass.
 type objc_super struct {
 	_          structs.HostLayout
 	receiver   ID
@@ -193,20 +181,9 @@ type objc_super struct {
 
 // SendSuper sends a message starting lookup in the receiver's runtime superclass.
 //
-// Deprecated: Use [ID.SendSuper1] with an explicit superclass or [ID.SendSuper2]
-// with the class defining the executing method.
+// Deprecated: Use [ID.SendSuper2] with the class defining the executing method.
 func (id ID) SendSuper(sel SEL, args ...any) ID {
 	return id.SendSuper2(id.Class(), sel, args...)
-}
-
-// SendSuper1 sends a message starting lookup in superClass.
-// For a super call, superClass must be the superclass of the class defining the executing method.
-func (id ID) SendSuper1(superClass Class, sel SEL, args ...any) ID {
-	super := &objc_super{
-		receiver:   id,
-		superClass: superClass,
-	}
-	return objc_msgSendSuper(super, sel, args...)
 }
 
 // SendSuper2 sends a message starting lookup in the superclass of class.
@@ -221,29 +198,9 @@ func (id ID) SendSuper2(class Class, sel SEL, args ...any) ID {
 
 // SendSuper sends a message starting lookup in the receiver's runtime superclass.
 //
-// Deprecated: Use [SendSuper1] with an explicit superclass or [SendSuper2]
-// with the class defining the executing method.
+// Deprecated: Use [SendSuper2] with the class defining the executing method.
 func SendSuper[T any](id ID, sel SEL, args ...any) T {
 	return SendSuper2[T](id, id.Class(), sel, args...)
-}
-
-// SendSuper1 sends a message starting lookup in superClass and returns T.
-// For a super call, superClass must be the superclass of the class defining the executing method.
-func SendSuper1[T any](id ID, superClass Class, sel SEL, args ...any) T {
-	super := &objc_super{
-		receiver:   id,
-		superClass: superClass,
-	}
-	var fn func(objcSuper *objc_super, sel SEL, args ...any) T
-	var zero T
-	if runtime.GOARCH == "amd64" &&
-		reflect.ValueOf(zero).Kind() == reflect.Struct &&
-		reflect.ValueOf(zero).Type().Size() > maxRegAllocStructSize {
-		purego.RegisterFunc(&fn, objc_msgSendSuper_stret_fn)
-	} else {
-		purego.RegisterFunc(&fn, objc_msgSendSuper_fn)
-	}
-	return fn(super, sel, args...)
 }
 
 // SendSuper2 sends a message starting lookup in the superclass of class and returns T.
