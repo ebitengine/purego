@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2026 The Ebitengine Authors
 
-//go:build darwin || freebsd || linux || netbsd || windows
+//go:build darwin || freebsd || linux || netbsd || openbsd || windows
 
 package purego
 

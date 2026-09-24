@@ -120,7 +120,7 @@ var (
 		{"sigfillset", [5]Arg{{"set", "*sigset_t"}}, "int32", nil},
 		{"nanosleep", [5]Arg{{"ts", "*syscall.Timespec"}, {"rem", "*syscall.Timespec"}}, "int32", nil},
 		{"abort", [5]Arg{}, "", nil},
-		{"sigaltstack", [5]Arg{{"ss", "*stack_t"}, {"old_ss", "*stack_t"}}, "int32", []string{"netbsd"}},
+		{"sigaltstack", [5]Arg{{"ss", "*stack_t"}, {"old_ss", "*stack_t"}}, "int32", []string{"netbsd", "openbsd"}},
 		{"__errno_location", [5]Arg{}, "uintptr", []string{"linux"}},
 		{"setegid", [5]Arg{{"egid", "uint32"}}, "int32", []string{"linux"}},
 		{"seteuid", [5]Arg{{"euid", "uint32"}}, "int32", []string{"linux"}},
@@ -139,9 +139,9 @@ var (
 		{"pthread_sigmask", [5]Arg{{"how", "sighow"}, {"ign", "*sigset_t"}, {"oset", "*sigset_t"}}, "int32", nil},
 		{"pthread_self", [5]Arg{}, "pthread_t", []string{"darwin"}},
 		{"pthread_get_stacksize_np", [5]Arg{{"thread", "pthread_t"}}, "size_t", []string{"darwin"}},
-		{"pthread_attr_getstacksize", [5]Arg{{"attr", "*pthread_attr_t"}, {"stacksize", "*size_t"}}, "int32", []string{"linux", "freebsd", "netbsd"}},
+		{"pthread_attr_getstacksize", [5]Arg{{"attr", "*pthread_attr_t"}, {"stacksize", "*size_t"}}, "int32", []string{"linux", "freebsd", "netbsd", "openbsd"}},
 		{"pthread_attr_setstacksize", [5]Arg{{"attr", "*pthread_attr_t"}, {"size", "size_t"}}, "int32", []string{"darwin"}},
-		{"pthread_attr_destroy", [5]Arg{{"attr", "*pthread_attr_t"}}, "int32", []string{"linux", "freebsd", "netbsd"}},
+		{"pthread_attr_destroy", [5]Arg{{"attr", "*pthread_attr_t"}}, "int32", []string{"linux", "freebsd", "netbsd", "openbsd"}},
 		{"pthread_mutex_lock", [5]Arg{{"mutex", "*pthread_mutex_t"}}, "int32", nil},
 		{"pthread_mutex_unlock", [5]Arg{{"mutex", "*pthread_mutex_t"}}, "int32", nil},
 		{"pthread_cond_broadcast", [5]Arg{{"cond", "*pthread_cond_t"}}, "int32", nil},
@@ -154,7 +154,7 @@ var funcs = map[string]any{
 	"imports":   imports,
 }
 
-var GOOSes = []string{"darwin", "freebsd", "linux", "netbsd"}
+var GOOSes = []string{"darwin", "freebsd", "linux", "netbsd", "openbsd"}
 
 func imports(symbols []Symbol) string {
 	if len(symbols) == 0 {
@@ -273,6 +273,9 @@ func run() error {
 			libcSO = "libc.so.6"
 			pthreadSO = "libpthread.so.0"
 		case "netbsd":
+			libcSO = "libc.so"
+			pthreadSO = "libpthread.so"
+		case "openbsd":
 			libcSO = "libc.so"
 			pthreadSO = "libpthread.so"
 		default:
