@@ -89,6 +89,11 @@ func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFl
 			*numFloats = numOfFloatRegisters()
 		} else if hva && *numInts+numABIFields(v.Type()) > numOfIntegerRegisters() {
 			*numInts = numOfIntegerRegisters()
+		} else if !hfa && !hva && !isDarwin && *numInts+int(roundUpTo8(size)/8) > numOfIntegerRegisters() {
+			// Not enough integer registers for all of the eightbytes,
+			// so the whole struct goes on the stack (AAPCS64). Darwin
+			// makes the same decision in shouldBundleStackArgs.
+			*numInts = numOfIntegerRegisters()
 		}
 
 		placeRegisters(v, addFloat, addInt)
@@ -107,6 +112,18 @@ func placeRegisters(v reflect.Value, addFloat func(uintptr), addInt func(uintptr
 }
 
 func placeRegistersArm64(v reflect.Value, addFloat func(uintptr), addInt func(uintptr)) {
+	// A non-HFA/HVA composite of 16 bytes or less is passed as
+	// consecutive chunks of its in-memory image, not routed by
+	// member kind (AAPCS64; mirrors getCallbackStruct).
+	if !isHFA(v.Type()) && !isHVA(v.Type()) && v.Type().Size() <= 16 {
+		if !v.CanAddr() {
+			tmp := reflect.New(v.Type()).Elem()
+			tmp.Set(v)
+			v = tmp
+		}
+		copyStruct8ByteChunks(v.Addr().UnsafePointer(), v.Type().Size(), addInt)
+		return
+	}
 	var val uint64
 	var shift byte
 	var flushed bool
@@ -310,12 +327,13 @@ func isHVA(t reflect.Type) bool {
 	}
 }
 
-// copyStruct8ByteChunks copies struct memory in 8-byte chunks to the provided callback.
-// This is used for Darwin ARM64's byte-level packing of non-HFA/HVA structs.
+// copyStruct8ByteChunks copies struct memory in 8-byte chunks to the provided
+// callback. The final partial chunk is read byte-by-byte so that nothing beyond
+// the value's allocation is touched, and is zero-extended.
 func copyStruct8ByteChunks(ptr unsafe.Pointer, size uintptr, addChunk func(uintptr)) {
-	if !isDarwin {
-		panic("purego: should only be called on darwin")
-	}
+	// Darwin's byte-level packing and the AAPCS64 rule for non-HFA/HVA
+	// composites of 16 bytes or less both pass consecutive chunks of the
+	// in-memory image, so the two paths share this helper.
 	for offset := uintptr(0); offset < size; offset += 8 {
 		var chunk uintptr
 		remaining := size - offset

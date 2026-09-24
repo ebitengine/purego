@@ -854,6 +854,35 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 				}
 			}
 			{
+				// A mixed {int64; float64}: on arm64 both eightbytes
+				// must reach the callee in integer registers, never
+				// x0/v0 (AAPCS64); other ABIs split them by class.
+				type Int64AndDouble struct {
+					_ structs.HostLayout
+					A int64
+					B float64
+				}
+				var fn func(Int64AndDouble) Int64AndDouble
+				register(&fn, lib, "IdentityInt64AndDouble", func(s Int64AndDouble) Int64AndDouble {
+					return s
+				})
+				expected := Int64AndDouble{A: -1234, B: 5.25}
+				if ret := fn(expected); ret != expected {
+					t.Fatalf("IdentityInt64AndDouble returned %+v wanted %+v", ret, expected)
+				}
+				if runtime.GOARCH == "arm64" {
+					// Only x7 is left, so the whole struct goes
+					// on the stack, also on Darwin.
+					var fn func(int64, int64, int64, int64, int64, int64, int64, Int64AndDouble) Int64AndDouble
+					register(&fn, lib, "IdentityInt64AndDoubleAfterRegisters", func(a, b, c, d, e, f, g int64, s Int64AndDouble) Int64AndDouble {
+						return s
+					})
+					if ret := fn(1, 2, 3, 4, 5, 6, 7, expected); ret != expected {
+						t.Fatalf("IdentityInt64AndDoubleAfterRegisters returned %+v wanted %+v", ret, expected)
+					}
+				}
+			}
+			{
 				// Struct > 16 bytes: hidden pointer on amd64, pointer in int register on arm64.
 				type ThreeInt64 struct {
 					_       structs.HostLayout
