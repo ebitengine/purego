@@ -392,6 +392,12 @@ func callbackasmAddr(i int) uintptr {
 		// On ARM, ARM64, Loong64, PPC64LE and RISCV64, each entry is a MOV instruction
 		// followed by a branch instruction
 		entrySize = 8
+		if runtime.GOOS == "openbsd" && runtime.GOARCH == "arm64" {
+			// OpenBSD/arm64 enforces BTI, so every entry begins with its own
+			// `BTI c` landing pad: three instructions rather than two. Without
+			// it an indirect branch to any entry but the first raises SIGILL.
+			entrySize = 12
+		}
 	case "s390x":
 		// On S390X, each entry is LGHI (4 bytes) + JG (6 bytes)
 		entrySize = 10
