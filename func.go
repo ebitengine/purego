@@ -48,8 +48,8 @@ func RegisterLibFunc(fptr any, handle uintptr, name string) {
 //
 // These conversions describe how a Go type in the fptr will be used to call
 // the C function. It is important to note that there is no way to verify that fptr
-// matches the C function. This also holds true for struct types where the padding
-// needs to be ensured to match that of C; RegisterFunc does not verify this.
+// matches the C function. This also holds true for struct types, whose memory layout
+// must match the C one; RegisterFunc does not verify this.
 //
 // # Type Conversions (Go <=> C)
 //
@@ -101,9 +101,11 @@ func RegisterLibFunc(fptr any, handle uintptr, name string) {
 //
 // # Structs
 //
-// Purego can handle the most common structs that have fields of builtin types like int8, uint16, float32, etc. However,
-// it does not support aligning fields properly. It is therefore the responsibility of the caller to ensure
-// that all padding is added to the Go struct to match the C one. See `BoolStructFn` in struct_test.go for an example.
+// Purego can handle the most common structs that have fields of builtin types like int8, uint16, float32, etc.
+// Each field is placed at the offset it has in the Go struct's memory image, so the padding the Go compiler
+// inserts is preserved and explicit padding fields are not needed. The Go struct must still be declared with the
+// same fields, in the same order, as the C one, and should embed [structs.HostLayout] to guarantee that layout.
+// Purego does not verify that the two match.
 //
 // On Apple ARM64 platforms (macOS and iOS), purego handles proper alignment of struct arguments
 // when passing them on the stack, following the C ABI's byte-level packing rules.

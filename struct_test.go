@@ -613,7 +613,7 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 				type BoolFloat struct {
 					_ structs.HostLayout
 					b bool
-					_ [3]byte // purego won't do padding for you so make sure it aligns properly with C struct
+					_ [3]byte // redundant with the padding Go inserts, but mirrors the C layout
 					f float32
 				}
 				var BoolFloatFn func(BoolFloat) float32
@@ -944,6 +944,163 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 				}
 				runtime.KeepAlive(ptr)
 			}
+			t.Run("CharLong", func(t *testing.T) {
+				// The wide field must not overwrite the pending small field.
+				type CharLong struct {
+					_ structs.HostLayout
+					A int8
+					B int64
+				}
+				var fn func(CharLong) CharLong
+				register(&fn, lib, "IdentityCharLong", func(s CharLong) CharLong {
+					return s
+				})
+				expected := CharLong{A: 0x7f, B: -0x0102030405060708}
+				if ret := fn(expected); ret != expected {
+					t.Fatalf("IdentityCharLong returned %+v wanted %+v", ret, expected)
+				}
+			})
+			t.Run("CharLongBetweenPrims", func(t *testing.T) {
+				// The struct must consume exactly two register slots so the
+				// trailing scalar is not shifted.
+				type CharLong struct {
+					_ structs.HostLayout
+					A int8
+					B int64
+				}
+				var fn func(int64, CharLong, int64) CharLong
+				register(&fn, lib, "IdentityCharLongBetweenPrims", func(x int64, s CharLong, y int64) CharLong {
+					return s
+				})
+				expected := CharLong{A: -1, B: 0x1122334455667788}
+				if ret := fn(1, expected, 2); ret != expected {
+					t.Fatalf("IdentityCharLongBetweenPrims returned %+v wanted %+v", ret, expected)
+				}
+			})
+			t.Run("CharInt", func(t *testing.T) {
+				// The int32 must be placed at its padded offset, not back-to-back
+				// with the int8.
+				type CharInt struct {
+					_ structs.HostLayout
+					A int8
+					B int32
+				}
+				var fn func(CharInt) CharInt
+				register(&fn, lib, "IdentityCharInt", func(s CharInt) CharInt {
+					return s
+				})
+				expected := CharInt{A: 0x01, B: 0x02030405}
+				if ret := fn(expected); ret != expected {
+					t.Fatalf("IdentityCharInt returned %+v wanted %+v", ret, expected)
+				}
+			})
+			t.Run("NestedSmallTail", func(t *testing.T) {
+				// A sibling in the next eightbyte after a padded nested struct.
+				type NestedSmallTail struct {
+					_ structs.HostLayout
+					I struct {
+						_ structs.HostLayout
+						A int8
+						B int32
+					}
+					C int8
+				}
+				var fn func(NestedSmallTail) NestedSmallTail
+				register(&fn, lib, "IdentityNestedSmallTail", func(s NestedSmallTail) NestedSmallTail {
+					return s
+				})
+				expected := NestedSmallTail{
+					I: struct {
+						_ structs.HostLayout
+						A int8
+						B int32
+					}{A: 0x11, B: 0x22334455},
+					C: 0x66,
+				}
+				if ret := fn(expected); ret != expected {
+					t.Fatalf("IdentityNestedSmallTail returned %+v wanted %+v", ret, expected)
+				}
+			})
+			t.Run("NestedIntsPlusOne", func(t *testing.T) {
+				// The sibling must be merged into the eightbyte the nested
+				// struct left pending.
+				type inner struct {
+					_ structs.HostLayout
+					X int32
+					Y int32
+					Z int32
+				}
+				type NestedIntsPlusOne struct {
+					_ structs.HostLayout
+					A inner
+					B int32
+				}
+				var sum func(NestedIntsPlusOne) int64
+				register(&sum, lib, "SumNestedIntsPlusOne", func(s NestedIntsPlusOne) int64 {
+					return int64(s.A.X) + int64(s.A.Y) + int64(s.A.Z) + int64(s.B)
+				})
+				if ret := sum(NestedIntsPlusOne{A: inner{X: 1, Y: 2, Z: 3}, B: 4}); ret != 10 {
+					t.Fatalf("SumNestedIntsPlusOne returned %d wanted 10", ret)
+				}
+			})
+			t.Run("NestedPadTail", func(t *testing.T) {
+				// The sibling after the nested struct's trailing padding must
+				// still be flushed.
+				type inner struct {
+					_ structs.HostLayout
+					X int32
+					Y int8
+				}
+				type NestedPadTail struct {
+					_ structs.HostLayout
+					A inner
+					B int8
+				}
+				var sum func(NestedPadTail) int64
+				register(&sum, lib, "SumNestedPadTail", func(s NestedPadTail) int64 {
+					return int64(s.A.X) + int64(s.A.Y) + int64(s.B)
+				})
+				if ret := sum(NestedPadTail{A: inner{X: 1, Y: 2}, B: 3}); ret != 6 {
+					t.Fatalf("SumNestedPadTail returned %d wanted 6", ret)
+				}
+			})
+			t.Run("ArrayIntsPlusOne", func(t *testing.T) {
+				// The array counterpart of NestedIntsPlusOne.
+				type ArrayIntsPlusOne struct {
+					_ structs.HostLayout
+					A [3]int32
+					B int32
+				}
+				var sum func(ArrayIntsPlusOne) int64
+				register(&sum, lib, "SumArrayIntsPlusOne", func(s ArrayIntsPlusOne) int64 {
+					return int64(s.A[0]) + int64(s.A[1]) + int64(s.A[2]) + int64(s.B)
+				})
+				if ret := sum(ArrayIntsPlusOne{A: [3]int32{1, 2, 3}, B: 4}); ret != 10 {
+					t.Fatalf("SumArrayIntsPlusOne returned %d wanted 10", ret)
+				}
+			})
+			t.Run("BoolFloatNoPadding", func(t *testing.T) {
+				// Fields are placed at their in-memory offsets, so no
+				// explicit padding is needed after the bool.
+				type BoolFloat struct {
+					_ structs.HostLayout
+					b bool
+					f float32
+				}
+				var fn func(BoolFloat) float32
+				register(&fn, lib, "BoolFloat", func(s BoolFloat) float32 {
+					if s.b {
+						return s.f
+					}
+					return -s.f
+				})
+				if ret := fn(BoolFloat{b: true, f: 10}); ret != expectedFloat {
+					t.Fatalf("BoolFloat returned %f wanted %f", ret, expectedFloat)
+				}
+				if ret := fn(BoolFloat{b: false, f: 10}); ret != -expectedFloat {
+					t.Fatalf("BoolFloat returned %f wanted %f", ret, -expectedFloat)
+				}
+			})
 		})
 	}
 }
