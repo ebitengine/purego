@@ -34,7 +34,10 @@ func getSystemLibrary() (string, error) {
 		return "libc.so.7", nil
 	case "linux":
 		return "libc.so.6", nil
-	case "netbsd":
+	case "netbsd", "openbsd":
+		// Neither ships an unversioned libc.so FILE, but ld.so resolves the
+		// soname: on OpenBSD 7.9 this opens libc.so.103.0 and returns the
+		// same handle as naming the versioned file directly.
 		return "libc.so", nil
 	case "windows":
 		return "ucrtbase.dll", nil
