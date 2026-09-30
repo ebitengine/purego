@@ -170,7 +170,6 @@ func loadBlockFixture(t *testing.T) uintptr {
 	return lib
 }
 
-// TestInvokeForeignBlock invokes blocks that Objective-C created rather than NewBlock.
 func TestInvokeForeignBlock(t *testing.T) {
 	lib := loadBlockFixture(t)
 

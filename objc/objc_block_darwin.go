@@ -253,12 +253,6 @@ func (b Block) callForeign(resultType reflect.Type, args []any) []reflect.Value 
 }
 
 // Invoke calls the implementation of a block.
-//
-// Blocks created by [NewBlock] call the associated Go function directly.
-// Any other block, such as a completion handler supplied by Objective-C, is called
-// through the Blocks ABI using the dynamic types of args; pass typed values
-// (for example int32(1) rather than a constant if the block takes an int32),
-// and any result is discarded.
 func (b Block) Invoke(args ...any) {
 	fn := theBlocksCache.Functions.Load(b)
 	if !fn.IsValid() {
@@ -295,9 +289,6 @@ func NewBlock(fn any) Block {
 
 // InvokeBlock is a convenience method for calling the implementation of a block.
 // The block implementation must return 1 value.
-//
-// Blocks that were not created by [NewBlock] are called through the Blocks ABI
-// with a signature derived from T and the dynamic types of args.
 func InvokeBlock[T any](block Block, args ...any) (result T, err error) {
 	if !theBlocksCache.Functions.Load(block).IsValid() {
 		// not one of ours. The block may live on the caller's stack, so it must not be
