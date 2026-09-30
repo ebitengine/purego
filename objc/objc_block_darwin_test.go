@@ -208,3 +208,80 @@ func TestInvokeForeignBlock(t *testing.T) {
 		}
 	})
 }
+
+func TestInvokeForeignBlockMismatch(t *testing.T) {
+	lib := loadBlockFixture(t)
+	var heapBlock func(base int64) objc.Block
+	purego.RegisterLibFunc(&heapBlock, lib, "purego_heap_block")
+	block := heapBlock(100)
+	defer block.Release()
+
+	if _, err := objc.InvokeBlock[int64](block, int64(20)); err == nil {
+		t.Error("missing argument: expected an error")
+	}
+	if _, err := objc.InvokeBlock[int64](block, int64(20), int64(3)); err == nil {
+		t.Error("integer for a double argument: expected an error")
+	}
+	if _, err := objc.InvokeBlock[float64](block, int64(20), 3.5); err == nil {
+		t.Error("wrong result type: expected an error")
+	}
+	if _, err := objc.InvokeBlock[any](block, int64(20), 3.5); err == nil {
+		t.Error("unsupported result type: expected an error")
+	}
+	if _, err := objc.InvokeBlock[int64](block, nil, 3.5); err == nil {
+		t.Error("nil argument: expected an error")
+	}
+	if got, err := objc.InvokeBlock[int64](block, int64(20), 3.5); err != nil || got != 123 {
+		t.Errorf("InvokeBlock = %d, %v; want 123, nil", got, err)
+	}
+}
+
+func TestInvokeForeignBlockStruct(t *testing.T) {
+	lib := loadBlockFixture(t)
+	var bigBlock func() objc.Block
+	purego.RegisterLibFunc(&bigBlock, lib, "purego_big_block")
+	block := bigBlock()
+	defer block.Release()
+
+	type big struct {
+		_          structs.HostLayout
+		a, b, c, d int64
+	}
+	got, err := objc.InvokeBlock[big](block, int64(1))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := (big{a: 1, b: 2, c: 3, d: 4}); got != want {
+		t.Errorf("got %+v, want %+v", got, want)
+	}
+
+	// Invoke cannot receive the result, so it must refuse rather than crash.
+	defer func() {
+		if recover() == nil {
+			t.Error("Invoke on a block returning a struct: expected a panic")
+		}
+	}()
+	block.Invoke(int64(1))
+}
+
+func TestInvokeForeignBlockFuncArgument(t *testing.T) {
+	lib := loadBlockFixture(t)
+	var fnptrBlock func() objc.Block
+	purego.RegisterLibFunc(&fnptrBlock, lib, "purego_fnptr_block")
+	block := fnptrBlock()
+	defer block.Release()
+
+	// a func argument would consume a callback on every call; it must be refused.
+	if _, err := objc.InvokeBlock[objc.ID](block, func() {}); err == nil {
+		t.Error("expected an error for a func argument")
+	}
+
+	called := 0
+	cb := purego.NewCallback(func() { called++ })
+	for range 5000 {
+		block.Invoke(cb)
+	}
+	if called != 5000 {
+		t.Errorf("called = %d, want 5000", called)
+	}
+}

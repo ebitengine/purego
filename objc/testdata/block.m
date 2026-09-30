@@ -22,3 +22,24 @@ void purego_with_stack_block(int64_t base, void (*cb)(void *block)) {
     };
     cb((void *)b);
 }
+
+typedef struct {
+    int64_t a, b, c, d;
+} Big;
+
+// purego_big_block returns a block that returns a struct in memory.
+void *purego_big_block(void) {
+    Big (^b)(int64_t) = ^Big(int64_t x) {
+        Big r = {x, x + 1, x + 2, x + 3};
+        return r;
+    };
+    return Block_copy(b);
+}
+
+// purego_fnptr_block returns a block that calls a function pointer.
+void *purego_fnptr_block(void) {
+    void (^b)(void (*)(void)) = ^(void (*f)(void)) {
+        f();
+    };
+    return Block_copy(b);
+}
