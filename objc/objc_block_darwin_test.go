@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"structs"
 	"testing"
-	"unsafe"
 
 	"github.com/ebitengine/purego"
 	"github.com/ebitengine/purego/objc"
@@ -191,40 +190,66 @@ func TestInvokeForeignBlock(t *testing.T) {
 	}
 }
 
-// literal mirrors a block literal that was not created by NewBlock.
-type literal struct {
-	_          structs.HostLayout
-	isa        uintptr
-	flags      int32
-	_          int32
-	invoke     uintptr
-	descriptor uintptr
-}
-
-func TestInvokeForeignBlockArgs(t *testing.T) {
-	var got int32
-	var gotF float64
-	var gotBlock objc.Block
-	desc := [2]uintptr{0, unsafe.Sizeof(literal{})}
-	lit := &literal{
-		invoke: purego.NewCallback(func(b objc.Block, i int32, f float64) int32 {
-			gotBlock, got, gotF = b, i, f
-			return i * 2
-		}),
-		descriptor: uintptr(unsafe.Pointer(&desc)),
-	}
-	block := objc.Block(unsafe.Pointer(lit))
-
-	block.Invoke(int32(7), 2.5)
-	if got != 7 || gotF != 2.5 || gotBlock != block {
-		t.Fatalf("got (%d, %v, %#x), want (7, 2.5, %#x)", got, gotF, gotBlock, block)
-	}
-
-	res, err := objc.InvokeBlock[int32](block, int32(21), 1.5)
-	if err != nil {
+// TestInvokeFrameworkCompletionHandler invokes a block created by Foundation.
+// NSItemProvider passes a completion handler (a stack block) to the load handler
+// given to registerItemForTypeIdentifier:loadHandler:.
+func TestInvokeFrameworkCompletionHandler(t *testing.T) {
+	if _, err := purego.Dlopen("/System/Library/Frameworks/Foundation.framework/Foundation", purego.RTLD_GLOBAL|purego.RTLD_NOW); err != nil {
 		t.Fatal(err)
 	}
-	if res != 42 {
-		t.Fatalf("got %d, want 42", res)
+	str := func(s string) objc.ID {
+		return objc.Send[objc.ID](objc.ID(objc.GetClass("NSString")), objc.RegisterName("stringWithUTF8String:"), s)
+	}
+	typeID := str("public.plain-text")
+	provider := objc.Send[objc.ID](objc.ID(objc.GetClass("NSItemProvider")), objc.RegisterName("new"))
+	defer objc.Send[objc.ID](provider, objc.RegisterName("release"))
+
+	want := str("hello")
+	load := objc.NewBlock(func(_ objc.Block, completion objc.Block, _ objc.Class, _ objc.ID) {
+		completion.Invoke(want, objc.ID(0))
+	})
+	defer load.Release()
+	objc.Send[objc.ID](provider, objc.RegisterName("registerItemForTypeIdentifier:loadHandler:"), typeID, load)
+
+	done := make(chan objc.ID, 1)
+	handler := objc.NewBlock(func(_ objc.Block, item, _ objc.ID) { done <- item })
+	defer handler.Release()
+	objc.Send[objc.ID](provider, objc.RegisterName("loadItemForTypeIdentifier:options:completionHandler:"), typeID, objc.ID(0), handler)
+
+	// the load handler is dispatched to the main queue, so the main run loop must run.
+	runLoop := objc.Send[objc.ID](objc.ID(objc.GetClass("NSRunLoop")), objc.RegisterName("mainRunLoop"))
+	date := objc.Send[objc.ID](objc.ID(objc.GetClass("NSDate")), objc.RegisterName("dateWithTimeIntervalSinceNow:"), 5.0)
+	for {
+		select {
+		case item := <-done:
+			if item != want {
+				t.Fatalf("got item %#x, want %#x", item, want)
+			}
+			return
+		default:
+		}
+		mode := str("kCFRunLoopDefaultMode")
+		soon := objc.Send[objc.ID](objc.ID(objc.GetClass("NSDate")), objc.RegisterName("dateWithTimeIntervalSinceNow:"), 0.05)
+		objc.Send[bool](runLoop, objc.RegisterName("runMode:beforeDate:"), mode, soon)
+		if objc.Send[float64](date, objc.RegisterName("timeIntervalSinceNow")) < 0 {
+			t.Fatal("timed out waiting for the completion handler")
+		}
+	}
+}
+
+func TestInvokeBlockForeign(t *testing.T) {
+	ran := false
+	ours := objc.NewBlock(func(_ objc.Block) { ran = true })
+	defer ours.Release()
+
+	foreign := foreignBlock(t, ours)
+	defer foreign.Release()
+
+	// the wrapper returns nothing meaningful; just check the call goes through.
+	if _, err := objc.InvokeBlock[int32](foreign); err != nil {
+		t.Fatal(err)
+	}
+	if !ran {
+		t.Fatal("inner block was not run")
 	}
 }
