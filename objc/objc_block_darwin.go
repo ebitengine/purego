@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
-	"strings"
 	"structs"
 	"sync"
 	"unsafe"
@@ -219,125 +218,6 @@ func (b Block) Copy() Block {
 	return _Block_copy(b)
 }
 
-// signature returns the type encoding of a block, as given to @encode,
-// or false if the block does not export one.
-func (b Block) signature() (string, bool) {
-	layout := *(**blockLayout)(unsafe.Pointer(&b))
-	if layout.flags&blockHasSignature == 0 {
-		return "", false
-	}
-	// The descriptor is { reserved, size, [copy, dispose,] [signature] } where the
-	// helpers are only present with blockHasCopyDispose.
-	offset := 2 * unsafe.Sizeof(uintptr(0))
-	if layout.flags&blockHasCopyDispose != 0 {
-		offset += 2 * unsafe.Sizeof(uintptr(0))
-	}
-	sig := *(**byte)(unsafe.Add(unsafe.Pointer(layout.descriptor), offset))
-	if sig == nil {
-		return "", false
-	}
-	n := 0
-	for *(*byte)(unsafe.Add(unsafe.Pointer(sig), n)) != 0 {
-		n++
-	}
-	return unsafe.String(sig, n), true
-}
-
-// skipEncoding returns the index just past the first type encoding in s,
-// including any leading qualifiers and any trailing frame offset.
-func skipEncoding(s string, i int) int {
-	for i < len(s) && strings.IndexByte("rnNoORV", s[i]) >= 0 {
-		i++
-	}
-	if i >= len(s) {
-		return i
-	}
-	switch s[i] {
-	case '{', '(', '[':
-		open, end := s[i], map[byte]byte{'{': '}', '(': ')', '[': ']'}[s[i]]
-		for depth := 0; i < len(s); i++ {
-			if s[i] == open {
-				depth++
-			} else if s[i] == end {
-				if depth--; depth == 0 {
-					i++
-					break
-				}
-			}
-		}
-	case '^':
-		i = skipEncoding(s, i+1)
-		return i // the offset was consumed by the pointee
-	case 'b':
-		i++
-	case '@':
-		i++
-		if i < len(s) && s[i] == '?' {
-			i++
-		} else if i < len(s) && s[i] == '"' {
-			i++
-			for i < len(s) && s[i] != '"' {
-				i++
-			}
-			i++
-		}
-	default:
-		i++
-	}
-	for i < len(s) && s[i] >= '0' && s[i] <= '9' {
-		i++
-	}
-	return i
-}
-
-// splitSignature splits a method or block type encoding into the return type followed by the argument types.
-func splitSignature(sig string) (types []string) {
-	for i := 0; i < len(sig); {
-		j := skipEncoding(sig, i)
-		types = append(types, strings.TrimRight(strings.TrimLeft(sig[i:j], "rnNoORV"), "0123456789"))
-		i = j
-	}
-	return types
-}
-
-// encodingClass reduces a type encoding to what matters to the calling convention.
-func encodingClass(enc string) string {
-	enc = strings.TrimLeft(enc, "rnNoORV")
-	switch {
-	case enc == "":
-		return ""
-	case enc[0] == 'v':
-		return "void"
-	case enc[0] == 'f':
-		return "float"
-	case enc[0] == 'd':
-		return "double"
-	case enc[0] == '{' || enc[0] == '(':
-		return "struct"
-	}
-	return "integer"
-}
-
-// goClass is encodingClass for a Go type.
-func goClass(typ reflect.Type) (string, error) {
-	switch typ.Kind() {
-	case reflect.Float32:
-		return "float", nil
-	case reflect.Float64:
-		return "double", nil
-	case reflect.Struct:
-		return "struct", nil
-	case reflect.Bool, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
-		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr,
-		reflect.Pointer, reflect.UnsafePointer, reflect.String:
-		return "integer", nil
-	case reflect.Func:
-		// RegisterFunc would create a callback for every call, and callbacks are never freed.
-		return "", fmt.Errorf("objc: a %s argument to a block is not supported; create the callback once with purego.NewCallback and pass the uintptr", typ)
-	}
-	return "", fmt.Errorf("objc: unsupported block argument or result type %s", typ)
-}
-
 // callForeign calls a block that was not created by [NewBlock] (for example one
 // handed to us by Objective-C) through the Blocks ABI: the block is passed as the
 // first argument followed by args. The signature is derived from the dynamic
@@ -354,7 +234,7 @@ func (b Block) callForeign(resultType reflect.Type, args []any) ([]reflect.Value
 	}
 
 	in := make([]reflect.Type, len(args)+1)
-	classes := make([]string, len(args))
+	abis := make([]string, len(args))
 	reflectedArgs := make([]reflect.Value, len(args)+1)
 	in[0] = reflect.TypeFor[Block]()
 	reflectedArgs[0] = reflect.ValueOf(b)
@@ -365,42 +245,48 @@ func (b Block) callForeign(resultType reflect.Type, args []any) ([]reflect.Value
 		reflectedArgs[i+1] = reflect.ValueOf(arg)
 		in[i+1] = reflectedArgs[i+1].Type()
 		var err error
-		if classes[i], err = goClass(in[i+1]); err != nil {
+		if abis[i], err = goABI(in[i+1]); err != nil {
 			return nil, err
 		}
 	}
-	resultClass := "void"
+	resultABI := abiVoid
 	var out []reflect.Type
 	if resultType != nil {
 		var err error
-		if resultClass, err = goClass(resultType); err != nil {
+		if resultABI, err = goABI(resultType); err != nil {
 			return nil, err
 		}
 		out = []reflect.Type{resultType}
 	}
 
 	if sig, ok := b.signature(); ok {
-		types := splitSignature(sig)
+		types, err := splitSignature(sig)
 		// types is the result, then the block itself, then the parameters.
-		if len(types) < 2 {
+		if err != nil || len(types) < 2 {
 			return nil, fmt.Errorf("objc: malformed block signature %q", sig)
 		}
 		if len(types)-2 != len(args) {
 			return nil, fmt.Errorf("objc: block callback expects %d arguments, got %d", len(types)-2, len(args))
 		}
-		want := encodingClass(types[0])
+		want, err := encodingABI(types[0])
 		switch {
-		case resultType == nil && want == "struct":
+		case resultType == nil && (err != nil || want[0] == '{'):
 			// The caller has to provide the result buffer for a struct returned in memory.
-			return nil, fmt.Errorf("objc: block returns a struct (%s); use InvokeBlock to receive it", types[0])
-		case resultType == nil && want != "void":
-			// the result is discarded.
-		case want != resultClass:
-			return nil, fmt.Errorf("objc: block returns %s (%s), not %s", want, types[0], resultClass)
+			return nil, fmt.Errorf("objc: block returns %s; use InvokeBlock to receive it", types[0])
+		case resultType == nil:
+			// the result, if any, is discarded.
+		case err != nil:
+			return nil, fmt.Errorf("objc: block result %s: %w", types[0], err)
+		case want != resultABI:
+			return nil, fmt.Errorf("objc: block returns %s, which does not match %s", types[0], resultType)
 		}
-		for i, class := range classes {
-			if want := encodingClass(types[i+2]); want != class {
-				return nil, fmt.Errorf("objc: argument %d to the block is %s (%s), not %s", i, want, types[i+2], class)
+		for i, got := range abis {
+			want, err := encodingABI(types[i+2])
+			if err != nil {
+				return nil, fmt.Errorf("objc: block argument %d %s: %w", i, types[i+2], err)
+			}
+			if want != got {
+				return nil, fmt.Errorf("objc: block argument %d is %s, which does not match %s", i, types[i+2], in[i+1])
 			}
 		}
 	}

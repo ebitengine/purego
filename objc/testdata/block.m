@@ -43,3 +43,11 @@ void *purego_fnptr_block(void) {
     };
     return Block_copy(b);
 }
+
+// purego_blockarg_block returns a block that calls the block it is given with x + 1.
+void *purego_blockarg_block(void) {
+    void (^b)(void (^)(int64_t), int64_t) = ^(void (^h)(int64_t), int64_t x) {
+        h(x + 1);
+    };
+    return Block_copy(b);
+}

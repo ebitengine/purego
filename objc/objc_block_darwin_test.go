@@ -228,6 +228,15 @@ func TestInvokeForeignBlockMismatch(t *testing.T) {
 	if _, err := objc.InvokeBlock[any](block, int64(20), 3.5); err == nil {
 		t.Error("unsupported result type: expected an error")
 	}
+	if _, err := objc.InvokeBlock[int32](block, int64(20), 3.5); err == nil {
+		t.Error("smaller result type: expected an error")
+	}
+	if _, err := objc.InvokeBlock[int64](block, 20, 3.5); err != nil {
+		t.Errorf("int for an int64_t argument: %v", err)
+	}
+	if _, err := objc.InvokeBlock[int64](block, int32(20), 3.5); err == nil {
+		t.Error("int32 for an int64_t argument: expected an error")
+	}
 	if _, err := objc.InvokeBlock[int64](block, nil, 3.5); err == nil {
 		t.Error("nil argument: expected an error")
 	}
@@ -255,6 +264,22 @@ func TestInvokeForeignBlockStruct(t *testing.T) {
 		t.Errorf("got %+v, want %+v", got, want)
 	}
 
+	type small struct {
+		_    structs.HostLayout
+		a, b int64
+	}
+	if _, err := objc.InvokeBlock[small](block, int64(1)); err == nil {
+		t.Error("smaller struct: expected an error")
+	}
+	type reordered struct {
+		_       structs.HostLayout
+		a, b, c int64
+		d       float64
+	}
+	if _, err := objc.InvokeBlock[reordered](block, int64(1)); err == nil {
+		t.Error("struct with a different field: expected an error")
+	}
+
 	// Invoke cannot receive the result, so it must refuse rather than crash.
 	defer func() {
 		if recover() == nil {
@@ -276,6 +301,15 @@ func TestInvokeForeignBlockFuncArgument(t *testing.T) {
 		t.Error("expected an error for a func argument")
 	}
 
+	func() {
+		defer func() {
+			if recover() == nil {
+				t.Error("Invoke with a func argument: expected a panic")
+			}
+		}()
+		block.Invoke(func() {})
+	}()
+
 	called := 0
 	cb := purego.NewCallback(func() { called++ })
 	for range 5000 {
@@ -283,5 +317,22 @@ func TestInvokeForeignBlockFuncArgument(t *testing.T) {
 	}
 	if called != 5000 {
 		t.Errorf("called = %d, want 5000", called)
+	}
+}
+
+func TestInvokeForeignBlockBlockArgument(t *testing.T) {
+	lib := loadBlockFixture(t)
+	var blockArgBlock func() objc.Block
+	purego.RegisterLibFunc(&blockArgBlock, lib, "purego_blockarg_block")
+	block := blockArgBlock()
+	defer block.Release()
+
+	var got int64
+	handler := objc.NewBlock(func(_ objc.Block, x int64) { got = x })
+	defer handler.Release()
+
+	block.Invoke(handler, int64(41))
+	if got != 42 {
+		t.Errorf("got %d, want 42", got)
 	}
 }
