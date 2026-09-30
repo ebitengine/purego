@@ -217,9 +217,54 @@ func (b Block) Copy() Block {
 	return _Block_copy(b)
 }
 
+// callForeign calls a block that was not created by [NewBlock] (for example one
+// handed to us by Objective-C) through the Blocks ABI: the block is passed as the
+// first argument followed by args. The signature is derived from the dynamic
+// types of args and from resultType (nil for no result).
+// See https://clang.llvm.org/docs/Block-ABI-Apple.html.
+func (b Block) callForeign(resultType reflect.Type, args []any) []reflect.Value {
+	if b == 0 {
+		panic("objc: cannot invoke a nil block")
+	}
+	invoke := (*(**blockLayout)(unsafe.Pointer(&b))).invoke
+	if invoke == 0 {
+		panic("objc: block has no invoke function")
+	}
+
+	in := make([]reflect.Type, len(args)+1)
+	reflectedArgs := make([]reflect.Value, len(args)+1)
+	in[0] = reflect.TypeFor[Block]()
+	reflectedArgs[0] = reflect.ValueOf(b)
+	for i, arg := range args {
+		if arg == nil {
+			panic(fmt.Sprintf("objc: argument %d to a block is nil; pass a typed value", i))
+		}
+		reflectedArgs[i+1] = reflect.ValueOf(arg)
+		in[i+1] = reflectedArgs[i+1].Type()
+	}
+	var out []reflect.Type
+	if resultType != nil {
+		out = []reflect.Type{resultType}
+	}
+
+	fn := reflect.New(reflect.FuncOf(in, out, false))
+	purego.RegisterFunc(fn.Interface(), invoke)
+	return fn.Elem().Call(reflectedArgs)
+}
+
 // Invoke calls the implementation of a block.
+//
+// Blocks created by [NewBlock] call the associated Go function directly.
+// Any other block, such as a completion handler supplied by Objective-C, is called
+// through the Blocks ABI using the dynamic types of args; pass typed values
+// (for example int32(1) rather than a constant if the block takes an int32),
+// and any result is discarded.
 func (b Block) Invoke(args ...any) {
 	fn := theBlocksCache.Functions.Load(b)
+	if !fn.IsValid() {
+		b.callForeign(nil, args)
+		return
+	}
 
 	reflectedArgs := make([]reflect.Value, len(args)+1)
 	reflectedArgs[0] = reflect.ValueOf(b)
@@ -250,7 +295,18 @@ func NewBlock(fn any) Block {
 
 // InvokeBlock is a convenience method for calling the implementation of a block.
 // The block implementation must return 1 value.
+//
+// Blocks that were not created by [NewBlock] are called through the Blocks ABI
+// with a signature derived from T and the dynamic types of args.
 func InvokeBlock[T any](block Block, args ...any) (result T, err error) {
+	if !theBlocksCache.Functions.Load(block).IsValid() {
+		// not one of ours. The block may live on the caller's stack, so it must not be
+		// copied: the copy would be a different pointer and is unnecessary for a synchronous call.
+		out := block.callForeign(reflect.TypeFor[T](), args)
+		result, _ = reflect.TypeAssert[T](out[0])
+		return result, nil
+	}
+
 	block = block.Copy()
 	defer block.Release()
 

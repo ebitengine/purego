@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"structs"
 	"testing"
+	"unsafe"
 
 	"github.com/ebitengine/purego"
 	"github.com/ebitengine/purego/objc"
@@ -152,5 +153,78 @@ func TestBlockCopyAndBlockRelease(t *testing.T) {
 	block.Invoke()
 	if refCount != 1 {
 		t.Fatalf("refCount: %d != 1", refCount)
+	}
+}
+
+// foreignBlock returns a block allocated by the runtime (not by NewBlock) that wraps inner.
+func foreignBlock(t *testing.T, inner objc.Block) objc.Block {
+	t.Helper()
+	lib, err := purego.Dlopen("/usr/lib/libSystem.B.dylib", purego.RTLD_LAZY|purego.RTLD_GLOBAL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	create, err := purego.Dlsym(lib, "dispatch_block_create")
+	if err != nil {
+		t.Fatal(err)
+	}
+	r, _, _ := purego.SyscallN(create, 0, uintptr(inner))
+	if r == 0 {
+		t.Fatal("dispatch_block_create returned nil")
+	}
+	return objc.Block(r)
+}
+
+func TestInvokeForeignBlock(t *testing.T) {
+	ran := false
+	ours := objc.NewBlock(func(_ objc.Block) { ran = true })
+	defer ours.Release()
+
+	foreign := foreignBlock(t, ours)
+	defer foreign.Release()
+	if foreign == ours {
+		t.Fatal("expected a distinct block")
+	}
+
+	foreign.Invoke()
+	if !ran {
+		t.Fatal("inner block was not run")
+	}
+}
+
+// literal mirrors a block literal that was not created by NewBlock.
+type literal struct {
+	_          structs.HostLayout
+	isa        uintptr
+	flags      int32
+	_          int32
+	invoke     uintptr
+	descriptor uintptr
+}
+
+func TestInvokeForeignBlockArgs(t *testing.T) {
+	var got int32
+	var gotF float64
+	var gotBlock objc.Block
+	desc := [2]uintptr{0, unsafe.Sizeof(literal{})}
+	lit := &literal{
+		invoke: purego.NewCallback(func(b objc.Block, i int32, f float64) int32 {
+			gotBlock, got, gotF = b, i, f
+			return i * 2
+		}),
+		descriptor: uintptr(unsafe.Pointer(&desc)),
+	}
+	block := objc.Block(unsafe.Pointer(lit))
+
+	block.Invoke(int32(7), 2.5)
+	if got != 7 || gotF != 2.5 || gotBlock != block {
+		t.Fatalf("got (%d, %v, %#x), want (7, 2.5, %#x)", got, gotF, gotBlock, block)
+	}
+
+	res, err := objc.InvokeBlock[int32](block, int32(21), 1.5)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res != 42 {
+		t.Fatalf("got %d, want 42", res)
 	}
 }
