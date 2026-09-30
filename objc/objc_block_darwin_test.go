@@ -5,6 +5,9 @@ package objc_test
 
 import (
 	"fmt"
+	"os/exec"
+	"path/filepath"
+	"runtime"
 	"structs"
 	"testing"
 
@@ -155,101 +158,61 @@ func TestBlockCopyAndBlockRelease(t *testing.T) {
 	}
 }
 
-// foreignBlock returns a block allocated by the runtime (not by NewBlock) that wraps inner.
-func foreignBlock(t *testing.T, inner objc.Block) objc.Block {
+// loadBlockFixture compiles testdata/block.m, which creates blocks in Objective-C.
+func loadBlockFixture(t *testing.T) uintptr {
 	t.Helper()
-	lib, err := purego.Dlopen("/usr/lib/libSystem.B.dylib", purego.RTLD_LAZY|purego.RTLD_GLOBAL)
+	arch := "arm64"
+	if runtime.GOARCH == "amd64" {
+		arch = "x86_64"
+	}
+	library := filepath.Join(t.TempDir(), "block.dylib")
+	cmd := exec.Command("clang", "-dynamiclib", "-arch", arch, "-framework", "Foundation", "-o", library, "testdata/block.m")
+	if out, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("compile block fixture: %v\n%s", err, out)
+	}
+	lib, err := purego.Dlopen(library, purego.RTLD_GLOBAL|purego.RTLD_NOW)
 	if err != nil {
 		t.Fatal(err)
 	}
-	create, err := purego.Dlsym(lib, "dispatch_block_create")
-	if err != nil {
-		t.Fatal(err)
-	}
-	r, _, _ := purego.SyscallN(create, 0, uintptr(inner))
-	if r == 0 {
-		t.Fatal("dispatch_block_create returned nil")
-	}
-	return objc.Block(r)
+	return lib
 }
 
+// TestInvokeForeignBlock invokes blocks that Objective-C created rather than NewBlock.
 func TestInvokeForeignBlock(t *testing.T) {
-	ran := false
-	ours := objc.NewBlock(func(_ objc.Block) { ran = true })
-	defer ours.Release()
+	lib := loadBlockFixture(t)
 
-	foreign := foreignBlock(t, ours)
-	defer foreign.Release()
-	if foreign == ours {
-		t.Fatal("expected a distinct block")
+	check := func(name string, block objc.Block) {
+		t.Helper()
+		block.Invoke(int64(20), 3.5) // the result is discarded; this must not panic
+		// the block returns base + i + int64(f), where base is 100.
+		got, err := objc.InvokeBlock[int64](block, int64(20), 3.5)
+		if err != nil {
+			t.Fatalf("%s: %v", name, err)
+		}
+		if got != 123 {
+			t.Errorf("%s: InvokeBlock = %d, want 123", name, got)
+		}
 	}
 
-	foreign.Invoke()
-	if !ran {
-		t.Fatal("inner block was not run")
-	}
-}
-
-// TestInvokeFrameworkCompletionHandler invokes a block created by Foundation.
-// NSItemProvider passes a completion handler (a stack block) to the load handler
-// given to registerItemForTypeIdentifier:loadHandler:.
-func TestInvokeFrameworkCompletionHandler(t *testing.T) {
-	if _, err := purego.Dlopen("/System/Library/Frameworks/Foundation.framework/Foundation", purego.RTLD_GLOBAL|purego.RTLD_NOW); err != nil {
-		t.Fatal(err)
-	}
-	str := func(s string) objc.ID {
-		return objc.Send[objc.ID](objc.ID(objc.GetClass("NSString")), objc.RegisterName("stringWithUTF8String:"), s)
-	}
-	typeID := str("public.plain-text")
-	provider := objc.Send[objc.ID](objc.ID(objc.GetClass("NSItemProvider")), objc.RegisterName("new"))
-	defer objc.Send[objc.ID](provider, objc.RegisterName("release"))
-
-	want := str("hello")
-	load := objc.NewBlock(func(_ objc.Block, completion objc.Block, _ objc.Class, _ objc.ID) {
-		completion.Invoke(want, objc.ID(0))
+	t.Run("heap", func(t *testing.T) {
+		var heapBlock func(base int64) objc.Block
+		purego.RegisterLibFunc(&heapBlock, lib, "purego_heap_block")
+		block := heapBlock(100)
+		defer block.Release()
+		check("InvokeBlock", block)
 	})
-	defer load.Release()
-	objc.Send[objc.ID](provider, objc.RegisterName("registerItemForTypeIdentifier:loadHandler:"), typeID, load)
 
-	done := make(chan objc.ID, 1)
-	handler := objc.NewBlock(func(_ objc.Block, item, _ objc.ID) { done <- item })
-	defer handler.Release()
-	objc.Send[objc.ID](provider, objc.RegisterName("loadItemForTypeIdentifier:options:completionHandler:"), typeID, objc.ID(0), handler)
-
-	// the load handler is dispatched to the main queue, so the main run loop must run.
-	runLoop := objc.Send[objc.ID](objc.ID(objc.GetClass("NSRunLoop")), objc.RegisterName("mainRunLoop"))
-	date := objc.Send[objc.ID](objc.ID(objc.GetClass("NSDate")), objc.RegisterName("dateWithTimeIntervalSinceNow:"), 5.0)
-	for {
-		select {
-		case item := <-done:
-			if item != want {
-				t.Fatalf("got item %#x, want %#x", item, want)
-			}
-			return
-		default:
+	t.Run("stack", func(t *testing.T) {
+		var withStackBlock func(base int64, cb uintptr)
+		purego.RegisterLibFunc(&withStackBlock, lib, "purego_with_stack_block")
+		called := false
+		cb := purego.NewCallback(func(block objc.Block) {
+			called = true
+			check("InvokeBlock", block)
+		})
+		withStackBlock(100, cb)
+		if !called {
+			t.Fatal("callback was not called")
 		}
-		mode := str("kCFRunLoopDefaultMode")
-		soon := objc.Send[objc.ID](objc.ID(objc.GetClass("NSDate")), objc.RegisterName("dateWithTimeIntervalSinceNow:"), 0.05)
-		objc.Send[bool](runLoop, objc.RegisterName("runMode:beforeDate:"), mode, soon)
-		if objc.Send[float64](date, objc.RegisterName("timeIntervalSinceNow")) < 0 {
-			t.Fatal("timed out waiting for the completion handler")
-		}
-	}
-}
-
-func TestInvokeBlockForeign(t *testing.T) {
-	ran := false
-	ours := objc.NewBlock(func(_ objc.Block) { ran = true })
-	defer ours.Release()
-
-	foreign := foreignBlock(t, ours)
-	defer foreign.Release()
-
-	// the wrapper returns nothing meaningful; just check the call goes through.
-	if _, err := objc.InvokeBlock[int32](foreign); err != nil {
-		t.Fatal(err)
-	}
-	if !ran {
-		t.Fatal("inner block was not run")
-	}
+	})
 }
