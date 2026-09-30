@@ -5,9 +5,7 @@ package objc_test
 
 import (
 	"fmt"
-	"os/exec"
 	"path/filepath"
-	"runtime"
 	"structs"
 	"testing"
 
@@ -161,14 +159,9 @@ func TestBlockCopyAndBlockRelease(t *testing.T) {
 // loadBlockFixture compiles testdata/block.m, which creates blocks in Objective-C.
 func loadBlockFixture(t *testing.T) uintptr {
 	t.Helper()
-	arch := "arm64"
-	if runtime.GOARCH == "amd64" {
-		arch = "x86_64"
-	}
 	library := filepath.Join(t.TempDir(), "block.dylib")
-	cmd := exec.Command("clang", "-dynamiclib", "-arch", arch, "-framework", "Foundation", "-o", library, "testdata/block.m")
-	if out, err := cmd.CombinedOutput(); err != nil {
-		t.Fatalf("compile block fixture: %v\n%s", err, out)
+	if err := buildSharedLib(t, library, filepath.Join("testdata", "block.m")); err != nil {
+		t.Fatal(err)
 	}
 	lib, err := purego.Dlopen(library, purego.RTLD_GLOBAL|purego.RTLD_NOW)
 	if err != nil {
