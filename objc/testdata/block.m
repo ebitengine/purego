@@ -51,3 +51,17 @@ void *purego_blockarg_block(void) {
     };
     return Block_copy(b);
 }
+
+typedef struct {
+    bool b;
+    float f;
+} BoolFloat;
+
+// purego_boolfloat_block returns a block that returns a struct with padding between its members.
+void *purego_boolfloat_block(void) {
+    BoolFloat (^b)(float) = ^BoolFloat(float f) {
+        BoolFloat r = {true, f * 2};
+        return r;
+    };
+    return Block_copy(b);
+}

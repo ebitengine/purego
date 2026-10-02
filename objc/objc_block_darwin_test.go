@@ -289,6 +289,29 @@ func TestInvokeForeignBlockStruct(t *testing.T) {
 	block.Invoke(int64(1))
 }
 
+func TestInvokeForeignBlockStructPadding(t *testing.T) {
+	lib := loadBlockFixture(t)
+	var boolFloatBlock func() objc.Block
+	purego.RegisterLibFunc(&boolFloatBlock, lib, "purego_boolfloat_block")
+	block := boolFloatBlock()
+	defer block.Release()
+
+	// the padding is written out, as the RegisterFunc documentation asks for.
+	type boolFloat struct {
+		_ structs.HostLayout
+		b bool
+		_ [3]byte
+		f float32
+	}
+	got, err := objc.InvokeBlock[boolFloat](block, float32(1.5))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !got.b || got.f != 3 {
+		t.Errorf("got {%v %v}, want {true 3}", got.b, got.f)
+	}
+}
+
 func TestInvokeForeignBlockFuncArgument(t *testing.T) {
 	lib := loadBlockFixture(t)
 	var fnptrBlock func() objc.Block

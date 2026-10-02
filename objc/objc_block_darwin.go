@@ -234,7 +234,7 @@ func (b Block) callForeign(resultType reflect.Type, args []any) ([]reflect.Value
 	}
 
 	in := make([]reflect.Type, len(args)+1)
-	abis := make([]string, len(args))
+	layouts := make([]abiLayout, len(args))
 	reflectedArgs := make([]reflect.Value, len(args)+1)
 	in[0] = reflect.TypeFor[Block]()
 	reflectedArgs[0] = reflect.ValueOf(b)
@@ -245,15 +245,15 @@ func (b Block) callForeign(resultType reflect.Type, args []any) ([]reflect.Value
 		reflectedArgs[i+1] = reflect.ValueOf(arg)
 		in[i+1] = reflectedArgs[i+1].Type()
 		var err error
-		if abis[i], err = goABI(in[i+1]); err != nil {
+		if layouts[i], err = goLayout(in[i+1]); err != nil {
 			return nil, err
 		}
 	}
-	resultABI := abiVoid
+	var resultLayout abiLayout
 	var out []reflect.Type
 	if resultType != nil {
 		var err error
-		if resultABI, err = goABI(resultType); err != nil {
+		if resultLayout, err = goLayout(resultType); err != nil {
 			return nil, err
 		}
 		out = []reflect.Type{resultType}
@@ -268,24 +268,24 @@ func (b Block) callForeign(resultType reflect.Type, args []any) ([]reflect.Value
 		if len(types)-2 != len(args) {
 			return nil, fmt.Errorf("objc: block callback expects %d arguments, got %d", len(types)-2, len(args))
 		}
-		want, err := encodingABI(types[0])
+		want, err := encodingLayout(types[0])
 		switch {
-		case resultType == nil && (err != nil || want[0] == '{'):
+		case resultType == nil && (err != nil || types[0][0] == '{'):
 			// The caller has to provide the result buffer for a struct returned in memory.
 			return nil, fmt.Errorf("objc: block returns %s; use InvokeBlock to receive it", types[0])
 		case resultType == nil:
 			// the result, if any, is discarded.
 		case err != nil:
 			return nil, fmt.Errorf("objc: block result %s: %w", types[0], err)
-		case want != resultABI:
+		case !want.matches(resultLayout):
 			return nil, fmt.Errorf("objc: block returns %s, which does not match %s", types[0], resultType)
 		}
-		for i, got := range abis {
-			want, err := encodingABI(types[i+2])
+		for i, got := range layouts {
+			want, err := encodingLayout(types[i+2])
 			if err != nil {
 				return nil, fmt.Errorf("objc: block argument %d %s: %w", i, types[i+2], err)
 			}
-			if want != got {
+			if !want.matches(got) {
 				return nil, fmt.Errorf("objc: block argument %d is %s, which does not match %s", i, types[i+2], in[i+1])
 			}
 		}

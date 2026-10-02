@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"slices"
 	stdstrings "strings"
 	"unsafe"
 
@@ -16,9 +17,6 @@ import (
 // encQualifiers are the method type qualifiers (const, in, inout, out, bycopy, byref, oneway)
 // that may prefix a type encoding. They do not affect the calling convention.
 const encQualifiers = "rnNoORV"
-
-// abiVoid is the ABI form of no value. See encodingABI.
-const abiVoid = "v"
 
 // signature returns the type encoding of a block, or false if the block does not export one.
 func (b Block) signature() (string, bool) {
@@ -115,115 +113,228 @@ func quotedLen(s string) (int, error) {
 	return 0, fmt.Errorf("unterminated name in type encoding %q", s)
 }
 
-// encodingABI reduces a type encoding to what the calling convention sees, so that it
-// can be compared with goABI: each scalar becomes its size in bytes, or "f" or "d" for
-// floating point, and a struct becomes its scalars in order between braces, with nested
-// structs and arrays flattened. For example, {CGRect={CGPoint=dd}{CGSize=dd}} is "{dddd}".
-func encodingABI(enc string) (string, error) {
+// abiScalar is one scalar member of a type, as the calling convention sees it.
+type abiScalar struct {
+	offset uintptr
+	// kind is the size in bytes of an integer or pointer ('1', '2', '4' or '8'),
+	// or 'f' or 'd' for floating point.
+	kind byte
+}
+
+// size returns the size of the scalar in bytes.
+func (s abiScalar) size() uintptr {
+	switch s.kind {
+	case 'f':
+		return 4
+	case 'd':
+		return 8
+	}
+	return uintptr(s.kind - '0')
+}
+
+// isFloat reports whether the scalar is passed in a floating point register.
+func (s abiScalar) isFloat() bool {
+	return s.kind == 'f' || s.kind == 'd'
+}
+
+// abiLayout is the layout of a type with nested structs and arrays flattened into scalars,
+// so that a type encoding can be compared with a Go type. A void result has no size.
+type abiLayout struct {
+	size, align uintptr
+	scalars     []abiScalar
+
+	// blank and blankScalars describe the blank (_) fields of a Go struct.
+	// They are padding as far as the Go type is concerned, so the type encoding
+	// may have nothing there, or a member that the Go type does not name.
+	blank        []abiScalar
+	blankRegions [][2]uintptr // offset and size
+}
+
+// append adds the members of l at offset.
+func (a *abiLayout) append(l abiLayout, offset uintptr) {
+	for _, s := range l.scalars {
+		a.scalars = append(a.scalars, abiScalar{offset + s.offset, s.kind})
+	}
+	for _, s := range l.blank {
+		a.blank = append(a.blank, abiScalar{offset + s.offset, s.kind})
+	}
+	for _, r := range l.blankRegions {
+		a.blankRegions = append(a.blankRegions, [2]uintptr{offset + r[0], r[1]})
+	}
+}
+
+func scalarLayout(kind byte) abiLayout {
+	s := abiScalar{kind: kind}
+	return abiLayout{size: s.size(), align: s.size(), scalars: []abiScalar{s}}
+}
+
+func alignUp(n, align uintptr) uintptr {
+	return (n + align - 1) / align * align
+}
+
+// encodingLayout returns the layout of a type encoding, with members at their natural alignment.
+func encodingLayout(enc string) (abiLayout, error) {
 	enc = stdstrings.TrimLeft(enc, encQualifiers)
 	if enc == "" {
-		return "", errors.New("missing type encoding")
+		return abiLayout{}, errors.New("missing type encoding")
 	}
 	switch enc[0] {
 	case 'v':
-		return abiVoid, nil
+		return abiLayout{}, nil
 	case 'c', 'C', 'B':
-		return "1", nil
+		return scalarLayout('1'), nil
 	case 's', 'S':
-		return "2", nil
+		return scalarLayout('2'), nil
 	case 'i', 'I', 'l', 'L': // long is encoded as a 32-bit quantity
-		return "4", nil
+		return scalarLayout('4'), nil
 	case 'q', 'Q', '^', '*', '@', '#', ':':
-		return "8", nil
+		return scalarLayout('8'), nil
 	case 'f', 'd':
-		return enc[:1], nil
+		return scalarLayout(enc[0]), nil
 	case '[':
-		count := len(enc) - 1 - len(stdstrings.TrimLeft(enc[1:], "0123456789"))
-		n := 0
-		for _, c := range enc[1 : 1+count] {
-			n = n*10 + int(c-'0')
+		digits := len(enc) - 1 - len(stdstrings.TrimLeft(enc[1:], "0123456789"))
+		var count uintptr
+		for _, c := range enc[1 : 1+digits] {
+			count = count*10 + uintptr(c-'0')
 		}
-		elem, err := encodingABI(enc[1+count : len(enc)-1])
+		elem, err := encodingLayout(enc[1+digits : len(enc)-1])
 		if err != nil {
-			return "", err
+			return abiLayout{}, err
 		}
-		return stdstrings.Repeat(stdstrings.Trim(elem, "{}"), n), nil
+		layout := abiLayout{size: count * elem.size, align: elem.align}
+		for i := range count {
+			layout.append(elem, i*elem.size)
+		}
+		return layout, nil
 	case '{':
 		_, fields, ok := stdstrings.Cut(enc[1:len(enc)-1], "=")
 		if !ok {
-			return "", fmt.Errorf("struct %s has no fields", enc)
+			return abiLayout{}, fmt.Errorf("struct %s has no fields", enc)
 		}
-		var abi stdstrings.Builder
-		abi.WriteByte('{')
+		layout := abiLayout{align: 1}
 		for fields != "" {
 			if fields[0] == '"' {
 				// a field name
 				n, err := quotedLen(fields)
 				if err != nil {
-					return "", err
+					return abiLayout{}, err
 				}
 				fields = fields[n:]
 				continue
 			}
 			n, err := encodingLen(fields)
 			if err != nil {
-				return "", err
+				return abiLayout{}, err
 			}
-			field, err := encodingABI(fields[:n])
+			field, err := encodingLayout(fields[:n])
 			if err != nil {
-				return "", err
+				return abiLayout{}, err
 			}
-			abi.WriteString(stdstrings.Trim(field, "{}"))
 			fields = fields[n:]
+			if field.size == 0 {
+				continue
+			}
+			layout.size = alignUp(layout.size, field.align)
+			layout.append(field, layout.size)
+			layout.size += field.size
+			layout.align = max(layout.align, field.align)
 		}
-		abi.WriteByte('}')
-		return abi.String(), nil
+		layout.size = alignUp(layout.size, layout.align)
+		return layout, nil
 	}
-	return "", fmt.Errorf("unsupported type encoding %s", enc)
+	return abiLayout{}, fmt.Errorf("unsupported type encoding %s", enc)
 }
 
-// goABI is encodingABI for a Go type.
-func goABI(typ reflect.Type) (string, error) {
+// goLayout is encodingLayout for a Go type.
+func goLayout(typ reflect.Type) (abiLayout, error) {
 	switch typ.Kind() {
 	case reflect.Bool, reflect.Int8, reflect.Uint8:
-		return "1", nil
+		return scalarLayout('1'), nil
 	case reflect.Int16, reflect.Uint16:
-		return "2", nil
+		return scalarLayout('2'), nil
 	case reflect.Int32, reflect.Uint32:
-		return "4", nil
+		return scalarLayout('4'), nil
 	case reflect.Int, reflect.Int64, reflect.Uint, reflect.Uint64, reflect.Uintptr,
 		reflect.Pointer, reflect.UnsafePointer, reflect.String:
-		return "8", nil
+		return scalarLayout('8'), nil
 	case reflect.Float32:
-		return "f", nil
+		return scalarLayout('f'), nil
 	case reflect.Float64:
-		return "d", nil
+		return scalarLayout('d'), nil
 	case reflect.Array:
-		elem, err := goABI(typ.Elem())
+		elem, err := goLayout(typ.Elem())
 		if err != nil {
-			return "", err
+			return abiLayout{}, err
 		}
-		return stdstrings.Repeat(stdstrings.Trim(elem, "{}"), typ.Len()), nil
+		layout := abiLayout{size: typ.Size(), align: uintptr(typ.Align())}
+		for i := range uintptr(typ.Len()) {
+			layout.append(elem, i*elem.size)
+		}
+		return layout, nil
 	case reflect.Struct:
-		var abi stdstrings.Builder
-		abi.WriteByte('{')
+		layout := abiLayout{size: typ.Size(), align: uintptr(typ.Align())}
 		for i := range typ.NumField() {
 			f := typ.Field(i)
 			if f.Type.Size() == 0 {
 				// structs.HostLayout and other zero-sized fields have no counterpart in C.
 				continue
 			}
-			field, err := goABI(f.Type)
+			field, err := goLayout(f.Type)
 			if err != nil {
-				return "", err
+				return abiLayout{}, err
 			}
-			abi.WriteString(stdstrings.Trim(field, "{}"))
+			if f.Name == "_" {
+				// everything in a blank field is blank.
+				field.blank = append(field.blank, field.scalars...)
+				field.scalars = nil
+				field.blankRegions = [][2]uintptr{{0, field.size}}
+			}
+			layout.append(field, f.Offset)
 		}
-		abi.WriteByte('}')
-		return abi.String(), nil
+		return layout, nil
 	case reflect.Func:
 		// RegisterFunc would create a callback for every call, and callbacks are never freed.
-		return "", fmt.Errorf("objc: a %s argument to a block is not supported; create the callback once with purego.NewCallback and pass the uintptr", typ)
+		return abiLayout{}, fmt.Errorf("objc: a %s argument to a block is not supported; create the callback once with purego.NewCallback and pass the uintptr", typ)
 	}
-	return "", fmt.Errorf("objc: unsupported block argument or result type %s", typ)
+	return abiLayout{}, fmt.Errorf("objc: unsupported block argument or result type %s", typ)
+}
+
+// matches reports whether a value of the Go type laid out as g can be passed as the C type laid out as c.
+//
+// Every member must be at the same offset with the same kind on both sides, except for
+// the blank (_) fields of the Go type. Callers use those for padding, which has no
+// counterpart in a type encoding, and for members they have no use for. A blank field
+// may therefore cover any integer or pointer members, or none. Floating point members
+// decide which registers a struct is passed in, so they must match even when blank.
+func (c abiLayout) matches(g abiLayout) bool {
+	if c.size != g.size {
+		return false
+	}
+	for _, s := range c.scalars {
+		if slices.Contains(g.scalars, s) {
+			continue
+		}
+		if s.isFloat() {
+			if !slices.Contains(g.blank, s) {
+				return false
+			}
+			continue
+		}
+		if !slices.ContainsFunc(g.blankRegions, func(r [2]uintptr) bool {
+			return s.offset >= r[0] && s.offset+s.size() <= r[0]+r[1]
+		}) {
+			return false
+		}
+	}
+	for _, s := range g.scalars {
+		if !slices.Contains(c.scalars, s) {
+			return false
+		}
+	}
+	for _, s := range g.blank {
+		if s.isFloat() && !slices.Contains(c.scalars, s) {
+			return false
+		}
+	}
+	return true
 }
