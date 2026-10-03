@@ -523,3 +523,21 @@ struct NestedPadTail {
 int64_t SumNestedPadTail(struct NestedPadTail s) {
     return (int64_t) s.a.x + s.a.y + s.b;
 }
+
+struct CharDouble {
+    int8_t a;
+    double b;
+};
+
+struct CharDouble IdentityCharDouble(struct CharDouble s) {
+    return s;
+}
+
+struct CharPointer {
+    int8_t a;
+    void * b;
+};
+
+struct CharPointer IdentityCharPointer(struct CharPointer s) {
+    return s;
+}

@@ -104,7 +104,8 @@ func RegisterLibFunc(fptr any, handle uintptr, name string) {
 // Purego can handle the most common structs that have fields of builtin types like int8, uint16, float32, etc.
 // Each field is placed at the offset it has in the Go struct's memory image, so the padding the Go compiler
 // inserts is preserved and explicit padding fields are not needed. The Go struct must still be declared with the
-// same fields, in the same order, as the C one, and should embed [structs.HostLayout] to guarantee that layout.
+// same fields, in the same order, as the C one, and should include a field named _ of type
+// [structs.HostLayout] to guarantee that layout.
 // Purego does not verify that the two match.
 //
 // On Apple ARM64 platforms (macOS and iOS), purego handles proper alignment of struct arguments

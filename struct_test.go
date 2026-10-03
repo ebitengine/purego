@@ -960,6 +960,40 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 					t.Fatalf("IdentityCharLong returned %+v wanted %+v", ret, expected)
 				}
 			})
+			t.Run("CharDouble", func(t *testing.T) {
+				// Preserve the small field before the aligned wide field.
+				type CharDouble struct {
+					_ structs.HostLayout
+					A int8
+					B float64
+				}
+				var fn func(CharDouble) CharDouble
+				register(&fn, lib, "IdentityCharDouble", func(s CharDouble) CharDouble {
+					return s
+				})
+				expected := CharDouble{A: -7, B: -123.5}
+				if ret := fn(expected); ret != expected {
+					t.Fatalf("IdentityCharDouble returned %+v wanted %+v", ret, expected)
+				}
+			})
+			t.Run("CharPointer", func(t *testing.T) {
+				// Preserve the small field before the aligned wide field.
+				type CharPointer struct {
+					_ structs.HostLayout
+					A int8
+					B unsafe.Pointer
+				}
+				var fn func(CharPointer) CharPointer
+				register(&fn, lib, "IdentityCharPointer", func(s CharPointer) CharPointer {
+					return s
+				})
+				value := int64(0x12345678)
+				expected := CharPointer{A: -7, B: unsafe.Pointer(&value)}
+				if ret := fn(expected); ret != expected {
+					t.Fatalf("IdentityCharPointer returned %+v wanted %+v", ret, expected)
+				}
+				runtime.KeepAlive(&value)
+			})
 			t.Run("CharLongBetweenPrims", func(t *testing.T) {
 				// The struct must consume exactly two register slots so the
 				// trailing scalar is not shifted.
