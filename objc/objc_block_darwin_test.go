@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/ebitengine/purego"
+	"github.com/ebitengine/purego/internal/testlib"
 	"github.com/ebitengine/purego/objc"
 )
 
@@ -160,7 +161,7 @@ func TestBlockCopyAndBlockRelease(t *testing.T) {
 func loadBlockFixture(t *testing.T) uintptr {
 	t.Helper()
 	library := filepath.Join(t.TempDir(), "block.dylib")
-	if err := buildSharedLib(t, library, filepath.Join("testdata", "block.m")); err != nil {
+	if err := testlib.BuildSharedLib(t, "CC", library, filepath.Join("testdata", "block.m")); err != nil {
 		t.Fatal(err)
 	}
 	lib, err := purego.Dlopen(library, purego.RTLD_GLOBAL|purego.RTLD_NOW)

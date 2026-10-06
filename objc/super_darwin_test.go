@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/ebitengine/purego"
+	"github.com/ebitengine/purego/internal/testlib"
 	"github.com/ebitengine/purego/objc"
 )
 
@@ -96,7 +97,7 @@ func TestSendSuperDispatch(t *testing.T) {
 
 func TestSendSuperStruct(t *testing.T) {
 	library := filepath.Join(t.TempDir(), "super.dylib")
-	if err := buildSharedLib(t, library, filepath.Join("testdata", "super.m")); err != nil {
+	if err := testlib.BuildSharedLib(t, "CC", library, filepath.Join("testdata", "super.m")); err != nil {
 		t.Fatal(err)
 	}
 	// Objective-C retains the registered classes and their implementations.

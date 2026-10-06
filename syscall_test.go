@@ -11,6 +11,7 @@ import (
 
 	"github.com/ebitengine/purego"
 	"github.com/ebitengine/purego/internal/load"
+	"github.com/ebitengine/purego/internal/testlib"
 )
 
 func TestOS(t *testing.T) {
@@ -46,7 +47,7 @@ func TestErrno(t *testing.T) {
 	}
 
 	libFileName := filepath.Join(t.TempDir(), "liberrnotest.so")
-	if err := buildSharedLib(t, "CC", libFileName, filepath.Join("testdata", "liberrnotest", "errno_test.c")); err != nil {
+	if err := testlib.BuildSharedLib(t, "CC", libFileName, filepath.Join("testdata", "liberrnotest", "errno_test.c")); err != nil {
 		t.Fatal(err)
 	}
 	defer os.Remove(libFileName)
