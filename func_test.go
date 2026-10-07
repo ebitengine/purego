@@ -235,6 +235,31 @@ func TestRegisterFunc_InvalidFunctionPointer(t *testing.T) {
 	}
 }
 
+func TestRegisterFunc_StackCallback(t *testing.T) {
+	if runtime.GOARCH != "arm" && runtime.GOARCH != "arm64" && runtime.GOARCH != "386" && runtime.GOARCH != "amd64" && runtime.GOARCH != "loong64" && runtime.GOARCH != "ppc64le" && runtime.GOARCH != "riscv64" && runtime.GOARCH != "s390x" {
+		t.Skip("Platform doesn't support callbacks")
+	}
+	libFileName := filepath.Join(t.TempDir(), "abitest.so")
+	if err := buildSharedLib(t, "CC", libFileName, filepath.Join("testdata", "abitest", "abi_test.c")); err != nil {
+		t.Fatal(err)
+	}
+	lib, err := load.OpenLibrary(libFileName)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		if err := load.CloseLibrary(lib); err != nil {
+			t.Error(err)
+		}
+	}()
+	var fn func(a1, a2, a3, a4, a5, a6, a7, a8 uintptr, callback func(purego.CDecl, uintptr, uintptr) uintptr, a, b int32) int32
+	purego.RegisterLibFunc(&fn, lib, "stack_callback")
+	got := fn(1, 2, 3, 4, 5, 6, 7, 8, func(_ purego.CDecl, a, b uintptr) uintptr { return a + b }, 40, 2)
+	if got != 78 {
+		t.Errorf("stack callback returned %d, want 78", got)
+	}
+}
+
 func TestABI(t *testing.T) {
 	libFileName := filepath.Join(t.TempDir(), "abitest.so")
 	t.Logf("Build %v", libFileName)
@@ -252,6 +277,14 @@ func TestABI(t *testing.T) {
 			t.Fatalf("failed to close library: %s", err)
 		}
 	}()
+	{
+		var fn func(a1, a2, a3, a4, a5, a6, a7, a8 uintptr, p []int32, x int32) int32
+		purego.RegisterLibFunc(&fn, lib, "stack_slice")
+		got := fn(0, 0, 0, 0, 0, 0, 0, 0, []int32{40}, 2)
+		if got != 42 {
+			t.Errorf("stack slice returned %d, want 42", got)
+		}
+	}
 	{
 		const cName = "stack_uint8_t"
 		const expect = 2047
