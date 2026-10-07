@@ -158,7 +158,7 @@ func TestBlockCopyAndBlockRelease(t *testing.T) {
 }
 
 // loadBlockFixture compiles testdata/block.m, which creates blocks in Objective-C.
-func loadBlockFixture(t *testing.T) uintptr {
+func loadBlockFixture(t testing.TB) uintptr {
 	t.Helper()
 	library := filepath.Join(t.TempDir(), "block.dylib")
 	if err := testlib.BuildSharedLib(t, "CC", library, filepath.Join("testdata", "block.m")); err != nil {
@@ -359,4 +359,27 @@ func TestInvokeForeignBlockBlockArgument(t *testing.T) {
 	if got != 42 {
 		t.Errorf("got %d, want 42", got)
 	}
+}
+
+func BenchmarkInvokeForeignBlock(b *testing.B) {
+	lib := loadBlockFixture(b)
+	var heapBlock func(base int64) objc.Block
+	purego.RegisterLibFunc(&heapBlock, lib, "purego_heap_block")
+	block := heapBlock(100)
+	defer block.Release()
+
+	b.Run("Invoke", func(b *testing.B) {
+		b.ReportAllocs()
+		for b.Loop() {
+			block.Invoke(int64(20), 3.5)
+		}
+	})
+	b.Run("InvokeBlock", func(b *testing.B) {
+		b.ReportAllocs()
+		for b.Loop() {
+			if _, err := objc.InvokeBlock[int64](block, int64(20), 3.5); err != nil {
+				b.Fatal(err)
+			}
+		}
+	})
 }
