@@ -217,8 +217,10 @@ func TestInvokeForeignBlockMismatch(t *testing.T) {
 	block := heapBlock(100)
 	defer block.Release()
 
-	if _, err := objc.InvokeBlock[int64](block, int64(20)); err == nil {
-		t.Error("missing argument: expected an error")
+	for range 2 { // the second call is answered from the cache
+		if _, err := objc.InvokeBlock[int64](block, int64(20)); err == nil {
+			t.Error("missing argument: expected an error")
+		}
 	}
 	if _, err := objc.InvokeBlock[int64](block, int64(20), int64(3)); err == nil {
 		t.Error("integer for a double argument: expected an error")

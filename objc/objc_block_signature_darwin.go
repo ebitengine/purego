@@ -8,10 +8,8 @@ import (
 	"fmt"
 	"reflect"
 	"slices"
-	stdstrings "strings"
+	"strings"
 	"unsafe"
-
-	"github.com/ebitengine/purego/internal/strings"
 )
 
 // encQualifiers are the method type qualifiers (const, in, inout, out, bycopy, byref, oneway)
@@ -19,6 +17,7 @@ import (
 const encQualifiers = "rnNoORV"
 
 // signature returns the type encoding of a block, or false if the block does not export one.
+// The string refers to the block's descriptor; it must be cloned to be kept beyond the call.
 func (b Block) signature() (string, bool) {
 	layout := *(**blockLayout)(unsafe.Pointer(&b))
 	if layout.flags&blockHasSignature == 0 {
@@ -30,8 +29,15 @@ func (b Block) signature() (string, bool) {
 	if layout.flags&blockHasCopyDispose != 0 {
 		offset += 2 * unsafe.Sizeof(uintptr(0))
 	}
-	sig := strings.GoString(*(*uintptr)(unsafe.Add(unsafe.Pointer(layout.descriptor), offset)))
-	return sig, sig != ""
+	sig := *(**byte)(unsafe.Add(unsafe.Pointer(layout.descriptor), offset))
+	if sig == nil {
+		return "", false
+	}
+	n := 0
+	for *(*byte)(unsafe.Add(unsafe.Pointer(sig), n)) != 0 {
+		n++
+	}
+	return unsafe.String(sig, n), true
 }
 
 // splitSignature splits a method or block type encoding, such as "v24@?0q8d16",
@@ -39,13 +45,13 @@ func (b Block) signature() (string, bool) {
 func splitSignature(sig string) ([]string, error) {
 	var types []string
 	for sig != "" {
-		sig = stdstrings.TrimLeft(sig, encQualifiers)
+		sig = strings.TrimLeft(sig, encQualifiers)
 		n, err := encodingLen(sig)
 		if err != nil {
 			return nil, err
 		}
 		types = append(types, sig[:n])
-		sig = stdstrings.TrimLeft(sig[n:], "0123456789")
+		sig = strings.TrimLeft(sig[n:], "0123456789")
 	}
 	return types, nil
 }
@@ -59,11 +65,11 @@ func encodingLen(s string) (int, error) {
 	case '{', '(', '[':
 		return bracketLen(s)
 	case '^':
-		rest := stdstrings.TrimLeft(s[1:], encQualifiers)
+		rest := strings.TrimLeft(s[1:], encQualifiers)
 		n, err := encodingLen(rest)
 		return len(s) - len(rest) + n, err
 	case 'b':
-		return 1 + len(s[1:]) - len(stdstrings.TrimLeft(s[1:], "0123456789")), nil
+		return 1 + len(s[1:]) - len(strings.TrimLeft(s[1:], "0123456789")), nil
 	case '@':
 		switch {
 		case len(s) > 1 && s[1] == '"':
@@ -107,7 +113,7 @@ func bracketLen(s string) (int, error) {
 
 // quotedLen returns the length of the quoted name at the start of s, including the quotes.
 func quotedLen(s string) (int, error) {
-	if end := stdstrings.IndexByte(s[1:], '"'); end >= 0 {
+	if end := strings.IndexByte(s[1:], '"'); end >= 0 {
 		return end + 2, nil
 	}
 	return 0, fmt.Errorf("unterminated name in type encoding %q", s)
@@ -174,7 +180,7 @@ func alignUp(n, align uintptr) uintptr {
 
 // encodingLayout returns the layout of a type encoding, with members at their natural alignment.
 func encodingLayout(enc string) (abiLayout, error) {
-	enc = stdstrings.TrimLeft(enc, encQualifiers)
+	enc = strings.TrimLeft(enc, encQualifiers)
 	if enc == "" {
 		return abiLayout{}, errors.New("missing type encoding")
 	}
@@ -192,7 +198,7 @@ func encodingLayout(enc string) (abiLayout, error) {
 	case 'f', 'd':
 		return scalarLayout(enc[0]), nil
 	case '[':
-		digits := len(enc) - 1 - len(stdstrings.TrimLeft(enc[1:], "0123456789"))
+		digits := len(enc) - 1 - len(strings.TrimLeft(enc[1:], "0123456789"))
 		var count uintptr
 		for _, c := range enc[1 : 1+digits] {
 			count = count*10 + uintptr(c-'0')
@@ -207,7 +213,7 @@ func encodingLayout(enc string) (abiLayout, error) {
 		}
 		return layout, nil
 	case '{':
-		_, fields, ok := stdstrings.Cut(enc[1:len(enc)-1], "=")
+		_, fields, ok := strings.Cut(enc[1:len(enc)-1], "=")
 		if !ok {
 			return abiLayout{}, fmt.Errorf("struct %s has no fields", enc)
 		}

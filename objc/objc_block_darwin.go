@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strings"
 	"structs"
 	"sync"
 	"unsafe"
@@ -234,7 +235,6 @@ func (b Block) callForeign(resultType reflect.Type, args []any) ([]reflect.Value
 	}
 
 	in := make([]reflect.Type, len(args)+1)
-	layouts := make([]abiLayout, len(args))
 	reflectedArgs := make([]reflect.Value, len(args)+1)
 	in[0] = reflect.TypeFor[Block]()
 	reflectedArgs[0] = reflect.ValueOf(b)
@@ -244,54 +244,97 @@ func (b Block) callForeign(resultType reflect.Type, args []any) ([]reflect.Value
 		}
 		reflectedArgs[i+1] = reflect.ValueOf(arg)
 		in[i+1] = reflectedArgs[i+1].Type()
-		var err error
-		if layouts[i], err = goLayout(in[i+1]); err != nil {
-			return nil, err
-		}
 	}
-	var resultLayout abiLayout
 	var out []reflect.Type
 	if resultType != nil {
-		var err error
-		if resultLayout, err = goLayout(resultType); err != nil {
-			return nil, err
-		}
 		out = []reflect.Type{resultType}
 	}
+	typ := reflect.FuncOf(in, out, false)
 
-	if sig, ok := b.signature(); ok {
-		types, err := splitSignature(sig)
-		// types is the result, then the block itself, then the parameters.
-		if err != nil || len(types) < 2 {
-			return nil, fmt.Errorf("objc: malformed block signature %q", sig)
-		}
-		if len(types)-2 != len(args) {
-			return nil, fmt.Errorf("objc: block callback expects %d arguments, got %d", len(types)-2, len(args))
-		}
-		want, err := encodingLayout(types[0])
-		switch {
-		case resultType == nil && (err != nil || types[0][0] == '{'):
-			// The caller has to provide the result buffer for a struct returned in memory.
-			return nil, fmt.Errorf("objc: block returns %s; use InvokeBlock to receive it", types[0])
-		case resultType == nil:
-			// the result, if any, is discarded.
-		case err != nil:
-			return nil, fmt.Errorf("objc: block result %s: %w", types[0], err)
-		case !want.matches(resultLayout):
-			return nil, fmt.Errorf("objc: block returns %s, which does not match %s", types[0], resultType)
-		}
-		for i, got := range layouts {
-			want, err := encodingLayout(types[i+2])
-			if err != nil {
-				return nil, fmt.Errorf("objc: block argument %d %s: %w", i, types[i+2], err)
-			}
-			if !want.matches(got) {
-				return nil, fmt.Errorf("objc: block argument %d is %s, which does not match %s", i, types[i+2], in[i+1])
-			}
+	sig, hasSig := b.signature()
+	if err := checkForeign(sig, hasSig, typ); err != nil {
+		return nil, err
+	}
+	return foreignFunc(invoke, typ).Call(reflectedArgs), nil
+}
+
+// foreignCheckKey identifies a check made by checkForeign.
+type foreignCheckKey struct {
+	sig    string
+	hasSig bool
+	typ    reflect.Type
+}
+
+// foreignChecks caches the results of checkForeign, as the signature and the
+// call's type are usually the same every time a block is called.
+var foreignChecks sync.Map // map[foreignCheckKey]error
+
+// checkForeign reports whether a block with the type signature sig, if hasSig,
+// can be called as a function of type typ, whose first argument is the block.
+func checkForeign(sig string, hasSig bool, typ reflect.Type) error {
+	key := foreignCheckKey{sig, hasSig, typ}
+	if err, ok := foreignChecks.Load(key); ok {
+		err, _ := err.(error)
+		return err
+	}
+	err := checkForeignUncached(sig, hasSig, typ)
+	// sig refers to the block's descriptor, which may not outlive the block.
+	key.sig = strings.Clone(sig)
+	foreignChecks.Store(key, err)
+	return err
+}
+
+func checkForeignUncached(sig string, hasSig bool, typ reflect.Type) error {
+	layouts := make([]abiLayout, typ.NumIn()-1)
+	for i := range layouts {
+		var err error
+		if layouts[i], err = goLayout(typ.In(i + 1)); err != nil {
+			return err
 		}
 	}
+	var resultType reflect.Type
+	var resultLayout abiLayout
+	if typ.NumOut() > 0 {
+		resultType = typ.Out(0)
+		var err error
+		if resultLayout, err = goLayout(resultType); err != nil {
+			return err
+		}
+	}
+	if !hasSig {
+		return nil
+	}
 
-	return foreignFunc(invoke, reflect.FuncOf(in, out, false)).Call(reflectedArgs), nil
+	types, err := splitSignature(sig)
+	// types is the result, then the block itself, then the parameters.
+	if err != nil || len(types) < 2 {
+		return fmt.Errorf("objc: malformed block signature %q", sig)
+	}
+	if len(types)-2 != len(layouts) {
+		return fmt.Errorf("objc: block callback expects %d arguments, got %d", len(types)-2, len(layouts))
+	}
+	want, err := encodingLayout(types[0])
+	switch {
+	case resultType == nil && (err != nil || types[0][0] == '{'):
+		// The caller has to provide the result buffer for a struct returned in memory.
+		return fmt.Errorf("objc: block returns %s; use InvokeBlock to receive it", types[0])
+	case resultType == nil:
+		// the result, if any, is discarded.
+	case err != nil:
+		return fmt.Errorf("objc: block result %s: %w", types[0], err)
+	case !want.matches(resultLayout):
+		return fmt.Errorf("objc: block returns %s, which does not match %s", types[0], resultType)
+	}
+	for i, got := range layouts {
+		want, err := encodingLayout(types[i+2])
+		if err != nil {
+			return fmt.Errorf("objc: block argument %d %s: %w", i, types[i+2], err)
+		}
+		if !want.matches(got) {
+			return fmt.Errorf("objc: block argument %d is %s, which does not match %s", i, types[i+2], typ.In(i+1))
+		}
+	}
+	return nil
 }
 
 // foreignFuncKey identifies a function registered by foreignFunc.
