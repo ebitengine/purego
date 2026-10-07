@@ -114,7 +114,6 @@ TEXT syscallX(SB), NOSPLIT, $0
 	BL   (R10)
 
 	MOVD PTR_ADDRESS(RSP), R2 // pop structure pointer
-	ADD  $STACK_SIZE, RSP
 
 	MOVD  R0, syscallArgs_a1(R2) // save r1
 	MOVD  R1, syscallArgs_a2(R2) // save r3
@@ -125,9 +124,11 @@ TEXT syscallX(SB), NOSPLIT, $0
 
 #ifdef GOOS_darwin
 	BL   purego_error(SB)
+	MOVD PTR_ADDRESS(RSP), R2 // R2 is caller-saved across purego_error.
 	MOVD (R0), R0
 	MOVD R0, syscallArgs_a3(R2) // save errno
 #else
 	MOVD $0, syscallArgs_a3(R2) // no errno here: clear the input argument
 #endif
+	ADD  $STACK_SIZE, RSP
 	RET
