@@ -174,16 +174,16 @@ func loadBlockFixture(t *testing.T) uintptr {
 func TestInvokeForeignBlock(t *testing.T) {
 	lib := loadBlockFixture(t)
 
-	check := func(name string, block objc.Block) {
+	check := func(t *testing.T, block objc.Block) {
 		t.Helper()
 		block.Invoke(int64(20), 3.5) // the result is discarded; this must not panic
 		// the block returns base + i + int64(f), where base is 100.
 		got, err := objc.InvokeBlock[int64](block, int64(20), 3.5)
 		if err != nil {
-			t.Fatalf("%s: %v", name, err)
+			t.Fatal(err)
 		}
 		if got != 123 {
-			t.Errorf("%s: InvokeBlock = %d, want 123", name, got)
+			t.Errorf("InvokeBlock = %d, want 123", got)
 		}
 	}
 
@@ -192,7 +192,7 @@ func TestInvokeForeignBlock(t *testing.T) {
 		purego.RegisterLibFunc(&heapBlock, lib, "purego_heap_block")
 		block := heapBlock(100)
 		defer block.Release()
-		check("InvokeBlock", block)
+		check(t, block)
 	})
 
 	t.Run("stack", func(t *testing.T) {
@@ -201,7 +201,7 @@ func TestInvokeForeignBlock(t *testing.T) {
 		called := false
 		cb := purego.NewCallback(func(block objc.Block) {
 			called = true
-			check("InvokeBlock", block)
+			check(t, block)
 		})
 		withStackBlock(100, cb)
 		if !called {
