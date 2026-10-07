@@ -21,6 +21,11 @@ type encodeTypeTestStruct struct {
 	B float64
 }
 
+type encodeTypeArrayTestStruct struct {
+	_      structs.HostLayout
+	Values [3]int32
+}
+
 var encodeTypeTests = []struct {
 	typ   reflect.Type
 	cType string
@@ -47,6 +52,21 @@ var encodeTypeTests = []struct {
 	{reflect.TypeFor[Class](), "Class", "#"},
 	{reflect.TypeFor[SEL](), "SEL", ":"},
 	{reflect.TypeFor[encodeTypeTestStruct](), "struct encodeTypeTestStruct", "{encodeTypeTestStruct=id}"},
+	{
+		typ:   reflect.TypeFor[[3]int32](),
+		cType: "int[3]",
+		want:  "[3i]",
+	},
+	{
+		typ:   reflect.TypeFor[[2][3]int32](),
+		cType: "int[2][3]",
+		want:  "[2[3i]]",
+	},
+	{
+		typ:   reflect.TypeFor[encodeTypeArrayTestStruct](),
+		cType: "struct encodeTypeArrayTestStruct",
+		want:  "{encodeTypeArrayTestStruct=[3i]}",
+	},
 }
 
 func TestEncodeType(t *testing.T) {
@@ -81,6 +101,7 @@ func TestEncodeTypeMatchesClang(t *testing.T) {
 	var src strings.Builder
 	src.WriteString("#include <stdio.h>\n#include <objc/objc.h>\n")
 	src.WriteString("struct encodeTypeTestStruct { int a; double b; };\n")
+	src.WriteString("struct encodeTypeArrayTestStruct { int values[3]; };\n")
 	src.WriteString("int main(void) {\n")
 	for _, tt := range encodeTypeTests {
 		fmt.Fprintf(&src, "\tprintf(\"%%s\\n\", @encode(%s));\n", tt.cType)

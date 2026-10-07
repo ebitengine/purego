@@ -475,6 +475,12 @@ func encodeType(typ reflect.Type, insidePtr bool) (string, error) {
 	case reflect.Pointer:
 		enc, err := encodeType(typ.Elem(), true)
 		return encPtr + enc, err
+	case reflect.Array:
+		enc, err := encodeType(typ.Elem(), insidePtr)
+		if err != nil {
+			return "", err
+		}
+		return fmt.Sprintf("[%d%s]", typ.Len(), enc), nil
 	case reflect.Struct:
 		if insidePtr {
 			return encStructBegin + typ.Name() + encStructEnd, nil
