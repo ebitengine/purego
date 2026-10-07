@@ -143,7 +143,7 @@ type abiLayout struct {
 	size, align uintptr
 	scalars     []abiScalar
 
-	// blank and blankScalars describe the blank (_) fields of a Go struct.
+	// blank and blankRegions describe the blank (_) fields of a Go struct.
 	// They are padding as far as the Go type is concerned, so the type encoding
 	// may have nothing there, or a member that the Go type does not name.
 	blank        []abiScalar
