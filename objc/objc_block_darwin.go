@@ -296,7 +296,15 @@ func (b Block) callForeign(resultType reflect.Type, args []any) ([]reflect.Value
 	return fn.Elem().Call(reflectedArgs), nil
 }
 
-// Invoke calls the implementation of a block.
+// Invoke calls the implementation of a block, discarding any result.
+//
+// A block that was not created by [NewBlock], such as a completion handler
+// supplied by Objective-C, is called through the Blocks ABI. The Go type of each
+// argument must then match the block's C parameter type (for example, int32 for
+// an int), and is checked against the block's type signature when it has one.
+// Go func arguments are not supported; pass a pointer from [purego.NewCallback]
+// instead. Invoke panics on a mismatch, and on a block that returns a struct
+// must be called with [InvokeBlock].
 func (b Block) Invoke(args ...any) {
 	fn := theBlocksCache.Functions.Load(b)
 	if !fn.IsValid() {
@@ -335,6 +343,11 @@ func NewBlock(fn any) Block {
 
 // InvokeBlock is a convenience method for calling the implementation of a block.
 // The block implementation must return 1 value.
+//
+// A block that was not created by [NewBlock] is called as described for
+// [Block.Invoke], with T as the type of its result. T must match the block's C
+// result type, and may be a struct. A mismatch returns an error instead of
+// calling the block.
 func InvokeBlock[T any](block Block, args ...any) (result T, err error) {
 	if !theBlocksCache.Functions.Load(block).IsValid() {
 		// not one of ours. The block may live on the caller's stack, so it must not be
