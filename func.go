@@ -131,7 +131,7 @@ func RegisterLibFunc(fptr any, handle uintptr, name string) {
 func RegisterFunc(fptr any, cfn uintptr) {
 	const is32bit = unsafe.Sizeof(uintptr(0)) == 4
 	rv := reflect.ValueOf(fptr)
-	if rv.Kind() != reflect.Ptr || rv.IsNil() {
+	if rv.Kind() != reflect.Pointer || rv.IsNil() {
 		panic("purego: fptr must be a non-nil function pointer")
 	}
 	fn := rv.Elem()
