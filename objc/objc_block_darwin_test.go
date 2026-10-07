@@ -385,3 +385,24 @@ func BenchmarkInvokeForeignBlock(b *testing.B) {
 		}
 	})
 }
+
+func TestInvokeForeignBlockManyArguments(t *testing.T) {
+	lib := loadBlockFixture(t)
+	var manyBlock func() objc.Block
+	purego.RegisterLibFunc(&manyBlock, lib, "purego_many_block")
+	block := manyBlock()
+	defer block.Release()
+
+	for range 2 { // the second call is answered from the cache
+		got, err := objc.InvokeBlock[int64](block, int64(1), int64(2), int64(3), int64(4), int64(5), int64(6), int64(7), int64(8), 9.5, int64(10))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got != 55 {
+			t.Errorf("got %d, want 55", got)
+		}
+		if _, err := objc.InvokeBlock[int64](block, int64(1), int64(2), int64(3), int64(4), int64(5), int64(6), int64(7), int64(8), 9.5, int32(10)); err == nil {
+			t.Error("int32 for the last int64_t argument: expected an error")
+		}
+	}
+}

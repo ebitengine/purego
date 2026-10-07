@@ -234,57 +234,91 @@ func (b Block) callForeign(resultType reflect.Type, args []any) ([]reflect.Value
 		return nil, errors.New("objc: block has no invoke function")
 	}
 
-	in := make([]reflect.Type, len(args)+1)
+	key := foreignKey{invoke: invoke, result: resultType, nargs: len(args)}
 	reflectedArgs := make([]reflect.Value, len(args)+1)
-	in[0] = reflect.TypeFor[Block]()
 	reflectedArgs[0] = reflect.ValueOf(b)
 	for i, arg := range args {
 		if arg == nil {
 			return nil, fmt.Errorf("objc: argument %d to a block is nil; pass a typed value such as objc.ID(0)", i)
 		}
 		reflectedArgs[i+1] = reflect.ValueOf(arg)
-		in[i+1] = reflectedArgs[i+1].Type()
+		if i < len(key.args) {
+			key.args[i] = reflectedArgs[i+1].Type()
+		}
 	}
-	var out []reflect.Type
-	if resultType != nil {
-		out = []reflect.Type{resultType}
+	if len(args) > len(key.args) {
+		key.typ = foreignFuncOf(reflectedArgs, resultType)
 	}
-	typ := reflect.FuncOf(in, out, false)
+	key.sig, key.hasSig = b.signature()
 
-	sig, hasSig := b.signature()
-	if err := checkForeign(sig, hasSig, typ); err != nil {
+	call, ok := foreignCalls.Load(key)
+	if !ok {
+		call = newForeignCall(key, reflectedArgs)
+		// key.sig refers to the block's descriptor, which may not outlive the block.
+		key.sig = strings.Clone(key.sig)
+		call, _ = foreignCalls.LoadOrStore(key, call)
+	}
+	if err := call.(*foreignCall).err; err != nil {
 		return nil, err
 	}
-	return foreignFunc(invoke, typ).Call(reflectedArgs), nil
+	return call.(*foreignCall).fn.Call(reflectedArgs), nil
 }
 
-// foreignCheckKey identifies a check made by checkForeign.
-type foreignCheckKey struct {
+// foreignKey identifies a call made by callForeign: the block's implementation and
+// type signature, and the types of the result and arguments of the call.
+type foreignKey struct {
+	invoke uintptr
 	sig    string
 	hasSig bool
-	typ    reflect.Type
+	result reflect.Type
+	nargs  int
+	// args holds the types of the arguments, so that the common case can be looked up
+	// without building a func type. A call with more arguments uses typ instead.
+	args [8]reflect.Type
+	typ  reflect.Type
 }
 
-// foreignChecks caches the results of checkForeign, as the signature and the
-// call's type are usually the same every time a block is called.
-var foreignChecks sync.Map // map[foreignCheckKey]error
+// foreignCall is a checked call to a foreign block: either a function that calls
+// the block's implementation, or the reason the block cannot be called that way.
+type foreignCall struct {
+	fn  reflect.Value
+	err error
+}
+
+// foreignCalls caches calls to foreign blocks, so that a block that is called
+// repeatedly, such as an enumeration handler, is only checked and registered once.
+var foreignCalls sync.Map // map[foreignKey]*foreignCall
+
+// newForeignCall checks and registers the call identified by key, with the given arguments.
+func newForeignCall(key foreignKey, args []reflect.Value) *foreignCall {
+	typ := key.typ
+	if typ == nil {
+		typ = foreignFuncOf(args, key.result)
+	}
+	if err := checkForeign(key.sig, key.hasSig, typ); err != nil {
+		return &foreignCall{err: err}
+	}
+	fn := reflect.New(typ)
+	purego.RegisterFunc(fn.Interface(), key.invoke)
+	return &foreignCall{fn: fn.Elem()}
+}
+
+// foreignFuncOf returns the type of a function that takes args and returns result, if not nil.
+func foreignFuncOf(args []reflect.Value, result reflect.Type) reflect.Type {
+	in := make([]reflect.Type, len(args))
+	for i, arg := range args {
+		in[i] = arg.Type()
+	}
+	var out []reflect.Type
+	if result != nil {
+		out = []reflect.Type{result}
+	}
+	return reflect.FuncOf(in, out, false)
+}
 
 // checkForeign reports whether a block with the type signature sig, if hasSig,
 // can be called as a function of type typ, whose first argument is the block.
 func checkForeign(sig string, hasSig bool, typ reflect.Type) error {
-	key := foreignCheckKey{sig, hasSig, typ}
-	if err, ok := foreignChecks.Load(key); ok {
-		err, _ := err.(error)
-		return err
-	}
-	err := checkForeignUncached(sig, hasSig, typ)
-	// sig refers to the block's descriptor, which may not outlive the block.
-	key.sig = strings.Clone(sig)
-	foreignChecks.Store(key, err)
-	return err
-}
-
-func checkForeignUncached(sig string, hasSig bool, typ reflect.Type) error {
 	layouts := make([]abiLayout, typ.NumIn()-1)
 	for i := range layouts {
 		var err error
@@ -335,28 +369,6 @@ func checkForeignUncached(sig string, hasSig bool, typ reflect.Type) error {
 		}
 	}
 	return nil
-}
-
-// foreignFuncKey identifies a function registered by foreignFunc.
-type foreignFuncKey struct {
-	invoke uintptr
-	typ    reflect.Type
-}
-
-// foreignFuncs caches the functions registered by foreignFunc, so that a block that is
-// called repeatedly, such as an enumeration handler, is only registered once.
-var foreignFuncs sync.Map // map[foreignFuncKey]reflect.Value
-
-// foreignFunc returns a function of type typ that calls the block implementation invoke.
-func foreignFunc(invoke uintptr, typ reflect.Type) reflect.Value {
-	key := foreignFuncKey{invoke, typ}
-	if fn, ok := foreignFuncs.Load(key); ok {
-		return fn.(reflect.Value)
-	}
-	fn := reflect.New(typ)
-	purego.RegisterFunc(fn.Interface(), invoke)
-	actual, _ := foreignFuncs.LoadOrStore(key, fn.Elem())
-	return actual.(reflect.Value)
 }
 
 // Invoke calls the implementation of a block, discarding any result.

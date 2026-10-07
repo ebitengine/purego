@@ -65,3 +65,12 @@ void *purego_boolfloat_block(void) {
     };
     return Block_copy(b);
 }
+
+// purego_many_block returns a block that takes more arguments than fit in registers.
+void *purego_many_block(void) {
+    int64_t (^b)(int64_t, int64_t, int64_t, int64_t, int64_t, int64_t, int64_t, int64_t, double, int64_t) =
+        ^int64_t(int64_t a1, int64_t a2, int64_t a3, int64_t a4, int64_t a5, int64_t a6, int64_t a7, int64_t a8, double f, int64_t a9) {
+            return a1 + a2 + a3 + a4 + a5 + a6 + a7 + a8 + (int64_t)f + a9;
+        };
+    return Block_copy(b);
+}
