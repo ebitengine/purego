@@ -252,9 +252,9 @@ func TestRegisterFunc_StackCallback(t *testing.T) {
 			t.Error(err)
 		}
 	}()
-	var fn func(a1, a2, a3, a4, a5, a6, a7, a8 uintptr, callback func(int32, int32) int32, a, b int32) int32
+	var fn func(a1, a2, a3, a4, a5, a6, a7, a8 uintptr, callback func(purego.CDecl, uintptr, uintptr) uintptr, a, b int32) int32
 	purego.RegisterLibFunc(&fn, lib, "stack_callback")
-	got := fn(1, 2, 3, 4, 5, 6, 7, 8, func(a, b int32) int32 { return a + b }, 40, 2)
+	got := fn(1, 2, 3, 4, 5, 6, 7, 8, func(_ purego.CDecl, a, b uintptr) uintptr { return a + b }, 40, 2)
 	if got != 78 {
 		t.Errorf("stack callback returned %d, want 78", got)
 	}

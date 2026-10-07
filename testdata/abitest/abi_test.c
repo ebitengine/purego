@@ -214,8 +214,8 @@ AddFunc return_null_func_ptr(void) {
 
 int32_t stack_callback(uintptr_t a1, uintptr_t a2, uintptr_t a3, uintptr_t a4,
                        uintptr_t a5, uintptr_t a6, uintptr_t a7, uintptr_t a8,
-                       AddFunc callback, int32_t a, int32_t b) {
-    return callback(a, b) + (int32_t)(a1 + a2 + a3 + a4 + a5 + a6 + a7 + a8);
+                       uintptr_t (*callback)(uintptr_t, uintptr_t), int32_t a, int32_t b) {
+    return (int32_t)(callback(a, b) + a1 + a2 + a3 + a4 + a5 + a6 + a7 + a8);
 }
 
 int32_t stack_slice(uintptr_t a1, uintptr_t a2, uintptr_t a3, uintptr_t a4,
