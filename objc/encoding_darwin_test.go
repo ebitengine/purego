@@ -37,6 +37,11 @@ var encodeTypeTests = []struct {
 	{reflect.TypeFor[uint64](), "unsigned long long", "Q"},
 	{reflect.TypeFor[int](), "long", "q"},
 	{reflect.TypeFor[uint](), "unsigned long", "Q"},
+	{
+		typ:   reflect.TypeFor[uintptr](),
+		cType: "uintptr_t",
+		want:  "Q",
+	},
 	{reflect.TypeFor[float32](), "float", "f"},
 	{reflect.TypeFor[float64](), "double", "d"},
 	{reflect.TypeFor[string](), "char *", "*"},
@@ -79,7 +84,7 @@ func TestEncodeTypeMatchesClang(t *testing.T) {
 	}
 
 	var src strings.Builder
-	src.WriteString("#include <stdio.h>\n#include <objc/objc.h>\n")
+	src.WriteString("#include <stdio.h>\n#include <stdint.h>\n#include <objc/objc.h>\n")
 	src.WriteString("struct encodeTypeTestStruct { int a; double b; };\n")
 	src.WriteString("int main(void) {\n")
 	for _, tt := range encodeTypeTests {

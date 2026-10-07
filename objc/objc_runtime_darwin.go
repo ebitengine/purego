@@ -467,7 +467,7 @@ func encodeType(typ reflect.Type, insidePtr bool) (string, error) {
 	case reflect.Uint64:
 		return encULongLong, nil
 	case reflect.Uintptr:
-		return encPtr, nil
+		return encULongLong, nil
 	case reflect.Float32:
 		return encFloat, nil
 	case reflect.Float64:
