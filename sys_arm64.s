@@ -113,7 +113,7 @@ TEXT syscallX(SB), NOSPLIT, $0
 	MOVD syscallArgs_fn(R9), R10 // fn
 	BL   (R10)
 
-	MOVD PTR_ADDRESS(RSP), R2 // pop structure pointer
+	MOVD PTR_ADDRESS(RSP), R2 // load structure pointer
 
 	MOVD  R0, syscallArgs_a1(R2) // save r1
 	MOVD  R1, syscallArgs_a2(R2) // save r3
@@ -124,7 +124,7 @@ TEXT syscallX(SB), NOSPLIT, $0
 
 #ifdef GOOS_darwin
 	BL   purego_error(SB)
-	MOVD PTR_ADDRESS(RSP), R2 // R2 is caller-saved across purego_error.
+	MOVD PTR_ADDRESS(RSP), R2 // reload (R2 clobbered by call)
 	MOVD (R0), R0
 	MOVD R0, syscallArgs_a3(R2) // save errno
 #else
