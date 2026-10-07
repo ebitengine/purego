@@ -236,8 +236,8 @@ func TestRegisterFunc_InvalidFunctionPointer(t *testing.T) {
 }
 
 func TestRegisterFunc_StackCallback(t *testing.T) {
-	if runtime.GOOS != "darwin" || runtime.GOARCH != "arm64" {
-		t.Skip("requires Darwin ARM64 stack argument packing")
+	if runtime.GOARCH != "arm" && runtime.GOARCH != "arm64" && runtime.GOARCH != "386" && runtime.GOARCH != "amd64" && runtime.GOARCH != "loong64" && runtime.GOARCH != "ppc64le" && runtime.GOARCH != "riscv64" && runtime.GOARCH != "s390x" {
+		t.Skip("Platform doesn't support callbacks")
 	}
 	libFileName := filepath.Join(t.TempDir(), "abitest.so")
 	if err := buildSharedLib(t, "CC", libFileName, filepath.Join("testdata", "abitest", "abi_test.c")); err != nil {
@@ -277,6 +277,14 @@ func TestABI(t *testing.T) {
 			t.Fatalf("failed to close library: %s", err)
 		}
 	}()
+	{
+		var fn func(a1, a2, a3, a4, a5, a6, a7, a8 uintptr, p []int32, x int32) int32
+		purego.RegisterLibFunc(&fn, lib, "stack_slice")
+		got := fn(0, 0, 0, 0, 0, 0, 0, 0, []int32{40}, 2)
+		if got != 42 {
+			t.Errorf("stack slice returned %d, want 42", got)
+		}
+	}
 	{
 		const cName = "stack_uint8_t"
 		const expect = 2047

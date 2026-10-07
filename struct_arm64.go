@@ -488,6 +488,8 @@ func collectStackArgs(args []reflect.Value, startIdx int, numInts, numFloats int
 				args[startIdx+j] = val
 			case reflect.Func:
 				val = reflect.ValueOf(NewCallback(val.Interface()))
+			case reflect.Slice:
+				val = reflect.ValueOf(unsafe.Pointer(val.Pointer()))
 			}
 			stackArgs = append(stackArgs, val)
 		}
