@@ -291,9 +291,29 @@ func (b Block) callForeign(resultType reflect.Type, args []any) ([]reflect.Value
 		}
 	}
 
-	fn := reflect.New(reflect.FuncOf(in, out, false))
+	return foreignFunc(invoke, reflect.FuncOf(in, out, false)).Call(reflectedArgs), nil
+}
+
+// foreignFuncKey identifies a function registered by foreignFunc.
+type foreignFuncKey struct {
+	invoke uintptr
+	typ    reflect.Type
+}
+
+// foreignFuncs caches the functions registered by foreignFunc, so that a block that is
+// called repeatedly, such as an enumeration handler, is only registered once.
+var foreignFuncs sync.Map // map[foreignFuncKey]reflect.Value
+
+// foreignFunc returns a function of type typ that calls the block implementation invoke.
+func foreignFunc(invoke uintptr, typ reflect.Type) reflect.Value {
+	key := foreignFuncKey{invoke, typ}
+	if fn, ok := foreignFuncs.Load(key); ok {
+		return fn.(reflect.Value)
+	}
+	fn := reflect.New(typ)
 	purego.RegisterFunc(fn.Interface(), invoke)
-	return fn.Elem().Call(reflectedArgs), nil
+	actual, _ := foreignFuncs.LoadOrStore(key, fn.Elem())
+	return actual.(reflect.Value)
 }
 
 // Invoke calls the implementation of a block, discarding any result.
