@@ -424,7 +424,8 @@ func NewBlock(fn any) Block {
 // result type, and may be a struct. A mismatch returns an error instead of
 // calling the block.
 func InvokeBlock[T any](block Block, args ...any) (result T, err error) {
-	if !theBlocksCache.Functions.Load(block).IsValid() {
+	fn := theBlocksCache.Functions.Load(block)
+	if !fn.IsValid() {
 		// not one of ours. The block may live on the caller's stack, so it must not be
 		// copied: the copy would be a different pointer and is unnecessary for a synchronous call.
 		out, err := block.callForeign(reflect.TypeFor[T](), args)
@@ -435,10 +436,10 @@ func InvokeBlock[T any](block Block, args ...any) (result T, err error) {
 		return result, nil
 	}
 
+	// NewBlock returns a heap block, which Copy retains rather than moving, so fn still applies.
 	block = block.Copy()
 	defer block.Release()
 
-	fn := theBlocksCache.Functions.Load(block)
 	if fn.Type().NumIn() != len(args)+1 {
 		return result, fmt.Errorf("objc: block callback expects %d arguments, got %d", fn.Type().NumIn()-1, len(args))
 	}
