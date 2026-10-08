@@ -13,12 +13,10 @@ import (
 	"unsafe"
 )
 
-// encQualifiers are the method type qualifiers (const, in, inout, out, bycopy, byref, oneway)
-// that may prefix a type encoding. They do not affect the calling convention.
+// encQualifiers are method type qualifiers, which do not affect the calling convention.
 const encQualifiers = "rnNoORV"
 
-// signature returns the type encoding of a block, or false if the block does not export one.
-// The string refers to the block's descriptor; it must be cloned to be kept beyond the call.
+// signature returns a string that refers to the block's descriptor; clone it to keep it.
 func (b Block) signature() (string, bool) {
 	layout := *(**blockLayout)(unsafe.Pointer(&b))
 	if layout.flags&blockHasSignature == 0 {
@@ -41,8 +39,8 @@ func (b Block) signature() (string, bool) {
 	return unsafe.String(sig, n), true
 }
 
-// splitSignature splits a method or block type encoding, such as "v24@?0q8d16",
-// into the result type followed by the argument types, without qualifiers or frame offsets.
+// splitSignature splits a type encoding such as "v24@?0q8d16" into the result
+// and argument types, dropping qualifiers and frame offsets.
 func splitSignature(sig string) ([]string, error) {
 	var types []string
 	for sig != "" {
@@ -57,13 +55,11 @@ func splitSignature(sig string) ([]string, error) {
 	return types, nil
 }
 
-// cutDigits splits s after its leading decimal digits.
 func cutDigits(s string) (digits, rest string) {
 	rest = strings.TrimLeft(s, "0123456789")
 	return s[:len(s)-len(rest)], rest
 }
 
-// encodingLen returns the length of the single type encoding at the start of s.
 func encodingLen(s string) (int, error) {
 	if s == "" {
 		return 0, errors.New("missing type encoding")
@@ -79,11 +75,11 @@ func encodingLen(s string) (int, error) {
 		digits, _ := cutDigits(s[1:])
 		return 1 + len(digits), nil
 	case strings.HasPrefix(s, `@"`):
-		// an object with its class name: @"NSString"
+		// @"NSString"
 		n, err := quotedLen(s[1:])
 		return 1 + n, err
 	case strings.HasPrefix(s, "@?<"):
-		// a block with its signature: @?<v@?q>
+		// @?<v@?q>
 		n, err := bracketLen(s[2:])
 		return 2 + n, err
 	case strings.HasPrefix(s, "@?"):
@@ -92,8 +88,6 @@ func encodingLen(s string) (int, error) {
 	return 1, nil
 }
 
-// bracketLen returns the length of the bracketed encoding at the start of s,
-// such as {name=type...}, (name=type...), [count type] or <signature>.
 func bracketLen(s string) (int, error) {
 	depth := 0
 	for i := 0; i < len(s); i++ {
@@ -105,7 +99,7 @@ func bracketLen(s string) (int, error) {
 				return i + 1, nil
 			}
 		case '"':
-			// field and class names may contain brackets, as in @"<NSCopying>".
+			// names may contain brackets, as in @"<NSCopying>".
 			n, err := quotedLen(s[i:])
 			if err != nil {
 				return 0, err
@@ -116,7 +110,6 @@ func bracketLen(s string) (int, error) {
 	return 0, fmt.Errorf("unterminated type encoding %q", s)
 }
 
-// quotedLen returns the length of the quoted name at the start of s, including the quotes.
 func quotedLen(s string) (int, error) {
 	if end := strings.IndexByte(s[1:], '"'); end >= 0 {
 		return end + 2, nil
@@ -124,17 +117,13 @@ func quotedLen(s string) (int, error) {
 	return 0, fmt.Errorf("unterminated name in type encoding %q", s)
 }
 
-// abiScalar is one scalar member of a type, as the calling convention sees it.
 type abiScalar struct {
 	offset uintptr
-	// kind is the size in bytes of an integer or pointer ('1', '2', '4' or '8'),
-	// or 'f' or 'd' for floating point.
-	kind byte
-	// blank reports whether the member is in a blank (_) field of a Go struct.
+	// kind is '1', '2', '4' or '8' for an integer of that size, or 'f' or 'd'.
+	kind  byte
 	blank bool
 }
 
-// size returns the size of the scalar in bytes.
 func (s abiScalar) size() uintptr {
 	switch s.kind {
 	case 'f':
@@ -145,23 +134,19 @@ func (s abiScalar) size() uintptr {
 	return uintptr(s.kind - '0')
 }
 
-// isFloat reports whether the scalar is passed in a floating point register.
 func (s abiScalar) isFloat() bool {
 	return s.kind == 'f' || s.kind == 'd'
 }
 
-// abiLayout is the layout of a type with nested structs and arrays flattened into scalars,
-// so that a type encoding can be compared with a Go type. A void result has no size.
+// abiLayout flattens nested structs and arrays so that a type encoding can be compared with a Go type.
 type abiLayout struct {
 	size, align uintptr
 	scalars     []abiScalar
-	// blank holds the offset and size of each blank (_) field of a Go struct.
-	// Callers use those for padding, which has no counterpart in a type encoding,
-	// and for members they have no use for.
+	// blank holds the offset and size of each _ field. Callers use those for
+	// padding, which a type encoding does not have, and for members they ignore.
 	blank [][2]uintptr
 }
 
-// append adds the members of l at offset.
 func (a *abiLayout) append(l abiLayout, offset uintptr) {
 	for _, s := range l.scalars {
 		s.offset += offset
@@ -172,7 +157,6 @@ func (a *abiLayout) append(l abiLayout, offset uintptr) {
 	}
 }
 
-// repeat returns the layout of an array of count elements laid out as l.
 func (l abiLayout) repeat(count uintptr) abiLayout {
 	array := abiLayout{size: count * l.size, align: l.align}
 	for i := range count {
@@ -185,8 +169,7 @@ func alignUp(n, align uintptr) uintptr {
 	return (n + align - 1) / align * align
 }
 
-// encodingLayout returns the layout of a type encoding without qualifiers,
-// with members at their natural alignment.
+// encodingLayout assumes members are at their natural alignment.
 func encodingLayout(enc string) (abiLayout, error) {
 	if enc == "" {
 		return abiLayout{}, errors.New("missing type encoding")
@@ -221,7 +204,6 @@ func encodingLayout(enc string) (abiLayout, error) {
 		layout := abiLayout{align: 1}
 		for fields != "" {
 			if fields[0] == '"' {
-				// a field name
 				n, err := quotedLen(fields)
 				if err != nil {
 					return abiLayout{}, err
@@ -255,7 +237,6 @@ func encodingLayout(enc string) (abiLayout, error) {
 	return abiLayout{size: s.size(), align: s.size(), scalars: []abiScalar{s}}, nil
 }
 
-// goLayout is encodingLayout for a Go type.
 func goLayout(typ reflect.Type) (abiLayout, error) {
 	switch typ.Kind() {
 	case reflect.Array:
@@ -292,12 +273,9 @@ func goLayout(typ reflect.Type) (abiLayout, error) {
 	return abiLayout{}, fmt.Errorf("objc: unsupported block argument or result type %s", typ)
 }
 
-// matches reports whether a value of the Go type laid out as g can be passed as the C type laid out as c.
-//
-// Every member must be at the same offset with the same kind on both sides, except that
-// a blank (_) field of the Go type may cover any integer or pointer members, or none.
-// Floating point members decide which registers a struct is passed in, so they must
-// match even when blank.
+// matches reports whether the Go layout g can be passed as the C layout c. A _ field
+// may cover integer members, but floats must match even when blank because they
+// decide which registers a struct is passed in.
 func (c abiLayout) matches(g abiLayout) bool {
 	if c.size != g.size {
 		return false

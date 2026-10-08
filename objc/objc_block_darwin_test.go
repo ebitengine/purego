@@ -175,8 +175,8 @@ func TestInvokeForeignBlock(t *testing.T) {
 
 	check := func(t *testing.T, block objc.Block) {
 		t.Helper()
-		block.Invoke(int64(20), 3.5) // the result is discarded; this must not panic
-		// the block returns base + i + int64(f), where base is 100.
+		block.Invoke(int64(20), 3.5)
+		// base + i + int64(f)
 		got, err := objc.InvokeBlock[int64](block, int64(20), 3.5)
 		if err != nil {
 			t.Fatal(err)

@@ -219,14 +219,8 @@ func (b Block) Copy() Block {
 	return _Block_copy(b)
 }
 
-// callForeign calls a block that was not created by [NewBlock], such as a
-// completion handler from Objective-C. Following the Blocks ABI, the block
-// itself is the first argument and args come after it. The types of args and
-// resultType make up the call's signature, where a nil resultType means the
-// result is discarded. If the block carries a type signature, the call is
-// checked against it first.
-//
-// See https://clang.llvm.org/docs/Block-ABI-Apple.html.
+// callForeign calls a block not created by [NewBlock]. The Blocks ABI passes the
+// block itself as the first argument: https://clang.llvm.org/docs/Block-ABI-Apple.html
 func (b Block) callForeign(resultType reflect.Type, args []any) ([]reflect.Value, error) {
 	if b == 0 {
 		return nil, errors.New("objc: cannot invoke a nil block")
@@ -266,32 +260,25 @@ func (b Block) callForeign(resultType reflect.Type, args []any) ([]reflect.Value
 	return call.(*foreignCall).fn.Call(reflectedArgs), nil
 }
 
-// foreignKey identifies a call made by callForeign: the block's implementation and
-// type signature, and the types of the result and arguments of the call.
 type foreignKey struct {
 	invoke uintptr
 	sig    string
 	hasSig bool
 	result reflect.Type
 	nargs  int
-	// args holds the types of the arguments, so that the common case can be looked up
-	// without building a func type. A call with more arguments uses typ instead.
+	// args avoids building a func type with reflect.FuncOf, which allocates on every
+	// call. typ is used instead when there are more arguments than fit.
 	args [8]reflect.Type
 	typ  reflect.Type
 }
 
-// foreignCall is a checked call to a foreign block: either a function that calls
-// the block's implementation, or the reason the block cannot be called that way.
 type foreignCall struct {
 	fn  reflect.Value
 	err error
 }
 
-// foreignCalls caches calls to foreign blocks, so that a block that is called
-// repeatedly, such as an enumeration handler, is only checked and registered once.
 var foreignCalls sync.Map // map[foreignKey]*foreignCall
 
-// newForeignCall checks and registers the call identified by key, with the given arguments.
 func newForeignCall(key foreignKey, args []reflect.Value) *foreignCall {
 	typ := key.typ
 	if typ == nil {
@@ -305,7 +292,6 @@ func newForeignCall(key foreignKey, args []reflect.Value) *foreignCall {
 	return &foreignCall{fn: fn.Elem()}
 }
 
-// foreignFuncOf returns the type of a function that takes args and returns result, if not nil.
 func foreignFuncOf(args []reflect.Value, result reflect.Type) reflect.Type {
 	in := make([]reflect.Type, len(args))
 	for i, arg := range args {
@@ -318,10 +304,8 @@ func foreignFuncOf(args []reflect.Value, result reflect.Type) reflect.Type {
 	return reflect.FuncOf(in, out, false)
 }
 
-// checkForeign reports whether a block with the type signature sig, if hasSig,
-// can be called as a function of type typ, whose first argument is the block.
 func checkForeign(sig string, hasSig bool, typ reflect.Type) error {
-	// goTypes are in the order of a signature: the result (nil to discard it), then the block, then its parameters.
+	// goTypes follows the order of a type signature: result, block, parameters.
 	goTypes := make([]reflect.Type, 1, typ.NumIn()+1)
 	if typ.NumOut() > 0 {
 		goTypes[0] = typ.Out(0)
@@ -428,8 +412,7 @@ func NewBlock(fn any) Block {
 func InvokeBlock[T any](block Block, args ...any) (result T, err error) {
 	fn := theBlocksCache.Functions.Load(block)
 	if !fn.IsValid() {
-		// not created by NewBlock. The block may live on the caller's stack, so it must not be
-		// copied: the copy would be a different pointer and is unnecessary for a synchronous call.
+		// The block may be on the caller's stack, where Copy would return a different pointer.
 		out, err := block.callForeign(reflect.TypeFor[T](), args)
 		if err != nil {
 			return result, err
@@ -438,7 +421,7 @@ func InvokeBlock[T any](block Block, args ...any) (result T, err error) {
 		return result, nil
 	}
 
-	// NewBlock returns a heap block, which Copy retains rather than moving, so fn still applies.
+	// Blocks from NewBlock are on the heap, so Copy returns the same pointer.
 	block = block.Copy()
 	defer block.Release()
 

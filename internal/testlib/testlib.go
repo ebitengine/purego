@@ -15,9 +15,7 @@ import (
 	"testing"
 )
 
-// BuildSharedLib compiles sources into a shared library at libFile using the C compiler named
-// by the go env variable compilerEnv (such as "CC" or "CXX"). The library is built for GOARCH,
-// and Objective-C (.m) sources are linked against Foundation.
+// BuildSharedLib builds sources with the compiler named by `go env compilerEnv`.
 func BuildSharedLib(tb testing.TB, compilerEnv, libFile string, sources ...string) error {
 	tb.Helper()
 	// When PUREGO_TEST_PREBUILT_LIBDIR is set, the shared library has been
