@@ -717,6 +717,39 @@ type IMP uintptr
 // The function panics if an error occurs.
 // The function pointer is never deallocated.
 func NewIMP(fn any) IMP {
+	imp, err := newIMP(fn)
+	if err != nil {
+		// Preserve the original panic value for callers that recover it.
+		panic(err.(*impError).panicValue)
+	}
+	return imp
+}
+
+// encodeSignatureType is like encodeType for a function parameter or result type, but rejects arrays.
+func encodeSignatureType(typ reflect.Type) (string, error) {
+	if typ.Kind() == reflect.Array {
+		// C array parameters decay to pointers, whereas Go callbacks receive arrays by value.
+		return "", errors.New("top-level arrays are not supported in function signatures")
+	}
+	return encodeType(typ, false)
+}
+
+// impError retains the original panic value while reporting RegisterClass errors.
+type impError struct {
+	panicValue any
+}
+
+func (e *impError) Error() string {
+	return fmt.Sprintf("objc: failed to create IMP: %v", e.panicValue)
+}
+
+// newIMP is like NewIMP but returns an error instead of panicking.
+func newIMP(fn any) (imp IMP, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = &impError{panicValue: r}
+		}
+	}()
 	ty := reflect.TypeOf(fn)
 	if ty.Kind() != reflect.Func {
 		panic("objc: not a function")
@@ -731,24 +764,5 @@ func NewIMP(fn any) IMP {
 	case ty.In(1) != reflect.TypeFor[SEL]():
 		panic("objc: NewIMP must take a (id, SEL) as its first two arguments; got " + ty.String())
 	}
-	return IMP(purego.NewCallback(fn))
-}
-
-// encodeSignatureType is like encodeType for a function parameter or result type, but rejects arrays.
-func encodeSignatureType(typ reflect.Type) (string, error) {
-	if typ.Kind() == reflect.Array {
-		// C array parameters decay to pointers, whereas Go callbacks receive arrays by value.
-		return "", errors.New("top-level arrays are not supported in function signatures")
-	}
-	return encodeType(typ, false)
-}
-
-// newIMP is like NewIMP but returns an error instead of panicking.
-func newIMP(fn any) (imp IMP, err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			err = fmt.Errorf("objc: failed to create IMP: %v", r)
-		}
-	}()
-	return NewIMP(fn), nil
+	return IMP(purego.NewCallback(fn)), nil
 }
