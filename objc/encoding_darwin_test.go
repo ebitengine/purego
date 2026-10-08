@@ -52,36 +52,12 @@ var encodeTypeTests = []struct {
 	{reflect.TypeFor[Class](), "Class", "#"},
 	{reflect.TypeFor[SEL](), "SEL", ":"},
 	{reflect.TypeFor[encodeTypeTestStruct](), "struct encodeTypeTestStruct", "{encodeTypeTestStruct=id}"},
-	{
-		typ:   reflect.TypeFor[[3]int32](),
-		cType: "int[3]",
-		want:  "[3i]",
-	},
-	{
-		typ:   reflect.TypeFor[[2][3]int32](),
-		cType: "int[2][3]",
-		want:  "[2[3i]]",
-	},
-	{
-		typ:   reflect.TypeFor[encodeTypeArrayTestStruct](),
-		cType: "struct encodeTypeArrayTestStruct",
-		want:  "{encodeTypeArrayTestStruct=[3i]}",
-	},
-	{
-		typ:   reflect.TypeFor[[0]uint8](),
-		cType: "unsigned char[0]",
-		want:  "[0C]",
-	},
-	{
-		typ:   reflect.TypeFor[[2]encodeTypeTestStruct](),
-		cType: "struct encodeTypeTestStruct[2]",
-		want:  "[2{encodeTypeTestStruct=id}]",
-	},
-	{
-		typ:   reflect.TypeFor[*[3]int32](),
-		cType: "int (*)[3]",
-		want:  "^[3i]",
-	},
+	{reflect.TypeFor[[3]int32](), "int[3]", "[3i]"},
+	{reflect.TypeFor[[2][3]int32](), "int[2][3]", "[2[3i]]"},
+	{reflect.TypeFor[encodeTypeArrayTestStruct](), "struct encodeTypeArrayTestStruct", "{encodeTypeArrayTestStruct=[3i]}"},
+	{reflect.TypeFor[[0]uint8](), "unsigned char[0]", "[0C]"},
+	{reflect.TypeFor[[2]encodeTypeTestStruct](), "struct encodeTypeTestStruct[2]", "[2{encodeTypeTestStruct=id}]"},
+	{reflect.TypeFor[*[3]int32](), "int (*)[3]", "^[3i]"},
 }
 
 func TestEncodeType(t *testing.T) {
