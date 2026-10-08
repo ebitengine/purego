@@ -238,7 +238,7 @@ func TestRegisterFunc_StackCallback(t *testing.T) {
 		t.Skip("Platform doesn't support callbacks")
 	}
 	libFileName := filepath.Join(t.TempDir(), "abitest.so")
-	if err := buildSharedLib(t, "CC", libFileName, filepath.Join("testdata", "abitest", "abi_test.c")); err != nil {
+	if err := testlib.BuildSharedLib(t, "CC", libFileName, filepath.Join("testdata", "abitest", "abi_test.c")); err != nil {
 		t.Fatal(err)
 	}
 	lib, err := load.OpenLibrary(libFileName)
