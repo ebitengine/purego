@@ -13,9 +13,9 @@ import (
 	"github.com/ebitengine/purego"
 )
 
-func TestCallbackPreservesVectorRegisters(t *testing.T) {
-	libFileName := filepath.Join(t.TempDir(), "libcallback_vregs.so")
-	if err := buildSharedLib(t, "CC", libFileName, filepath.Join("testdata", "libcbtest", "callback_vregs_ppc64le.S")); err != nil {
+func TestCallbackPreservesFloatRegisters(t *testing.T) {
+	libFileName := filepath.Join(t.TempDir(), "libcallback_fregs.so")
+	if err := buildSharedLib(t, "CC", libFileName, filepath.Join("testdata", "libcbtest", "callback_fregs_ppc64le.S")); err != nil {
 		t.Fatal(err)
 	}
 
@@ -25,7 +25,7 @@ func TestCallbackPreservesVectorRegisters(t *testing.T) {
 	}
 
 	var check func(uintptr) uint64
-	purego.RegisterLibFunc(&check, lib, "check_callback_vregs")
+	purego.RegisterLibFunc(&check, lib, "check_callback_fregs")
 	data := make([]byte, 4096)
 	callback := purego.NewCallback(func() {
 		for range 100 {
@@ -34,9 +34,9 @@ func TestCallbackPreservesVectorRegisters(t *testing.T) {
 	})
 
 	mask := check(callback)
-	for i := range 12 {
+	for i := range 18 {
 		if mask&(1<<i) != 0 {
-			t.Errorf("V%d was clobbered", 20+i)
+			t.Errorf("F%d was clobbered", 14+i)
 		}
 	}
 }

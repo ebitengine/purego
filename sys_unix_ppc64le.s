@@ -17,22 +17,17 @@
 //  24(R1)   - TOC save area (if needed)
 //  32(R1)+  - parameter save area / local variables
 //
-// Our frame (total 208 bytes, 16-byte aligned):
-//  32(R1)   - saved R31 (8 bytes)
-//  40(R1)   - callbackArgs struct (32 bytes: index, args, result, stackArgs)
-//  72(R1)   - args array: floats (64) + ints (64) = 128 bytes, ends at 200
-// Total with alignment: 208 bytes
+// Our frame (total 192 bytes, 16-byte aligned):
+//  32(R1)   - callbackArgs struct (32 bytes: index, args, result, stackArgs)
+//  64(R1)   - args array: floats (64) + ints (64) = 128 bytes
 //
 // Stack args are NOT copied - we pass a pointer to their location in caller's frame.
 // This keeps frame size small enough for NOSPLIT with CGO_ENABLED=1.
-// Budget: 208 + 544 (crosscall2) + 56 (cgocallback) = 808 bytes
-// This is 8 bytes over the 800 limit, but cgocallback's children (load_g, save_g)
-// reuse the same stack space, so in practice it works.
+// Budget: 192 + 544 (crosscall2) + 56 (cgocallback) = 792 bytes.
 
-#define FRAME_SIZE     200
-#define SAVE_R31       32
-#define CB_ARGS        40
-#define ARGS_ARRAY     72
+#define FRAME_SIZE     192
+#define CB_ARGS        32
+#define ARGS_ARRAY     64
 #define FLOAT_OFF      0
 #define INT_OFF        64
 
@@ -49,12 +44,13 @@ TEXT callbackasm1(SB), NOSPLIT|NOFRAME, $0
 	// Allocate our stack frame (with back chain via MOVDU)
 	MOVDU R1, -FRAME_SIZE(R1)
 
-	// Save R31 - Go assembler uses it for MOVD from SB (like arm64's R27)
-	MOVD R31, SAVE_R31(R1)
-
 	// Save R11 (callback index) immediately - it's volatile and will be clobbered!
 	// Store it in the callbackArgs struct's index field now.
 	MOVD R11, (CB_ARGS+0)(R1)
+
+	// The assembler may use R31 as REGTMP below. Keep the C caller's R31
+	// in R11 until crosscall2, which saves and restores R31 itself.
+	MOVD R31, R11
 
 	// Save callback arguments to args array.
 	// Layout: floats first (F1-F8), then ints (R3-R10), then stack args
@@ -95,14 +91,12 @@ TEXT callbackasm1(SB), NOSPLIT|NOFRAME, $0
 	MOVD (R3), R3                   // dereference closure to get fn
 	ADD  $CB_ARGS, R1, R4           // frame = &callbackArgs
 	MOVD $0, R6                     // ctxt = 0
+	MOVD R11, R31
 
 	BL crosscall2(SB)
 
 	// Get callback result into R3
 	MOVD (CB_ARGS+16)(R1), R3
-
-	// Restore R31
-	MOVD SAVE_R31(R1), R31
 
 	// Deallocate frame
 	ADD $FRAME_SIZE, R1

@@ -102,23 +102,35 @@ check_callback_vregs:
 	li 4,592
 	stvx 31,1,4
 
+	li 3,0
 	li 4,224
 	li 5,416
-	li 6,24
+	li 6,0
 .Lcompare:
 	ldx 7,1,4
 	ldx 8,1,5
 	cmpd 7,8
-	bne .Lfailed
+	beq .Lcompare_second_word
+	addi 4,4,16
+	addi 5,5,16
+	b .Lclobbered
+.Lcompare_second_word:
 	addi 4,4,8
 	addi 5,5,8
-	addic. 6,6,-1
-	bne .Lcompare
-	li 3,1
-	b .Lrestore
-.Lfailed:
-	li 3,0
-.Lrestore:
+	ldx 7,1,4
+	ldx 8,1,5
+	addi 4,4,8
+	addi 5,5,8
+	cmpd 7,8
+	beq .Lnext
+.Lclobbered:
+	li 9,1
+	sld 9,9,6
+	or 3,3,9
+.Lnext:
+	addi 6,6,1
+	cmpdi 6,12
+	blt .Lcompare
 	li 4,32
 	lvx 20,1,4
 	li 4,48
