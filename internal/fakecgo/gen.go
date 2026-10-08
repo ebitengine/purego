@@ -255,16 +255,27 @@ type fileContent struct {
 	DynamicImports []dynamicImport
 }
 
+var trampolineArchConstraints = map[string]string{
+	"linux": "!ppc64le",
+}
+
 func trampolineBuildTag(gooses []string) string {
 	tags := make([]string, len(gooses))
 	for i, goos := range gooses {
-		if goos == "linux" {
-			tags[i] = "(linux && !ppc64le)"
-		} else {
-			tags[i] = goos
+		tags[i] = goos
+		if constraint := trampolineArchConstraints[goos]; constraint != "" {
+			tags[i] = "(" + goos + " && " + constraint + ")"
 		}
 	}
 	return strings.Join(tags, " || ")
+}
+
+func trampolineFileBuildTag(goos string) string {
+	tag := "!cgo"
+	if constraint := trampolineArchConstraints[goos]; constraint != "" {
+		tag += " && " + constraint
+	}
+	return tag
 }
 
 func run() error {
@@ -314,7 +325,7 @@ func run() error {
 			return err
 		}
 		if len(goosSymbols) != 0 {
-			located.Tag = "!cgo && " + trampolineBuildTag([]string{goos})
+			located.Tag = trampolineFileBuildTag(goos)
 			if err := execute(templateTrampolinesStubs, fmt.Sprintf("ztrampolines_%s.s", goos), located); err != nil {
 				return err
 			}
