@@ -436,12 +436,24 @@ const (
 // encodeType returns a string representing a type as if it was given to @encode(typ)
 // Source: https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/ObjCRuntimeGuide/Articles/ocrtTypeEncodings.html#//apple_ref/doc/uid/TP40008048-CH100
 func encodeType(typ reflect.Type, insidePtr bool) (string, error) {
-	return encodeTypeContext(typ, insidePtr, false)
+	context := encodeTopLevel
+	if insidePtr {
+		context = encodeInsidePointer
+	}
+	return encodeTypeContext(typ, context)
 }
 
-// Clang omits the opaque runtime struct definition for handles nested in
-// pointers or struct fields, while retaining it for a standalone handle.
-func encodeTypeContext(typ reflect.Type, insidePtr, insideAggregate bool) (string, error) {
+type encodingContext uint8
+
+const (
+	encodeTopLevel encodingContext = iota
+	encodeInsidePointer
+	encodeStructField
+)
+
+// encodeTypeContext is like encodeType, but uses context to distinguish
+// standalone types, pointer targets, and struct fields.
+func encodeTypeContext(typ reflect.Type, context encodingContext) (string, error) {
 	switch typ {
 	case reflect.TypeFor[Class]():
 		return encClass, nil
@@ -451,13 +463,14 @@ func encodeTypeContext(typ reflect.Type, insidePtr, insideAggregate bool) (strin
 		return encSelector, nil
 	case reflect.TypeFor[IMP]():
 		return encPtr + "?", nil
+	// Clang omits the empty definition marker for nested opaque runtime handles.
 	case reflect.TypeFor[Ivar]():
-		if insidePtr || insideAggregate {
+		if context != encodeTopLevel {
 			return encPtr + "{objc_ivar}", nil
 		}
 		return encPtr + "{objc_ivar=}", nil
 	case reflect.TypeFor[Property]():
-		if insidePtr || insideAggregate {
+		if context != encodeTopLevel {
 			return encPtr + "{objc_property}", nil
 		}
 		return encPtr + "{objc_property=}", nil
@@ -494,10 +507,10 @@ func encodeTypeContext(typ reflect.Type, insidePtr, insideAggregate bool) (strin
 	case reflect.Float64:
 		return encDouble, nil
 	case reflect.Pointer:
-		enc, err := encodeTypeContext(typ.Elem(), true, insideAggregate)
+		enc, err := encodeTypeContext(typ.Elem(), encodeInsidePointer)
 		return encPtr + enc, err
 	case reflect.Struct:
-		if insidePtr {
+		if context == encodeInsidePointer {
 			return encStructBegin + typ.Name() + encStructEnd, nil
 		}
 		var encoding stdstrings.Builder
@@ -513,7 +526,7 @@ func encodeTypeContext(typ reflect.Type, insidePtr, insideAggregate bool) (strin
 				// encodes a zero-length array member as [0c].
 				continue
 			}
-			tmp, err := encodeTypeContext(f.Type, false, true)
+			tmp, err := encodeTypeContext(f.Type, encodeStructField)
 			if err != nil {
 				return "", err
 			}
