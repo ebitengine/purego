@@ -159,39 +159,37 @@ func placeStack(v reflect.Value, keepAlive []any, addInt func(uintptr)) []any {
 //
 // [Arm64 Calling Convention]: https://github.com/ARM-software/abi-aa/blob/main/sysvabi64/sysvabi64.rst
 func isHFA(t reflect.Type) bool {
-	// round up struct size to nearest 8 see section B.4
-	structSize := roundUpTo8(t.Size())
-	numFields := numABIFields(t)
-	if structSize == 0 || numFields > 4 {
-		return false
-	}
-	first := abiField(t, 0)
-	switch first.Type.Kind() {
-	case reflect.Float32, reflect.Float64:
-		firstKind := first.Type.Kind()
-		for i := range numFields {
-			if abiField(t, i).Type.Kind() != firstKind {
+	var kind reflect.Kind
+	var n int
+	var walk func(reflect.Type) bool
+	walk = func(t reflect.Type) bool {
+		switch t.Kind() {
+		case reflect.Struct:
+			for i := range t.NumField() {
+				if f := t.Field(i); isABIField(f) && !walk(f.Type) {
+					return false
+				}
+			}
+			return true
+		case reflect.Array:
+			for range t.Len() {
+				if !walk(t.Elem()) {
+					return false
+				}
+			}
+			return true
+		case reflect.Float32, reflect.Float64:
+			if n > 0 && t.Kind() != kind {
 				return false
 			}
-		}
-		return true
-	case reflect.Array:
-		switch first.Type.Elem().Kind() {
-		case reflect.Float32, reflect.Float64:
-			return true
+			kind = t.Kind()
+			n++
+			return n <= 4
 		default:
 			return false
 		}
-	case reflect.Struct:
-		for range numABIFields(first.Type) {
-			if !isHFA(first.Type) {
-				return false
-			}
-		}
-		return true
-	default:
-		return false
 	}
+	return walk(t) && n > 0
 }
 
 // isHVA reports a Homogeneous Aggregate with a Fundamental Data Type that is a Short-Vector type

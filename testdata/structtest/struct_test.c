@@ -541,3 +541,19 @@ struct CharPointer {
 struct CharPointer IdentityCharPointer(struct CharPointer s) {
     return s;
 }
+
+int32_t NestedFloatAndInt(struct { struct { float x; } a; int32_t b; } s) {
+    return (int32_t)s.a.x * 10 + s.b;
+}
+
+int32_t NestedFloatsAndInt(struct { struct { float x, y; } pos; int32_t id; } s) {
+    return (int32_t)s.pos.x * 100 + (int32_t)s.pos.y * 10 + s.id;
+}
+
+int32_t FloatArrayAndInt(struct { float a[2]; int32_t id; } s) {
+    return (int32_t)s.a[0] * 100 + (int32_t)s.a[1] * 10 + s.id;
+}
+
+int32_t FloatAndFloatArray(struct { float x; float v[2]; } s) {
+    return (int32_t)s.x * 100 + (int32_t)s.v[0] * 10 + (int32_t)s.v[1];
+}

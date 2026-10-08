@@ -1628,3 +1628,91 @@ func TestRegisterFunc_structReturns(t *testing.T) {
 		})
 	}
 }
+
+func TestRegisterFunc_HFAClassification(t *testing.T) {
+	if runtime.GOARCH != "arm64" {
+		t.Skip("arm64 HFA classification")
+	}
+	libFileName := filepath.Join(t.TempDir(), "structtest.so")
+	if err := buildSharedLib(t, "CC", libFileName, filepath.Join("testdata", "structtest", "struct_test.c")); err != nil {
+		t.Fatal(err)
+	}
+	lib, err := load.OpenLibrary(libFileName)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		if err := load.CloseLibrary(lib); err != nil {
+			t.Error(err)
+		}
+	}()
+	t.Run("nested_float_and_int", func(t *testing.T) {
+		type S struct {
+			_ structs.HostLayout
+			A struct {
+				_ structs.HostLayout
+				X float32
+			}
+			B int32
+		}
+		var fn func(S) int32
+		purego.RegisterLibFunc(&fn, lib, "NestedFloatAndInt")
+		var s S
+		s.A.X = 3
+		s.B = 7
+		if got := fn(s); got != 37 {
+			t.Errorf("got %d, want 37", got)
+		}
+	})
+	t.Run("nested_floats_and_int", func(t *testing.T) {
+		type S struct {
+			_   structs.HostLayout
+			Pos struct {
+				_    structs.HostLayout
+				X, Y float32
+			}
+			ID int32
+		}
+		var fn func(S) int32
+		purego.RegisterLibFunc(&fn, lib, "NestedFloatsAndInt")
+		var s S
+		s.Pos.X = 3
+		s.Pos.Y = 5
+		s.ID = 7
+		if got := fn(s); got != 357 {
+			t.Errorf("got %d, want 357", got)
+		}
+	})
+	t.Run("float_array_and_int", func(t *testing.T) {
+		type S struct {
+			_  structs.HostLayout
+			A  [2]float32
+			ID int32
+		}
+		var fn func(S) int32
+		purego.RegisterLibFunc(&fn, lib, "FloatArrayAndInt")
+		s := S{
+			A:  [2]float32{3, 5},
+			ID: 7,
+		}
+		if got := fn(s); got != 357 {
+			t.Errorf("got %d, want 357", got)
+		}
+	})
+	t.Run("float_and_float_array", func(t *testing.T) {
+		type S struct {
+			_ structs.HostLayout
+			X float32
+			V [2]float32
+		}
+		var fn func(S) int32
+		purego.RegisterLibFunc(&fn, lib, "FloatAndFloatArray")
+		s := S{
+			X: 3,
+			V: [2]float32{5, 7},
+		}
+		if got := fn(s); got != 357 {
+			t.Errorf("got %d, want 357", got)
+		}
+	})
+}
