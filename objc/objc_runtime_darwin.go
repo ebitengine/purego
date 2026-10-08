@@ -436,6 +436,12 @@ const (
 // encodeType returns a string representing a type as if it was given to @encode(typ)
 // Source: https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/ObjCRuntimeGuide/Articles/ocrtTypeEncodings.html#//apple_ref/doc/uid/TP40008048-CH100
 func encodeType(typ reflect.Type, insidePtr bool) (string, error) {
+	return encodeTypeContext(typ, insidePtr, false)
+}
+
+// Clang omits the opaque runtime struct definition for handles nested in
+// pointers or struct fields, while retaining it for a standalone handle.
+func encodeTypeContext(typ reflect.Type, insidePtr, insideAggregate bool) (string, error) {
 	switch typ {
 	case reflect.TypeFor[Class]():
 		return encClass, nil
@@ -446,8 +452,14 @@ func encodeType(typ reflect.Type, insidePtr bool) (string, error) {
 	case reflect.TypeFor[IMP]():
 		return encPtr + "?", nil
 	case reflect.TypeFor[Ivar]():
+		if insidePtr || insideAggregate {
+			return encPtr + "{objc_ivar}", nil
+		}
 		return encPtr + "{objc_ivar=}", nil
 	case reflect.TypeFor[Property]():
+		if insidePtr || insideAggregate {
+			return encPtr + "{objc_property}", nil
+		}
 		return encPtr + "{objc_property=}", nil
 	}
 
@@ -482,7 +494,7 @@ func encodeType(typ reflect.Type, insidePtr bool) (string, error) {
 	case reflect.Float64:
 		return encDouble, nil
 	case reflect.Pointer:
-		enc, err := encodeType(typ.Elem(), true)
+		enc, err := encodeTypeContext(typ.Elem(), true, insideAggregate)
 		return encPtr + enc, err
 	case reflect.Struct:
 		if insidePtr {
@@ -501,7 +513,7 @@ func encodeType(typ reflect.Type, insidePtr bool) (string, error) {
 				// encodes a zero-length array member as [0c].
 				continue
 			}
-			tmp, err := encodeType(f.Type, false)
+			tmp, err := encodeTypeContext(f.Type, false, true)
 			if err != nil {
 				return "", err
 			}

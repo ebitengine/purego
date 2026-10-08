@@ -21,6 +21,13 @@ type encodeTypeTestStruct struct {
 	B float64
 }
 
+type encodeTypeHandleTestStruct struct {
+	_              structs.HostLayout
+	Implementation IMP
+	Variable       Ivar
+	Metadata       Property
+}
+
 var encodeTypeTests = []struct {
 	typ   reflect.Type
 	cType string
@@ -54,6 +61,10 @@ var encodeTypeTests = []struct {
 	{reflect.TypeFor[IMP](), "IMP", "^?"},
 	{reflect.TypeFor[Ivar](), "Ivar", "^{objc_ivar=}"},
 	{reflect.TypeFor[Property](), "objc_property_t", "^{objc_property=}"},
+	{typ: reflect.TypeFor[*Ivar](), cType: "Ivar *", want: "^^{objc_ivar}"},
+	{typ: reflect.TypeFor[*Property](), cType: "objc_property_t *", want: "^^{objc_property}"},
+	{typ: reflect.TypeFor[*IMP](), cType: "IMP *", want: "^^?"},
+	{typ: reflect.TypeFor[encodeTypeHandleTestStruct](), cType: "struct encodeTypeHandleTestStruct", want: "{encodeTypeHandleTestStruct=^?^{objc_ivar}^{objc_property}}"},
 	{reflect.TypeFor[encodeTypeTestStruct](), "struct encodeTypeTestStruct", "{encodeTypeTestStruct=id}"},
 }
 
@@ -89,6 +100,7 @@ func TestEncodeTypeMatchesClang(t *testing.T) {
 	var src strings.Builder
 	src.WriteString("#include <stdio.h>\n#include <stdint.h>\n#include <objc/runtime.h>\n")
 	src.WriteString("struct encodeTypeTestStruct { int a; double b; };\n")
+	src.WriteString("struct encodeTypeHandleTestStruct { IMP implementation; Ivar variable; objc_property_t metadata; };\n")
 	src.WriteString("int main(void) {\n")
 	for _, tt := range encodeTypeTests {
 		fmt.Fprintf(&src, "\tprintf(\"%%s\\n\", @encode(%s));\n", tt.cType)
