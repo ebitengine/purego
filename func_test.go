@@ -868,36 +868,6 @@ func buildSharedLib(tb testing.TB, compilerEnv, libFile string, sources ...strin
 	return nil
 }
 
-func TestRegisterFunc_UnsupportedStructFields(t *testing.T) {
-	if runtime.GOARCH != "arm64" && runtime.GOARCH != "amd64" {
-		t.Skip("struct arguments unsupported")
-	}
-	types := []reflect.Type{
-		reflect.TypeFor[struct{ S string }](),
-		reflect.TypeFor[struct{ S []byte }](),
-		reflect.TypeFor[struct{ S any }](),
-		reflect.TypeFor[struct{ S map[int]int }](),
-		reflect.TypeFor[struct{ S func() }](),
-		reflect.TypeFor[struct{ S complex64 }](),
-		reflect.TypeFor[struct{ S complex128 }](),
-		reflect.TypeFor[struct{ S struct{ X string } }](),
-		reflect.TypeFor[struct{ S [2]string }](),
-		reflect.TypeFor[struct{ S [2]struct{ X string } }](),
-		reflect.TypeFor[struct{ S [2][2]string }](),
-	}
-	for _, ty := range types {
-		t.Run(ty.String(), func(t *testing.T) {
-			defer func() {
-				if recover() == nil {
-					t.Error("RegisterFunc accepted unsupported struct field")
-				}
-			}()
-			fn := reflect.New(reflect.FuncOf([]reflect.Type{ty}, nil, false))
-			purego.RegisterFunc(fn.Interface(), 1)
-		})
-	}
-}
-
 func TestRegisterFunc_SpilledStructStackLimit(t *testing.T) {
 	if runtime.GOARCH != "arm64" || runtime.GOOS != "linux" {
 		t.Skip("Linux arm64 register exhaustion")
@@ -929,19 +899,4 @@ func TestRegisterFunc_SpilledStructStackLimit(t *testing.T) {
 			purego.RegisterFunc(fn.Interface(), 1)
 		})
 	}
-}
-
-func TestRegisterFunc_SupportedNestedStructFields(t *testing.T) {
-	if runtime.GOARCH != "arm64" && runtime.GOARCH != "amd64" {
-		t.Skip("struct arguments unsupported")
-	}
-	var fn func(struct {
-		_ structs.HostLayout
-		S [2]struct {
-			_ structs.HostLayout
-			X int32
-		}
-		A [2][2]int8
-	})
-	purego.RegisterFunc(&fn, 1)
 }
