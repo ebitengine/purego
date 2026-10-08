@@ -241,6 +241,8 @@ func GetClass(name string) Class {
 }
 
 // MethodDef represents the Go function and the selector that ObjC uses to access that function.
+// Use the exact runtime handle types, such as ID and Class, in Fn. Types defined
+// from these handles are encoded as their underlying Go type.
 type MethodDef struct {
 	Cmd SEL
 	Fn  any
@@ -271,7 +273,8 @@ const (
 // The name of the field is what will be used to access it through the Ivar. If the type is bool
 // the name cannot start with `is` since a getter will be generated with the name `isBoolName`.
 // The name also cannot contain any spaces.
-// The type is the Go equivalent type of the Ivar.
+// The type is the Go equivalent type of the Ivar. Use the exact runtime handle
+// types, such as ID and Class; types defined from them use the underlying Go encoding.
 // Attribute determines if a getter and or setter method is generated for this field.
 type FieldDef struct {
 	Name      string
@@ -440,6 +443,12 @@ func encodeType(typ reflect.Type, insidePtr bool) (string, error) {
 		return encId, nil
 	case reflect.TypeFor[SEL]():
 		return encSelector, nil
+	case reflect.TypeFor[IMP]():
+		return encPtr + "?", nil
+	case reflect.TypeFor[Ivar]():
+		return encPtr + "{objc_ivar=}", nil
+	case reflect.TypeFor[Property]():
+		return encPtr + "{objc_property=}", nil
 	}
 
 	kind := typ.Kind()

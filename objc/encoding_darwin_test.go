@@ -51,6 +51,9 @@ var encodeTypeTests = []struct {
 	{reflect.TypeFor[ID](), "id", "@"},
 	{reflect.TypeFor[Class](), "Class", "#"},
 	{reflect.TypeFor[SEL](), "SEL", ":"},
+	{reflect.TypeFor[IMP](), "IMP", "^?"},
+	{reflect.TypeFor[Ivar](), "Ivar", "^{objc_ivar=}"},
+	{reflect.TypeFor[Property](), "objc_property_t", "^{objc_property=}"},
 	{reflect.TypeFor[encodeTypeTestStruct](), "struct encodeTypeTestStruct", "{encodeTypeTestStruct=id}"},
 }
 
@@ -84,7 +87,7 @@ func TestEncodeTypeMatchesClang(t *testing.T) {
 	}
 
 	var src strings.Builder
-	src.WriteString("#include <stdio.h>\n#include <stdint.h>\n#include <objc/objc.h>\n")
+	src.WriteString("#include <stdio.h>\n#include <stdint.h>\n#include <objc/runtime.h>\n")
 	src.WriteString("struct encodeTypeTestStruct { int a; double b; };\n")
 	src.WriteString("int main(void) {\n")
 	for _, tt := range encodeTypeTests {
@@ -145,6 +148,11 @@ func TestEncodeFunc(t *testing.T) {
 			name: "value return, mixed integer kinds",
 			fn:   func(_ ID, _ SEL, a int, b int64, c uint, d uint64) int { return 0 },
 			want: "q@:qqQQ",
+		},
+		{
+			name: "uintptr preserves adjacent argument",
+			fn:   func(_ ID, _ SEL, p uintptr, n int32) uintptr { return 0 },
+			want: "Q@:Qi",
 		},
 		{
 			name: "no arguments",
