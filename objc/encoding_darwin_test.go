@@ -67,6 +67,9 @@ var encodeTypeTests = []struct {
 		cType: "struct encodeTypeArrayTestStruct",
 		want:  "{encodeTypeArrayTestStruct=[3i]}",
 	},
+	{typ: reflect.TypeFor[[0]uint8](), cType: "unsigned char[0]", want: "[0C]"},
+	{typ: reflect.TypeFor[[2]encodeTypeTestStruct](), cType: "struct encodeTypeTestStruct[2]", want: "[2{encodeTypeTestStruct=id}]"},
+	{typ: reflect.TypeFor[*[3]int32](), cType: "int (*)[3]", want: "^[3i]"},
 }
 
 func TestEncodeType(t *testing.T) {
@@ -192,6 +195,8 @@ func TestEncodeFuncErrors(t *testing.T) {
 		fn   any
 	}{
 		{"not a func", 0},
+		{"array argument", func(_ ID, _ SEL, v [3]int32) {}},
+		{"array return", func(_ ID, _ SEL) [3]int32 { return [3]int32{} }},
 		{"too many return values", func(_ ID, _ SEL) (int, int) { return 0, 0 }},
 		{"missing self and _cmd", func() {}},
 		{"missing _cmd", func(_ ID) {}},
@@ -202,6 +207,25 @@ func TestEncodeFuncErrors(t *testing.T) {
 			if got, err := encodeFunc(tt.fn); err == nil {
 				t.Errorf("encodeFunc = %q; want an error", got)
 			}
+		})
+	}
+}
+
+func TestEncodeArrayElementError(t *testing.T) {
+	if _, err := encodeType(reflect.TypeFor[[2]func()](), false); err == nil {
+		t.Fatal("want an error for an unencodable array element")
+	}
+}
+
+func TestBlockEncodeArrayErrors(t *testing.T) {
+	for _, typ := range []reflect.Type{reflect.TypeFor[func(Block, [3]int32)](), reflect.TypeFor[func(Block) [3]int32]()} {
+		t.Run(typ.String(), func(t *testing.T) {
+			defer func() {
+				if recover() == nil {
+					t.Error("want a panic for a top-level array")
+				}
+			}()
+			new(blockCache).encode(typ)
 		})
 	}
 }

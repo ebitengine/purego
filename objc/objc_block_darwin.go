@@ -123,7 +123,7 @@ func (*blockCache) encode(typ reflect.Type) *uint8 {
 	case 0:
 		encoding = encVoid
 	default:
-		returnType, err := encodeType(typ.Out(0), false)
+		returnType, err := encodeSignatureType(typ.Out(0))
 		if err != nil {
 			panic(fmt.Sprintf("objc: %v", err))
 		}
@@ -136,7 +136,7 @@ func (*blockCache) encode(typ reflect.Type) *uint8 {
 
 	encoding += encId
 	for i := 1; i < typ.NumIn(); i++ {
-		argType, err := encodeType(typ.In(i), false)
+		argType, err := encodeSignatureType(typ.In(i))
 		if err != nil {
 			panic(fmt.Sprintf("objc: %v", err))
 		}
