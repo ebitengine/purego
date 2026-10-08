@@ -402,3 +402,21 @@ func TestInvokeForeignBlockManyArguments(t *testing.T) {
 		}
 	}
 }
+
+func TestInvokeForeignBlockUnknownResult(t *testing.T) {
+	lib := loadBlockFixture(t)
+	var vectorBlock func() objc.Block
+	purego.RegisterLibFunc(&vectorBlock, lib, "purego_vector_block")
+	block := vectorBlock()
+	defer block.Release()
+
+	if _, err := objc.InvokeBlock[int64](block, int64(1)); err == nil {
+		t.Error("InvokeBlock: expected an error")
+	}
+	defer func() {
+		if recover() == nil {
+			t.Error("Invoke: expected a panic")
+		}
+	}()
+	block.Invoke(int64(1))
+}

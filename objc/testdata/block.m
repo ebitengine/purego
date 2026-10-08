@@ -68,3 +68,13 @@ void *purego_many_block(void) {
         };
     return Block_copy(b);
 }
+
+#include <simd/simd.h>
+
+// Clang encodes vector types as an empty string, so this signature is "16@?0q8".
+void *purego_vector_block(void) {
+    simd_double4 (^b)(int64_t) = ^simd_double4(int64_t x) {
+        return (simd_double4){x, x, x, x};
+    };
+    return Block_copy(b);
+}

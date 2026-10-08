@@ -39,7 +39,7 @@ func TestSplitSignature(t *testing.T) {
 		}
 	}
 
-	for _, sig := range []string{"v8@?0{S=i", `v8@?0@"NSString`, "v8@?0@?<v"} {
+	for _, sig := range []string{"v8@?0{S=i", `v8@?0@"NSString`, "v8@?0@?<v", "16@?0q8"} {
 		if got, err := splitSignature(sig); err == nil {
 			t.Errorf("splitSignature(%q) = %q, want an error", sig, got)
 		}
@@ -221,5 +221,16 @@ func TestLayoutMatches(t *testing.T) {
 		if got := c.matches(g); got != tt.want {
 			t.Errorf("%q matches %v = %v, want %v", tt.enc, tt.typ, got, tt.want)
 		}
+	}
+}
+
+func TestCheckForeignUndecodedResult(t *testing.T) {
+	// long double has an encoding that encodingLayout cannot lay out.
+	invoke := reflect.FuncOf([]reflect.Type{reflect.TypeFor[Block](), reflect.TypeFor[int64]()}, nil, false)
+	if err := checkForeign("D16@?0q8", true, invoke); err == nil {
+		t.Error("Invoke on a block with an undecoded result: expected an error")
+	}
+	if err := checkForeign("v16@?0q8", true, invoke); err != nil {
+		t.Errorf("Invoke on a block returning void: %v", err)
 	}
 }

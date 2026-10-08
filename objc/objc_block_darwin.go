@@ -334,8 +334,8 @@ func checkForeign(sig string, hasSig bool, typ reflect.Type) error {
 	if len(types) != len(goTypes) {
 		return fmt.Errorf("objc: block callback expects %d arguments, got %d", len(types)-2, len(goTypes)-2)
 	}
-	if goTypes[0] == nil && (types[0][0] == '{' || types[0][0] == '(') {
-		// The caller has to provide the result buffer for a struct returned in memory.
+	if _, err := encodingLayout(types[0]); goTypes[0] == nil && (err != nil || types[0][0] == '{' || types[0][0] == '(') {
+		// The result may be returned in memory, which needs a buffer from the caller.
 		return fmt.Errorf("objc: block returns %s; use InvokeBlock to receive it", types[0])
 	}
 	for i, enc := range types {

@@ -61,7 +61,8 @@ func cutDigits(s string) (digits, rest string) {
 }
 
 func encodingLen(s string) (int, error) {
-	if s == "" {
+	if s == "" || s[0] >= '0' && s[0] <= '9' {
+		// Clang encodes some types, such as vectors, as an empty string.
 		return 0, errors.New("missing type encoding")
 	}
 	switch {
