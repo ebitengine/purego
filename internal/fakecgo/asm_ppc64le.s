@@ -12,7 +12,7 @@
 // Saves C callee-saved registers and calls cgocallback with three arguments.
 // fn is the PC of a func(a unsafe.Pointer) function.
 TEXT crosscall2(SB), NOSPLIT|NOFRAME, $0
-	STACK_AND_SAVE_HOST_TO_GO_ABI(32)
+	STACK_AND_SAVE_HOST_TO_GO_ABI(FIXED_FRAME)
 	MOVD R2, 24(R1)
 
 	MOVD R3, FIXED_FRAME+0(R1) // fn unsafe.Pointer
@@ -23,5 +23,5 @@ TEXT crosscall2(SB), NOSPLIT|NOFRAME, $0
 	BL   runtime·cgocallback(SB)
 
 	MOVD 24(R1), R2
-	UNSTACK_AND_RESTORE_GO_TO_HOST_ABI(32)
+	UNSTACK_AND_RESTORE_GO_TO_HOST_ABI(FIXED_FRAME)
 	RET

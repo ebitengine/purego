@@ -19,7 +19,7 @@ func TestCallbackPreservesFloatRegisters(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	lib, err := purego.Dlopen(libFileName, purego.RTLD_NOW|purego.RTLD_LOCAL)
+	lib, err := purego.Dlopen(libFileName, purego.RTLD_NOW|purego.RTLD_GLOBAL)
 	if err != nil {
 		t.Fatal(err)
 	}
