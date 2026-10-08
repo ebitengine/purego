@@ -13,6 +13,7 @@ import (
 	"reflect"
 	"runtime"
 	"slices"
+	"strings"
 	"structs"
 	"testing"
 	"unsafe"
@@ -1497,17 +1498,105 @@ func TestRegisterFunc_UnsupportedStructFields(t *testing.T) {
 	}
 }
 
-func TestRegisterFunc_SupportedNestedStructFields(t *testing.T) {
+func TestRegisterFunc_UnsupportedCompositeArrays(t *testing.T) {
 	if runtime.GOARCH != "arm64" && runtime.GOARCH != "amd64" {
 		t.Skip("struct arguments unsupported")
 	}
-	var fn func(struct {
-		_ structs.HostLayout
-		S [2]struct {
+	types := []reflect.Type{
+		reflect.TypeFor[struct {
 			_ structs.HostLayout
-			X int32
+			S [2]struct {
+				_ structs.HostLayout
+				X float32
+			}
+		}](),
+		reflect.TypeFor[struct {
+			_ structs.HostLayout
+			A [2][2]float32
+		}](),
+		reflect.TypeFor[struct {
+			_ structs.HostLayout
+			S [2]struct {
+				_ structs.HostLayout
+				X int32
+			}
+		}](),
+	}
+	for _, ty := range types {
+		t.Run(ty.String(), func(t *testing.T) {
+			for _, context := range []string{"argument", "return", "callback_argument", "callback_return"} {
+				t.Run(context, func(t *testing.T) {
+					if runtime.GOOS == "windows" && strings.HasPrefix(context, "callback") {
+						t.Skip("struct callbacks unsupported")
+					}
+					var inputs, outputs []reflect.Type
+					if strings.HasSuffix(context, "argument") {
+						inputs = []reflect.Type{ty}
+					} else {
+						outputs = []reflect.Type{ty}
+					}
+					fnType := reflect.FuncOf(inputs, outputs, false)
+					defer func() {
+						if recover() == nil {
+							t.Error("accepted unsupported composite array")
+						}
+					}()
+					if strings.HasPrefix(context, "callback") {
+						fn := reflect.MakeFunc(fnType, func([]reflect.Value) []reflect.Value { return nil })
+						purego.NewCallback(fn.Interface())
+					} else {
+						purego.RegisterFunc(reflect.New(fnType).Interface(), 1)
+					}
+				})
+			}
+		})
+	}
+}
+
+func TestRegisterFunc_UnsupportedVariadicStructFields(t *testing.T) {
+	if runtime.GOARCH != "arm64" && runtime.GOARCH != "amd64" {
+		t.Skip("struct arguments unsupported")
+	}
+	libFileName := filepath.Join(t.TempDir(), "structtest.so")
+	if err := buildSharedLib(t, "CC", libFileName, filepath.Join("testdata", "structtest", "struct_test.c")); err != nil {
+		t.Fatal(err)
+	}
+	lib, err := load.OpenLibrary(libFileName)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		if err := load.CloseLibrary(lib); err != nil {
+			t.Error(err)
 		}
-		A [2][2]int8
-	})
-	purego.RegisterFunc(&fn, 1)
+	}()
+	var variadic func(int64, ...any) int64
+	var slice func(int64, []any) int64
+	purego.RegisterLibFunc(&variadic, lib, "IgnoreStructArgument")
+	purego.RegisterLibFunc(&slice, lib, "IgnoreStructArgument")
+	supported := struct{ A, B int64 }{
+		A: 7,
+		B: 9,
+	}
+	if got := variadic(5, supported); got != 5 {
+		t.Errorf("variadic got %d, want 5", got)
+	}
+	if got := slice(5, []any{supported}); got != 5 {
+		t.Errorf("slice got %d, want 5", got)
+	}
+	value := struct{ S string }{S: "x"}
+	for _, name := range []string{"variadic", "slice"} {
+		t.Run(name, func(t *testing.T) {
+			defer func() {
+				if recover() == nil {
+					t.Error("accepted unsupported struct field")
+				}
+			}()
+			if name == "variadic" {
+				variadic(5, value)
+			} else {
+				slice(5, []any{value})
+			}
+		})
+	}
 }

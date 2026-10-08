@@ -360,7 +360,11 @@ func RegisterFunc(fptr any, cfn uintptr) {
 			if i == len(args)-1 {
 				if variadic, ok := reflect.TypeAssert[[]any](args[i]); ok {
 					for _, x := range variadic {
-						keepAlive = addValue(reflect.ValueOf(x), keepAlive, addInt, addFloat, addStack, &numInts, &numFloats, &numStack)
+						v := reflect.ValueOf(x)
+						if v.Kind() == reflect.Struct {
+							checkStructFieldsSupported(v.Type())
+						}
+						keepAlive = addValue(v, keepAlive, addInt, addFloat, addStack, &numInts, &numFloats, &numStack)
 					}
 					continue
 				}
@@ -646,10 +650,9 @@ func checkStructFieldsSupported(ty reflect.Type) {
 			continue
 		}
 		f := ty.Field(i).Type
-		for f.Kind() == reflect.Array {
+		if f.Kind() == reflect.Array {
 			f = f.Elem()
-		}
-		if f.Kind() == reflect.Struct {
+		} else if f.Kind() == reflect.Struct {
 			checkStructFieldsSupported(f)
 			continue
 		}

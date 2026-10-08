@@ -466,3 +466,9 @@ struct Mixed5Args {
 struct Mixed5Args IdentityMixed5Args(struct Mixed5Args s) {
     return s;
 }
+
+int64_t IgnoreStructArgument(int64_t n, uintptr_t data, uintptr_t length) {
+    (void)data;
+    (void)length;
+    return n;
+}
