@@ -474,7 +474,11 @@ func encodeType(typ reflect.Type, insidePtr bool) (string, error) {
 		return encDouble, nil
 	case reflect.Pointer:
 		enc, err := encodeType(typ.Elem(), true)
-		return encPtr + enc, err
+		if err != nil {
+			// A pointer to a type that has no encoding, such as a slice, is opaque.
+			return encUnsafePtr, nil
+		}
+		return encPtr + enc, nil
 	case reflect.Struct:
 		if insidePtr {
 			return encStructBegin + typ.Name() + encStructEnd, nil
