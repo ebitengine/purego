@@ -8,6 +8,7 @@ import (
 	"slices"
 	"structs"
 	"testing"
+	"unsafe"
 )
 
 func TestSplitSignature(t *testing.T) {
@@ -177,6 +178,10 @@ func TestLayoutMatches(t *testing.T) {
 		{"d", reflect.TypeFor[float64](), true},
 		{"d", reflect.TypeFor[float32](), false},
 		{"@", reflect.TypeFor[ID](), true},
+		{"^i", reflect.TypeFor[*int32](), true},
+		{"^v", reflect.TypeFor[*[]int](), true},
+		{"^v", reflect.TypeFor[unsafe.Pointer](), true},
+		{"^v", reflect.TypeFor[uint32](), false},
 		{"@?", reflect.TypeFor[Block](), true},
 		{"v", reflect.TypeFor[int](), false},
 		{"{CGRect={CGPoint=dd}{CGSize=dd}}", reflect.TypeFor[rect](), true},

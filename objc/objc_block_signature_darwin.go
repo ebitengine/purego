@@ -258,9 +258,6 @@ func encodingLayout(enc string) (abiLayout, error) {
 // goLayout is encodingLayout for a Go type.
 func goLayout(typ reflect.Type) (abiLayout, error) {
 	switch typ.Kind() {
-	case reflect.Pointer, reflect.UnsafePointer:
-		// encodeType also encodes the pointee, which may not have an encoding.
-		return encodingLayout(encPtr)
 	case reflect.Array:
 		elem, err := goLayout(typ.Elem())
 		return elem.repeat(uintptr(typ.Len())), err
