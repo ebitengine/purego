@@ -219,11 +219,13 @@ func (b Block) Copy() Block {
 	return _Block_copy(b)
 }
 
-// callForeign calls a block that was not created by [NewBlock] (for example one
-// handed to us by Objective-C) through the Blocks ABI: the block is passed as the
-// first argument followed by args. The signature is derived from the dynamic
-// types of args and from resultType (nil for no result), and is checked against
-// the block's own signature when it has one.
+// callForeign calls a block that was not created by [NewBlock], such as a
+// completion handler from Objective-C. Following the Blocks ABI, the block
+// itself is the first argument and args come after it. The types of args and
+// resultType make up the call's signature, where a nil resultType means the
+// result is discarded. If the block carries a type signature, the call is
+// checked against it first.
+//
 // See https://clang.llvm.org/docs/Block-ABI-Apple.html.
 func (b Block) callForeign(resultType reflect.Type, args []any) ([]reflect.Value, error) {
 	if b == 0 {
