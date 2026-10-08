@@ -74,6 +74,9 @@ var encodeTypeTests = []struct {
 	{reflect.TypeFor[[2][3]int32](), "int[2][3]", "[2[3i]]"},
 	{reflect.TypeFor[encodeTypeArrayTestStruct](), "struct encodeTypeArrayTestStruct", "{encodeTypeArrayTestStruct=[3i]}"},
 	{reflect.TypeFor[[0]uint8](), "unsigned char[0]", "[0C]"},
+	{reflect.TypeFor[[2]Ivar](), "Ivar[2]", "[2^{objc_ivar}]"},
+	{reflect.TypeFor[[2]Property](), "objc_property_t[2]", "[2^{objc_property}]"},
+	{reflect.TypeFor[[2][3]Ivar](), "Ivar[2][3]", "[2[3^{objc_ivar}]]"},
 	{reflect.TypeFor[[2]encodeTypeTestStruct](), "struct encodeTypeTestStruct[2]", "[2{encodeTypeTestStruct=id}]"},
 	{reflect.TypeFor[*[3]int32](), "int (*)[3]", "^[3i]"},
 }

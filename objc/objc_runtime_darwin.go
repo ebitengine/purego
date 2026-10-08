@@ -513,7 +513,11 @@ func encodeTypeContext(typ reflect.Type, context encodingContext) (string, error
 		enc, err := encodeTypeContext(typ.Elem(), encodeInsidePointer)
 		return encPtr + enc, err
 	case reflect.Array:
-		enc, err := encodeTypeContext(typ.Elem(), context)
+		elemContext := context
+		if elemContext == encodeTopLevel {
+			elemContext = encodeStructField
+		}
+		enc, err := encodeTypeContext(typ.Elem(), elemContext)
 		if err != nil {
 			return "", err
 		}
