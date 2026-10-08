@@ -192,6 +192,26 @@ func isHFA(t reflect.Type) bool {
 	return walk(t) && n > 0
 }
 
+// numHFAMembers returns the number of floating-point members of an HFA.
+func numHFAMembers(t reflect.Type) int {
+	switch t.Kind() {
+	case reflect.Struct:
+		var n int
+		for i := range t.NumField() {
+			if f := t.Field(i); isABIField(f) {
+				n += numHFAMembers(f.Type)
+			}
+		}
+		return n
+	case reflect.Array:
+		return t.Len() * numHFAMembers(t.Elem())
+	case reflect.Float32, reflect.Float64:
+		return 1
+	default:
+		return 0
+	}
+}
+
 // isHVA reports a Homogeneous Aggregate with a Fundamental Data Type that is a Short-Vector type
 // and at most four uniquely addressable members (5.9.5.2 in [Arm64 Calling Convention]).
 // A short vector is a machine type that is composed of repeated instances of one fundamental integral or
@@ -469,7 +489,7 @@ func getCallbackStruct(inType reflect.Type, frame unsafe.Pointer, floatsN *int, 
 	f := (*[callbackMaxFrame]uintptr)(frame)
 
 	if isHFA(inType) {
-		_, numFloatFields := isAllSameFloat(inType)
+		numFloatFields := numHFAMembers(inType)
 		if *floatsN+numFloatFields <= numOfFloatRegisters() {
 			return readHFAFromRegisters(inType, f, floatsN, numFloatFields)
 		}

@@ -1716,3 +1716,51 @@ func TestRegisterFunc_HFAClassification(t *testing.T) {
 		}
 	})
 }
+
+func TestRegisterFunc_HFAArrayCallback(t *testing.T) {
+	if runtime.GOARCH != "arm64" || runtime.GOOS == "windows" {
+		t.Skip("arm64 Unix callbacks")
+	}
+	type S struct {
+		_ structs.HostLayout
+		X float32
+		V [2]float32
+	}
+	expected := S{
+		X: 3,
+		V: [2]float32{5, 7},
+	}
+	callback := purego.NewCallback(func(s S) int32 {
+		if s != expected {
+			t.Errorf("callback got %+v, want %+v", s, expected)
+		}
+		return int32(s.X*100 + s.V[0]*10 + s.V[1])
+	})
+	t.Run("registered_callback", func(t *testing.T) {
+		var fn func(S) int32
+		purego.RegisterFunc(&fn, callback)
+		if got := fn(expected); got != 357 {
+			t.Errorf("got %d, want 357", got)
+		}
+	})
+	t.Run("c_callback", func(t *testing.T) {
+		libFileName := filepath.Join(t.TempDir(), "structtest.so")
+		if err := buildSharedLib(t, "CC", libFileName, filepath.Join("testdata", "structtest", "struct_test.c")); err != nil {
+			t.Fatal(err)
+		}
+		lib, err := load.OpenLibrary(libFileName)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer func() {
+			if err := load.CloseLibrary(lib); err != nil {
+				t.Error(err)
+			}
+		}()
+		var fn func(uintptr, float32, float32, float32) int32
+		purego.RegisterLibFunc(&fn, lib, "CallFloatAndFloatArrayCallback")
+		if got := fn(callback, 3, 5, 7); got != 357 {
+			t.Errorf("got %d, want 357", got)
+		}
+	})
+}

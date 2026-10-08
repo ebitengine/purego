@@ -577,3 +577,8 @@ struct FloatAndFloatArray {
 int32_t FloatAndFloatArray(struct FloatAndFloatArray s) {
     return (int32_t)s.x * 100 + (int32_t)s.v[0] * 10 + (int32_t)s.v[1];
 }
+
+int32_t CallFloatAndFloatArrayCallback(int32_t (*cb)(struct FloatAndFloatArray), float x, float y, float z) {
+    struct FloatAndFloatArray s = {x, {y, z}};
+    return cb(s);
+}
