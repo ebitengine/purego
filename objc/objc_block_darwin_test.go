@@ -157,7 +157,6 @@ func TestBlockCopyAndBlockRelease(t *testing.T) {
 	}
 }
 
-// loadBlockFixture compiles testdata/block.m, which creates blocks in Objective-C.
 func loadBlockFixture(t testing.TB) uintptr {
 	t.Helper()
 	library := filepath.Join(t.TempDir(), "block.dylib")
@@ -283,7 +282,6 @@ func TestInvokeForeignBlockStruct(t *testing.T) {
 		t.Error("struct with a different field: expected an error")
 	}
 
-	// Invoke cannot receive the result, so it must refuse rather than crash.
 	defer func() {
 		if recover() == nil {
 			t.Error("Invoke on a block returning a struct: expected a panic")
@@ -299,7 +297,6 @@ func TestInvokeForeignBlockStructPadding(t *testing.T) {
 	block := boolFloatBlock()
 	defer block.Release()
 
-	// the padding is written out, as the RegisterFunc documentation asks for.
 	type boolFloat struct {
 		_ structs.HostLayout
 		b bool
@@ -322,7 +319,6 @@ func TestInvokeForeignBlockFuncArgument(t *testing.T) {
 	block := fnptrBlock()
 	defer block.Release()
 
-	// a func argument would consume a callback on every call; it must be refused.
 	if _, err := objc.InvokeBlock[objc.ID](block, func() {}); err == nil {
 		t.Error("expected an error for a func argument")
 	}
