@@ -868,7 +868,7 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 				})
 				expected := Int64AndDouble{A: -1234, B: 5.25}
 				if ret := fn(expected); ret != expected {
-					t.Fatalf("IdentityInt64AndDouble returned %+v wanted %+v", ret, expected)
+					t.Errorf("IdentityInt64AndDouble returned %+v wanted %+v", ret, expected)
 				}
 				if runtime.GOARCH == "arm64" {
 					// Only x7 is left, so the whole struct goes
@@ -878,7 +878,7 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 						return s
 					})
 					if ret := fn(1, 2, 3, 4, 5, 6, 7, expected); ret != expected {
-						t.Fatalf("IdentityInt64AndDoubleAfterRegisters returned %+v wanted %+v", ret, expected)
+						t.Errorf("IdentityInt64AndDoubleAfterRegisters returned %+v wanted %+v", ret, expected)
 					}
 				}
 			}

@@ -867,3 +867,81 @@ func buildSharedLib(tb testing.TB, compilerEnv, libFile string, sources ...strin
 
 	return nil
 }
+
+func TestRegisterFunc_UnsupportedStructFields(t *testing.T) {
+	if runtime.GOARCH != "arm64" && runtime.GOARCH != "amd64" {
+		t.Skip("struct arguments unsupported")
+	}
+	types := []reflect.Type{
+		reflect.TypeFor[struct{ S string }](),
+		reflect.TypeFor[struct{ S []byte }](),
+		reflect.TypeFor[struct{ S any }](),
+		reflect.TypeFor[struct{ S map[int]int }](),
+		reflect.TypeFor[struct{ S func() }](),
+		reflect.TypeFor[struct{ S complex64 }](),
+		reflect.TypeFor[struct{ S complex128 }](),
+		reflect.TypeFor[struct{ S struct{ X string } }](),
+		reflect.TypeFor[struct{ S [2]string }](),
+		reflect.TypeFor[struct{ S [2]struct{ X string } }](),
+		reflect.TypeFor[struct{ S [2][2]string }](),
+	}
+	for _, ty := range types {
+		t.Run(ty.String(), func(t *testing.T) {
+			defer func() {
+				if recover() == nil {
+					t.Error("RegisterFunc accepted unsupported struct field")
+				}
+			}()
+			fn := reflect.New(reflect.FuncOf([]reflect.Type{ty}, nil, false))
+			purego.RegisterFunc(fn.Interface(), 1)
+		})
+	}
+}
+
+func TestRegisterFunc_SpilledStructStackLimit(t *testing.T) {
+	if runtime.GOARCH != "arm64" || runtime.GOOS != "linux" {
+		t.Skip("Linux arm64 register exhaustion")
+	}
+	for _, trailing := range []int{22, 23} {
+		t.Run(strconv.Itoa(trailing), func(t *testing.T) {
+			inputs := make([]reflect.Type, 7)
+			for i := range inputs {
+				inputs[i] = reflect.TypeFor[int64]()
+			}
+			inputs = append(inputs, reflect.TypeFor[struct {
+				_ structs.HostLayout
+				A int64
+				B float64
+			}]())
+			for range trailing {
+				inputs = append(inputs, reflect.TypeFor[int64]())
+			}
+			fn := reflect.New(reflect.FuncOf(inputs, nil, false))
+			defer func() {
+				r := recover()
+				if trailing == 23 && r == nil {
+					t.Error("RegisterFunc accepted too many stack arguments")
+				}
+				if trailing == 22 && r != nil {
+					t.Errorf("RegisterFunc rejected boundary signature: %v", r)
+				}
+			}()
+			purego.RegisterFunc(fn.Interface(), 1)
+		})
+	}
+}
+
+func TestRegisterFunc_SupportedNestedStructFields(t *testing.T) {
+	if runtime.GOARCH != "arm64" && runtime.GOARCH != "amd64" {
+		t.Skip("struct arguments unsupported")
+	}
+	var fn func(struct {
+		_ structs.HostLayout
+		S [2]struct {
+			_ structs.HostLayout
+			X int32
+		}
+		A [2][2]int8
+	})
+	purego.RegisterFunc(&fn, 1)
+}

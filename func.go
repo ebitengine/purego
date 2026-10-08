@@ -217,12 +217,17 @@ func RegisterFunc(fptr any, cfn uintptr) {
 				}
 			case reflect.Struct:
 				ensureStructSupported()
+				checkStructFieldsSupported(arg)
 				if arg.Size() == 0 && runtime.GOOS != "windows" {
 					// On Windows an empty struct still consumes one argument slot.
 					continue
 				}
 				addInt := func(u uintptr) {
-					ints++
+					if ints < numOfIntegerRegisters() {
+						ints++
+					} else {
+						stack++
+					}
 				}
 				addFloat := func(u uintptr) {
 					floats++
@@ -641,9 +646,10 @@ func checkStructFieldsSupported(ty reflect.Type) {
 			continue
 		}
 		f := ty.Field(i).Type
-		if f.Kind() == reflect.Array {
+		for f.Kind() == reflect.Array {
 			f = f.Elem()
-		} else if f.Kind() == reflect.Struct {
+		}
+		if f.Kind() == reflect.Struct {
 			checkStructFieldsSupported(f)
 			continue
 		}

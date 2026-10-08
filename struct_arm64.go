@@ -328,8 +328,7 @@ func isHVA(t reflect.Type) bool {
 }
 
 // copyStruct8ByteChunks copies struct memory in 8-byte chunks to the provided
-// callback. The final partial chunk is read byte-by-byte so that nothing beyond
-// the value's allocation is touched, and is zero-extended.
+// callback. The final partial chunk is zero-extended.
 func copyStruct8ByteChunks(ptr unsafe.Pointer, size uintptr, addChunk func(uintptr)) {
 	// Darwin's byte-level packing and the AAPCS64 rule for non-HFA/HVA
 	// composites of 16 bytes or less both pass consecutive chunks of the
