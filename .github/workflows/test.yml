@@ -269,8 +269,8 @@ jobs:
           go env -w CXX=powerpc64le-linux-gnu-g++
           env GOOS=linux GOARCH=ppc64le CGO_ENABLED=0 go test -c -o=purego-test-nocgo .
           env QEMU_LD_PREFIX=/usr/powerpc64le-linux-gnu qemu-ppc64le ./purego-test-nocgo -test.shuffle=on -test.v -test.count=10
-          # This only verifies internal PIE linking; executing callbacks in this mode is not yet supported.
           env GOOS=linux GOARCH=ppc64le CGO_ENABLED=0 go test -c -buildmode=pie -ldflags=-linkmode=internal -o=purego-test-nocgo-pie .
+          env QEMU_LD_PREFIX=/usr/powerpc64le-linux-gnu qemu-ppc64le ./purego-test-nocgo-pie -test.shuffle=on -test.v -test.count=10
           env GOOS=linux GOARCH=ppc64le CGO_ENABLED=1 go test -c -o=purego-test-cgo .
           env QEMU_LD_PREFIX=/usr/powerpc64le-linux-gnu qemu-ppc64le ./purego-test-cgo -test.shuffle=on -test.v -test.count=10
           go env -u CC

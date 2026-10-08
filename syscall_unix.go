@@ -119,6 +119,9 @@ const callbackMaxFrame = 64 * ptrSize
 var __callbackasm byte
 var callbackasmABI0 = uintptr(unsafe.Pointer(&__callbackasm))
 
+//go:linkname callbackasmAddrs callbackasmAddrs
+var callbackasmAddrs [maxCB]uintptr
+
 // callbackWrap_call allows the calling of the ABIInternal wrapper
 // which is required for runtime.cgocallback without the
 // <ABIInternal> tag which is only allowed in the runtime.
@@ -377,6 +380,8 @@ func callbackArgFromSlotBigEndian(slotPtr unsafe.Pointer, inType reflect.Type) r
 // On ARM, runtime.callbackasm is a series of mov and branch instructions.
 // R12 is loaded with the callback index. Each entry is two instructions,
 // hence 8 bytes.
+// On PPC64LE, every callback has a separate global-entry symbol so that an
+// external call initializes the TOC. callbackasmAddrs stores their addresses.
 func callbackasmAddr(i int) uintptr {
 	var entrySize int
 	switch runtime.GOARCH {
@@ -388,8 +393,10 @@ func callbackasmAddr(i int) uintptr {
 	case "386":
 		// On 386, each callback entry is MOVL $imm, CX (5 bytes) + JMP (5 bytes)
 		entrySize = 10
-	case "arm", "arm64", "loong64", "ppc64le", "riscv64":
-		// On ARM, ARM64, Loong64, PPC64LE and RISCV64, each entry is a MOV instruction
+	case "ppc64le":
+		return callbackasmAddrs[i]
+	case "arm", "arm64", "loong64", "riscv64":
+		// On ARM, ARM64, Loong64 and RISCV64, each entry is a MOV instruction
 		// followed by a branch instruction
 		entrySize = 8
 	case "s390x":

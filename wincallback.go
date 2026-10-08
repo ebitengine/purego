@@ -163,21 +163,26 @@ func genasmPpc64le() {
 
 //go:build linux
 
-// External code calls into callbackasm at an offset corresponding
-// to the callback index. Callbackasm is a table of MOVD and BR instructions.
-// The MOVD instruction loads R11 with the callback index, and the
-// BR instruction branches to callbackasm1.
+// External code calls one callbackasm function per callback index. Keeping
+// each callback in a separate TEXT symbol gives every function an ELFv2 global
+// entry that initializes the TOC before branching to callbackasm1.
 // callbackasm1 takes the callback index from R11 and
 // indexes into an array that stores information about each callback.
 // It then calls the Go implementation for that callback.
 #include "textflag.h"
 
-TEXT callbackasm(SB), NOSPLIT|NOFRAME, $0
 `)
 	for i := range maxCallback {
+		name := fmt.Sprintf("callbackasm_entry_%d", i)
+		if i == 0 {
+			name = "callbackasm"
+		}
+		fmt.Fprintf(&buf, "TEXT %s(SB), NOSPLIT|NOFRAME, $0\n", name)
 		fmt.Fprintf(&buf, "\tMOVD $%d, R11\n", i)
 		buf.WriteString("\tBR   callbackasm1(SB)\n")
+		fmt.Fprintf(&buf, "DATA callbackasmAddrs+%d(SB)/8, $%s(SB)\n\n", i*8, name)
 	}
+	fmt.Fprintf(&buf, "GLOBL callbackasmAddrs(SB), RODATA, $%d\n", maxCallback*8)
 	if err := os.WriteFile("zcallback_ppc64le.s", buf.Bytes(), 0644); err != nil {
 		fmt.Fprintf(os.Stderr, "wincallback: %s\n", err)
 		os.Exit(2)
