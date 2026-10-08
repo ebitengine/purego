@@ -73,6 +73,7 @@ check_callback_vregs:
 	li 4,400
 	stvx 31,1,4
 
+	mr 12,3
 	mtctr 3
 	bctrl
 	ld 2,24(1)

@@ -22,6 +22,7 @@ check_callback_fregs:
 	lfd \r,176+8*(\r-14)(1)
 	.endr
 
+	mr 12,3
 	mtctr 3
 	bctrl
 	ld 2,24(1)
