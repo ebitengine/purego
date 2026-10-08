@@ -319,19 +319,21 @@ func foreignFuncOf(args []reflect.Value, result reflect.Type) reflect.Type {
 // checkForeign reports whether a block with the type signature sig, if hasSig,
 // can be called as a function of type typ, whose first argument is the block.
 func checkForeign(sig string, hasSig bool, typ reflect.Type) error {
-	layouts := make([]abiLayout, typ.NumIn()-1)
-	for i := range layouts {
-		var err error
-		if layouts[i], err = goLayout(typ.In(i + 1)); err != nil {
-			return err
-		}
-	}
-	var resultType reflect.Type
-	var resultLayout abiLayout
+	// goTypes are in the order of a signature: the result (nil to discard it), then the block, then its parameters.
+	goTypes := make([]reflect.Type, 1, typ.NumIn()+1)
 	if typ.NumOut() > 0 {
-		resultType = typ.Out(0)
+		goTypes[0] = typ.Out(0)
+	}
+	for i := range typ.NumIn() {
+		goTypes = append(goTypes, typ.In(i))
+	}
+	layouts := make([]abiLayout, len(goTypes))
+	for i, t := range goTypes {
+		if t == nil {
+			continue
+		}
 		var err error
-		if resultLayout, err = goLayout(resultType); err != nil {
+		if layouts[i], err = goLayout(t); err != nil {
 			return err
 		}
 	}
@@ -340,32 +342,30 @@ func checkForeign(sig string, hasSig bool, typ reflect.Type) error {
 	}
 
 	types, err := splitSignature(sig)
-	// types is the result, then the block itself, then the parameters.
 	if err != nil || len(types) < 2 {
 		return fmt.Errorf("objc: malformed block signature %q", sig)
 	}
-	if len(types)-2 != len(layouts) {
-		return fmt.Errorf("objc: block callback expects %d arguments, got %d", len(types)-2, len(layouts))
+	if len(types) != len(goTypes) {
+		return fmt.Errorf("objc: block callback expects %d arguments, got %d", len(types)-2, len(goTypes)-2)
 	}
-	want, err := encodingLayout(types[0])
-	switch {
-	case resultType == nil && (err != nil || types[0][0] == '{'):
+	if goTypes[0] == nil && (types[0][0] == '{' || types[0][0] == '(') {
 		// The caller has to provide the result buffer for a struct returned in memory.
 		return fmt.Errorf("objc: block returns %s; use InvokeBlock to receive it", types[0])
-	case resultType == nil:
-		// the result, if any, is discarded.
-	case err != nil:
-		return fmt.Errorf("objc: block result %s: %w", types[0], err)
-	case !want.matches(resultLayout):
-		return fmt.Errorf("objc: block returns %s, which does not match %s", types[0], resultType)
 	}
-	for i, got := range layouts {
-		want, err := encodingLayout(types[i+2])
-		if err != nil {
-			return fmt.Errorf("objc: block argument %d %s: %w", i, types[i+2], err)
+	for i, enc := range types {
+		if goTypes[i] == nil {
+			continue
 		}
-		if !want.matches(got) {
-			return fmt.Errorf("objc: block argument %d is %s, which does not match %s", i, types[i+2], typ.In(i+1))
+		what := "result"
+		if i > 0 {
+			what = fmt.Sprintf("argument %d", i-2)
+		}
+		want, err := encodingLayout(enc)
+		if err != nil {
+			return fmt.Errorf("objc: block %s %s: %w", what, enc, err)
+		}
+		if !want.matches(layouts[i]) {
+			return fmt.Errorf("objc: block %s is %s, which does not match %s", what, enc, goTypes[i])
 		}
 	}
 	return nil

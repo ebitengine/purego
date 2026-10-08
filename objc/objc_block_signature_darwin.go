@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"reflect"
 	"slices"
+	"strconv"
 	"strings"
 	"unsafe"
 )
@@ -51,9 +52,15 @@ func splitSignature(sig string) ([]string, error) {
 			return nil, err
 		}
 		types = append(types, sig[:n])
-		sig = strings.TrimLeft(sig[n:], "0123456789")
+		_, sig = cutDigits(sig[n:])
 	}
 	return types, nil
+}
+
+// cutDigits splits s after its leading decimal digits.
+func cutDigits(s string) (digits, rest string) {
+	rest = strings.TrimLeft(s, "0123456789")
+	return s[:len(s)-len(rest)], rest
 }
 
 // encodingLen returns the length of the single type encoding at the start of s.
@@ -61,28 +68,26 @@ func encodingLen(s string) (int, error) {
 	if s == "" {
 		return 0, errors.New("missing type encoding")
 	}
-	switch s[0] {
-	case '{', '(', '[':
+	switch {
+	case strings.IndexByte("{([", s[0]) >= 0:
 		return bracketLen(s)
-	case '^':
+	case s[0] == '^':
 		rest := strings.TrimLeft(s[1:], encQualifiers)
 		n, err := encodingLen(rest)
 		return len(s) - len(rest) + n, err
-	case 'b':
-		return 1 + len(s[1:]) - len(strings.TrimLeft(s[1:], "0123456789")), nil
-	case '@':
-		switch {
-		case len(s) > 1 && s[1] == '"':
-			// an object with its class name: @"NSString"
-			n, err := quotedLen(s[1:])
-			return 1 + n, err
-		case len(s) > 2 && s[1] == '?' && s[2] == '<':
-			// a block with its signature: @?<v@?q>
-			n, err := bracketLen(s[2:])
-			return 2 + n, err
-		case len(s) > 1 && s[1] == '?':
-			return 2, nil
-		}
+	case s[0] == 'b':
+		digits, _ := cutDigits(s[1:])
+		return 1 + len(digits), nil
+	case strings.HasPrefix(s, `@"`):
+		// an object with its class name: @"NSString"
+		n, err := quotedLen(s[1:])
+		return 1 + n, err
+	case strings.HasPrefix(s, "@?<"):
+		// a block with its signature: @?<v@?q>
+		n, err := bracketLen(s[2:])
+		return 2 + n, err
+	case strings.HasPrefix(s, "@?"):
+		return 2, nil
 	}
 	return 1, nil
 }
@@ -125,6 +130,8 @@ type abiScalar struct {
 	// kind is the size in bytes of an integer or pointer ('1', '2', '4' or '8'),
 	// or 'f' or 'd' for floating point.
 	kind byte
+	// blank reports whether the member is in a blank (_) field of a Go struct.
+	blank bool
 }
 
 // size returns the size of the scalar in bytes.
@@ -148,70 +155,64 @@ func (s abiScalar) isFloat() bool {
 type abiLayout struct {
 	size, align uintptr
 	scalars     []abiScalar
-
-	// blank and blankRegions describe the blank (_) fields of a Go struct.
-	// They are padding as far as the Go type is concerned, so the type encoding
-	// may have nothing there, or a member that the Go type does not name.
-	blank        []abiScalar
-	blankRegions [][2]uintptr // offset and size
+	// blank holds the offset and size of each blank (_) field of a Go struct.
+	// Callers use those for padding, which has no counterpart in a type encoding,
+	// and for members they have no use for.
+	blank [][2]uintptr
 }
 
 // append adds the members of l at offset.
 func (a *abiLayout) append(l abiLayout, offset uintptr) {
 	for _, s := range l.scalars {
-		a.scalars = append(a.scalars, abiScalar{offset + s.offset, s.kind})
+		s.offset += offset
+		a.scalars = append(a.scalars, s)
 	}
-	for _, s := range l.blank {
-		a.blank = append(a.blank, abiScalar{offset + s.offset, s.kind})
-	}
-	for _, r := range l.blankRegions {
-		a.blankRegions = append(a.blankRegions, [2]uintptr{offset + r[0], r[1]})
+	for _, r := range l.blank {
+		a.blank = append(a.blank, [2]uintptr{offset + r[0], r[1]})
 	}
 }
 
-func scalarLayout(kind byte) abiLayout {
-	s := abiScalar{kind: kind}
-	return abiLayout{size: s.size(), align: s.size(), scalars: []abiScalar{s}}
+// repeat returns the layout of an array of count elements laid out as l.
+func (l abiLayout) repeat(count uintptr) abiLayout {
+	array := abiLayout{size: count * l.size, align: l.align}
+	for i := range count {
+		array.append(l, i*l.size)
+	}
+	return array
 }
 
 func alignUp(n, align uintptr) uintptr {
 	return (n + align - 1) / align * align
 }
 
-// encodingLayout returns the layout of a type encoding, with members at their natural alignment.
+// encodingLayout returns the layout of a type encoding without qualifiers,
+// with members at their natural alignment.
 func encodingLayout(enc string) (abiLayout, error) {
-	enc = strings.TrimLeft(enc, encQualifiers)
 	if enc == "" {
 		return abiLayout{}, errors.New("missing type encoding")
 	}
+	var kind byte
 	switch enc[0] {
 	case 'v':
 		return abiLayout{}, nil
 	case 'c', 'C', 'B':
-		return scalarLayout('1'), nil
+		kind = '1'
 	case 's', 'S':
-		return scalarLayout('2'), nil
+		kind = '2'
 	case 'i', 'I', 'l', 'L': // long is encoded as a 32-bit quantity
-		return scalarLayout('4'), nil
+		kind = '4'
 	case 'q', 'Q', '^', '*', '@', '#', ':':
-		return scalarLayout('8'), nil
+		kind = '8'
 	case 'f', 'd':
-		return scalarLayout(enc[0]), nil
+		kind = enc[0]
 	case '[':
-		digits := len(enc) - 1 - len(strings.TrimLeft(enc[1:], "0123456789"))
-		var count uintptr
-		for _, c := range enc[1 : 1+digits] {
-			count = count*10 + uintptr(c-'0')
-		}
-		elem, err := encodingLayout(enc[1+digits : len(enc)-1])
+		digits, elem := cutDigits(enc[1 : len(enc)-1])
+		count, err := strconv.Atoi(digits)
 		if err != nil {
-			return abiLayout{}, err
+			return abiLayout{}, fmt.Errorf("array %s has no count", enc)
 		}
-		layout := abiLayout{size: count * elem.size, align: elem.align}
-		for i := range count {
-			layout.append(elem, i*elem.size)
-		}
-		return layout, nil
+		layout, err := encodingLayout(elem)
+		return layout.repeat(uintptr(count)), err
 	case '{':
 		_, fields, ok := strings.Cut(enc[1:len(enc)-1], "=")
 		if !ok {
@@ -247,36 +248,22 @@ func encodingLayout(enc string) (abiLayout, error) {
 		}
 		layout.size = alignUp(layout.size, layout.align)
 		return layout, nil
+	default:
+		return abiLayout{}, fmt.Errorf("unsupported type encoding %s", enc)
 	}
-	return abiLayout{}, fmt.Errorf("unsupported type encoding %s", enc)
+	s := abiScalar{kind: kind}
+	return abiLayout{size: s.size(), align: s.size(), scalars: []abiScalar{s}}, nil
 }
 
 // goLayout is encodingLayout for a Go type.
 func goLayout(typ reflect.Type) (abiLayout, error) {
 	switch typ.Kind() {
-	case reflect.Bool, reflect.Int8, reflect.Uint8:
-		return scalarLayout('1'), nil
-	case reflect.Int16, reflect.Uint16:
-		return scalarLayout('2'), nil
-	case reflect.Int32, reflect.Uint32:
-		return scalarLayout('4'), nil
-	case reflect.Int, reflect.Int64, reflect.Uint, reflect.Uint64, reflect.Uintptr,
-		reflect.Pointer, reflect.UnsafePointer, reflect.String:
-		return scalarLayout('8'), nil
-	case reflect.Float32:
-		return scalarLayout('f'), nil
-	case reflect.Float64:
-		return scalarLayout('d'), nil
+	case reflect.Pointer, reflect.UnsafePointer:
+		// encodeType also encodes the pointee, which may not have an encoding.
+		return encodingLayout(encPtr)
 	case reflect.Array:
 		elem, err := goLayout(typ.Elem())
-		if err != nil {
-			return abiLayout{}, err
-		}
-		layout := abiLayout{size: typ.Size(), align: uintptr(typ.Align())}
-		for i := range uintptr(typ.Len()) {
-			layout.append(elem, i*elem.size)
-		}
-		return layout, nil
+		return elem.repeat(uintptr(typ.Len())), err
 	case reflect.Struct:
 		layout := abiLayout{size: typ.Size(), align: uintptr(typ.Align())}
 		for i := range typ.NumField() {
@@ -290,10 +277,10 @@ func goLayout(typ reflect.Type) (abiLayout, error) {
 				return abiLayout{}, err
 			}
 			if f.Name == "_" {
-				// everything in a blank field is blank.
-				field.blank = append(field.blank, field.scalars...)
-				field.scalars = nil
-				field.blankRegions = [][2]uintptr{{0, field.size}}
+				for i := range field.scalars {
+					field.scalars[i].blank = true
+				}
+				field.blank = [][2]uintptr{{0, field.size}}
 			}
 			layout.append(field, f.Offset)
 		}
@@ -302,43 +289,37 @@ func goLayout(typ reflect.Type) (abiLayout, error) {
 		// RegisterFunc would create a callback for every call, and callbacks are never freed.
 		return abiLayout{}, fmt.Errorf("objc: a %s argument to a block is not supported; create the callback once with purego.NewCallback and pass the uintptr", typ)
 	}
+	if enc, err := encodeType(typ, false); err == nil {
+		return encodingLayout(enc)
+	}
 	return abiLayout{}, fmt.Errorf("objc: unsupported block argument or result type %s", typ)
 }
 
 // matches reports whether a value of the Go type laid out as g can be passed as the C type laid out as c.
 //
-// Every member must be at the same offset with the same kind on both sides, except for
-// the blank (_) fields of the Go type. Callers use those for padding, which has no
-// counterpart in a type encoding, and for members they have no use for. A blank field
-// may therefore cover any integer or pointer members, or none. Floating point members
-// decide which registers a struct is passed in, so they must match even when blank.
+// Every member must be at the same offset with the same kind on both sides, except that
+// a blank (_) field of the Go type may cover any integer or pointer members, or none.
+// Floating point members decide which registers a struct is passed in, so they must
+// match even when blank.
 func (c abiLayout) matches(g abiLayout) bool {
 	if c.size != g.size {
 		return false
 	}
-	for _, s := range c.scalars {
-		if slices.Contains(g.scalars, s) {
-			continue
-		}
-		if s.isFloat() {
-			if !slices.Contains(g.blank, s) {
-				return false
-			}
-			continue
-		}
-		if !slices.ContainsFunc(g.blankRegions, func(r [2]uintptr) bool {
+	same := func(s abiScalar) func(abiScalar) bool {
+		return func(t abiScalar) bool { return t.offset == s.offset && t.kind == s.kind }
+	}
+	inBlank := func(s abiScalar) bool {
+		return slices.ContainsFunc(g.blank, func(r [2]uintptr) bool {
 			return s.offset >= r[0] && s.offset+s.size() <= r[0]+r[1]
-		}) {
+		})
+	}
+	for _, s := range c.scalars {
+		if !slices.ContainsFunc(g.scalars, same(s)) && (s.isFloat() || !inBlank(s)) {
 			return false
 		}
 	}
 	for _, s := range g.scalars {
-		if !slices.Contains(c.scalars, s) {
-			return false
-		}
-	}
-	for _, s := range g.blank {
-		if s.isFloat() && !slices.Contains(c.scalars, s) {
+		if (!s.blank || s.isFloat()) && !slices.ContainsFunc(c.scalars, same(s)) {
 			return false
 		}
 	}
