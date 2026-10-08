@@ -44,11 +44,7 @@ var encodeTypeTests = []struct {
 	{reflect.TypeFor[uint64](), "unsigned long long", "Q"},
 	{reflect.TypeFor[int](), "long", "q"},
 	{reflect.TypeFor[uint](), "unsigned long", "Q"},
-	{
-		typ:   reflect.TypeFor[uintptr](),
-		cType: "uintptr_t",
-		want:  "Q",
-	},
+	{reflect.TypeFor[uintptr](), "uintptr_t", "Q"},
 	{reflect.TypeFor[float32](), "float", "f"},
 	{reflect.TypeFor[float64](), "double", "d"},
 	{reflect.TypeFor[string](), "char *", "*"},
@@ -58,41 +54,13 @@ var encodeTypeTests = []struct {
 	{reflect.TypeFor[ID](), "id", "@"},
 	{reflect.TypeFor[Class](), "Class", "#"},
 	{reflect.TypeFor[SEL](), "SEL", ":"},
-	{
-		typ:   reflect.TypeFor[IMP](),
-		cType: "IMP",
-		want:  "^?",
-	},
-	{
-		typ:   reflect.TypeFor[Ivar](),
-		cType: "Ivar",
-		want:  "^{objc_ivar=}",
-	},
-	{
-		typ:   reflect.TypeFor[Property](),
-		cType: "objc_property_t",
-		want:  "^{objc_property=}",
-	},
-	{
-		typ:   reflect.TypeFor[*Ivar](),
-		cType: "Ivar *",
-		want:  "^^{objc_ivar}",
-	},
-	{
-		typ:   reflect.TypeFor[*Property](),
-		cType: "objc_property_t *",
-		want:  "^^{objc_property}",
-	},
-	{
-		typ:   reflect.TypeFor[*IMP](),
-		cType: "IMP *",
-		want:  "^^?",
-	},
-	{
-		typ:   reflect.TypeFor[encodeTypeHandleTestStruct](),
-		cType: "struct encodeTypeHandleTestStruct",
-		want:  "{encodeTypeHandleTestStruct=^?^{objc_ivar}^{objc_property}}",
-	},
+	{reflect.TypeFor[IMP](), "IMP", "^?"},
+	{reflect.TypeFor[Ivar](), "Ivar", "^{objc_ivar=}"},
+	{reflect.TypeFor[Property](), "objc_property_t", "^{objc_property=}"},
+	{reflect.TypeFor[*Ivar](), "Ivar *", "^^{objc_ivar}"},
+	{reflect.TypeFor[*Property](), "objc_property_t *", "^^{objc_property}"},
+	{reflect.TypeFor[*IMP](), "IMP *", "^^?"},
+	{reflect.TypeFor[encodeTypeHandleTestStruct](), "struct encodeTypeHandleTestStruct", "{encodeTypeHandleTestStruct=^?^{objc_ivar}^{objc_property}}"},
 	{reflect.TypeFor[encodeTypeTestStruct](), "struct encodeTypeTestStruct", "{encodeTypeTestStruct=id}"},
 }
 
