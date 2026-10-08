@@ -428,7 +428,7 @@ func NewBlock(fn any) Block {
 func InvokeBlock[T any](block Block, args ...any) (result T, err error) {
 	fn := theBlocksCache.Functions.Load(block)
 	if !fn.IsValid() {
-		// not one of ours. The block may live on the caller's stack, so it must not be
+		// not created by NewBlock. The block may live on the caller's stack, so it must not be
 		// copied: the copy would be a different pointer and is unnecessary for a synchronous call.
 		out, err := block.callForeign(reflect.TypeFor[T](), args)
 		if err != nil {
