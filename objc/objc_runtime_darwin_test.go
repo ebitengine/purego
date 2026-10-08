@@ -302,7 +302,13 @@ func TestRegisterClassUnsupportedArrayAccessors(t *testing.T) {
 					t.Errorf("RegisterClass panicked: %v", r)
 				}
 			}()
-			class, err := objc.RegisterClass("PuregoUnsupported"+tt.name, objc.GetClass("NSObject"), nil, []objc.FieldDef{{Name: "buffer", Type: tt.typ, Attribute: tt.attribute}}, nil)
+			class, err := objc.RegisterClass("PuregoUnsupported"+tt.name, objc.GetClass("NSObject"), nil, []objc.FieldDef{
+				{
+					Name:      "buffer",
+					Type:      tt.typ,
+					Attribute: tt.attribute,
+				},
+			}, nil)
 			if err == nil || class != 0 {
 				t.Errorf("RegisterClass = %v, %v; want zero class and error", class, err)
 			}

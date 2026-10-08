@@ -67,9 +67,21 @@ var encodeTypeTests = []struct {
 		cType: "struct encodeTypeArrayTestStruct",
 		want:  "{encodeTypeArrayTestStruct=[3i]}",
 	},
-	{typ: reflect.TypeFor[[0]uint8](), cType: "unsigned char[0]", want: "[0C]"},
-	{typ: reflect.TypeFor[[2]encodeTypeTestStruct](), cType: "struct encodeTypeTestStruct[2]", want: "[2{encodeTypeTestStruct=id}]"},
-	{typ: reflect.TypeFor[*[3]int32](), cType: "int (*)[3]", want: "^[3i]"},
+	{
+		typ:   reflect.TypeFor[[0]uint8](),
+		cType: "unsigned char[0]",
+		want:  "[0C]",
+	},
+	{
+		typ:   reflect.TypeFor[[2]encodeTypeTestStruct](),
+		cType: "struct encodeTypeTestStruct[2]",
+		want:  "[2{encodeTypeTestStruct=id}]",
+	},
+	{
+		typ:   reflect.TypeFor[*[3]int32](),
+		cType: "int (*)[3]",
+		want:  "^[3i]",
+	},
 }
 
 func TestEncodeType(t *testing.T) {
@@ -213,7 +225,7 @@ func TestEncodeFuncErrors(t *testing.T) {
 
 func TestEncodeArrayElementError(t *testing.T) {
 	if _, err := encodeType(reflect.TypeFor[[2]func()](), false); err == nil {
-		t.Fatal("want an error for an unencodable array element")
+		t.Error("want an error for an unencodable array element")
 	}
 }
 

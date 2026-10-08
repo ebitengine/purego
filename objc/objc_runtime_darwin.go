@@ -336,7 +336,7 @@ func RegisterClass(name string, superClass Class, protocols []*Protocol, ivars [
 			)
 			var encoding string
 			if encoding, err = encodeFunc(reflect.New(ty).Elem().Interface()); err != nil {
-				return 0, fmt.Errorf("objc: failed to create read method for '%s': %w", ivar.Name, err)
+				return 0, fmt.Errorf("objc: failed to create write method for '%s': %w", ivar.Name, err)
 			}
 			val := reflect.MakeFunc(ty, func(args []reflect.Value) (results []reflect.Value) {
 				// on entry the first and second arguments are ID and SEL followed by the value
@@ -734,16 +734,16 @@ func NewIMP(fn any) IMP {
 	return IMP(purego.NewCallback(fn))
 }
 
-// encodeSignatureType excludes arrays passed or returned by value. C array
-// parameters decay to pointers, whereas Go callbacks receive arrays by value.
+// encodeSignatureType is like encodeType for a function parameter or result type, but rejects arrays.
 func encodeSignatureType(typ reflect.Type) (string, error) {
 	if typ.Kind() == reflect.Array {
+		// C array parameters decay to pointers, whereas Go callbacks receive arrays by value.
 		return "", errors.New("top-level arrays are not supported in function signatures")
 	}
 	return encodeType(typ, false)
 }
 
-// newIMP converts unsupported callback panics into RegisterClass errors.
+// newIMP is like NewIMP but returns an error instead of panicking.
 func newIMP(fn any) (imp IMP, err error) {
 	defer func() {
 		if r := recover(); r != nil {
