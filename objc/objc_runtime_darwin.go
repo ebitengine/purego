@@ -241,6 +241,8 @@ func GetClass(name string) Class {
 }
 
 // MethodDef represents the Go function and the selector that ObjC uses to access that function.
+// Use the exact runtime handle types, such as ID and Class, in Fn. Types defined
+// from these handles are encoded as their underlying Go type.
 type MethodDef struct {
 	Cmd SEL
 	Fn  any
@@ -271,7 +273,8 @@ const (
 // The name of the field is what will be used to access it through the Ivar. If the type is bool
 // the name cannot start with `is` since a getter will be generated with the name `isBoolName`.
 // The name also cannot contain any spaces.
-// The type is the Go equivalent type of the Ivar.
+// The type is the Go equivalent type of the Ivar. Use the exact runtime handle
+// types, such as ID and Class; types defined from them use the underlying Go encoding.
 // Attribute determines if a getter and or setter method is generated for this field.
 type FieldDef struct {
 	Name      string
@@ -433,6 +436,24 @@ const (
 // encodeType returns a string representing a type as if it was given to @encode(typ)
 // Source: https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/ObjCRuntimeGuide/Articles/ocrtTypeEncodings.html#//apple_ref/doc/uid/TP40008048-CH100
 func encodeType(typ reflect.Type, insidePtr bool) (string, error) {
+	context := encodeTopLevel
+	if insidePtr {
+		context = encodeInsidePointer
+	}
+	return encodeTypeContext(typ, context)
+}
+
+type encodingContext uint8
+
+const (
+	encodeTopLevel encodingContext = iota
+	encodeInsidePointer
+	encodeStructField
+)
+
+// encodeTypeContext is like encodeType, but uses context to distinguish
+// standalone types, pointer targets, and struct fields.
+func encodeTypeContext(typ reflect.Type, context encodingContext) (string, error) {
 	switch typ {
 	case reflect.TypeFor[Class]():
 		return encClass, nil
@@ -440,6 +461,19 @@ func encodeType(typ reflect.Type, insidePtr bool) (string, error) {
 		return encId, nil
 	case reflect.TypeFor[SEL]():
 		return encSelector, nil
+	case reflect.TypeFor[IMP]():
+		return encPtr + "?", nil
+	// Clang omits the empty definition marker for nested opaque runtime handles.
+	case reflect.TypeFor[Ivar]():
+		if context != encodeTopLevel {
+			return encPtr + "{objc_ivar}", nil
+		}
+		return encPtr + "{objc_ivar=}", nil
+	case reflect.TypeFor[Property]():
+		if context != encodeTopLevel {
+			return encPtr + "{objc_property}", nil
+		}
+		return encPtr + "{objc_property=}", nil
 	}
 
 	kind := typ.Kind()
@@ -467,20 +501,20 @@ func encodeType(typ reflect.Type, insidePtr bool) (string, error) {
 	case reflect.Uint64:
 		return encULongLong, nil
 	case reflect.Uintptr:
-		return encPtr, nil
+		return encULongLong, nil
 	case reflect.Float32:
 		return encFloat, nil
 	case reflect.Float64:
 		return encDouble, nil
 	case reflect.Pointer:
-		enc, err := encodeType(typ.Elem(), true)
+		enc, err := encodeTypeContext(typ.Elem(), encodeInsidePointer)
 		if err != nil {
 			// A pointer to a type that has no encoding, such as a slice, is opaque.
 			return encUnsafePtr, nil
 		}
 		return encPtr + enc, nil
 	case reflect.Struct:
-		if insidePtr {
+		if context == encodeInsidePointer {
 			return encStructBegin + typ.Name() + encStructEnd, nil
 		}
 		var encoding stdstrings.Builder
@@ -496,7 +530,7 @@ func encodeType(typ reflect.Type, insidePtr bool) (string, error) {
 				// encodes a zero-length array member as [0c].
 				continue
 			}
-			tmp, err := encodeType(f.Type, false)
+			tmp, err := encodeTypeContext(f.Type, encodeStructField)
 			if err != nil {
 				return "", err
 			}
