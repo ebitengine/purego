@@ -29,6 +29,13 @@ type encodeTypeArrayTestStruct struct {
 	Values [3]int32
 }
 
+type encodeTypeHandleTestStruct struct {
+	_              structs.HostLayout
+	Implementation IMP
+	Variable       Ivar
+	Metadata       Property
+}
+
 var encodeTypeTests = []struct {
 	typ   reflect.Type
 	cType string
@@ -45,6 +52,7 @@ var encodeTypeTests = []struct {
 	{reflect.TypeFor[uint64](), "unsigned long long", "Q"},
 	{reflect.TypeFor[int](), "long", "q"},
 	{reflect.TypeFor[uint](), "unsigned long", "Q"},
+	{reflect.TypeFor[uintptr](), "uintptr_t", "Q"},
 	{reflect.TypeFor[float32](), "float", "f"},
 	{reflect.TypeFor[float64](), "double", "d"},
 	{reflect.TypeFor[string](), "char *", "*"},
@@ -54,6 +62,13 @@ var encodeTypeTests = []struct {
 	{reflect.TypeFor[ID](), "id", "@"},
 	{reflect.TypeFor[Class](), "Class", "#"},
 	{reflect.TypeFor[SEL](), "SEL", ":"},
+	{reflect.TypeFor[IMP](), "IMP", "^?"},
+	{reflect.TypeFor[Ivar](), "Ivar", "^{objc_ivar=}"},
+	{reflect.TypeFor[Property](), "objc_property_t", "^{objc_property=}"},
+	{reflect.TypeFor[*Ivar](), "Ivar *", "^^{objc_ivar}"},
+	{reflect.TypeFor[*Property](), "objc_property_t *", "^^{objc_property}"},
+	{reflect.TypeFor[*IMP](), "IMP *", "^^?"},
+	{reflect.TypeFor[encodeTypeHandleTestStruct](), "struct encodeTypeHandleTestStruct", "{encodeTypeHandleTestStruct=^?^{objc_ivar}^{objc_property}}"},
 	{reflect.TypeFor[encodeTypeTestStruct](), "struct encodeTypeTestStruct", "{encodeTypeTestStruct=id}"},
 	{reflect.TypeFor[[3]int32](), "int[3]", "[3i]"},
 	{reflect.TypeFor[[2][3]int32](), "int[2][3]", "[2[3i]]"},
@@ -93,9 +108,10 @@ func TestEncodeTypeMatchesClang(t *testing.T) {
 	}
 
 	var src strings.Builder
-	src.WriteString("#include <stdio.h>\n#include <objc/objc.h>\n")
+	src.WriteString("#include <stdio.h>\n#include <stdint.h>\n#include <objc/runtime.h>\n")
 	src.WriteString("struct encodeTypeTestStruct { int a; double b; };\n")
 	src.WriteString("struct encodeTypeArrayTestStruct { int values[3]; };\n")
+	src.WriteString("struct encodeTypeHandleTestStruct { IMP implementation; Ivar variable; objc_property_t metadata; };\n")
 	src.WriteString("int main(void) {\n")
 	for _, tt := range encodeTypeTests {
 		fmt.Fprintf(&src, "\tprintf(\"%%s\\n\", @encode(%s));\n", tt.cType)
@@ -155,6 +171,11 @@ func TestEncodeFunc(t *testing.T) {
 			name: "value return, mixed integer kinds",
 			fn:   func(_ ID, _ SEL, a int, b int64, c uint, d uint64) int { return 0 },
 			want: "q@:qqQQ",
+		},
+		{
+			name: "uintptr preserves adjacent argument",
+			fn:   func(_ ID, _ SEL, p uintptr, n int32) uintptr { return 0 },
+			want: "Q@:Qi",
 		},
 		{
 			name: "no arguments",
