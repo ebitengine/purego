@@ -832,3 +832,36 @@ func TestABI_StructReturnHiddenPointer(t *testing.T) {
 	// argument count, before the function is ever called.
 	purego.RegisterFunc(fptr.Interface(), uintptr(1))
 }
+
+func TestRegisterFunc_SpilledStructStackLimit(t *testing.T) {
+	if runtime.GOARCH != "arm64" || runtime.GOOS != "linux" {
+		t.Skip("Linux arm64 register exhaustion")
+	}
+	for _, trailing := range []int{22, 23} {
+		t.Run(strconv.Itoa(trailing), func(t *testing.T) {
+			inputs := make([]reflect.Type, 7)
+			for i := range inputs {
+				inputs[i] = reflect.TypeFor[int64]()
+			}
+			inputs = append(inputs, reflect.TypeFor[struct {
+				_ structs.HostLayout
+				A int64
+				B float64
+			}]())
+			for range trailing {
+				inputs = append(inputs, reflect.TypeFor[int64]())
+			}
+			fn := reflect.New(reflect.FuncOf(inputs, nil, false))
+			defer func() {
+				r := recover()
+				if trailing == 23 && r == nil {
+					t.Error("RegisterFunc accepted too many stack arguments")
+				}
+				if trailing == 22 && r != nil {
+					t.Errorf("RegisterFunc rejected boundary signature: %v", r)
+				}
+			}()
+			purego.RegisterFunc(fn.Interface(), 1)
+		})
+	}
+}

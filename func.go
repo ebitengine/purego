@@ -217,12 +217,17 @@ func RegisterFunc(fptr any, cfn uintptr) {
 				}
 			case reflect.Struct:
 				ensureStructSupported()
+				checkStructFieldsSupported(arg)
 				if arg.Size() == 0 && runtime.GOOS != "windows" {
 					// On Windows an empty struct still consumes one argument slot.
 					continue
 				}
 				addInt := func(u uintptr) {
-					ints++
+					if ints < numOfIntegerRegisters() {
+						ints++
+					} else {
+						stack++
+					}
 				}
 				addFloat := func(u uintptr) {
 					floats++
@@ -355,7 +360,11 @@ func RegisterFunc(fptr any, cfn uintptr) {
 			if i == len(args)-1 {
 				if variadic, ok := reflect.TypeAssert[[]any](args[i]); ok {
 					for _, x := range variadic {
-						keepAlive = addValue(reflect.ValueOf(x), keepAlive, addInt, addFloat, addStack, &numInts, &numFloats, &numStack)
+						v := reflect.ValueOf(x)
+						if v.Kind() == reflect.Struct {
+							checkStructFieldsSupported(v.Type())
+						}
+						keepAlive = addValue(v, keepAlive, addInt, addFloat, addStack, &numInts, &numFloats, &numStack)
 					}
 					continue
 				}
