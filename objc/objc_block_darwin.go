@@ -364,8 +364,8 @@ func checkForeign(sig string, hasSig bool, typ reflect.Type) error {
 // argument must then match the block's C parameter type (for example, int32 for
 // an int), and is checked against the block's type signature when it has one.
 // Go func arguments are not supported; pass a pointer from [purego.NewCallback]
-// instead. Invoke panics on a mismatch, and on a block that returns a struct
-// must be called with [InvokeBlock].
+// instead. Invoke panics on a mismatch. A block that returns a struct must be
+// called with [InvokeBlock].
 func (b Block) Invoke(args ...any) {
 	fn := theBlocksCache.Functions.Load(b)
 	if !fn.IsValid() {
