@@ -2,10 +2,9 @@
 
 //go:build linux
 
-// External code calls into callbackasm at an offset corresponding
-// to the callback index. Callbackasm is a table of MOVD and BR instructions.
-// The MOVD instruction loads R11 with the callback index, and the
-// BR instruction branches to callbackasm1.
+// External code calls one callbackasm function per callback index. Keeping
+// each callback in a separate TEXT symbol gives every function an ELFv2 global
+// entry that initializes the TOC before branching to callbackasm1.
 // callbackasm1 takes the callback index from R11 and
 // indexes into an array that stores information about each callback.
 // It then calls the Go implementation for that callback.
@@ -14,4001 +13,10001 @@
 TEXT callbackasm(SB), NOSPLIT|NOFRAME, $0
 	MOVD $0, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+0(SB)/8, $callbackasm(SB)
+
+TEXT callbackasm_entry_1(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8(SB)/8, $callbackasm_entry_1(SB)
+
+TEXT callbackasm_entry_2(SB), NOSPLIT|NOFRAME, $0
 	MOVD $2, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+16(SB)/8, $callbackasm_entry_2(SB)
+
+TEXT callbackasm_entry_3(SB), NOSPLIT|NOFRAME, $0
 	MOVD $3, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+24(SB)/8, $callbackasm_entry_3(SB)
+
+TEXT callbackasm_entry_4(SB), NOSPLIT|NOFRAME, $0
 	MOVD $4, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+32(SB)/8, $callbackasm_entry_4(SB)
+
+TEXT callbackasm_entry_5(SB), NOSPLIT|NOFRAME, $0
 	MOVD $5, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+40(SB)/8, $callbackasm_entry_5(SB)
+
+TEXT callbackasm_entry_6(SB), NOSPLIT|NOFRAME, $0
 	MOVD $6, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+48(SB)/8, $callbackasm_entry_6(SB)
+
+TEXT callbackasm_entry_7(SB), NOSPLIT|NOFRAME, $0
 	MOVD $7, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+56(SB)/8, $callbackasm_entry_7(SB)
+
+TEXT callbackasm_entry_8(SB), NOSPLIT|NOFRAME, $0
 	MOVD $8, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+64(SB)/8, $callbackasm_entry_8(SB)
+
+TEXT callbackasm_entry_9(SB), NOSPLIT|NOFRAME, $0
 	MOVD $9, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+72(SB)/8, $callbackasm_entry_9(SB)
+
+TEXT callbackasm_entry_10(SB), NOSPLIT|NOFRAME, $0
 	MOVD $10, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+80(SB)/8, $callbackasm_entry_10(SB)
+
+TEXT callbackasm_entry_11(SB), NOSPLIT|NOFRAME, $0
 	MOVD $11, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+88(SB)/8, $callbackasm_entry_11(SB)
+
+TEXT callbackasm_entry_12(SB), NOSPLIT|NOFRAME, $0
 	MOVD $12, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+96(SB)/8, $callbackasm_entry_12(SB)
+
+TEXT callbackasm_entry_13(SB), NOSPLIT|NOFRAME, $0
 	MOVD $13, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+104(SB)/8, $callbackasm_entry_13(SB)
+
+TEXT callbackasm_entry_14(SB), NOSPLIT|NOFRAME, $0
 	MOVD $14, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+112(SB)/8, $callbackasm_entry_14(SB)
+
+TEXT callbackasm_entry_15(SB), NOSPLIT|NOFRAME, $0
 	MOVD $15, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+120(SB)/8, $callbackasm_entry_15(SB)
+
+TEXT callbackasm_entry_16(SB), NOSPLIT|NOFRAME, $0
 	MOVD $16, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+128(SB)/8, $callbackasm_entry_16(SB)
+
+TEXT callbackasm_entry_17(SB), NOSPLIT|NOFRAME, $0
 	MOVD $17, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+136(SB)/8, $callbackasm_entry_17(SB)
+
+TEXT callbackasm_entry_18(SB), NOSPLIT|NOFRAME, $0
 	MOVD $18, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+144(SB)/8, $callbackasm_entry_18(SB)
+
+TEXT callbackasm_entry_19(SB), NOSPLIT|NOFRAME, $0
 	MOVD $19, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+152(SB)/8, $callbackasm_entry_19(SB)
+
+TEXT callbackasm_entry_20(SB), NOSPLIT|NOFRAME, $0
 	MOVD $20, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+160(SB)/8, $callbackasm_entry_20(SB)
+
+TEXT callbackasm_entry_21(SB), NOSPLIT|NOFRAME, $0
 	MOVD $21, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+168(SB)/8, $callbackasm_entry_21(SB)
+
+TEXT callbackasm_entry_22(SB), NOSPLIT|NOFRAME, $0
 	MOVD $22, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+176(SB)/8, $callbackasm_entry_22(SB)
+
+TEXT callbackasm_entry_23(SB), NOSPLIT|NOFRAME, $0
 	MOVD $23, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+184(SB)/8, $callbackasm_entry_23(SB)
+
+TEXT callbackasm_entry_24(SB), NOSPLIT|NOFRAME, $0
 	MOVD $24, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+192(SB)/8, $callbackasm_entry_24(SB)
+
+TEXT callbackasm_entry_25(SB), NOSPLIT|NOFRAME, $0
 	MOVD $25, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+200(SB)/8, $callbackasm_entry_25(SB)
+
+TEXT callbackasm_entry_26(SB), NOSPLIT|NOFRAME, $0
 	MOVD $26, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+208(SB)/8, $callbackasm_entry_26(SB)
+
+TEXT callbackasm_entry_27(SB), NOSPLIT|NOFRAME, $0
 	MOVD $27, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+216(SB)/8, $callbackasm_entry_27(SB)
+
+TEXT callbackasm_entry_28(SB), NOSPLIT|NOFRAME, $0
 	MOVD $28, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+224(SB)/8, $callbackasm_entry_28(SB)
+
+TEXT callbackasm_entry_29(SB), NOSPLIT|NOFRAME, $0
 	MOVD $29, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+232(SB)/8, $callbackasm_entry_29(SB)
+
+TEXT callbackasm_entry_30(SB), NOSPLIT|NOFRAME, $0
 	MOVD $30, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+240(SB)/8, $callbackasm_entry_30(SB)
+
+TEXT callbackasm_entry_31(SB), NOSPLIT|NOFRAME, $0
 	MOVD $31, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+248(SB)/8, $callbackasm_entry_31(SB)
+
+TEXT callbackasm_entry_32(SB), NOSPLIT|NOFRAME, $0
 	MOVD $32, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+256(SB)/8, $callbackasm_entry_32(SB)
+
+TEXT callbackasm_entry_33(SB), NOSPLIT|NOFRAME, $0
 	MOVD $33, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+264(SB)/8, $callbackasm_entry_33(SB)
+
+TEXT callbackasm_entry_34(SB), NOSPLIT|NOFRAME, $0
 	MOVD $34, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+272(SB)/8, $callbackasm_entry_34(SB)
+
+TEXT callbackasm_entry_35(SB), NOSPLIT|NOFRAME, $0
 	MOVD $35, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+280(SB)/8, $callbackasm_entry_35(SB)
+
+TEXT callbackasm_entry_36(SB), NOSPLIT|NOFRAME, $0
 	MOVD $36, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+288(SB)/8, $callbackasm_entry_36(SB)
+
+TEXT callbackasm_entry_37(SB), NOSPLIT|NOFRAME, $0
 	MOVD $37, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+296(SB)/8, $callbackasm_entry_37(SB)
+
+TEXT callbackasm_entry_38(SB), NOSPLIT|NOFRAME, $0
 	MOVD $38, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+304(SB)/8, $callbackasm_entry_38(SB)
+
+TEXT callbackasm_entry_39(SB), NOSPLIT|NOFRAME, $0
 	MOVD $39, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+312(SB)/8, $callbackasm_entry_39(SB)
+
+TEXT callbackasm_entry_40(SB), NOSPLIT|NOFRAME, $0
 	MOVD $40, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+320(SB)/8, $callbackasm_entry_40(SB)
+
+TEXT callbackasm_entry_41(SB), NOSPLIT|NOFRAME, $0
 	MOVD $41, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+328(SB)/8, $callbackasm_entry_41(SB)
+
+TEXT callbackasm_entry_42(SB), NOSPLIT|NOFRAME, $0
 	MOVD $42, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+336(SB)/8, $callbackasm_entry_42(SB)
+
+TEXT callbackasm_entry_43(SB), NOSPLIT|NOFRAME, $0
 	MOVD $43, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+344(SB)/8, $callbackasm_entry_43(SB)
+
+TEXT callbackasm_entry_44(SB), NOSPLIT|NOFRAME, $0
 	MOVD $44, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+352(SB)/8, $callbackasm_entry_44(SB)
+
+TEXT callbackasm_entry_45(SB), NOSPLIT|NOFRAME, $0
 	MOVD $45, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+360(SB)/8, $callbackasm_entry_45(SB)
+
+TEXT callbackasm_entry_46(SB), NOSPLIT|NOFRAME, $0
 	MOVD $46, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+368(SB)/8, $callbackasm_entry_46(SB)
+
+TEXT callbackasm_entry_47(SB), NOSPLIT|NOFRAME, $0
 	MOVD $47, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+376(SB)/8, $callbackasm_entry_47(SB)
+
+TEXT callbackasm_entry_48(SB), NOSPLIT|NOFRAME, $0
 	MOVD $48, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+384(SB)/8, $callbackasm_entry_48(SB)
+
+TEXT callbackasm_entry_49(SB), NOSPLIT|NOFRAME, $0
 	MOVD $49, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+392(SB)/8, $callbackasm_entry_49(SB)
+
+TEXT callbackasm_entry_50(SB), NOSPLIT|NOFRAME, $0
 	MOVD $50, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+400(SB)/8, $callbackasm_entry_50(SB)
+
+TEXT callbackasm_entry_51(SB), NOSPLIT|NOFRAME, $0
 	MOVD $51, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+408(SB)/8, $callbackasm_entry_51(SB)
+
+TEXT callbackasm_entry_52(SB), NOSPLIT|NOFRAME, $0
 	MOVD $52, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+416(SB)/8, $callbackasm_entry_52(SB)
+
+TEXT callbackasm_entry_53(SB), NOSPLIT|NOFRAME, $0
 	MOVD $53, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+424(SB)/8, $callbackasm_entry_53(SB)
+
+TEXT callbackasm_entry_54(SB), NOSPLIT|NOFRAME, $0
 	MOVD $54, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+432(SB)/8, $callbackasm_entry_54(SB)
+
+TEXT callbackasm_entry_55(SB), NOSPLIT|NOFRAME, $0
 	MOVD $55, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+440(SB)/8, $callbackasm_entry_55(SB)
+
+TEXT callbackasm_entry_56(SB), NOSPLIT|NOFRAME, $0
 	MOVD $56, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+448(SB)/8, $callbackasm_entry_56(SB)
+
+TEXT callbackasm_entry_57(SB), NOSPLIT|NOFRAME, $0
 	MOVD $57, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+456(SB)/8, $callbackasm_entry_57(SB)
+
+TEXT callbackasm_entry_58(SB), NOSPLIT|NOFRAME, $0
 	MOVD $58, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+464(SB)/8, $callbackasm_entry_58(SB)
+
+TEXT callbackasm_entry_59(SB), NOSPLIT|NOFRAME, $0
 	MOVD $59, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+472(SB)/8, $callbackasm_entry_59(SB)
+
+TEXT callbackasm_entry_60(SB), NOSPLIT|NOFRAME, $0
 	MOVD $60, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+480(SB)/8, $callbackasm_entry_60(SB)
+
+TEXT callbackasm_entry_61(SB), NOSPLIT|NOFRAME, $0
 	MOVD $61, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+488(SB)/8, $callbackasm_entry_61(SB)
+
+TEXT callbackasm_entry_62(SB), NOSPLIT|NOFRAME, $0
 	MOVD $62, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+496(SB)/8, $callbackasm_entry_62(SB)
+
+TEXT callbackasm_entry_63(SB), NOSPLIT|NOFRAME, $0
 	MOVD $63, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+504(SB)/8, $callbackasm_entry_63(SB)
+
+TEXT callbackasm_entry_64(SB), NOSPLIT|NOFRAME, $0
 	MOVD $64, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+512(SB)/8, $callbackasm_entry_64(SB)
+
+TEXT callbackasm_entry_65(SB), NOSPLIT|NOFRAME, $0
 	MOVD $65, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+520(SB)/8, $callbackasm_entry_65(SB)
+
+TEXT callbackasm_entry_66(SB), NOSPLIT|NOFRAME, $0
 	MOVD $66, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+528(SB)/8, $callbackasm_entry_66(SB)
+
+TEXT callbackasm_entry_67(SB), NOSPLIT|NOFRAME, $0
 	MOVD $67, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+536(SB)/8, $callbackasm_entry_67(SB)
+
+TEXT callbackasm_entry_68(SB), NOSPLIT|NOFRAME, $0
 	MOVD $68, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+544(SB)/8, $callbackasm_entry_68(SB)
+
+TEXT callbackasm_entry_69(SB), NOSPLIT|NOFRAME, $0
 	MOVD $69, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+552(SB)/8, $callbackasm_entry_69(SB)
+
+TEXT callbackasm_entry_70(SB), NOSPLIT|NOFRAME, $0
 	MOVD $70, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+560(SB)/8, $callbackasm_entry_70(SB)
+
+TEXT callbackasm_entry_71(SB), NOSPLIT|NOFRAME, $0
 	MOVD $71, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+568(SB)/8, $callbackasm_entry_71(SB)
+
+TEXT callbackasm_entry_72(SB), NOSPLIT|NOFRAME, $0
 	MOVD $72, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+576(SB)/8, $callbackasm_entry_72(SB)
+
+TEXT callbackasm_entry_73(SB), NOSPLIT|NOFRAME, $0
 	MOVD $73, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+584(SB)/8, $callbackasm_entry_73(SB)
+
+TEXT callbackasm_entry_74(SB), NOSPLIT|NOFRAME, $0
 	MOVD $74, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+592(SB)/8, $callbackasm_entry_74(SB)
+
+TEXT callbackasm_entry_75(SB), NOSPLIT|NOFRAME, $0
 	MOVD $75, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+600(SB)/8, $callbackasm_entry_75(SB)
+
+TEXT callbackasm_entry_76(SB), NOSPLIT|NOFRAME, $0
 	MOVD $76, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+608(SB)/8, $callbackasm_entry_76(SB)
+
+TEXT callbackasm_entry_77(SB), NOSPLIT|NOFRAME, $0
 	MOVD $77, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+616(SB)/8, $callbackasm_entry_77(SB)
+
+TEXT callbackasm_entry_78(SB), NOSPLIT|NOFRAME, $0
 	MOVD $78, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+624(SB)/8, $callbackasm_entry_78(SB)
+
+TEXT callbackasm_entry_79(SB), NOSPLIT|NOFRAME, $0
 	MOVD $79, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+632(SB)/8, $callbackasm_entry_79(SB)
+
+TEXT callbackasm_entry_80(SB), NOSPLIT|NOFRAME, $0
 	MOVD $80, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+640(SB)/8, $callbackasm_entry_80(SB)
+
+TEXT callbackasm_entry_81(SB), NOSPLIT|NOFRAME, $0
 	MOVD $81, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+648(SB)/8, $callbackasm_entry_81(SB)
+
+TEXT callbackasm_entry_82(SB), NOSPLIT|NOFRAME, $0
 	MOVD $82, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+656(SB)/8, $callbackasm_entry_82(SB)
+
+TEXT callbackasm_entry_83(SB), NOSPLIT|NOFRAME, $0
 	MOVD $83, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+664(SB)/8, $callbackasm_entry_83(SB)
+
+TEXT callbackasm_entry_84(SB), NOSPLIT|NOFRAME, $0
 	MOVD $84, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+672(SB)/8, $callbackasm_entry_84(SB)
+
+TEXT callbackasm_entry_85(SB), NOSPLIT|NOFRAME, $0
 	MOVD $85, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+680(SB)/8, $callbackasm_entry_85(SB)
+
+TEXT callbackasm_entry_86(SB), NOSPLIT|NOFRAME, $0
 	MOVD $86, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+688(SB)/8, $callbackasm_entry_86(SB)
+
+TEXT callbackasm_entry_87(SB), NOSPLIT|NOFRAME, $0
 	MOVD $87, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+696(SB)/8, $callbackasm_entry_87(SB)
+
+TEXT callbackasm_entry_88(SB), NOSPLIT|NOFRAME, $0
 	MOVD $88, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+704(SB)/8, $callbackasm_entry_88(SB)
+
+TEXT callbackasm_entry_89(SB), NOSPLIT|NOFRAME, $0
 	MOVD $89, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+712(SB)/8, $callbackasm_entry_89(SB)
+
+TEXT callbackasm_entry_90(SB), NOSPLIT|NOFRAME, $0
 	MOVD $90, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+720(SB)/8, $callbackasm_entry_90(SB)
+
+TEXT callbackasm_entry_91(SB), NOSPLIT|NOFRAME, $0
 	MOVD $91, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+728(SB)/8, $callbackasm_entry_91(SB)
+
+TEXT callbackasm_entry_92(SB), NOSPLIT|NOFRAME, $0
 	MOVD $92, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+736(SB)/8, $callbackasm_entry_92(SB)
+
+TEXT callbackasm_entry_93(SB), NOSPLIT|NOFRAME, $0
 	MOVD $93, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+744(SB)/8, $callbackasm_entry_93(SB)
+
+TEXT callbackasm_entry_94(SB), NOSPLIT|NOFRAME, $0
 	MOVD $94, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+752(SB)/8, $callbackasm_entry_94(SB)
+
+TEXT callbackasm_entry_95(SB), NOSPLIT|NOFRAME, $0
 	MOVD $95, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+760(SB)/8, $callbackasm_entry_95(SB)
+
+TEXT callbackasm_entry_96(SB), NOSPLIT|NOFRAME, $0
 	MOVD $96, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+768(SB)/8, $callbackasm_entry_96(SB)
+
+TEXT callbackasm_entry_97(SB), NOSPLIT|NOFRAME, $0
 	MOVD $97, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+776(SB)/8, $callbackasm_entry_97(SB)
+
+TEXT callbackasm_entry_98(SB), NOSPLIT|NOFRAME, $0
 	MOVD $98, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+784(SB)/8, $callbackasm_entry_98(SB)
+
+TEXT callbackasm_entry_99(SB), NOSPLIT|NOFRAME, $0
 	MOVD $99, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+792(SB)/8, $callbackasm_entry_99(SB)
+
+TEXT callbackasm_entry_100(SB), NOSPLIT|NOFRAME, $0
 	MOVD $100, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+800(SB)/8, $callbackasm_entry_100(SB)
+
+TEXT callbackasm_entry_101(SB), NOSPLIT|NOFRAME, $0
 	MOVD $101, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+808(SB)/8, $callbackasm_entry_101(SB)
+
+TEXT callbackasm_entry_102(SB), NOSPLIT|NOFRAME, $0
 	MOVD $102, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+816(SB)/8, $callbackasm_entry_102(SB)
+
+TEXT callbackasm_entry_103(SB), NOSPLIT|NOFRAME, $0
 	MOVD $103, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+824(SB)/8, $callbackasm_entry_103(SB)
+
+TEXT callbackasm_entry_104(SB), NOSPLIT|NOFRAME, $0
 	MOVD $104, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+832(SB)/8, $callbackasm_entry_104(SB)
+
+TEXT callbackasm_entry_105(SB), NOSPLIT|NOFRAME, $0
 	MOVD $105, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+840(SB)/8, $callbackasm_entry_105(SB)
+
+TEXT callbackasm_entry_106(SB), NOSPLIT|NOFRAME, $0
 	MOVD $106, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+848(SB)/8, $callbackasm_entry_106(SB)
+
+TEXT callbackasm_entry_107(SB), NOSPLIT|NOFRAME, $0
 	MOVD $107, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+856(SB)/8, $callbackasm_entry_107(SB)
+
+TEXT callbackasm_entry_108(SB), NOSPLIT|NOFRAME, $0
 	MOVD $108, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+864(SB)/8, $callbackasm_entry_108(SB)
+
+TEXT callbackasm_entry_109(SB), NOSPLIT|NOFRAME, $0
 	MOVD $109, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+872(SB)/8, $callbackasm_entry_109(SB)
+
+TEXT callbackasm_entry_110(SB), NOSPLIT|NOFRAME, $0
 	MOVD $110, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+880(SB)/8, $callbackasm_entry_110(SB)
+
+TEXT callbackasm_entry_111(SB), NOSPLIT|NOFRAME, $0
 	MOVD $111, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+888(SB)/8, $callbackasm_entry_111(SB)
+
+TEXT callbackasm_entry_112(SB), NOSPLIT|NOFRAME, $0
 	MOVD $112, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+896(SB)/8, $callbackasm_entry_112(SB)
+
+TEXT callbackasm_entry_113(SB), NOSPLIT|NOFRAME, $0
 	MOVD $113, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+904(SB)/8, $callbackasm_entry_113(SB)
+
+TEXT callbackasm_entry_114(SB), NOSPLIT|NOFRAME, $0
 	MOVD $114, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+912(SB)/8, $callbackasm_entry_114(SB)
+
+TEXT callbackasm_entry_115(SB), NOSPLIT|NOFRAME, $0
 	MOVD $115, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+920(SB)/8, $callbackasm_entry_115(SB)
+
+TEXT callbackasm_entry_116(SB), NOSPLIT|NOFRAME, $0
 	MOVD $116, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+928(SB)/8, $callbackasm_entry_116(SB)
+
+TEXT callbackasm_entry_117(SB), NOSPLIT|NOFRAME, $0
 	MOVD $117, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+936(SB)/8, $callbackasm_entry_117(SB)
+
+TEXT callbackasm_entry_118(SB), NOSPLIT|NOFRAME, $0
 	MOVD $118, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+944(SB)/8, $callbackasm_entry_118(SB)
+
+TEXT callbackasm_entry_119(SB), NOSPLIT|NOFRAME, $0
 	MOVD $119, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+952(SB)/8, $callbackasm_entry_119(SB)
+
+TEXT callbackasm_entry_120(SB), NOSPLIT|NOFRAME, $0
 	MOVD $120, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+960(SB)/8, $callbackasm_entry_120(SB)
+
+TEXT callbackasm_entry_121(SB), NOSPLIT|NOFRAME, $0
 	MOVD $121, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+968(SB)/8, $callbackasm_entry_121(SB)
+
+TEXT callbackasm_entry_122(SB), NOSPLIT|NOFRAME, $0
 	MOVD $122, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+976(SB)/8, $callbackasm_entry_122(SB)
+
+TEXT callbackasm_entry_123(SB), NOSPLIT|NOFRAME, $0
 	MOVD $123, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+984(SB)/8, $callbackasm_entry_123(SB)
+
+TEXT callbackasm_entry_124(SB), NOSPLIT|NOFRAME, $0
 	MOVD $124, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+992(SB)/8, $callbackasm_entry_124(SB)
+
+TEXT callbackasm_entry_125(SB), NOSPLIT|NOFRAME, $0
 	MOVD $125, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1000(SB)/8, $callbackasm_entry_125(SB)
+
+TEXT callbackasm_entry_126(SB), NOSPLIT|NOFRAME, $0
 	MOVD $126, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1008(SB)/8, $callbackasm_entry_126(SB)
+
+TEXT callbackasm_entry_127(SB), NOSPLIT|NOFRAME, $0
 	MOVD $127, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1016(SB)/8, $callbackasm_entry_127(SB)
+
+TEXT callbackasm_entry_128(SB), NOSPLIT|NOFRAME, $0
 	MOVD $128, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1024(SB)/8, $callbackasm_entry_128(SB)
+
+TEXT callbackasm_entry_129(SB), NOSPLIT|NOFRAME, $0
 	MOVD $129, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1032(SB)/8, $callbackasm_entry_129(SB)
+
+TEXT callbackasm_entry_130(SB), NOSPLIT|NOFRAME, $0
 	MOVD $130, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1040(SB)/8, $callbackasm_entry_130(SB)
+
+TEXT callbackasm_entry_131(SB), NOSPLIT|NOFRAME, $0
 	MOVD $131, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1048(SB)/8, $callbackasm_entry_131(SB)
+
+TEXT callbackasm_entry_132(SB), NOSPLIT|NOFRAME, $0
 	MOVD $132, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1056(SB)/8, $callbackasm_entry_132(SB)
+
+TEXT callbackasm_entry_133(SB), NOSPLIT|NOFRAME, $0
 	MOVD $133, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1064(SB)/8, $callbackasm_entry_133(SB)
+
+TEXT callbackasm_entry_134(SB), NOSPLIT|NOFRAME, $0
 	MOVD $134, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1072(SB)/8, $callbackasm_entry_134(SB)
+
+TEXT callbackasm_entry_135(SB), NOSPLIT|NOFRAME, $0
 	MOVD $135, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1080(SB)/8, $callbackasm_entry_135(SB)
+
+TEXT callbackasm_entry_136(SB), NOSPLIT|NOFRAME, $0
 	MOVD $136, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1088(SB)/8, $callbackasm_entry_136(SB)
+
+TEXT callbackasm_entry_137(SB), NOSPLIT|NOFRAME, $0
 	MOVD $137, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1096(SB)/8, $callbackasm_entry_137(SB)
+
+TEXT callbackasm_entry_138(SB), NOSPLIT|NOFRAME, $0
 	MOVD $138, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1104(SB)/8, $callbackasm_entry_138(SB)
+
+TEXT callbackasm_entry_139(SB), NOSPLIT|NOFRAME, $0
 	MOVD $139, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1112(SB)/8, $callbackasm_entry_139(SB)
+
+TEXT callbackasm_entry_140(SB), NOSPLIT|NOFRAME, $0
 	MOVD $140, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1120(SB)/8, $callbackasm_entry_140(SB)
+
+TEXT callbackasm_entry_141(SB), NOSPLIT|NOFRAME, $0
 	MOVD $141, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1128(SB)/8, $callbackasm_entry_141(SB)
+
+TEXT callbackasm_entry_142(SB), NOSPLIT|NOFRAME, $0
 	MOVD $142, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1136(SB)/8, $callbackasm_entry_142(SB)
+
+TEXT callbackasm_entry_143(SB), NOSPLIT|NOFRAME, $0
 	MOVD $143, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1144(SB)/8, $callbackasm_entry_143(SB)
+
+TEXT callbackasm_entry_144(SB), NOSPLIT|NOFRAME, $0
 	MOVD $144, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1152(SB)/8, $callbackasm_entry_144(SB)
+
+TEXT callbackasm_entry_145(SB), NOSPLIT|NOFRAME, $0
 	MOVD $145, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1160(SB)/8, $callbackasm_entry_145(SB)
+
+TEXT callbackasm_entry_146(SB), NOSPLIT|NOFRAME, $0
 	MOVD $146, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1168(SB)/8, $callbackasm_entry_146(SB)
+
+TEXT callbackasm_entry_147(SB), NOSPLIT|NOFRAME, $0
 	MOVD $147, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1176(SB)/8, $callbackasm_entry_147(SB)
+
+TEXT callbackasm_entry_148(SB), NOSPLIT|NOFRAME, $0
 	MOVD $148, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1184(SB)/8, $callbackasm_entry_148(SB)
+
+TEXT callbackasm_entry_149(SB), NOSPLIT|NOFRAME, $0
 	MOVD $149, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1192(SB)/8, $callbackasm_entry_149(SB)
+
+TEXT callbackasm_entry_150(SB), NOSPLIT|NOFRAME, $0
 	MOVD $150, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1200(SB)/8, $callbackasm_entry_150(SB)
+
+TEXT callbackasm_entry_151(SB), NOSPLIT|NOFRAME, $0
 	MOVD $151, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1208(SB)/8, $callbackasm_entry_151(SB)
+
+TEXT callbackasm_entry_152(SB), NOSPLIT|NOFRAME, $0
 	MOVD $152, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1216(SB)/8, $callbackasm_entry_152(SB)
+
+TEXT callbackasm_entry_153(SB), NOSPLIT|NOFRAME, $0
 	MOVD $153, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1224(SB)/8, $callbackasm_entry_153(SB)
+
+TEXT callbackasm_entry_154(SB), NOSPLIT|NOFRAME, $0
 	MOVD $154, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1232(SB)/8, $callbackasm_entry_154(SB)
+
+TEXT callbackasm_entry_155(SB), NOSPLIT|NOFRAME, $0
 	MOVD $155, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1240(SB)/8, $callbackasm_entry_155(SB)
+
+TEXT callbackasm_entry_156(SB), NOSPLIT|NOFRAME, $0
 	MOVD $156, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1248(SB)/8, $callbackasm_entry_156(SB)
+
+TEXT callbackasm_entry_157(SB), NOSPLIT|NOFRAME, $0
 	MOVD $157, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1256(SB)/8, $callbackasm_entry_157(SB)
+
+TEXT callbackasm_entry_158(SB), NOSPLIT|NOFRAME, $0
 	MOVD $158, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1264(SB)/8, $callbackasm_entry_158(SB)
+
+TEXT callbackasm_entry_159(SB), NOSPLIT|NOFRAME, $0
 	MOVD $159, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1272(SB)/8, $callbackasm_entry_159(SB)
+
+TEXT callbackasm_entry_160(SB), NOSPLIT|NOFRAME, $0
 	MOVD $160, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1280(SB)/8, $callbackasm_entry_160(SB)
+
+TEXT callbackasm_entry_161(SB), NOSPLIT|NOFRAME, $0
 	MOVD $161, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1288(SB)/8, $callbackasm_entry_161(SB)
+
+TEXT callbackasm_entry_162(SB), NOSPLIT|NOFRAME, $0
 	MOVD $162, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1296(SB)/8, $callbackasm_entry_162(SB)
+
+TEXT callbackasm_entry_163(SB), NOSPLIT|NOFRAME, $0
 	MOVD $163, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1304(SB)/8, $callbackasm_entry_163(SB)
+
+TEXT callbackasm_entry_164(SB), NOSPLIT|NOFRAME, $0
 	MOVD $164, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1312(SB)/8, $callbackasm_entry_164(SB)
+
+TEXT callbackasm_entry_165(SB), NOSPLIT|NOFRAME, $0
 	MOVD $165, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1320(SB)/8, $callbackasm_entry_165(SB)
+
+TEXT callbackasm_entry_166(SB), NOSPLIT|NOFRAME, $0
 	MOVD $166, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1328(SB)/8, $callbackasm_entry_166(SB)
+
+TEXT callbackasm_entry_167(SB), NOSPLIT|NOFRAME, $0
 	MOVD $167, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1336(SB)/8, $callbackasm_entry_167(SB)
+
+TEXT callbackasm_entry_168(SB), NOSPLIT|NOFRAME, $0
 	MOVD $168, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1344(SB)/8, $callbackasm_entry_168(SB)
+
+TEXT callbackasm_entry_169(SB), NOSPLIT|NOFRAME, $0
 	MOVD $169, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1352(SB)/8, $callbackasm_entry_169(SB)
+
+TEXT callbackasm_entry_170(SB), NOSPLIT|NOFRAME, $0
 	MOVD $170, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1360(SB)/8, $callbackasm_entry_170(SB)
+
+TEXT callbackasm_entry_171(SB), NOSPLIT|NOFRAME, $0
 	MOVD $171, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1368(SB)/8, $callbackasm_entry_171(SB)
+
+TEXT callbackasm_entry_172(SB), NOSPLIT|NOFRAME, $0
 	MOVD $172, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1376(SB)/8, $callbackasm_entry_172(SB)
+
+TEXT callbackasm_entry_173(SB), NOSPLIT|NOFRAME, $0
 	MOVD $173, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1384(SB)/8, $callbackasm_entry_173(SB)
+
+TEXT callbackasm_entry_174(SB), NOSPLIT|NOFRAME, $0
 	MOVD $174, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1392(SB)/8, $callbackasm_entry_174(SB)
+
+TEXT callbackasm_entry_175(SB), NOSPLIT|NOFRAME, $0
 	MOVD $175, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1400(SB)/8, $callbackasm_entry_175(SB)
+
+TEXT callbackasm_entry_176(SB), NOSPLIT|NOFRAME, $0
 	MOVD $176, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1408(SB)/8, $callbackasm_entry_176(SB)
+
+TEXT callbackasm_entry_177(SB), NOSPLIT|NOFRAME, $0
 	MOVD $177, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1416(SB)/8, $callbackasm_entry_177(SB)
+
+TEXT callbackasm_entry_178(SB), NOSPLIT|NOFRAME, $0
 	MOVD $178, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1424(SB)/8, $callbackasm_entry_178(SB)
+
+TEXT callbackasm_entry_179(SB), NOSPLIT|NOFRAME, $0
 	MOVD $179, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1432(SB)/8, $callbackasm_entry_179(SB)
+
+TEXT callbackasm_entry_180(SB), NOSPLIT|NOFRAME, $0
 	MOVD $180, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1440(SB)/8, $callbackasm_entry_180(SB)
+
+TEXT callbackasm_entry_181(SB), NOSPLIT|NOFRAME, $0
 	MOVD $181, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1448(SB)/8, $callbackasm_entry_181(SB)
+
+TEXT callbackasm_entry_182(SB), NOSPLIT|NOFRAME, $0
 	MOVD $182, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1456(SB)/8, $callbackasm_entry_182(SB)
+
+TEXT callbackasm_entry_183(SB), NOSPLIT|NOFRAME, $0
 	MOVD $183, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1464(SB)/8, $callbackasm_entry_183(SB)
+
+TEXT callbackasm_entry_184(SB), NOSPLIT|NOFRAME, $0
 	MOVD $184, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1472(SB)/8, $callbackasm_entry_184(SB)
+
+TEXT callbackasm_entry_185(SB), NOSPLIT|NOFRAME, $0
 	MOVD $185, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1480(SB)/8, $callbackasm_entry_185(SB)
+
+TEXT callbackasm_entry_186(SB), NOSPLIT|NOFRAME, $0
 	MOVD $186, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1488(SB)/8, $callbackasm_entry_186(SB)
+
+TEXT callbackasm_entry_187(SB), NOSPLIT|NOFRAME, $0
 	MOVD $187, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1496(SB)/8, $callbackasm_entry_187(SB)
+
+TEXT callbackasm_entry_188(SB), NOSPLIT|NOFRAME, $0
 	MOVD $188, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1504(SB)/8, $callbackasm_entry_188(SB)
+
+TEXT callbackasm_entry_189(SB), NOSPLIT|NOFRAME, $0
 	MOVD $189, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1512(SB)/8, $callbackasm_entry_189(SB)
+
+TEXT callbackasm_entry_190(SB), NOSPLIT|NOFRAME, $0
 	MOVD $190, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1520(SB)/8, $callbackasm_entry_190(SB)
+
+TEXT callbackasm_entry_191(SB), NOSPLIT|NOFRAME, $0
 	MOVD $191, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1528(SB)/8, $callbackasm_entry_191(SB)
+
+TEXT callbackasm_entry_192(SB), NOSPLIT|NOFRAME, $0
 	MOVD $192, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1536(SB)/8, $callbackasm_entry_192(SB)
+
+TEXT callbackasm_entry_193(SB), NOSPLIT|NOFRAME, $0
 	MOVD $193, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1544(SB)/8, $callbackasm_entry_193(SB)
+
+TEXT callbackasm_entry_194(SB), NOSPLIT|NOFRAME, $0
 	MOVD $194, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1552(SB)/8, $callbackasm_entry_194(SB)
+
+TEXT callbackasm_entry_195(SB), NOSPLIT|NOFRAME, $0
 	MOVD $195, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1560(SB)/8, $callbackasm_entry_195(SB)
+
+TEXT callbackasm_entry_196(SB), NOSPLIT|NOFRAME, $0
 	MOVD $196, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1568(SB)/8, $callbackasm_entry_196(SB)
+
+TEXT callbackasm_entry_197(SB), NOSPLIT|NOFRAME, $0
 	MOVD $197, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1576(SB)/8, $callbackasm_entry_197(SB)
+
+TEXT callbackasm_entry_198(SB), NOSPLIT|NOFRAME, $0
 	MOVD $198, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1584(SB)/8, $callbackasm_entry_198(SB)
+
+TEXT callbackasm_entry_199(SB), NOSPLIT|NOFRAME, $0
 	MOVD $199, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1592(SB)/8, $callbackasm_entry_199(SB)
+
+TEXT callbackasm_entry_200(SB), NOSPLIT|NOFRAME, $0
 	MOVD $200, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1600(SB)/8, $callbackasm_entry_200(SB)
+
+TEXT callbackasm_entry_201(SB), NOSPLIT|NOFRAME, $0
 	MOVD $201, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1608(SB)/8, $callbackasm_entry_201(SB)
+
+TEXT callbackasm_entry_202(SB), NOSPLIT|NOFRAME, $0
 	MOVD $202, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1616(SB)/8, $callbackasm_entry_202(SB)
+
+TEXT callbackasm_entry_203(SB), NOSPLIT|NOFRAME, $0
 	MOVD $203, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1624(SB)/8, $callbackasm_entry_203(SB)
+
+TEXT callbackasm_entry_204(SB), NOSPLIT|NOFRAME, $0
 	MOVD $204, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1632(SB)/8, $callbackasm_entry_204(SB)
+
+TEXT callbackasm_entry_205(SB), NOSPLIT|NOFRAME, $0
 	MOVD $205, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1640(SB)/8, $callbackasm_entry_205(SB)
+
+TEXT callbackasm_entry_206(SB), NOSPLIT|NOFRAME, $0
 	MOVD $206, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1648(SB)/8, $callbackasm_entry_206(SB)
+
+TEXT callbackasm_entry_207(SB), NOSPLIT|NOFRAME, $0
 	MOVD $207, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1656(SB)/8, $callbackasm_entry_207(SB)
+
+TEXT callbackasm_entry_208(SB), NOSPLIT|NOFRAME, $0
 	MOVD $208, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1664(SB)/8, $callbackasm_entry_208(SB)
+
+TEXT callbackasm_entry_209(SB), NOSPLIT|NOFRAME, $0
 	MOVD $209, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1672(SB)/8, $callbackasm_entry_209(SB)
+
+TEXT callbackasm_entry_210(SB), NOSPLIT|NOFRAME, $0
 	MOVD $210, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1680(SB)/8, $callbackasm_entry_210(SB)
+
+TEXT callbackasm_entry_211(SB), NOSPLIT|NOFRAME, $0
 	MOVD $211, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1688(SB)/8, $callbackasm_entry_211(SB)
+
+TEXT callbackasm_entry_212(SB), NOSPLIT|NOFRAME, $0
 	MOVD $212, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1696(SB)/8, $callbackasm_entry_212(SB)
+
+TEXT callbackasm_entry_213(SB), NOSPLIT|NOFRAME, $0
 	MOVD $213, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1704(SB)/8, $callbackasm_entry_213(SB)
+
+TEXT callbackasm_entry_214(SB), NOSPLIT|NOFRAME, $0
 	MOVD $214, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1712(SB)/8, $callbackasm_entry_214(SB)
+
+TEXT callbackasm_entry_215(SB), NOSPLIT|NOFRAME, $0
 	MOVD $215, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1720(SB)/8, $callbackasm_entry_215(SB)
+
+TEXT callbackasm_entry_216(SB), NOSPLIT|NOFRAME, $0
 	MOVD $216, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1728(SB)/8, $callbackasm_entry_216(SB)
+
+TEXT callbackasm_entry_217(SB), NOSPLIT|NOFRAME, $0
 	MOVD $217, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1736(SB)/8, $callbackasm_entry_217(SB)
+
+TEXT callbackasm_entry_218(SB), NOSPLIT|NOFRAME, $0
 	MOVD $218, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1744(SB)/8, $callbackasm_entry_218(SB)
+
+TEXT callbackasm_entry_219(SB), NOSPLIT|NOFRAME, $0
 	MOVD $219, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1752(SB)/8, $callbackasm_entry_219(SB)
+
+TEXT callbackasm_entry_220(SB), NOSPLIT|NOFRAME, $0
 	MOVD $220, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1760(SB)/8, $callbackasm_entry_220(SB)
+
+TEXT callbackasm_entry_221(SB), NOSPLIT|NOFRAME, $0
 	MOVD $221, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1768(SB)/8, $callbackasm_entry_221(SB)
+
+TEXT callbackasm_entry_222(SB), NOSPLIT|NOFRAME, $0
 	MOVD $222, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1776(SB)/8, $callbackasm_entry_222(SB)
+
+TEXT callbackasm_entry_223(SB), NOSPLIT|NOFRAME, $0
 	MOVD $223, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1784(SB)/8, $callbackasm_entry_223(SB)
+
+TEXT callbackasm_entry_224(SB), NOSPLIT|NOFRAME, $0
 	MOVD $224, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1792(SB)/8, $callbackasm_entry_224(SB)
+
+TEXT callbackasm_entry_225(SB), NOSPLIT|NOFRAME, $0
 	MOVD $225, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1800(SB)/8, $callbackasm_entry_225(SB)
+
+TEXT callbackasm_entry_226(SB), NOSPLIT|NOFRAME, $0
 	MOVD $226, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1808(SB)/8, $callbackasm_entry_226(SB)
+
+TEXT callbackasm_entry_227(SB), NOSPLIT|NOFRAME, $0
 	MOVD $227, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1816(SB)/8, $callbackasm_entry_227(SB)
+
+TEXT callbackasm_entry_228(SB), NOSPLIT|NOFRAME, $0
 	MOVD $228, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1824(SB)/8, $callbackasm_entry_228(SB)
+
+TEXT callbackasm_entry_229(SB), NOSPLIT|NOFRAME, $0
 	MOVD $229, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1832(SB)/8, $callbackasm_entry_229(SB)
+
+TEXT callbackasm_entry_230(SB), NOSPLIT|NOFRAME, $0
 	MOVD $230, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1840(SB)/8, $callbackasm_entry_230(SB)
+
+TEXT callbackasm_entry_231(SB), NOSPLIT|NOFRAME, $0
 	MOVD $231, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1848(SB)/8, $callbackasm_entry_231(SB)
+
+TEXT callbackasm_entry_232(SB), NOSPLIT|NOFRAME, $0
 	MOVD $232, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1856(SB)/8, $callbackasm_entry_232(SB)
+
+TEXT callbackasm_entry_233(SB), NOSPLIT|NOFRAME, $0
 	MOVD $233, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1864(SB)/8, $callbackasm_entry_233(SB)
+
+TEXT callbackasm_entry_234(SB), NOSPLIT|NOFRAME, $0
 	MOVD $234, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1872(SB)/8, $callbackasm_entry_234(SB)
+
+TEXT callbackasm_entry_235(SB), NOSPLIT|NOFRAME, $0
 	MOVD $235, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1880(SB)/8, $callbackasm_entry_235(SB)
+
+TEXT callbackasm_entry_236(SB), NOSPLIT|NOFRAME, $0
 	MOVD $236, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1888(SB)/8, $callbackasm_entry_236(SB)
+
+TEXT callbackasm_entry_237(SB), NOSPLIT|NOFRAME, $0
 	MOVD $237, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1896(SB)/8, $callbackasm_entry_237(SB)
+
+TEXT callbackasm_entry_238(SB), NOSPLIT|NOFRAME, $0
 	MOVD $238, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1904(SB)/8, $callbackasm_entry_238(SB)
+
+TEXT callbackasm_entry_239(SB), NOSPLIT|NOFRAME, $0
 	MOVD $239, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1912(SB)/8, $callbackasm_entry_239(SB)
+
+TEXT callbackasm_entry_240(SB), NOSPLIT|NOFRAME, $0
 	MOVD $240, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1920(SB)/8, $callbackasm_entry_240(SB)
+
+TEXT callbackasm_entry_241(SB), NOSPLIT|NOFRAME, $0
 	MOVD $241, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1928(SB)/8, $callbackasm_entry_241(SB)
+
+TEXT callbackasm_entry_242(SB), NOSPLIT|NOFRAME, $0
 	MOVD $242, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1936(SB)/8, $callbackasm_entry_242(SB)
+
+TEXT callbackasm_entry_243(SB), NOSPLIT|NOFRAME, $0
 	MOVD $243, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1944(SB)/8, $callbackasm_entry_243(SB)
+
+TEXT callbackasm_entry_244(SB), NOSPLIT|NOFRAME, $0
 	MOVD $244, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1952(SB)/8, $callbackasm_entry_244(SB)
+
+TEXT callbackasm_entry_245(SB), NOSPLIT|NOFRAME, $0
 	MOVD $245, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1960(SB)/8, $callbackasm_entry_245(SB)
+
+TEXT callbackasm_entry_246(SB), NOSPLIT|NOFRAME, $0
 	MOVD $246, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1968(SB)/8, $callbackasm_entry_246(SB)
+
+TEXT callbackasm_entry_247(SB), NOSPLIT|NOFRAME, $0
 	MOVD $247, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1976(SB)/8, $callbackasm_entry_247(SB)
+
+TEXT callbackasm_entry_248(SB), NOSPLIT|NOFRAME, $0
 	MOVD $248, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1984(SB)/8, $callbackasm_entry_248(SB)
+
+TEXT callbackasm_entry_249(SB), NOSPLIT|NOFRAME, $0
 	MOVD $249, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+1992(SB)/8, $callbackasm_entry_249(SB)
+
+TEXT callbackasm_entry_250(SB), NOSPLIT|NOFRAME, $0
 	MOVD $250, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2000(SB)/8, $callbackasm_entry_250(SB)
+
+TEXT callbackasm_entry_251(SB), NOSPLIT|NOFRAME, $0
 	MOVD $251, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2008(SB)/8, $callbackasm_entry_251(SB)
+
+TEXT callbackasm_entry_252(SB), NOSPLIT|NOFRAME, $0
 	MOVD $252, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2016(SB)/8, $callbackasm_entry_252(SB)
+
+TEXT callbackasm_entry_253(SB), NOSPLIT|NOFRAME, $0
 	MOVD $253, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2024(SB)/8, $callbackasm_entry_253(SB)
+
+TEXT callbackasm_entry_254(SB), NOSPLIT|NOFRAME, $0
 	MOVD $254, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2032(SB)/8, $callbackasm_entry_254(SB)
+
+TEXT callbackasm_entry_255(SB), NOSPLIT|NOFRAME, $0
 	MOVD $255, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2040(SB)/8, $callbackasm_entry_255(SB)
+
+TEXT callbackasm_entry_256(SB), NOSPLIT|NOFRAME, $0
 	MOVD $256, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2048(SB)/8, $callbackasm_entry_256(SB)
+
+TEXT callbackasm_entry_257(SB), NOSPLIT|NOFRAME, $0
 	MOVD $257, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2056(SB)/8, $callbackasm_entry_257(SB)
+
+TEXT callbackasm_entry_258(SB), NOSPLIT|NOFRAME, $0
 	MOVD $258, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2064(SB)/8, $callbackasm_entry_258(SB)
+
+TEXT callbackasm_entry_259(SB), NOSPLIT|NOFRAME, $0
 	MOVD $259, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2072(SB)/8, $callbackasm_entry_259(SB)
+
+TEXT callbackasm_entry_260(SB), NOSPLIT|NOFRAME, $0
 	MOVD $260, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2080(SB)/8, $callbackasm_entry_260(SB)
+
+TEXT callbackasm_entry_261(SB), NOSPLIT|NOFRAME, $0
 	MOVD $261, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2088(SB)/8, $callbackasm_entry_261(SB)
+
+TEXT callbackasm_entry_262(SB), NOSPLIT|NOFRAME, $0
 	MOVD $262, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2096(SB)/8, $callbackasm_entry_262(SB)
+
+TEXT callbackasm_entry_263(SB), NOSPLIT|NOFRAME, $0
 	MOVD $263, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2104(SB)/8, $callbackasm_entry_263(SB)
+
+TEXT callbackasm_entry_264(SB), NOSPLIT|NOFRAME, $0
 	MOVD $264, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2112(SB)/8, $callbackasm_entry_264(SB)
+
+TEXT callbackasm_entry_265(SB), NOSPLIT|NOFRAME, $0
 	MOVD $265, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2120(SB)/8, $callbackasm_entry_265(SB)
+
+TEXT callbackasm_entry_266(SB), NOSPLIT|NOFRAME, $0
 	MOVD $266, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2128(SB)/8, $callbackasm_entry_266(SB)
+
+TEXT callbackasm_entry_267(SB), NOSPLIT|NOFRAME, $0
 	MOVD $267, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2136(SB)/8, $callbackasm_entry_267(SB)
+
+TEXT callbackasm_entry_268(SB), NOSPLIT|NOFRAME, $0
 	MOVD $268, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2144(SB)/8, $callbackasm_entry_268(SB)
+
+TEXT callbackasm_entry_269(SB), NOSPLIT|NOFRAME, $0
 	MOVD $269, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2152(SB)/8, $callbackasm_entry_269(SB)
+
+TEXT callbackasm_entry_270(SB), NOSPLIT|NOFRAME, $0
 	MOVD $270, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2160(SB)/8, $callbackasm_entry_270(SB)
+
+TEXT callbackasm_entry_271(SB), NOSPLIT|NOFRAME, $0
 	MOVD $271, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2168(SB)/8, $callbackasm_entry_271(SB)
+
+TEXT callbackasm_entry_272(SB), NOSPLIT|NOFRAME, $0
 	MOVD $272, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2176(SB)/8, $callbackasm_entry_272(SB)
+
+TEXT callbackasm_entry_273(SB), NOSPLIT|NOFRAME, $0
 	MOVD $273, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2184(SB)/8, $callbackasm_entry_273(SB)
+
+TEXT callbackasm_entry_274(SB), NOSPLIT|NOFRAME, $0
 	MOVD $274, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2192(SB)/8, $callbackasm_entry_274(SB)
+
+TEXT callbackasm_entry_275(SB), NOSPLIT|NOFRAME, $0
 	MOVD $275, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2200(SB)/8, $callbackasm_entry_275(SB)
+
+TEXT callbackasm_entry_276(SB), NOSPLIT|NOFRAME, $0
 	MOVD $276, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2208(SB)/8, $callbackasm_entry_276(SB)
+
+TEXT callbackasm_entry_277(SB), NOSPLIT|NOFRAME, $0
 	MOVD $277, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2216(SB)/8, $callbackasm_entry_277(SB)
+
+TEXT callbackasm_entry_278(SB), NOSPLIT|NOFRAME, $0
 	MOVD $278, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2224(SB)/8, $callbackasm_entry_278(SB)
+
+TEXT callbackasm_entry_279(SB), NOSPLIT|NOFRAME, $0
 	MOVD $279, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2232(SB)/8, $callbackasm_entry_279(SB)
+
+TEXT callbackasm_entry_280(SB), NOSPLIT|NOFRAME, $0
 	MOVD $280, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2240(SB)/8, $callbackasm_entry_280(SB)
+
+TEXT callbackasm_entry_281(SB), NOSPLIT|NOFRAME, $0
 	MOVD $281, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2248(SB)/8, $callbackasm_entry_281(SB)
+
+TEXT callbackasm_entry_282(SB), NOSPLIT|NOFRAME, $0
 	MOVD $282, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2256(SB)/8, $callbackasm_entry_282(SB)
+
+TEXT callbackasm_entry_283(SB), NOSPLIT|NOFRAME, $0
 	MOVD $283, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2264(SB)/8, $callbackasm_entry_283(SB)
+
+TEXT callbackasm_entry_284(SB), NOSPLIT|NOFRAME, $0
 	MOVD $284, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2272(SB)/8, $callbackasm_entry_284(SB)
+
+TEXT callbackasm_entry_285(SB), NOSPLIT|NOFRAME, $0
 	MOVD $285, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2280(SB)/8, $callbackasm_entry_285(SB)
+
+TEXT callbackasm_entry_286(SB), NOSPLIT|NOFRAME, $0
 	MOVD $286, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2288(SB)/8, $callbackasm_entry_286(SB)
+
+TEXT callbackasm_entry_287(SB), NOSPLIT|NOFRAME, $0
 	MOVD $287, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2296(SB)/8, $callbackasm_entry_287(SB)
+
+TEXT callbackasm_entry_288(SB), NOSPLIT|NOFRAME, $0
 	MOVD $288, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2304(SB)/8, $callbackasm_entry_288(SB)
+
+TEXT callbackasm_entry_289(SB), NOSPLIT|NOFRAME, $0
 	MOVD $289, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2312(SB)/8, $callbackasm_entry_289(SB)
+
+TEXT callbackasm_entry_290(SB), NOSPLIT|NOFRAME, $0
 	MOVD $290, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2320(SB)/8, $callbackasm_entry_290(SB)
+
+TEXT callbackasm_entry_291(SB), NOSPLIT|NOFRAME, $0
 	MOVD $291, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2328(SB)/8, $callbackasm_entry_291(SB)
+
+TEXT callbackasm_entry_292(SB), NOSPLIT|NOFRAME, $0
 	MOVD $292, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2336(SB)/8, $callbackasm_entry_292(SB)
+
+TEXT callbackasm_entry_293(SB), NOSPLIT|NOFRAME, $0
 	MOVD $293, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2344(SB)/8, $callbackasm_entry_293(SB)
+
+TEXT callbackasm_entry_294(SB), NOSPLIT|NOFRAME, $0
 	MOVD $294, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2352(SB)/8, $callbackasm_entry_294(SB)
+
+TEXT callbackasm_entry_295(SB), NOSPLIT|NOFRAME, $0
 	MOVD $295, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2360(SB)/8, $callbackasm_entry_295(SB)
+
+TEXT callbackasm_entry_296(SB), NOSPLIT|NOFRAME, $0
 	MOVD $296, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2368(SB)/8, $callbackasm_entry_296(SB)
+
+TEXT callbackasm_entry_297(SB), NOSPLIT|NOFRAME, $0
 	MOVD $297, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2376(SB)/8, $callbackasm_entry_297(SB)
+
+TEXT callbackasm_entry_298(SB), NOSPLIT|NOFRAME, $0
 	MOVD $298, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2384(SB)/8, $callbackasm_entry_298(SB)
+
+TEXT callbackasm_entry_299(SB), NOSPLIT|NOFRAME, $0
 	MOVD $299, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2392(SB)/8, $callbackasm_entry_299(SB)
+
+TEXT callbackasm_entry_300(SB), NOSPLIT|NOFRAME, $0
 	MOVD $300, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2400(SB)/8, $callbackasm_entry_300(SB)
+
+TEXT callbackasm_entry_301(SB), NOSPLIT|NOFRAME, $0
 	MOVD $301, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2408(SB)/8, $callbackasm_entry_301(SB)
+
+TEXT callbackasm_entry_302(SB), NOSPLIT|NOFRAME, $0
 	MOVD $302, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2416(SB)/8, $callbackasm_entry_302(SB)
+
+TEXT callbackasm_entry_303(SB), NOSPLIT|NOFRAME, $0
 	MOVD $303, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2424(SB)/8, $callbackasm_entry_303(SB)
+
+TEXT callbackasm_entry_304(SB), NOSPLIT|NOFRAME, $0
 	MOVD $304, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2432(SB)/8, $callbackasm_entry_304(SB)
+
+TEXT callbackasm_entry_305(SB), NOSPLIT|NOFRAME, $0
 	MOVD $305, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2440(SB)/8, $callbackasm_entry_305(SB)
+
+TEXT callbackasm_entry_306(SB), NOSPLIT|NOFRAME, $0
 	MOVD $306, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2448(SB)/8, $callbackasm_entry_306(SB)
+
+TEXT callbackasm_entry_307(SB), NOSPLIT|NOFRAME, $0
 	MOVD $307, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2456(SB)/8, $callbackasm_entry_307(SB)
+
+TEXT callbackasm_entry_308(SB), NOSPLIT|NOFRAME, $0
 	MOVD $308, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2464(SB)/8, $callbackasm_entry_308(SB)
+
+TEXT callbackasm_entry_309(SB), NOSPLIT|NOFRAME, $0
 	MOVD $309, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2472(SB)/8, $callbackasm_entry_309(SB)
+
+TEXT callbackasm_entry_310(SB), NOSPLIT|NOFRAME, $0
 	MOVD $310, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2480(SB)/8, $callbackasm_entry_310(SB)
+
+TEXT callbackasm_entry_311(SB), NOSPLIT|NOFRAME, $0
 	MOVD $311, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2488(SB)/8, $callbackasm_entry_311(SB)
+
+TEXT callbackasm_entry_312(SB), NOSPLIT|NOFRAME, $0
 	MOVD $312, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2496(SB)/8, $callbackasm_entry_312(SB)
+
+TEXT callbackasm_entry_313(SB), NOSPLIT|NOFRAME, $0
 	MOVD $313, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2504(SB)/8, $callbackasm_entry_313(SB)
+
+TEXT callbackasm_entry_314(SB), NOSPLIT|NOFRAME, $0
 	MOVD $314, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2512(SB)/8, $callbackasm_entry_314(SB)
+
+TEXT callbackasm_entry_315(SB), NOSPLIT|NOFRAME, $0
 	MOVD $315, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2520(SB)/8, $callbackasm_entry_315(SB)
+
+TEXT callbackasm_entry_316(SB), NOSPLIT|NOFRAME, $0
 	MOVD $316, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2528(SB)/8, $callbackasm_entry_316(SB)
+
+TEXT callbackasm_entry_317(SB), NOSPLIT|NOFRAME, $0
 	MOVD $317, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2536(SB)/8, $callbackasm_entry_317(SB)
+
+TEXT callbackasm_entry_318(SB), NOSPLIT|NOFRAME, $0
 	MOVD $318, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2544(SB)/8, $callbackasm_entry_318(SB)
+
+TEXT callbackasm_entry_319(SB), NOSPLIT|NOFRAME, $0
 	MOVD $319, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2552(SB)/8, $callbackasm_entry_319(SB)
+
+TEXT callbackasm_entry_320(SB), NOSPLIT|NOFRAME, $0
 	MOVD $320, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2560(SB)/8, $callbackasm_entry_320(SB)
+
+TEXT callbackasm_entry_321(SB), NOSPLIT|NOFRAME, $0
 	MOVD $321, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2568(SB)/8, $callbackasm_entry_321(SB)
+
+TEXT callbackasm_entry_322(SB), NOSPLIT|NOFRAME, $0
 	MOVD $322, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2576(SB)/8, $callbackasm_entry_322(SB)
+
+TEXT callbackasm_entry_323(SB), NOSPLIT|NOFRAME, $0
 	MOVD $323, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2584(SB)/8, $callbackasm_entry_323(SB)
+
+TEXT callbackasm_entry_324(SB), NOSPLIT|NOFRAME, $0
 	MOVD $324, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2592(SB)/8, $callbackasm_entry_324(SB)
+
+TEXT callbackasm_entry_325(SB), NOSPLIT|NOFRAME, $0
 	MOVD $325, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2600(SB)/8, $callbackasm_entry_325(SB)
+
+TEXT callbackasm_entry_326(SB), NOSPLIT|NOFRAME, $0
 	MOVD $326, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2608(SB)/8, $callbackasm_entry_326(SB)
+
+TEXT callbackasm_entry_327(SB), NOSPLIT|NOFRAME, $0
 	MOVD $327, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2616(SB)/8, $callbackasm_entry_327(SB)
+
+TEXT callbackasm_entry_328(SB), NOSPLIT|NOFRAME, $0
 	MOVD $328, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2624(SB)/8, $callbackasm_entry_328(SB)
+
+TEXT callbackasm_entry_329(SB), NOSPLIT|NOFRAME, $0
 	MOVD $329, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2632(SB)/8, $callbackasm_entry_329(SB)
+
+TEXT callbackasm_entry_330(SB), NOSPLIT|NOFRAME, $0
 	MOVD $330, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2640(SB)/8, $callbackasm_entry_330(SB)
+
+TEXT callbackasm_entry_331(SB), NOSPLIT|NOFRAME, $0
 	MOVD $331, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2648(SB)/8, $callbackasm_entry_331(SB)
+
+TEXT callbackasm_entry_332(SB), NOSPLIT|NOFRAME, $0
 	MOVD $332, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2656(SB)/8, $callbackasm_entry_332(SB)
+
+TEXT callbackasm_entry_333(SB), NOSPLIT|NOFRAME, $0
 	MOVD $333, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2664(SB)/8, $callbackasm_entry_333(SB)
+
+TEXT callbackasm_entry_334(SB), NOSPLIT|NOFRAME, $0
 	MOVD $334, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2672(SB)/8, $callbackasm_entry_334(SB)
+
+TEXT callbackasm_entry_335(SB), NOSPLIT|NOFRAME, $0
 	MOVD $335, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2680(SB)/8, $callbackasm_entry_335(SB)
+
+TEXT callbackasm_entry_336(SB), NOSPLIT|NOFRAME, $0
 	MOVD $336, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2688(SB)/8, $callbackasm_entry_336(SB)
+
+TEXT callbackasm_entry_337(SB), NOSPLIT|NOFRAME, $0
 	MOVD $337, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2696(SB)/8, $callbackasm_entry_337(SB)
+
+TEXT callbackasm_entry_338(SB), NOSPLIT|NOFRAME, $0
 	MOVD $338, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2704(SB)/8, $callbackasm_entry_338(SB)
+
+TEXT callbackasm_entry_339(SB), NOSPLIT|NOFRAME, $0
 	MOVD $339, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2712(SB)/8, $callbackasm_entry_339(SB)
+
+TEXT callbackasm_entry_340(SB), NOSPLIT|NOFRAME, $0
 	MOVD $340, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2720(SB)/8, $callbackasm_entry_340(SB)
+
+TEXT callbackasm_entry_341(SB), NOSPLIT|NOFRAME, $0
 	MOVD $341, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2728(SB)/8, $callbackasm_entry_341(SB)
+
+TEXT callbackasm_entry_342(SB), NOSPLIT|NOFRAME, $0
 	MOVD $342, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2736(SB)/8, $callbackasm_entry_342(SB)
+
+TEXT callbackasm_entry_343(SB), NOSPLIT|NOFRAME, $0
 	MOVD $343, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2744(SB)/8, $callbackasm_entry_343(SB)
+
+TEXT callbackasm_entry_344(SB), NOSPLIT|NOFRAME, $0
 	MOVD $344, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2752(SB)/8, $callbackasm_entry_344(SB)
+
+TEXT callbackasm_entry_345(SB), NOSPLIT|NOFRAME, $0
 	MOVD $345, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2760(SB)/8, $callbackasm_entry_345(SB)
+
+TEXT callbackasm_entry_346(SB), NOSPLIT|NOFRAME, $0
 	MOVD $346, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2768(SB)/8, $callbackasm_entry_346(SB)
+
+TEXT callbackasm_entry_347(SB), NOSPLIT|NOFRAME, $0
 	MOVD $347, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2776(SB)/8, $callbackasm_entry_347(SB)
+
+TEXT callbackasm_entry_348(SB), NOSPLIT|NOFRAME, $0
 	MOVD $348, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2784(SB)/8, $callbackasm_entry_348(SB)
+
+TEXT callbackasm_entry_349(SB), NOSPLIT|NOFRAME, $0
 	MOVD $349, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2792(SB)/8, $callbackasm_entry_349(SB)
+
+TEXT callbackasm_entry_350(SB), NOSPLIT|NOFRAME, $0
 	MOVD $350, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2800(SB)/8, $callbackasm_entry_350(SB)
+
+TEXT callbackasm_entry_351(SB), NOSPLIT|NOFRAME, $0
 	MOVD $351, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2808(SB)/8, $callbackasm_entry_351(SB)
+
+TEXT callbackasm_entry_352(SB), NOSPLIT|NOFRAME, $0
 	MOVD $352, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2816(SB)/8, $callbackasm_entry_352(SB)
+
+TEXT callbackasm_entry_353(SB), NOSPLIT|NOFRAME, $0
 	MOVD $353, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2824(SB)/8, $callbackasm_entry_353(SB)
+
+TEXT callbackasm_entry_354(SB), NOSPLIT|NOFRAME, $0
 	MOVD $354, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2832(SB)/8, $callbackasm_entry_354(SB)
+
+TEXT callbackasm_entry_355(SB), NOSPLIT|NOFRAME, $0
 	MOVD $355, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2840(SB)/8, $callbackasm_entry_355(SB)
+
+TEXT callbackasm_entry_356(SB), NOSPLIT|NOFRAME, $0
 	MOVD $356, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2848(SB)/8, $callbackasm_entry_356(SB)
+
+TEXT callbackasm_entry_357(SB), NOSPLIT|NOFRAME, $0
 	MOVD $357, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2856(SB)/8, $callbackasm_entry_357(SB)
+
+TEXT callbackasm_entry_358(SB), NOSPLIT|NOFRAME, $0
 	MOVD $358, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2864(SB)/8, $callbackasm_entry_358(SB)
+
+TEXT callbackasm_entry_359(SB), NOSPLIT|NOFRAME, $0
 	MOVD $359, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2872(SB)/8, $callbackasm_entry_359(SB)
+
+TEXT callbackasm_entry_360(SB), NOSPLIT|NOFRAME, $0
 	MOVD $360, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2880(SB)/8, $callbackasm_entry_360(SB)
+
+TEXT callbackasm_entry_361(SB), NOSPLIT|NOFRAME, $0
 	MOVD $361, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2888(SB)/8, $callbackasm_entry_361(SB)
+
+TEXT callbackasm_entry_362(SB), NOSPLIT|NOFRAME, $0
 	MOVD $362, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2896(SB)/8, $callbackasm_entry_362(SB)
+
+TEXT callbackasm_entry_363(SB), NOSPLIT|NOFRAME, $0
 	MOVD $363, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2904(SB)/8, $callbackasm_entry_363(SB)
+
+TEXT callbackasm_entry_364(SB), NOSPLIT|NOFRAME, $0
 	MOVD $364, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2912(SB)/8, $callbackasm_entry_364(SB)
+
+TEXT callbackasm_entry_365(SB), NOSPLIT|NOFRAME, $0
 	MOVD $365, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2920(SB)/8, $callbackasm_entry_365(SB)
+
+TEXT callbackasm_entry_366(SB), NOSPLIT|NOFRAME, $0
 	MOVD $366, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2928(SB)/8, $callbackasm_entry_366(SB)
+
+TEXT callbackasm_entry_367(SB), NOSPLIT|NOFRAME, $0
 	MOVD $367, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2936(SB)/8, $callbackasm_entry_367(SB)
+
+TEXT callbackasm_entry_368(SB), NOSPLIT|NOFRAME, $0
 	MOVD $368, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2944(SB)/8, $callbackasm_entry_368(SB)
+
+TEXT callbackasm_entry_369(SB), NOSPLIT|NOFRAME, $0
 	MOVD $369, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2952(SB)/8, $callbackasm_entry_369(SB)
+
+TEXT callbackasm_entry_370(SB), NOSPLIT|NOFRAME, $0
 	MOVD $370, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2960(SB)/8, $callbackasm_entry_370(SB)
+
+TEXT callbackasm_entry_371(SB), NOSPLIT|NOFRAME, $0
 	MOVD $371, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2968(SB)/8, $callbackasm_entry_371(SB)
+
+TEXT callbackasm_entry_372(SB), NOSPLIT|NOFRAME, $0
 	MOVD $372, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2976(SB)/8, $callbackasm_entry_372(SB)
+
+TEXT callbackasm_entry_373(SB), NOSPLIT|NOFRAME, $0
 	MOVD $373, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2984(SB)/8, $callbackasm_entry_373(SB)
+
+TEXT callbackasm_entry_374(SB), NOSPLIT|NOFRAME, $0
 	MOVD $374, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+2992(SB)/8, $callbackasm_entry_374(SB)
+
+TEXT callbackasm_entry_375(SB), NOSPLIT|NOFRAME, $0
 	MOVD $375, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3000(SB)/8, $callbackasm_entry_375(SB)
+
+TEXT callbackasm_entry_376(SB), NOSPLIT|NOFRAME, $0
 	MOVD $376, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3008(SB)/8, $callbackasm_entry_376(SB)
+
+TEXT callbackasm_entry_377(SB), NOSPLIT|NOFRAME, $0
 	MOVD $377, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3016(SB)/8, $callbackasm_entry_377(SB)
+
+TEXT callbackasm_entry_378(SB), NOSPLIT|NOFRAME, $0
 	MOVD $378, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3024(SB)/8, $callbackasm_entry_378(SB)
+
+TEXT callbackasm_entry_379(SB), NOSPLIT|NOFRAME, $0
 	MOVD $379, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3032(SB)/8, $callbackasm_entry_379(SB)
+
+TEXT callbackasm_entry_380(SB), NOSPLIT|NOFRAME, $0
 	MOVD $380, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3040(SB)/8, $callbackasm_entry_380(SB)
+
+TEXT callbackasm_entry_381(SB), NOSPLIT|NOFRAME, $0
 	MOVD $381, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3048(SB)/8, $callbackasm_entry_381(SB)
+
+TEXT callbackasm_entry_382(SB), NOSPLIT|NOFRAME, $0
 	MOVD $382, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3056(SB)/8, $callbackasm_entry_382(SB)
+
+TEXT callbackasm_entry_383(SB), NOSPLIT|NOFRAME, $0
 	MOVD $383, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3064(SB)/8, $callbackasm_entry_383(SB)
+
+TEXT callbackasm_entry_384(SB), NOSPLIT|NOFRAME, $0
 	MOVD $384, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3072(SB)/8, $callbackasm_entry_384(SB)
+
+TEXT callbackasm_entry_385(SB), NOSPLIT|NOFRAME, $0
 	MOVD $385, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3080(SB)/8, $callbackasm_entry_385(SB)
+
+TEXT callbackasm_entry_386(SB), NOSPLIT|NOFRAME, $0
 	MOVD $386, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3088(SB)/8, $callbackasm_entry_386(SB)
+
+TEXT callbackasm_entry_387(SB), NOSPLIT|NOFRAME, $0
 	MOVD $387, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3096(SB)/8, $callbackasm_entry_387(SB)
+
+TEXT callbackasm_entry_388(SB), NOSPLIT|NOFRAME, $0
 	MOVD $388, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3104(SB)/8, $callbackasm_entry_388(SB)
+
+TEXT callbackasm_entry_389(SB), NOSPLIT|NOFRAME, $0
 	MOVD $389, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3112(SB)/8, $callbackasm_entry_389(SB)
+
+TEXT callbackasm_entry_390(SB), NOSPLIT|NOFRAME, $0
 	MOVD $390, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3120(SB)/8, $callbackasm_entry_390(SB)
+
+TEXT callbackasm_entry_391(SB), NOSPLIT|NOFRAME, $0
 	MOVD $391, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3128(SB)/8, $callbackasm_entry_391(SB)
+
+TEXT callbackasm_entry_392(SB), NOSPLIT|NOFRAME, $0
 	MOVD $392, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3136(SB)/8, $callbackasm_entry_392(SB)
+
+TEXT callbackasm_entry_393(SB), NOSPLIT|NOFRAME, $0
 	MOVD $393, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3144(SB)/8, $callbackasm_entry_393(SB)
+
+TEXT callbackasm_entry_394(SB), NOSPLIT|NOFRAME, $0
 	MOVD $394, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3152(SB)/8, $callbackasm_entry_394(SB)
+
+TEXT callbackasm_entry_395(SB), NOSPLIT|NOFRAME, $0
 	MOVD $395, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3160(SB)/8, $callbackasm_entry_395(SB)
+
+TEXT callbackasm_entry_396(SB), NOSPLIT|NOFRAME, $0
 	MOVD $396, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3168(SB)/8, $callbackasm_entry_396(SB)
+
+TEXT callbackasm_entry_397(SB), NOSPLIT|NOFRAME, $0
 	MOVD $397, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3176(SB)/8, $callbackasm_entry_397(SB)
+
+TEXT callbackasm_entry_398(SB), NOSPLIT|NOFRAME, $0
 	MOVD $398, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3184(SB)/8, $callbackasm_entry_398(SB)
+
+TEXT callbackasm_entry_399(SB), NOSPLIT|NOFRAME, $0
 	MOVD $399, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3192(SB)/8, $callbackasm_entry_399(SB)
+
+TEXT callbackasm_entry_400(SB), NOSPLIT|NOFRAME, $0
 	MOVD $400, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3200(SB)/8, $callbackasm_entry_400(SB)
+
+TEXT callbackasm_entry_401(SB), NOSPLIT|NOFRAME, $0
 	MOVD $401, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3208(SB)/8, $callbackasm_entry_401(SB)
+
+TEXT callbackasm_entry_402(SB), NOSPLIT|NOFRAME, $0
 	MOVD $402, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3216(SB)/8, $callbackasm_entry_402(SB)
+
+TEXT callbackasm_entry_403(SB), NOSPLIT|NOFRAME, $0
 	MOVD $403, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3224(SB)/8, $callbackasm_entry_403(SB)
+
+TEXT callbackasm_entry_404(SB), NOSPLIT|NOFRAME, $0
 	MOVD $404, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3232(SB)/8, $callbackasm_entry_404(SB)
+
+TEXT callbackasm_entry_405(SB), NOSPLIT|NOFRAME, $0
 	MOVD $405, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3240(SB)/8, $callbackasm_entry_405(SB)
+
+TEXT callbackasm_entry_406(SB), NOSPLIT|NOFRAME, $0
 	MOVD $406, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3248(SB)/8, $callbackasm_entry_406(SB)
+
+TEXT callbackasm_entry_407(SB), NOSPLIT|NOFRAME, $0
 	MOVD $407, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3256(SB)/8, $callbackasm_entry_407(SB)
+
+TEXT callbackasm_entry_408(SB), NOSPLIT|NOFRAME, $0
 	MOVD $408, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3264(SB)/8, $callbackasm_entry_408(SB)
+
+TEXT callbackasm_entry_409(SB), NOSPLIT|NOFRAME, $0
 	MOVD $409, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3272(SB)/8, $callbackasm_entry_409(SB)
+
+TEXT callbackasm_entry_410(SB), NOSPLIT|NOFRAME, $0
 	MOVD $410, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3280(SB)/8, $callbackasm_entry_410(SB)
+
+TEXT callbackasm_entry_411(SB), NOSPLIT|NOFRAME, $0
 	MOVD $411, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3288(SB)/8, $callbackasm_entry_411(SB)
+
+TEXT callbackasm_entry_412(SB), NOSPLIT|NOFRAME, $0
 	MOVD $412, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3296(SB)/8, $callbackasm_entry_412(SB)
+
+TEXT callbackasm_entry_413(SB), NOSPLIT|NOFRAME, $0
 	MOVD $413, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3304(SB)/8, $callbackasm_entry_413(SB)
+
+TEXT callbackasm_entry_414(SB), NOSPLIT|NOFRAME, $0
 	MOVD $414, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3312(SB)/8, $callbackasm_entry_414(SB)
+
+TEXT callbackasm_entry_415(SB), NOSPLIT|NOFRAME, $0
 	MOVD $415, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3320(SB)/8, $callbackasm_entry_415(SB)
+
+TEXT callbackasm_entry_416(SB), NOSPLIT|NOFRAME, $0
 	MOVD $416, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3328(SB)/8, $callbackasm_entry_416(SB)
+
+TEXT callbackasm_entry_417(SB), NOSPLIT|NOFRAME, $0
 	MOVD $417, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3336(SB)/8, $callbackasm_entry_417(SB)
+
+TEXT callbackasm_entry_418(SB), NOSPLIT|NOFRAME, $0
 	MOVD $418, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3344(SB)/8, $callbackasm_entry_418(SB)
+
+TEXT callbackasm_entry_419(SB), NOSPLIT|NOFRAME, $0
 	MOVD $419, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3352(SB)/8, $callbackasm_entry_419(SB)
+
+TEXT callbackasm_entry_420(SB), NOSPLIT|NOFRAME, $0
 	MOVD $420, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3360(SB)/8, $callbackasm_entry_420(SB)
+
+TEXT callbackasm_entry_421(SB), NOSPLIT|NOFRAME, $0
 	MOVD $421, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3368(SB)/8, $callbackasm_entry_421(SB)
+
+TEXT callbackasm_entry_422(SB), NOSPLIT|NOFRAME, $0
 	MOVD $422, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3376(SB)/8, $callbackasm_entry_422(SB)
+
+TEXT callbackasm_entry_423(SB), NOSPLIT|NOFRAME, $0
 	MOVD $423, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3384(SB)/8, $callbackasm_entry_423(SB)
+
+TEXT callbackasm_entry_424(SB), NOSPLIT|NOFRAME, $0
 	MOVD $424, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3392(SB)/8, $callbackasm_entry_424(SB)
+
+TEXT callbackasm_entry_425(SB), NOSPLIT|NOFRAME, $0
 	MOVD $425, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3400(SB)/8, $callbackasm_entry_425(SB)
+
+TEXT callbackasm_entry_426(SB), NOSPLIT|NOFRAME, $0
 	MOVD $426, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3408(SB)/8, $callbackasm_entry_426(SB)
+
+TEXT callbackasm_entry_427(SB), NOSPLIT|NOFRAME, $0
 	MOVD $427, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3416(SB)/8, $callbackasm_entry_427(SB)
+
+TEXT callbackasm_entry_428(SB), NOSPLIT|NOFRAME, $0
 	MOVD $428, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3424(SB)/8, $callbackasm_entry_428(SB)
+
+TEXT callbackasm_entry_429(SB), NOSPLIT|NOFRAME, $0
 	MOVD $429, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3432(SB)/8, $callbackasm_entry_429(SB)
+
+TEXT callbackasm_entry_430(SB), NOSPLIT|NOFRAME, $0
 	MOVD $430, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3440(SB)/8, $callbackasm_entry_430(SB)
+
+TEXT callbackasm_entry_431(SB), NOSPLIT|NOFRAME, $0
 	MOVD $431, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3448(SB)/8, $callbackasm_entry_431(SB)
+
+TEXT callbackasm_entry_432(SB), NOSPLIT|NOFRAME, $0
 	MOVD $432, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3456(SB)/8, $callbackasm_entry_432(SB)
+
+TEXT callbackasm_entry_433(SB), NOSPLIT|NOFRAME, $0
 	MOVD $433, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3464(SB)/8, $callbackasm_entry_433(SB)
+
+TEXT callbackasm_entry_434(SB), NOSPLIT|NOFRAME, $0
 	MOVD $434, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3472(SB)/8, $callbackasm_entry_434(SB)
+
+TEXT callbackasm_entry_435(SB), NOSPLIT|NOFRAME, $0
 	MOVD $435, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3480(SB)/8, $callbackasm_entry_435(SB)
+
+TEXT callbackasm_entry_436(SB), NOSPLIT|NOFRAME, $0
 	MOVD $436, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3488(SB)/8, $callbackasm_entry_436(SB)
+
+TEXT callbackasm_entry_437(SB), NOSPLIT|NOFRAME, $0
 	MOVD $437, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3496(SB)/8, $callbackasm_entry_437(SB)
+
+TEXT callbackasm_entry_438(SB), NOSPLIT|NOFRAME, $0
 	MOVD $438, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3504(SB)/8, $callbackasm_entry_438(SB)
+
+TEXT callbackasm_entry_439(SB), NOSPLIT|NOFRAME, $0
 	MOVD $439, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3512(SB)/8, $callbackasm_entry_439(SB)
+
+TEXT callbackasm_entry_440(SB), NOSPLIT|NOFRAME, $0
 	MOVD $440, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3520(SB)/8, $callbackasm_entry_440(SB)
+
+TEXT callbackasm_entry_441(SB), NOSPLIT|NOFRAME, $0
 	MOVD $441, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3528(SB)/8, $callbackasm_entry_441(SB)
+
+TEXT callbackasm_entry_442(SB), NOSPLIT|NOFRAME, $0
 	MOVD $442, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3536(SB)/8, $callbackasm_entry_442(SB)
+
+TEXT callbackasm_entry_443(SB), NOSPLIT|NOFRAME, $0
 	MOVD $443, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3544(SB)/8, $callbackasm_entry_443(SB)
+
+TEXT callbackasm_entry_444(SB), NOSPLIT|NOFRAME, $0
 	MOVD $444, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3552(SB)/8, $callbackasm_entry_444(SB)
+
+TEXT callbackasm_entry_445(SB), NOSPLIT|NOFRAME, $0
 	MOVD $445, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3560(SB)/8, $callbackasm_entry_445(SB)
+
+TEXT callbackasm_entry_446(SB), NOSPLIT|NOFRAME, $0
 	MOVD $446, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3568(SB)/8, $callbackasm_entry_446(SB)
+
+TEXT callbackasm_entry_447(SB), NOSPLIT|NOFRAME, $0
 	MOVD $447, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3576(SB)/8, $callbackasm_entry_447(SB)
+
+TEXT callbackasm_entry_448(SB), NOSPLIT|NOFRAME, $0
 	MOVD $448, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3584(SB)/8, $callbackasm_entry_448(SB)
+
+TEXT callbackasm_entry_449(SB), NOSPLIT|NOFRAME, $0
 	MOVD $449, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3592(SB)/8, $callbackasm_entry_449(SB)
+
+TEXT callbackasm_entry_450(SB), NOSPLIT|NOFRAME, $0
 	MOVD $450, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3600(SB)/8, $callbackasm_entry_450(SB)
+
+TEXT callbackasm_entry_451(SB), NOSPLIT|NOFRAME, $0
 	MOVD $451, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3608(SB)/8, $callbackasm_entry_451(SB)
+
+TEXT callbackasm_entry_452(SB), NOSPLIT|NOFRAME, $0
 	MOVD $452, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3616(SB)/8, $callbackasm_entry_452(SB)
+
+TEXT callbackasm_entry_453(SB), NOSPLIT|NOFRAME, $0
 	MOVD $453, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3624(SB)/8, $callbackasm_entry_453(SB)
+
+TEXT callbackasm_entry_454(SB), NOSPLIT|NOFRAME, $0
 	MOVD $454, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3632(SB)/8, $callbackasm_entry_454(SB)
+
+TEXT callbackasm_entry_455(SB), NOSPLIT|NOFRAME, $0
 	MOVD $455, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3640(SB)/8, $callbackasm_entry_455(SB)
+
+TEXT callbackasm_entry_456(SB), NOSPLIT|NOFRAME, $0
 	MOVD $456, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3648(SB)/8, $callbackasm_entry_456(SB)
+
+TEXT callbackasm_entry_457(SB), NOSPLIT|NOFRAME, $0
 	MOVD $457, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3656(SB)/8, $callbackasm_entry_457(SB)
+
+TEXT callbackasm_entry_458(SB), NOSPLIT|NOFRAME, $0
 	MOVD $458, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3664(SB)/8, $callbackasm_entry_458(SB)
+
+TEXT callbackasm_entry_459(SB), NOSPLIT|NOFRAME, $0
 	MOVD $459, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3672(SB)/8, $callbackasm_entry_459(SB)
+
+TEXT callbackasm_entry_460(SB), NOSPLIT|NOFRAME, $0
 	MOVD $460, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3680(SB)/8, $callbackasm_entry_460(SB)
+
+TEXT callbackasm_entry_461(SB), NOSPLIT|NOFRAME, $0
 	MOVD $461, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3688(SB)/8, $callbackasm_entry_461(SB)
+
+TEXT callbackasm_entry_462(SB), NOSPLIT|NOFRAME, $0
 	MOVD $462, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3696(SB)/8, $callbackasm_entry_462(SB)
+
+TEXT callbackasm_entry_463(SB), NOSPLIT|NOFRAME, $0
 	MOVD $463, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3704(SB)/8, $callbackasm_entry_463(SB)
+
+TEXT callbackasm_entry_464(SB), NOSPLIT|NOFRAME, $0
 	MOVD $464, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3712(SB)/8, $callbackasm_entry_464(SB)
+
+TEXT callbackasm_entry_465(SB), NOSPLIT|NOFRAME, $0
 	MOVD $465, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3720(SB)/8, $callbackasm_entry_465(SB)
+
+TEXT callbackasm_entry_466(SB), NOSPLIT|NOFRAME, $0
 	MOVD $466, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3728(SB)/8, $callbackasm_entry_466(SB)
+
+TEXT callbackasm_entry_467(SB), NOSPLIT|NOFRAME, $0
 	MOVD $467, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3736(SB)/8, $callbackasm_entry_467(SB)
+
+TEXT callbackasm_entry_468(SB), NOSPLIT|NOFRAME, $0
 	MOVD $468, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3744(SB)/8, $callbackasm_entry_468(SB)
+
+TEXT callbackasm_entry_469(SB), NOSPLIT|NOFRAME, $0
 	MOVD $469, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3752(SB)/8, $callbackasm_entry_469(SB)
+
+TEXT callbackasm_entry_470(SB), NOSPLIT|NOFRAME, $0
 	MOVD $470, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3760(SB)/8, $callbackasm_entry_470(SB)
+
+TEXT callbackasm_entry_471(SB), NOSPLIT|NOFRAME, $0
 	MOVD $471, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3768(SB)/8, $callbackasm_entry_471(SB)
+
+TEXT callbackasm_entry_472(SB), NOSPLIT|NOFRAME, $0
 	MOVD $472, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3776(SB)/8, $callbackasm_entry_472(SB)
+
+TEXT callbackasm_entry_473(SB), NOSPLIT|NOFRAME, $0
 	MOVD $473, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3784(SB)/8, $callbackasm_entry_473(SB)
+
+TEXT callbackasm_entry_474(SB), NOSPLIT|NOFRAME, $0
 	MOVD $474, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3792(SB)/8, $callbackasm_entry_474(SB)
+
+TEXT callbackasm_entry_475(SB), NOSPLIT|NOFRAME, $0
 	MOVD $475, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3800(SB)/8, $callbackasm_entry_475(SB)
+
+TEXT callbackasm_entry_476(SB), NOSPLIT|NOFRAME, $0
 	MOVD $476, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3808(SB)/8, $callbackasm_entry_476(SB)
+
+TEXT callbackasm_entry_477(SB), NOSPLIT|NOFRAME, $0
 	MOVD $477, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3816(SB)/8, $callbackasm_entry_477(SB)
+
+TEXT callbackasm_entry_478(SB), NOSPLIT|NOFRAME, $0
 	MOVD $478, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3824(SB)/8, $callbackasm_entry_478(SB)
+
+TEXT callbackasm_entry_479(SB), NOSPLIT|NOFRAME, $0
 	MOVD $479, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3832(SB)/8, $callbackasm_entry_479(SB)
+
+TEXT callbackasm_entry_480(SB), NOSPLIT|NOFRAME, $0
 	MOVD $480, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3840(SB)/8, $callbackasm_entry_480(SB)
+
+TEXT callbackasm_entry_481(SB), NOSPLIT|NOFRAME, $0
 	MOVD $481, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3848(SB)/8, $callbackasm_entry_481(SB)
+
+TEXT callbackasm_entry_482(SB), NOSPLIT|NOFRAME, $0
 	MOVD $482, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3856(SB)/8, $callbackasm_entry_482(SB)
+
+TEXT callbackasm_entry_483(SB), NOSPLIT|NOFRAME, $0
 	MOVD $483, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3864(SB)/8, $callbackasm_entry_483(SB)
+
+TEXT callbackasm_entry_484(SB), NOSPLIT|NOFRAME, $0
 	MOVD $484, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3872(SB)/8, $callbackasm_entry_484(SB)
+
+TEXT callbackasm_entry_485(SB), NOSPLIT|NOFRAME, $0
 	MOVD $485, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3880(SB)/8, $callbackasm_entry_485(SB)
+
+TEXT callbackasm_entry_486(SB), NOSPLIT|NOFRAME, $0
 	MOVD $486, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3888(SB)/8, $callbackasm_entry_486(SB)
+
+TEXT callbackasm_entry_487(SB), NOSPLIT|NOFRAME, $0
 	MOVD $487, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3896(SB)/8, $callbackasm_entry_487(SB)
+
+TEXT callbackasm_entry_488(SB), NOSPLIT|NOFRAME, $0
 	MOVD $488, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3904(SB)/8, $callbackasm_entry_488(SB)
+
+TEXT callbackasm_entry_489(SB), NOSPLIT|NOFRAME, $0
 	MOVD $489, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3912(SB)/8, $callbackasm_entry_489(SB)
+
+TEXT callbackasm_entry_490(SB), NOSPLIT|NOFRAME, $0
 	MOVD $490, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3920(SB)/8, $callbackasm_entry_490(SB)
+
+TEXT callbackasm_entry_491(SB), NOSPLIT|NOFRAME, $0
 	MOVD $491, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3928(SB)/8, $callbackasm_entry_491(SB)
+
+TEXT callbackasm_entry_492(SB), NOSPLIT|NOFRAME, $0
 	MOVD $492, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3936(SB)/8, $callbackasm_entry_492(SB)
+
+TEXT callbackasm_entry_493(SB), NOSPLIT|NOFRAME, $0
 	MOVD $493, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3944(SB)/8, $callbackasm_entry_493(SB)
+
+TEXT callbackasm_entry_494(SB), NOSPLIT|NOFRAME, $0
 	MOVD $494, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3952(SB)/8, $callbackasm_entry_494(SB)
+
+TEXT callbackasm_entry_495(SB), NOSPLIT|NOFRAME, $0
 	MOVD $495, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3960(SB)/8, $callbackasm_entry_495(SB)
+
+TEXT callbackasm_entry_496(SB), NOSPLIT|NOFRAME, $0
 	MOVD $496, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3968(SB)/8, $callbackasm_entry_496(SB)
+
+TEXT callbackasm_entry_497(SB), NOSPLIT|NOFRAME, $0
 	MOVD $497, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3976(SB)/8, $callbackasm_entry_497(SB)
+
+TEXT callbackasm_entry_498(SB), NOSPLIT|NOFRAME, $0
 	MOVD $498, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3984(SB)/8, $callbackasm_entry_498(SB)
+
+TEXT callbackasm_entry_499(SB), NOSPLIT|NOFRAME, $0
 	MOVD $499, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+3992(SB)/8, $callbackasm_entry_499(SB)
+
+TEXT callbackasm_entry_500(SB), NOSPLIT|NOFRAME, $0
 	MOVD $500, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4000(SB)/8, $callbackasm_entry_500(SB)
+
+TEXT callbackasm_entry_501(SB), NOSPLIT|NOFRAME, $0
 	MOVD $501, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4008(SB)/8, $callbackasm_entry_501(SB)
+
+TEXT callbackasm_entry_502(SB), NOSPLIT|NOFRAME, $0
 	MOVD $502, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4016(SB)/8, $callbackasm_entry_502(SB)
+
+TEXT callbackasm_entry_503(SB), NOSPLIT|NOFRAME, $0
 	MOVD $503, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4024(SB)/8, $callbackasm_entry_503(SB)
+
+TEXT callbackasm_entry_504(SB), NOSPLIT|NOFRAME, $0
 	MOVD $504, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4032(SB)/8, $callbackasm_entry_504(SB)
+
+TEXT callbackasm_entry_505(SB), NOSPLIT|NOFRAME, $0
 	MOVD $505, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4040(SB)/8, $callbackasm_entry_505(SB)
+
+TEXT callbackasm_entry_506(SB), NOSPLIT|NOFRAME, $0
 	MOVD $506, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4048(SB)/8, $callbackasm_entry_506(SB)
+
+TEXT callbackasm_entry_507(SB), NOSPLIT|NOFRAME, $0
 	MOVD $507, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4056(SB)/8, $callbackasm_entry_507(SB)
+
+TEXT callbackasm_entry_508(SB), NOSPLIT|NOFRAME, $0
 	MOVD $508, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4064(SB)/8, $callbackasm_entry_508(SB)
+
+TEXT callbackasm_entry_509(SB), NOSPLIT|NOFRAME, $0
 	MOVD $509, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4072(SB)/8, $callbackasm_entry_509(SB)
+
+TEXT callbackasm_entry_510(SB), NOSPLIT|NOFRAME, $0
 	MOVD $510, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4080(SB)/8, $callbackasm_entry_510(SB)
+
+TEXT callbackasm_entry_511(SB), NOSPLIT|NOFRAME, $0
 	MOVD $511, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4088(SB)/8, $callbackasm_entry_511(SB)
+
+TEXT callbackasm_entry_512(SB), NOSPLIT|NOFRAME, $0
 	MOVD $512, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4096(SB)/8, $callbackasm_entry_512(SB)
+
+TEXT callbackasm_entry_513(SB), NOSPLIT|NOFRAME, $0
 	MOVD $513, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4104(SB)/8, $callbackasm_entry_513(SB)
+
+TEXT callbackasm_entry_514(SB), NOSPLIT|NOFRAME, $0
 	MOVD $514, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4112(SB)/8, $callbackasm_entry_514(SB)
+
+TEXT callbackasm_entry_515(SB), NOSPLIT|NOFRAME, $0
 	MOVD $515, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4120(SB)/8, $callbackasm_entry_515(SB)
+
+TEXT callbackasm_entry_516(SB), NOSPLIT|NOFRAME, $0
 	MOVD $516, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4128(SB)/8, $callbackasm_entry_516(SB)
+
+TEXT callbackasm_entry_517(SB), NOSPLIT|NOFRAME, $0
 	MOVD $517, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4136(SB)/8, $callbackasm_entry_517(SB)
+
+TEXT callbackasm_entry_518(SB), NOSPLIT|NOFRAME, $0
 	MOVD $518, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4144(SB)/8, $callbackasm_entry_518(SB)
+
+TEXT callbackasm_entry_519(SB), NOSPLIT|NOFRAME, $0
 	MOVD $519, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4152(SB)/8, $callbackasm_entry_519(SB)
+
+TEXT callbackasm_entry_520(SB), NOSPLIT|NOFRAME, $0
 	MOVD $520, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4160(SB)/8, $callbackasm_entry_520(SB)
+
+TEXT callbackasm_entry_521(SB), NOSPLIT|NOFRAME, $0
 	MOVD $521, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4168(SB)/8, $callbackasm_entry_521(SB)
+
+TEXT callbackasm_entry_522(SB), NOSPLIT|NOFRAME, $0
 	MOVD $522, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4176(SB)/8, $callbackasm_entry_522(SB)
+
+TEXT callbackasm_entry_523(SB), NOSPLIT|NOFRAME, $0
 	MOVD $523, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4184(SB)/8, $callbackasm_entry_523(SB)
+
+TEXT callbackasm_entry_524(SB), NOSPLIT|NOFRAME, $0
 	MOVD $524, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4192(SB)/8, $callbackasm_entry_524(SB)
+
+TEXT callbackasm_entry_525(SB), NOSPLIT|NOFRAME, $0
 	MOVD $525, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4200(SB)/8, $callbackasm_entry_525(SB)
+
+TEXT callbackasm_entry_526(SB), NOSPLIT|NOFRAME, $0
 	MOVD $526, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4208(SB)/8, $callbackasm_entry_526(SB)
+
+TEXT callbackasm_entry_527(SB), NOSPLIT|NOFRAME, $0
 	MOVD $527, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4216(SB)/8, $callbackasm_entry_527(SB)
+
+TEXT callbackasm_entry_528(SB), NOSPLIT|NOFRAME, $0
 	MOVD $528, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4224(SB)/8, $callbackasm_entry_528(SB)
+
+TEXT callbackasm_entry_529(SB), NOSPLIT|NOFRAME, $0
 	MOVD $529, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4232(SB)/8, $callbackasm_entry_529(SB)
+
+TEXT callbackasm_entry_530(SB), NOSPLIT|NOFRAME, $0
 	MOVD $530, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4240(SB)/8, $callbackasm_entry_530(SB)
+
+TEXT callbackasm_entry_531(SB), NOSPLIT|NOFRAME, $0
 	MOVD $531, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4248(SB)/8, $callbackasm_entry_531(SB)
+
+TEXT callbackasm_entry_532(SB), NOSPLIT|NOFRAME, $0
 	MOVD $532, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4256(SB)/8, $callbackasm_entry_532(SB)
+
+TEXT callbackasm_entry_533(SB), NOSPLIT|NOFRAME, $0
 	MOVD $533, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4264(SB)/8, $callbackasm_entry_533(SB)
+
+TEXT callbackasm_entry_534(SB), NOSPLIT|NOFRAME, $0
 	MOVD $534, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4272(SB)/8, $callbackasm_entry_534(SB)
+
+TEXT callbackasm_entry_535(SB), NOSPLIT|NOFRAME, $0
 	MOVD $535, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4280(SB)/8, $callbackasm_entry_535(SB)
+
+TEXT callbackasm_entry_536(SB), NOSPLIT|NOFRAME, $0
 	MOVD $536, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4288(SB)/8, $callbackasm_entry_536(SB)
+
+TEXT callbackasm_entry_537(SB), NOSPLIT|NOFRAME, $0
 	MOVD $537, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4296(SB)/8, $callbackasm_entry_537(SB)
+
+TEXT callbackasm_entry_538(SB), NOSPLIT|NOFRAME, $0
 	MOVD $538, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4304(SB)/8, $callbackasm_entry_538(SB)
+
+TEXT callbackasm_entry_539(SB), NOSPLIT|NOFRAME, $0
 	MOVD $539, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4312(SB)/8, $callbackasm_entry_539(SB)
+
+TEXT callbackasm_entry_540(SB), NOSPLIT|NOFRAME, $0
 	MOVD $540, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4320(SB)/8, $callbackasm_entry_540(SB)
+
+TEXT callbackasm_entry_541(SB), NOSPLIT|NOFRAME, $0
 	MOVD $541, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4328(SB)/8, $callbackasm_entry_541(SB)
+
+TEXT callbackasm_entry_542(SB), NOSPLIT|NOFRAME, $0
 	MOVD $542, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4336(SB)/8, $callbackasm_entry_542(SB)
+
+TEXT callbackasm_entry_543(SB), NOSPLIT|NOFRAME, $0
 	MOVD $543, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4344(SB)/8, $callbackasm_entry_543(SB)
+
+TEXT callbackasm_entry_544(SB), NOSPLIT|NOFRAME, $0
 	MOVD $544, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4352(SB)/8, $callbackasm_entry_544(SB)
+
+TEXT callbackasm_entry_545(SB), NOSPLIT|NOFRAME, $0
 	MOVD $545, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4360(SB)/8, $callbackasm_entry_545(SB)
+
+TEXT callbackasm_entry_546(SB), NOSPLIT|NOFRAME, $0
 	MOVD $546, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4368(SB)/8, $callbackasm_entry_546(SB)
+
+TEXT callbackasm_entry_547(SB), NOSPLIT|NOFRAME, $0
 	MOVD $547, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4376(SB)/8, $callbackasm_entry_547(SB)
+
+TEXT callbackasm_entry_548(SB), NOSPLIT|NOFRAME, $0
 	MOVD $548, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4384(SB)/8, $callbackasm_entry_548(SB)
+
+TEXT callbackasm_entry_549(SB), NOSPLIT|NOFRAME, $0
 	MOVD $549, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4392(SB)/8, $callbackasm_entry_549(SB)
+
+TEXT callbackasm_entry_550(SB), NOSPLIT|NOFRAME, $0
 	MOVD $550, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4400(SB)/8, $callbackasm_entry_550(SB)
+
+TEXT callbackasm_entry_551(SB), NOSPLIT|NOFRAME, $0
 	MOVD $551, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4408(SB)/8, $callbackasm_entry_551(SB)
+
+TEXT callbackasm_entry_552(SB), NOSPLIT|NOFRAME, $0
 	MOVD $552, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4416(SB)/8, $callbackasm_entry_552(SB)
+
+TEXT callbackasm_entry_553(SB), NOSPLIT|NOFRAME, $0
 	MOVD $553, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4424(SB)/8, $callbackasm_entry_553(SB)
+
+TEXT callbackasm_entry_554(SB), NOSPLIT|NOFRAME, $0
 	MOVD $554, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4432(SB)/8, $callbackasm_entry_554(SB)
+
+TEXT callbackasm_entry_555(SB), NOSPLIT|NOFRAME, $0
 	MOVD $555, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4440(SB)/8, $callbackasm_entry_555(SB)
+
+TEXT callbackasm_entry_556(SB), NOSPLIT|NOFRAME, $0
 	MOVD $556, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4448(SB)/8, $callbackasm_entry_556(SB)
+
+TEXT callbackasm_entry_557(SB), NOSPLIT|NOFRAME, $0
 	MOVD $557, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4456(SB)/8, $callbackasm_entry_557(SB)
+
+TEXT callbackasm_entry_558(SB), NOSPLIT|NOFRAME, $0
 	MOVD $558, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4464(SB)/8, $callbackasm_entry_558(SB)
+
+TEXT callbackasm_entry_559(SB), NOSPLIT|NOFRAME, $0
 	MOVD $559, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4472(SB)/8, $callbackasm_entry_559(SB)
+
+TEXT callbackasm_entry_560(SB), NOSPLIT|NOFRAME, $0
 	MOVD $560, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4480(SB)/8, $callbackasm_entry_560(SB)
+
+TEXT callbackasm_entry_561(SB), NOSPLIT|NOFRAME, $0
 	MOVD $561, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4488(SB)/8, $callbackasm_entry_561(SB)
+
+TEXT callbackasm_entry_562(SB), NOSPLIT|NOFRAME, $0
 	MOVD $562, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4496(SB)/8, $callbackasm_entry_562(SB)
+
+TEXT callbackasm_entry_563(SB), NOSPLIT|NOFRAME, $0
 	MOVD $563, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4504(SB)/8, $callbackasm_entry_563(SB)
+
+TEXT callbackasm_entry_564(SB), NOSPLIT|NOFRAME, $0
 	MOVD $564, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4512(SB)/8, $callbackasm_entry_564(SB)
+
+TEXT callbackasm_entry_565(SB), NOSPLIT|NOFRAME, $0
 	MOVD $565, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4520(SB)/8, $callbackasm_entry_565(SB)
+
+TEXT callbackasm_entry_566(SB), NOSPLIT|NOFRAME, $0
 	MOVD $566, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4528(SB)/8, $callbackasm_entry_566(SB)
+
+TEXT callbackasm_entry_567(SB), NOSPLIT|NOFRAME, $0
 	MOVD $567, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4536(SB)/8, $callbackasm_entry_567(SB)
+
+TEXT callbackasm_entry_568(SB), NOSPLIT|NOFRAME, $0
 	MOVD $568, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4544(SB)/8, $callbackasm_entry_568(SB)
+
+TEXT callbackasm_entry_569(SB), NOSPLIT|NOFRAME, $0
 	MOVD $569, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4552(SB)/8, $callbackasm_entry_569(SB)
+
+TEXT callbackasm_entry_570(SB), NOSPLIT|NOFRAME, $0
 	MOVD $570, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4560(SB)/8, $callbackasm_entry_570(SB)
+
+TEXT callbackasm_entry_571(SB), NOSPLIT|NOFRAME, $0
 	MOVD $571, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4568(SB)/8, $callbackasm_entry_571(SB)
+
+TEXT callbackasm_entry_572(SB), NOSPLIT|NOFRAME, $0
 	MOVD $572, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4576(SB)/8, $callbackasm_entry_572(SB)
+
+TEXT callbackasm_entry_573(SB), NOSPLIT|NOFRAME, $0
 	MOVD $573, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4584(SB)/8, $callbackasm_entry_573(SB)
+
+TEXT callbackasm_entry_574(SB), NOSPLIT|NOFRAME, $0
 	MOVD $574, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4592(SB)/8, $callbackasm_entry_574(SB)
+
+TEXT callbackasm_entry_575(SB), NOSPLIT|NOFRAME, $0
 	MOVD $575, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4600(SB)/8, $callbackasm_entry_575(SB)
+
+TEXT callbackasm_entry_576(SB), NOSPLIT|NOFRAME, $0
 	MOVD $576, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4608(SB)/8, $callbackasm_entry_576(SB)
+
+TEXT callbackasm_entry_577(SB), NOSPLIT|NOFRAME, $0
 	MOVD $577, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4616(SB)/8, $callbackasm_entry_577(SB)
+
+TEXT callbackasm_entry_578(SB), NOSPLIT|NOFRAME, $0
 	MOVD $578, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4624(SB)/8, $callbackasm_entry_578(SB)
+
+TEXT callbackasm_entry_579(SB), NOSPLIT|NOFRAME, $0
 	MOVD $579, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4632(SB)/8, $callbackasm_entry_579(SB)
+
+TEXT callbackasm_entry_580(SB), NOSPLIT|NOFRAME, $0
 	MOVD $580, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4640(SB)/8, $callbackasm_entry_580(SB)
+
+TEXT callbackasm_entry_581(SB), NOSPLIT|NOFRAME, $0
 	MOVD $581, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4648(SB)/8, $callbackasm_entry_581(SB)
+
+TEXT callbackasm_entry_582(SB), NOSPLIT|NOFRAME, $0
 	MOVD $582, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4656(SB)/8, $callbackasm_entry_582(SB)
+
+TEXT callbackasm_entry_583(SB), NOSPLIT|NOFRAME, $0
 	MOVD $583, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4664(SB)/8, $callbackasm_entry_583(SB)
+
+TEXT callbackasm_entry_584(SB), NOSPLIT|NOFRAME, $0
 	MOVD $584, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4672(SB)/8, $callbackasm_entry_584(SB)
+
+TEXT callbackasm_entry_585(SB), NOSPLIT|NOFRAME, $0
 	MOVD $585, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4680(SB)/8, $callbackasm_entry_585(SB)
+
+TEXT callbackasm_entry_586(SB), NOSPLIT|NOFRAME, $0
 	MOVD $586, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4688(SB)/8, $callbackasm_entry_586(SB)
+
+TEXT callbackasm_entry_587(SB), NOSPLIT|NOFRAME, $0
 	MOVD $587, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4696(SB)/8, $callbackasm_entry_587(SB)
+
+TEXT callbackasm_entry_588(SB), NOSPLIT|NOFRAME, $0
 	MOVD $588, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4704(SB)/8, $callbackasm_entry_588(SB)
+
+TEXT callbackasm_entry_589(SB), NOSPLIT|NOFRAME, $0
 	MOVD $589, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4712(SB)/8, $callbackasm_entry_589(SB)
+
+TEXT callbackasm_entry_590(SB), NOSPLIT|NOFRAME, $0
 	MOVD $590, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4720(SB)/8, $callbackasm_entry_590(SB)
+
+TEXT callbackasm_entry_591(SB), NOSPLIT|NOFRAME, $0
 	MOVD $591, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4728(SB)/8, $callbackasm_entry_591(SB)
+
+TEXT callbackasm_entry_592(SB), NOSPLIT|NOFRAME, $0
 	MOVD $592, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4736(SB)/8, $callbackasm_entry_592(SB)
+
+TEXT callbackasm_entry_593(SB), NOSPLIT|NOFRAME, $0
 	MOVD $593, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4744(SB)/8, $callbackasm_entry_593(SB)
+
+TEXT callbackasm_entry_594(SB), NOSPLIT|NOFRAME, $0
 	MOVD $594, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4752(SB)/8, $callbackasm_entry_594(SB)
+
+TEXT callbackasm_entry_595(SB), NOSPLIT|NOFRAME, $0
 	MOVD $595, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4760(SB)/8, $callbackasm_entry_595(SB)
+
+TEXT callbackasm_entry_596(SB), NOSPLIT|NOFRAME, $0
 	MOVD $596, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4768(SB)/8, $callbackasm_entry_596(SB)
+
+TEXT callbackasm_entry_597(SB), NOSPLIT|NOFRAME, $0
 	MOVD $597, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4776(SB)/8, $callbackasm_entry_597(SB)
+
+TEXT callbackasm_entry_598(SB), NOSPLIT|NOFRAME, $0
 	MOVD $598, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4784(SB)/8, $callbackasm_entry_598(SB)
+
+TEXT callbackasm_entry_599(SB), NOSPLIT|NOFRAME, $0
 	MOVD $599, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4792(SB)/8, $callbackasm_entry_599(SB)
+
+TEXT callbackasm_entry_600(SB), NOSPLIT|NOFRAME, $0
 	MOVD $600, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4800(SB)/8, $callbackasm_entry_600(SB)
+
+TEXT callbackasm_entry_601(SB), NOSPLIT|NOFRAME, $0
 	MOVD $601, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4808(SB)/8, $callbackasm_entry_601(SB)
+
+TEXT callbackasm_entry_602(SB), NOSPLIT|NOFRAME, $0
 	MOVD $602, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4816(SB)/8, $callbackasm_entry_602(SB)
+
+TEXT callbackasm_entry_603(SB), NOSPLIT|NOFRAME, $0
 	MOVD $603, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4824(SB)/8, $callbackasm_entry_603(SB)
+
+TEXT callbackasm_entry_604(SB), NOSPLIT|NOFRAME, $0
 	MOVD $604, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4832(SB)/8, $callbackasm_entry_604(SB)
+
+TEXT callbackasm_entry_605(SB), NOSPLIT|NOFRAME, $0
 	MOVD $605, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4840(SB)/8, $callbackasm_entry_605(SB)
+
+TEXT callbackasm_entry_606(SB), NOSPLIT|NOFRAME, $0
 	MOVD $606, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4848(SB)/8, $callbackasm_entry_606(SB)
+
+TEXT callbackasm_entry_607(SB), NOSPLIT|NOFRAME, $0
 	MOVD $607, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4856(SB)/8, $callbackasm_entry_607(SB)
+
+TEXT callbackasm_entry_608(SB), NOSPLIT|NOFRAME, $0
 	MOVD $608, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4864(SB)/8, $callbackasm_entry_608(SB)
+
+TEXT callbackasm_entry_609(SB), NOSPLIT|NOFRAME, $0
 	MOVD $609, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4872(SB)/8, $callbackasm_entry_609(SB)
+
+TEXT callbackasm_entry_610(SB), NOSPLIT|NOFRAME, $0
 	MOVD $610, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4880(SB)/8, $callbackasm_entry_610(SB)
+
+TEXT callbackasm_entry_611(SB), NOSPLIT|NOFRAME, $0
 	MOVD $611, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4888(SB)/8, $callbackasm_entry_611(SB)
+
+TEXT callbackasm_entry_612(SB), NOSPLIT|NOFRAME, $0
 	MOVD $612, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4896(SB)/8, $callbackasm_entry_612(SB)
+
+TEXT callbackasm_entry_613(SB), NOSPLIT|NOFRAME, $0
 	MOVD $613, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4904(SB)/8, $callbackasm_entry_613(SB)
+
+TEXT callbackasm_entry_614(SB), NOSPLIT|NOFRAME, $0
 	MOVD $614, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4912(SB)/8, $callbackasm_entry_614(SB)
+
+TEXT callbackasm_entry_615(SB), NOSPLIT|NOFRAME, $0
 	MOVD $615, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4920(SB)/8, $callbackasm_entry_615(SB)
+
+TEXT callbackasm_entry_616(SB), NOSPLIT|NOFRAME, $0
 	MOVD $616, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4928(SB)/8, $callbackasm_entry_616(SB)
+
+TEXT callbackasm_entry_617(SB), NOSPLIT|NOFRAME, $0
 	MOVD $617, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4936(SB)/8, $callbackasm_entry_617(SB)
+
+TEXT callbackasm_entry_618(SB), NOSPLIT|NOFRAME, $0
 	MOVD $618, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4944(SB)/8, $callbackasm_entry_618(SB)
+
+TEXT callbackasm_entry_619(SB), NOSPLIT|NOFRAME, $0
 	MOVD $619, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4952(SB)/8, $callbackasm_entry_619(SB)
+
+TEXT callbackasm_entry_620(SB), NOSPLIT|NOFRAME, $0
 	MOVD $620, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4960(SB)/8, $callbackasm_entry_620(SB)
+
+TEXT callbackasm_entry_621(SB), NOSPLIT|NOFRAME, $0
 	MOVD $621, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4968(SB)/8, $callbackasm_entry_621(SB)
+
+TEXT callbackasm_entry_622(SB), NOSPLIT|NOFRAME, $0
 	MOVD $622, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4976(SB)/8, $callbackasm_entry_622(SB)
+
+TEXT callbackasm_entry_623(SB), NOSPLIT|NOFRAME, $0
 	MOVD $623, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4984(SB)/8, $callbackasm_entry_623(SB)
+
+TEXT callbackasm_entry_624(SB), NOSPLIT|NOFRAME, $0
 	MOVD $624, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+4992(SB)/8, $callbackasm_entry_624(SB)
+
+TEXT callbackasm_entry_625(SB), NOSPLIT|NOFRAME, $0
 	MOVD $625, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5000(SB)/8, $callbackasm_entry_625(SB)
+
+TEXT callbackasm_entry_626(SB), NOSPLIT|NOFRAME, $0
 	MOVD $626, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5008(SB)/8, $callbackasm_entry_626(SB)
+
+TEXT callbackasm_entry_627(SB), NOSPLIT|NOFRAME, $0
 	MOVD $627, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5016(SB)/8, $callbackasm_entry_627(SB)
+
+TEXT callbackasm_entry_628(SB), NOSPLIT|NOFRAME, $0
 	MOVD $628, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5024(SB)/8, $callbackasm_entry_628(SB)
+
+TEXT callbackasm_entry_629(SB), NOSPLIT|NOFRAME, $0
 	MOVD $629, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5032(SB)/8, $callbackasm_entry_629(SB)
+
+TEXT callbackasm_entry_630(SB), NOSPLIT|NOFRAME, $0
 	MOVD $630, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5040(SB)/8, $callbackasm_entry_630(SB)
+
+TEXT callbackasm_entry_631(SB), NOSPLIT|NOFRAME, $0
 	MOVD $631, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5048(SB)/8, $callbackasm_entry_631(SB)
+
+TEXT callbackasm_entry_632(SB), NOSPLIT|NOFRAME, $0
 	MOVD $632, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5056(SB)/8, $callbackasm_entry_632(SB)
+
+TEXT callbackasm_entry_633(SB), NOSPLIT|NOFRAME, $0
 	MOVD $633, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5064(SB)/8, $callbackasm_entry_633(SB)
+
+TEXT callbackasm_entry_634(SB), NOSPLIT|NOFRAME, $0
 	MOVD $634, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5072(SB)/8, $callbackasm_entry_634(SB)
+
+TEXT callbackasm_entry_635(SB), NOSPLIT|NOFRAME, $0
 	MOVD $635, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5080(SB)/8, $callbackasm_entry_635(SB)
+
+TEXT callbackasm_entry_636(SB), NOSPLIT|NOFRAME, $0
 	MOVD $636, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5088(SB)/8, $callbackasm_entry_636(SB)
+
+TEXT callbackasm_entry_637(SB), NOSPLIT|NOFRAME, $0
 	MOVD $637, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5096(SB)/8, $callbackasm_entry_637(SB)
+
+TEXT callbackasm_entry_638(SB), NOSPLIT|NOFRAME, $0
 	MOVD $638, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5104(SB)/8, $callbackasm_entry_638(SB)
+
+TEXT callbackasm_entry_639(SB), NOSPLIT|NOFRAME, $0
 	MOVD $639, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5112(SB)/8, $callbackasm_entry_639(SB)
+
+TEXT callbackasm_entry_640(SB), NOSPLIT|NOFRAME, $0
 	MOVD $640, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5120(SB)/8, $callbackasm_entry_640(SB)
+
+TEXT callbackasm_entry_641(SB), NOSPLIT|NOFRAME, $0
 	MOVD $641, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5128(SB)/8, $callbackasm_entry_641(SB)
+
+TEXT callbackasm_entry_642(SB), NOSPLIT|NOFRAME, $0
 	MOVD $642, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5136(SB)/8, $callbackasm_entry_642(SB)
+
+TEXT callbackasm_entry_643(SB), NOSPLIT|NOFRAME, $0
 	MOVD $643, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5144(SB)/8, $callbackasm_entry_643(SB)
+
+TEXT callbackasm_entry_644(SB), NOSPLIT|NOFRAME, $0
 	MOVD $644, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5152(SB)/8, $callbackasm_entry_644(SB)
+
+TEXT callbackasm_entry_645(SB), NOSPLIT|NOFRAME, $0
 	MOVD $645, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5160(SB)/8, $callbackasm_entry_645(SB)
+
+TEXT callbackasm_entry_646(SB), NOSPLIT|NOFRAME, $0
 	MOVD $646, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5168(SB)/8, $callbackasm_entry_646(SB)
+
+TEXT callbackasm_entry_647(SB), NOSPLIT|NOFRAME, $0
 	MOVD $647, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5176(SB)/8, $callbackasm_entry_647(SB)
+
+TEXT callbackasm_entry_648(SB), NOSPLIT|NOFRAME, $0
 	MOVD $648, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5184(SB)/8, $callbackasm_entry_648(SB)
+
+TEXT callbackasm_entry_649(SB), NOSPLIT|NOFRAME, $0
 	MOVD $649, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5192(SB)/8, $callbackasm_entry_649(SB)
+
+TEXT callbackasm_entry_650(SB), NOSPLIT|NOFRAME, $0
 	MOVD $650, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5200(SB)/8, $callbackasm_entry_650(SB)
+
+TEXT callbackasm_entry_651(SB), NOSPLIT|NOFRAME, $0
 	MOVD $651, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5208(SB)/8, $callbackasm_entry_651(SB)
+
+TEXT callbackasm_entry_652(SB), NOSPLIT|NOFRAME, $0
 	MOVD $652, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5216(SB)/8, $callbackasm_entry_652(SB)
+
+TEXT callbackasm_entry_653(SB), NOSPLIT|NOFRAME, $0
 	MOVD $653, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5224(SB)/8, $callbackasm_entry_653(SB)
+
+TEXT callbackasm_entry_654(SB), NOSPLIT|NOFRAME, $0
 	MOVD $654, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5232(SB)/8, $callbackasm_entry_654(SB)
+
+TEXT callbackasm_entry_655(SB), NOSPLIT|NOFRAME, $0
 	MOVD $655, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5240(SB)/8, $callbackasm_entry_655(SB)
+
+TEXT callbackasm_entry_656(SB), NOSPLIT|NOFRAME, $0
 	MOVD $656, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5248(SB)/8, $callbackasm_entry_656(SB)
+
+TEXT callbackasm_entry_657(SB), NOSPLIT|NOFRAME, $0
 	MOVD $657, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5256(SB)/8, $callbackasm_entry_657(SB)
+
+TEXT callbackasm_entry_658(SB), NOSPLIT|NOFRAME, $0
 	MOVD $658, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5264(SB)/8, $callbackasm_entry_658(SB)
+
+TEXT callbackasm_entry_659(SB), NOSPLIT|NOFRAME, $0
 	MOVD $659, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5272(SB)/8, $callbackasm_entry_659(SB)
+
+TEXT callbackasm_entry_660(SB), NOSPLIT|NOFRAME, $0
 	MOVD $660, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5280(SB)/8, $callbackasm_entry_660(SB)
+
+TEXT callbackasm_entry_661(SB), NOSPLIT|NOFRAME, $0
 	MOVD $661, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5288(SB)/8, $callbackasm_entry_661(SB)
+
+TEXT callbackasm_entry_662(SB), NOSPLIT|NOFRAME, $0
 	MOVD $662, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5296(SB)/8, $callbackasm_entry_662(SB)
+
+TEXT callbackasm_entry_663(SB), NOSPLIT|NOFRAME, $0
 	MOVD $663, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5304(SB)/8, $callbackasm_entry_663(SB)
+
+TEXT callbackasm_entry_664(SB), NOSPLIT|NOFRAME, $0
 	MOVD $664, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5312(SB)/8, $callbackasm_entry_664(SB)
+
+TEXT callbackasm_entry_665(SB), NOSPLIT|NOFRAME, $0
 	MOVD $665, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5320(SB)/8, $callbackasm_entry_665(SB)
+
+TEXT callbackasm_entry_666(SB), NOSPLIT|NOFRAME, $0
 	MOVD $666, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5328(SB)/8, $callbackasm_entry_666(SB)
+
+TEXT callbackasm_entry_667(SB), NOSPLIT|NOFRAME, $0
 	MOVD $667, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5336(SB)/8, $callbackasm_entry_667(SB)
+
+TEXT callbackasm_entry_668(SB), NOSPLIT|NOFRAME, $0
 	MOVD $668, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5344(SB)/8, $callbackasm_entry_668(SB)
+
+TEXT callbackasm_entry_669(SB), NOSPLIT|NOFRAME, $0
 	MOVD $669, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5352(SB)/8, $callbackasm_entry_669(SB)
+
+TEXT callbackasm_entry_670(SB), NOSPLIT|NOFRAME, $0
 	MOVD $670, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5360(SB)/8, $callbackasm_entry_670(SB)
+
+TEXT callbackasm_entry_671(SB), NOSPLIT|NOFRAME, $0
 	MOVD $671, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5368(SB)/8, $callbackasm_entry_671(SB)
+
+TEXT callbackasm_entry_672(SB), NOSPLIT|NOFRAME, $0
 	MOVD $672, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5376(SB)/8, $callbackasm_entry_672(SB)
+
+TEXT callbackasm_entry_673(SB), NOSPLIT|NOFRAME, $0
 	MOVD $673, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5384(SB)/8, $callbackasm_entry_673(SB)
+
+TEXT callbackasm_entry_674(SB), NOSPLIT|NOFRAME, $0
 	MOVD $674, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5392(SB)/8, $callbackasm_entry_674(SB)
+
+TEXT callbackasm_entry_675(SB), NOSPLIT|NOFRAME, $0
 	MOVD $675, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5400(SB)/8, $callbackasm_entry_675(SB)
+
+TEXT callbackasm_entry_676(SB), NOSPLIT|NOFRAME, $0
 	MOVD $676, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5408(SB)/8, $callbackasm_entry_676(SB)
+
+TEXT callbackasm_entry_677(SB), NOSPLIT|NOFRAME, $0
 	MOVD $677, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5416(SB)/8, $callbackasm_entry_677(SB)
+
+TEXT callbackasm_entry_678(SB), NOSPLIT|NOFRAME, $0
 	MOVD $678, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5424(SB)/8, $callbackasm_entry_678(SB)
+
+TEXT callbackasm_entry_679(SB), NOSPLIT|NOFRAME, $0
 	MOVD $679, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5432(SB)/8, $callbackasm_entry_679(SB)
+
+TEXT callbackasm_entry_680(SB), NOSPLIT|NOFRAME, $0
 	MOVD $680, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5440(SB)/8, $callbackasm_entry_680(SB)
+
+TEXT callbackasm_entry_681(SB), NOSPLIT|NOFRAME, $0
 	MOVD $681, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5448(SB)/8, $callbackasm_entry_681(SB)
+
+TEXT callbackasm_entry_682(SB), NOSPLIT|NOFRAME, $0
 	MOVD $682, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5456(SB)/8, $callbackasm_entry_682(SB)
+
+TEXT callbackasm_entry_683(SB), NOSPLIT|NOFRAME, $0
 	MOVD $683, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5464(SB)/8, $callbackasm_entry_683(SB)
+
+TEXT callbackasm_entry_684(SB), NOSPLIT|NOFRAME, $0
 	MOVD $684, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5472(SB)/8, $callbackasm_entry_684(SB)
+
+TEXT callbackasm_entry_685(SB), NOSPLIT|NOFRAME, $0
 	MOVD $685, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5480(SB)/8, $callbackasm_entry_685(SB)
+
+TEXT callbackasm_entry_686(SB), NOSPLIT|NOFRAME, $0
 	MOVD $686, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5488(SB)/8, $callbackasm_entry_686(SB)
+
+TEXT callbackasm_entry_687(SB), NOSPLIT|NOFRAME, $0
 	MOVD $687, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5496(SB)/8, $callbackasm_entry_687(SB)
+
+TEXT callbackasm_entry_688(SB), NOSPLIT|NOFRAME, $0
 	MOVD $688, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5504(SB)/8, $callbackasm_entry_688(SB)
+
+TEXT callbackasm_entry_689(SB), NOSPLIT|NOFRAME, $0
 	MOVD $689, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5512(SB)/8, $callbackasm_entry_689(SB)
+
+TEXT callbackasm_entry_690(SB), NOSPLIT|NOFRAME, $0
 	MOVD $690, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5520(SB)/8, $callbackasm_entry_690(SB)
+
+TEXT callbackasm_entry_691(SB), NOSPLIT|NOFRAME, $0
 	MOVD $691, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5528(SB)/8, $callbackasm_entry_691(SB)
+
+TEXT callbackasm_entry_692(SB), NOSPLIT|NOFRAME, $0
 	MOVD $692, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5536(SB)/8, $callbackasm_entry_692(SB)
+
+TEXT callbackasm_entry_693(SB), NOSPLIT|NOFRAME, $0
 	MOVD $693, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5544(SB)/8, $callbackasm_entry_693(SB)
+
+TEXT callbackasm_entry_694(SB), NOSPLIT|NOFRAME, $0
 	MOVD $694, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5552(SB)/8, $callbackasm_entry_694(SB)
+
+TEXT callbackasm_entry_695(SB), NOSPLIT|NOFRAME, $0
 	MOVD $695, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5560(SB)/8, $callbackasm_entry_695(SB)
+
+TEXT callbackasm_entry_696(SB), NOSPLIT|NOFRAME, $0
 	MOVD $696, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5568(SB)/8, $callbackasm_entry_696(SB)
+
+TEXT callbackasm_entry_697(SB), NOSPLIT|NOFRAME, $0
 	MOVD $697, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5576(SB)/8, $callbackasm_entry_697(SB)
+
+TEXT callbackasm_entry_698(SB), NOSPLIT|NOFRAME, $0
 	MOVD $698, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5584(SB)/8, $callbackasm_entry_698(SB)
+
+TEXT callbackasm_entry_699(SB), NOSPLIT|NOFRAME, $0
 	MOVD $699, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5592(SB)/8, $callbackasm_entry_699(SB)
+
+TEXT callbackasm_entry_700(SB), NOSPLIT|NOFRAME, $0
 	MOVD $700, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5600(SB)/8, $callbackasm_entry_700(SB)
+
+TEXT callbackasm_entry_701(SB), NOSPLIT|NOFRAME, $0
 	MOVD $701, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5608(SB)/8, $callbackasm_entry_701(SB)
+
+TEXT callbackasm_entry_702(SB), NOSPLIT|NOFRAME, $0
 	MOVD $702, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5616(SB)/8, $callbackasm_entry_702(SB)
+
+TEXT callbackasm_entry_703(SB), NOSPLIT|NOFRAME, $0
 	MOVD $703, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5624(SB)/8, $callbackasm_entry_703(SB)
+
+TEXT callbackasm_entry_704(SB), NOSPLIT|NOFRAME, $0
 	MOVD $704, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5632(SB)/8, $callbackasm_entry_704(SB)
+
+TEXT callbackasm_entry_705(SB), NOSPLIT|NOFRAME, $0
 	MOVD $705, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5640(SB)/8, $callbackasm_entry_705(SB)
+
+TEXT callbackasm_entry_706(SB), NOSPLIT|NOFRAME, $0
 	MOVD $706, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5648(SB)/8, $callbackasm_entry_706(SB)
+
+TEXT callbackasm_entry_707(SB), NOSPLIT|NOFRAME, $0
 	MOVD $707, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5656(SB)/8, $callbackasm_entry_707(SB)
+
+TEXT callbackasm_entry_708(SB), NOSPLIT|NOFRAME, $0
 	MOVD $708, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5664(SB)/8, $callbackasm_entry_708(SB)
+
+TEXT callbackasm_entry_709(SB), NOSPLIT|NOFRAME, $0
 	MOVD $709, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5672(SB)/8, $callbackasm_entry_709(SB)
+
+TEXT callbackasm_entry_710(SB), NOSPLIT|NOFRAME, $0
 	MOVD $710, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5680(SB)/8, $callbackasm_entry_710(SB)
+
+TEXT callbackasm_entry_711(SB), NOSPLIT|NOFRAME, $0
 	MOVD $711, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5688(SB)/8, $callbackasm_entry_711(SB)
+
+TEXT callbackasm_entry_712(SB), NOSPLIT|NOFRAME, $0
 	MOVD $712, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5696(SB)/8, $callbackasm_entry_712(SB)
+
+TEXT callbackasm_entry_713(SB), NOSPLIT|NOFRAME, $0
 	MOVD $713, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5704(SB)/8, $callbackasm_entry_713(SB)
+
+TEXT callbackasm_entry_714(SB), NOSPLIT|NOFRAME, $0
 	MOVD $714, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5712(SB)/8, $callbackasm_entry_714(SB)
+
+TEXT callbackasm_entry_715(SB), NOSPLIT|NOFRAME, $0
 	MOVD $715, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5720(SB)/8, $callbackasm_entry_715(SB)
+
+TEXT callbackasm_entry_716(SB), NOSPLIT|NOFRAME, $0
 	MOVD $716, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5728(SB)/8, $callbackasm_entry_716(SB)
+
+TEXT callbackasm_entry_717(SB), NOSPLIT|NOFRAME, $0
 	MOVD $717, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5736(SB)/8, $callbackasm_entry_717(SB)
+
+TEXT callbackasm_entry_718(SB), NOSPLIT|NOFRAME, $0
 	MOVD $718, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5744(SB)/8, $callbackasm_entry_718(SB)
+
+TEXT callbackasm_entry_719(SB), NOSPLIT|NOFRAME, $0
 	MOVD $719, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5752(SB)/8, $callbackasm_entry_719(SB)
+
+TEXT callbackasm_entry_720(SB), NOSPLIT|NOFRAME, $0
 	MOVD $720, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5760(SB)/8, $callbackasm_entry_720(SB)
+
+TEXT callbackasm_entry_721(SB), NOSPLIT|NOFRAME, $0
 	MOVD $721, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5768(SB)/8, $callbackasm_entry_721(SB)
+
+TEXT callbackasm_entry_722(SB), NOSPLIT|NOFRAME, $0
 	MOVD $722, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5776(SB)/8, $callbackasm_entry_722(SB)
+
+TEXT callbackasm_entry_723(SB), NOSPLIT|NOFRAME, $0
 	MOVD $723, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5784(SB)/8, $callbackasm_entry_723(SB)
+
+TEXT callbackasm_entry_724(SB), NOSPLIT|NOFRAME, $0
 	MOVD $724, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5792(SB)/8, $callbackasm_entry_724(SB)
+
+TEXT callbackasm_entry_725(SB), NOSPLIT|NOFRAME, $0
 	MOVD $725, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5800(SB)/8, $callbackasm_entry_725(SB)
+
+TEXT callbackasm_entry_726(SB), NOSPLIT|NOFRAME, $0
 	MOVD $726, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5808(SB)/8, $callbackasm_entry_726(SB)
+
+TEXT callbackasm_entry_727(SB), NOSPLIT|NOFRAME, $0
 	MOVD $727, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5816(SB)/8, $callbackasm_entry_727(SB)
+
+TEXT callbackasm_entry_728(SB), NOSPLIT|NOFRAME, $0
 	MOVD $728, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5824(SB)/8, $callbackasm_entry_728(SB)
+
+TEXT callbackasm_entry_729(SB), NOSPLIT|NOFRAME, $0
 	MOVD $729, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5832(SB)/8, $callbackasm_entry_729(SB)
+
+TEXT callbackasm_entry_730(SB), NOSPLIT|NOFRAME, $0
 	MOVD $730, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5840(SB)/8, $callbackasm_entry_730(SB)
+
+TEXT callbackasm_entry_731(SB), NOSPLIT|NOFRAME, $0
 	MOVD $731, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5848(SB)/8, $callbackasm_entry_731(SB)
+
+TEXT callbackasm_entry_732(SB), NOSPLIT|NOFRAME, $0
 	MOVD $732, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5856(SB)/8, $callbackasm_entry_732(SB)
+
+TEXT callbackasm_entry_733(SB), NOSPLIT|NOFRAME, $0
 	MOVD $733, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5864(SB)/8, $callbackasm_entry_733(SB)
+
+TEXT callbackasm_entry_734(SB), NOSPLIT|NOFRAME, $0
 	MOVD $734, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5872(SB)/8, $callbackasm_entry_734(SB)
+
+TEXT callbackasm_entry_735(SB), NOSPLIT|NOFRAME, $0
 	MOVD $735, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5880(SB)/8, $callbackasm_entry_735(SB)
+
+TEXT callbackasm_entry_736(SB), NOSPLIT|NOFRAME, $0
 	MOVD $736, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5888(SB)/8, $callbackasm_entry_736(SB)
+
+TEXT callbackasm_entry_737(SB), NOSPLIT|NOFRAME, $0
 	MOVD $737, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5896(SB)/8, $callbackasm_entry_737(SB)
+
+TEXT callbackasm_entry_738(SB), NOSPLIT|NOFRAME, $0
 	MOVD $738, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5904(SB)/8, $callbackasm_entry_738(SB)
+
+TEXT callbackasm_entry_739(SB), NOSPLIT|NOFRAME, $0
 	MOVD $739, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5912(SB)/8, $callbackasm_entry_739(SB)
+
+TEXT callbackasm_entry_740(SB), NOSPLIT|NOFRAME, $0
 	MOVD $740, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5920(SB)/8, $callbackasm_entry_740(SB)
+
+TEXT callbackasm_entry_741(SB), NOSPLIT|NOFRAME, $0
 	MOVD $741, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5928(SB)/8, $callbackasm_entry_741(SB)
+
+TEXT callbackasm_entry_742(SB), NOSPLIT|NOFRAME, $0
 	MOVD $742, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5936(SB)/8, $callbackasm_entry_742(SB)
+
+TEXT callbackasm_entry_743(SB), NOSPLIT|NOFRAME, $0
 	MOVD $743, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5944(SB)/8, $callbackasm_entry_743(SB)
+
+TEXT callbackasm_entry_744(SB), NOSPLIT|NOFRAME, $0
 	MOVD $744, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5952(SB)/8, $callbackasm_entry_744(SB)
+
+TEXT callbackasm_entry_745(SB), NOSPLIT|NOFRAME, $0
 	MOVD $745, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5960(SB)/8, $callbackasm_entry_745(SB)
+
+TEXT callbackasm_entry_746(SB), NOSPLIT|NOFRAME, $0
 	MOVD $746, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5968(SB)/8, $callbackasm_entry_746(SB)
+
+TEXT callbackasm_entry_747(SB), NOSPLIT|NOFRAME, $0
 	MOVD $747, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5976(SB)/8, $callbackasm_entry_747(SB)
+
+TEXT callbackasm_entry_748(SB), NOSPLIT|NOFRAME, $0
 	MOVD $748, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5984(SB)/8, $callbackasm_entry_748(SB)
+
+TEXT callbackasm_entry_749(SB), NOSPLIT|NOFRAME, $0
 	MOVD $749, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+5992(SB)/8, $callbackasm_entry_749(SB)
+
+TEXT callbackasm_entry_750(SB), NOSPLIT|NOFRAME, $0
 	MOVD $750, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6000(SB)/8, $callbackasm_entry_750(SB)
+
+TEXT callbackasm_entry_751(SB), NOSPLIT|NOFRAME, $0
 	MOVD $751, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6008(SB)/8, $callbackasm_entry_751(SB)
+
+TEXT callbackasm_entry_752(SB), NOSPLIT|NOFRAME, $0
 	MOVD $752, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6016(SB)/8, $callbackasm_entry_752(SB)
+
+TEXT callbackasm_entry_753(SB), NOSPLIT|NOFRAME, $0
 	MOVD $753, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6024(SB)/8, $callbackasm_entry_753(SB)
+
+TEXT callbackasm_entry_754(SB), NOSPLIT|NOFRAME, $0
 	MOVD $754, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6032(SB)/8, $callbackasm_entry_754(SB)
+
+TEXT callbackasm_entry_755(SB), NOSPLIT|NOFRAME, $0
 	MOVD $755, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6040(SB)/8, $callbackasm_entry_755(SB)
+
+TEXT callbackasm_entry_756(SB), NOSPLIT|NOFRAME, $0
 	MOVD $756, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6048(SB)/8, $callbackasm_entry_756(SB)
+
+TEXT callbackasm_entry_757(SB), NOSPLIT|NOFRAME, $0
 	MOVD $757, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6056(SB)/8, $callbackasm_entry_757(SB)
+
+TEXT callbackasm_entry_758(SB), NOSPLIT|NOFRAME, $0
 	MOVD $758, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6064(SB)/8, $callbackasm_entry_758(SB)
+
+TEXT callbackasm_entry_759(SB), NOSPLIT|NOFRAME, $0
 	MOVD $759, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6072(SB)/8, $callbackasm_entry_759(SB)
+
+TEXT callbackasm_entry_760(SB), NOSPLIT|NOFRAME, $0
 	MOVD $760, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6080(SB)/8, $callbackasm_entry_760(SB)
+
+TEXT callbackasm_entry_761(SB), NOSPLIT|NOFRAME, $0
 	MOVD $761, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6088(SB)/8, $callbackasm_entry_761(SB)
+
+TEXT callbackasm_entry_762(SB), NOSPLIT|NOFRAME, $0
 	MOVD $762, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6096(SB)/8, $callbackasm_entry_762(SB)
+
+TEXT callbackasm_entry_763(SB), NOSPLIT|NOFRAME, $0
 	MOVD $763, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6104(SB)/8, $callbackasm_entry_763(SB)
+
+TEXT callbackasm_entry_764(SB), NOSPLIT|NOFRAME, $0
 	MOVD $764, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6112(SB)/8, $callbackasm_entry_764(SB)
+
+TEXT callbackasm_entry_765(SB), NOSPLIT|NOFRAME, $0
 	MOVD $765, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6120(SB)/8, $callbackasm_entry_765(SB)
+
+TEXT callbackasm_entry_766(SB), NOSPLIT|NOFRAME, $0
 	MOVD $766, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6128(SB)/8, $callbackasm_entry_766(SB)
+
+TEXT callbackasm_entry_767(SB), NOSPLIT|NOFRAME, $0
 	MOVD $767, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6136(SB)/8, $callbackasm_entry_767(SB)
+
+TEXT callbackasm_entry_768(SB), NOSPLIT|NOFRAME, $0
 	MOVD $768, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6144(SB)/8, $callbackasm_entry_768(SB)
+
+TEXT callbackasm_entry_769(SB), NOSPLIT|NOFRAME, $0
 	MOVD $769, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6152(SB)/8, $callbackasm_entry_769(SB)
+
+TEXT callbackasm_entry_770(SB), NOSPLIT|NOFRAME, $0
 	MOVD $770, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6160(SB)/8, $callbackasm_entry_770(SB)
+
+TEXT callbackasm_entry_771(SB), NOSPLIT|NOFRAME, $0
 	MOVD $771, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6168(SB)/8, $callbackasm_entry_771(SB)
+
+TEXT callbackasm_entry_772(SB), NOSPLIT|NOFRAME, $0
 	MOVD $772, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6176(SB)/8, $callbackasm_entry_772(SB)
+
+TEXT callbackasm_entry_773(SB), NOSPLIT|NOFRAME, $0
 	MOVD $773, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6184(SB)/8, $callbackasm_entry_773(SB)
+
+TEXT callbackasm_entry_774(SB), NOSPLIT|NOFRAME, $0
 	MOVD $774, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6192(SB)/8, $callbackasm_entry_774(SB)
+
+TEXT callbackasm_entry_775(SB), NOSPLIT|NOFRAME, $0
 	MOVD $775, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6200(SB)/8, $callbackasm_entry_775(SB)
+
+TEXT callbackasm_entry_776(SB), NOSPLIT|NOFRAME, $0
 	MOVD $776, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6208(SB)/8, $callbackasm_entry_776(SB)
+
+TEXT callbackasm_entry_777(SB), NOSPLIT|NOFRAME, $0
 	MOVD $777, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6216(SB)/8, $callbackasm_entry_777(SB)
+
+TEXT callbackasm_entry_778(SB), NOSPLIT|NOFRAME, $0
 	MOVD $778, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6224(SB)/8, $callbackasm_entry_778(SB)
+
+TEXT callbackasm_entry_779(SB), NOSPLIT|NOFRAME, $0
 	MOVD $779, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6232(SB)/8, $callbackasm_entry_779(SB)
+
+TEXT callbackasm_entry_780(SB), NOSPLIT|NOFRAME, $0
 	MOVD $780, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6240(SB)/8, $callbackasm_entry_780(SB)
+
+TEXT callbackasm_entry_781(SB), NOSPLIT|NOFRAME, $0
 	MOVD $781, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6248(SB)/8, $callbackasm_entry_781(SB)
+
+TEXT callbackasm_entry_782(SB), NOSPLIT|NOFRAME, $0
 	MOVD $782, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6256(SB)/8, $callbackasm_entry_782(SB)
+
+TEXT callbackasm_entry_783(SB), NOSPLIT|NOFRAME, $0
 	MOVD $783, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6264(SB)/8, $callbackasm_entry_783(SB)
+
+TEXT callbackasm_entry_784(SB), NOSPLIT|NOFRAME, $0
 	MOVD $784, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6272(SB)/8, $callbackasm_entry_784(SB)
+
+TEXT callbackasm_entry_785(SB), NOSPLIT|NOFRAME, $0
 	MOVD $785, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6280(SB)/8, $callbackasm_entry_785(SB)
+
+TEXT callbackasm_entry_786(SB), NOSPLIT|NOFRAME, $0
 	MOVD $786, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6288(SB)/8, $callbackasm_entry_786(SB)
+
+TEXT callbackasm_entry_787(SB), NOSPLIT|NOFRAME, $0
 	MOVD $787, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6296(SB)/8, $callbackasm_entry_787(SB)
+
+TEXT callbackasm_entry_788(SB), NOSPLIT|NOFRAME, $0
 	MOVD $788, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6304(SB)/8, $callbackasm_entry_788(SB)
+
+TEXT callbackasm_entry_789(SB), NOSPLIT|NOFRAME, $0
 	MOVD $789, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6312(SB)/8, $callbackasm_entry_789(SB)
+
+TEXT callbackasm_entry_790(SB), NOSPLIT|NOFRAME, $0
 	MOVD $790, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6320(SB)/8, $callbackasm_entry_790(SB)
+
+TEXT callbackasm_entry_791(SB), NOSPLIT|NOFRAME, $0
 	MOVD $791, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6328(SB)/8, $callbackasm_entry_791(SB)
+
+TEXT callbackasm_entry_792(SB), NOSPLIT|NOFRAME, $0
 	MOVD $792, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6336(SB)/8, $callbackasm_entry_792(SB)
+
+TEXT callbackasm_entry_793(SB), NOSPLIT|NOFRAME, $0
 	MOVD $793, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6344(SB)/8, $callbackasm_entry_793(SB)
+
+TEXT callbackasm_entry_794(SB), NOSPLIT|NOFRAME, $0
 	MOVD $794, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6352(SB)/8, $callbackasm_entry_794(SB)
+
+TEXT callbackasm_entry_795(SB), NOSPLIT|NOFRAME, $0
 	MOVD $795, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6360(SB)/8, $callbackasm_entry_795(SB)
+
+TEXT callbackasm_entry_796(SB), NOSPLIT|NOFRAME, $0
 	MOVD $796, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6368(SB)/8, $callbackasm_entry_796(SB)
+
+TEXT callbackasm_entry_797(SB), NOSPLIT|NOFRAME, $0
 	MOVD $797, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6376(SB)/8, $callbackasm_entry_797(SB)
+
+TEXT callbackasm_entry_798(SB), NOSPLIT|NOFRAME, $0
 	MOVD $798, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6384(SB)/8, $callbackasm_entry_798(SB)
+
+TEXT callbackasm_entry_799(SB), NOSPLIT|NOFRAME, $0
 	MOVD $799, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6392(SB)/8, $callbackasm_entry_799(SB)
+
+TEXT callbackasm_entry_800(SB), NOSPLIT|NOFRAME, $0
 	MOVD $800, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6400(SB)/8, $callbackasm_entry_800(SB)
+
+TEXT callbackasm_entry_801(SB), NOSPLIT|NOFRAME, $0
 	MOVD $801, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6408(SB)/8, $callbackasm_entry_801(SB)
+
+TEXT callbackasm_entry_802(SB), NOSPLIT|NOFRAME, $0
 	MOVD $802, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6416(SB)/8, $callbackasm_entry_802(SB)
+
+TEXT callbackasm_entry_803(SB), NOSPLIT|NOFRAME, $0
 	MOVD $803, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6424(SB)/8, $callbackasm_entry_803(SB)
+
+TEXT callbackasm_entry_804(SB), NOSPLIT|NOFRAME, $0
 	MOVD $804, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6432(SB)/8, $callbackasm_entry_804(SB)
+
+TEXT callbackasm_entry_805(SB), NOSPLIT|NOFRAME, $0
 	MOVD $805, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6440(SB)/8, $callbackasm_entry_805(SB)
+
+TEXT callbackasm_entry_806(SB), NOSPLIT|NOFRAME, $0
 	MOVD $806, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6448(SB)/8, $callbackasm_entry_806(SB)
+
+TEXT callbackasm_entry_807(SB), NOSPLIT|NOFRAME, $0
 	MOVD $807, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6456(SB)/8, $callbackasm_entry_807(SB)
+
+TEXT callbackasm_entry_808(SB), NOSPLIT|NOFRAME, $0
 	MOVD $808, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6464(SB)/8, $callbackasm_entry_808(SB)
+
+TEXT callbackasm_entry_809(SB), NOSPLIT|NOFRAME, $0
 	MOVD $809, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6472(SB)/8, $callbackasm_entry_809(SB)
+
+TEXT callbackasm_entry_810(SB), NOSPLIT|NOFRAME, $0
 	MOVD $810, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6480(SB)/8, $callbackasm_entry_810(SB)
+
+TEXT callbackasm_entry_811(SB), NOSPLIT|NOFRAME, $0
 	MOVD $811, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6488(SB)/8, $callbackasm_entry_811(SB)
+
+TEXT callbackasm_entry_812(SB), NOSPLIT|NOFRAME, $0
 	MOVD $812, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6496(SB)/8, $callbackasm_entry_812(SB)
+
+TEXT callbackasm_entry_813(SB), NOSPLIT|NOFRAME, $0
 	MOVD $813, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6504(SB)/8, $callbackasm_entry_813(SB)
+
+TEXT callbackasm_entry_814(SB), NOSPLIT|NOFRAME, $0
 	MOVD $814, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6512(SB)/8, $callbackasm_entry_814(SB)
+
+TEXT callbackasm_entry_815(SB), NOSPLIT|NOFRAME, $0
 	MOVD $815, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6520(SB)/8, $callbackasm_entry_815(SB)
+
+TEXT callbackasm_entry_816(SB), NOSPLIT|NOFRAME, $0
 	MOVD $816, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6528(SB)/8, $callbackasm_entry_816(SB)
+
+TEXT callbackasm_entry_817(SB), NOSPLIT|NOFRAME, $0
 	MOVD $817, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6536(SB)/8, $callbackasm_entry_817(SB)
+
+TEXT callbackasm_entry_818(SB), NOSPLIT|NOFRAME, $0
 	MOVD $818, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6544(SB)/8, $callbackasm_entry_818(SB)
+
+TEXT callbackasm_entry_819(SB), NOSPLIT|NOFRAME, $0
 	MOVD $819, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6552(SB)/8, $callbackasm_entry_819(SB)
+
+TEXT callbackasm_entry_820(SB), NOSPLIT|NOFRAME, $0
 	MOVD $820, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6560(SB)/8, $callbackasm_entry_820(SB)
+
+TEXT callbackasm_entry_821(SB), NOSPLIT|NOFRAME, $0
 	MOVD $821, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6568(SB)/8, $callbackasm_entry_821(SB)
+
+TEXT callbackasm_entry_822(SB), NOSPLIT|NOFRAME, $0
 	MOVD $822, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6576(SB)/8, $callbackasm_entry_822(SB)
+
+TEXT callbackasm_entry_823(SB), NOSPLIT|NOFRAME, $0
 	MOVD $823, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6584(SB)/8, $callbackasm_entry_823(SB)
+
+TEXT callbackasm_entry_824(SB), NOSPLIT|NOFRAME, $0
 	MOVD $824, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6592(SB)/8, $callbackasm_entry_824(SB)
+
+TEXT callbackasm_entry_825(SB), NOSPLIT|NOFRAME, $0
 	MOVD $825, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6600(SB)/8, $callbackasm_entry_825(SB)
+
+TEXT callbackasm_entry_826(SB), NOSPLIT|NOFRAME, $0
 	MOVD $826, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6608(SB)/8, $callbackasm_entry_826(SB)
+
+TEXT callbackasm_entry_827(SB), NOSPLIT|NOFRAME, $0
 	MOVD $827, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6616(SB)/8, $callbackasm_entry_827(SB)
+
+TEXT callbackasm_entry_828(SB), NOSPLIT|NOFRAME, $0
 	MOVD $828, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6624(SB)/8, $callbackasm_entry_828(SB)
+
+TEXT callbackasm_entry_829(SB), NOSPLIT|NOFRAME, $0
 	MOVD $829, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6632(SB)/8, $callbackasm_entry_829(SB)
+
+TEXT callbackasm_entry_830(SB), NOSPLIT|NOFRAME, $0
 	MOVD $830, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6640(SB)/8, $callbackasm_entry_830(SB)
+
+TEXT callbackasm_entry_831(SB), NOSPLIT|NOFRAME, $0
 	MOVD $831, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6648(SB)/8, $callbackasm_entry_831(SB)
+
+TEXT callbackasm_entry_832(SB), NOSPLIT|NOFRAME, $0
 	MOVD $832, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6656(SB)/8, $callbackasm_entry_832(SB)
+
+TEXT callbackasm_entry_833(SB), NOSPLIT|NOFRAME, $0
 	MOVD $833, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6664(SB)/8, $callbackasm_entry_833(SB)
+
+TEXT callbackasm_entry_834(SB), NOSPLIT|NOFRAME, $0
 	MOVD $834, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6672(SB)/8, $callbackasm_entry_834(SB)
+
+TEXT callbackasm_entry_835(SB), NOSPLIT|NOFRAME, $0
 	MOVD $835, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6680(SB)/8, $callbackasm_entry_835(SB)
+
+TEXT callbackasm_entry_836(SB), NOSPLIT|NOFRAME, $0
 	MOVD $836, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6688(SB)/8, $callbackasm_entry_836(SB)
+
+TEXT callbackasm_entry_837(SB), NOSPLIT|NOFRAME, $0
 	MOVD $837, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6696(SB)/8, $callbackasm_entry_837(SB)
+
+TEXT callbackasm_entry_838(SB), NOSPLIT|NOFRAME, $0
 	MOVD $838, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6704(SB)/8, $callbackasm_entry_838(SB)
+
+TEXT callbackasm_entry_839(SB), NOSPLIT|NOFRAME, $0
 	MOVD $839, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6712(SB)/8, $callbackasm_entry_839(SB)
+
+TEXT callbackasm_entry_840(SB), NOSPLIT|NOFRAME, $0
 	MOVD $840, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6720(SB)/8, $callbackasm_entry_840(SB)
+
+TEXT callbackasm_entry_841(SB), NOSPLIT|NOFRAME, $0
 	MOVD $841, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6728(SB)/8, $callbackasm_entry_841(SB)
+
+TEXT callbackasm_entry_842(SB), NOSPLIT|NOFRAME, $0
 	MOVD $842, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6736(SB)/8, $callbackasm_entry_842(SB)
+
+TEXT callbackasm_entry_843(SB), NOSPLIT|NOFRAME, $0
 	MOVD $843, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6744(SB)/8, $callbackasm_entry_843(SB)
+
+TEXT callbackasm_entry_844(SB), NOSPLIT|NOFRAME, $0
 	MOVD $844, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6752(SB)/8, $callbackasm_entry_844(SB)
+
+TEXT callbackasm_entry_845(SB), NOSPLIT|NOFRAME, $0
 	MOVD $845, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6760(SB)/8, $callbackasm_entry_845(SB)
+
+TEXT callbackasm_entry_846(SB), NOSPLIT|NOFRAME, $0
 	MOVD $846, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6768(SB)/8, $callbackasm_entry_846(SB)
+
+TEXT callbackasm_entry_847(SB), NOSPLIT|NOFRAME, $0
 	MOVD $847, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6776(SB)/8, $callbackasm_entry_847(SB)
+
+TEXT callbackasm_entry_848(SB), NOSPLIT|NOFRAME, $0
 	MOVD $848, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6784(SB)/8, $callbackasm_entry_848(SB)
+
+TEXT callbackasm_entry_849(SB), NOSPLIT|NOFRAME, $0
 	MOVD $849, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6792(SB)/8, $callbackasm_entry_849(SB)
+
+TEXT callbackasm_entry_850(SB), NOSPLIT|NOFRAME, $0
 	MOVD $850, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6800(SB)/8, $callbackasm_entry_850(SB)
+
+TEXT callbackasm_entry_851(SB), NOSPLIT|NOFRAME, $0
 	MOVD $851, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6808(SB)/8, $callbackasm_entry_851(SB)
+
+TEXT callbackasm_entry_852(SB), NOSPLIT|NOFRAME, $0
 	MOVD $852, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6816(SB)/8, $callbackasm_entry_852(SB)
+
+TEXT callbackasm_entry_853(SB), NOSPLIT|NOFRAME, $0
 	MOVD $853, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6824(SB)/8, $callbackasm_entry_853(SB)
+
+TEXT callbackasm_entry_854(SB), NOSPLIT|NOFRAME, $0
 	MOVD $854, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6832(SB)/8, $callbackasm_entry_854(SB)
+
+TEXT callbackasm_entry_855(SB), NOSPLIT|NOFRAME, $0
 	MOVD $855, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6840(SB)/8, $callbackasm_entry_855(SB)
+
+TEXT callbackasm_entry_856(SB), NOSPLIT|NOFRAME, $0
 	MOVD $856, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6848(SB)/8, $callbackasm_entry_856(SB)
+
+TEXT callbackasm_entry_857(SB), NOSPLIT|NOFRAME, $0
 	MOVD $857, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6856(SB)/8, $callbackasm_entry_857(SB)
+
+TEXT callbackasm_entry_858(SB), NOSPLIT|NOFRAME, $0
 	MOVD $858, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6864(SB)/8, $callbackasm_entry_858(SB)
+
+TEXT callbackasm_entry_859(SB), NOSPLIT|NOFRAME, $0
 	MOVD $859, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6872(SB)/8, $callbackasm_entry_859(SB)
+
+TEXT callbackasm_entry_860(SB), NOSPLIT|NOFRAME, $0
 	MOVD $860, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6880(SB)/8, $callbackasm_entry_860(SB)
+
+TEXT callbackasm_entry_861(SB), NOSPLIT|NOFRAME, $0
 	MOVD $861, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6888(SB)/8, $callbackasm_entry_861(SB)
+
+TEXT callbackasm_entry_862(SB), NOSPLIT|NOFRAME, $0
 	MOVD $862, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6896(SB)/8, $callbackasm_entry_862(SB)
+
+TEXT callbackasm_entry_863(SB), NOSPLIT|NOFRAME, $0
 	MOVD $863, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6904(SB)/8, $callbackasm_entry_863(SB)
+
+TEXT callbackasm_entry_864(SB), NOSPLIT|NOFRAME, $0
 	MOVD $864, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6912(SB)/8, $callbackasm_entry_864(SB)
+
+TEXT callbackasm_entry_865(SB), NOSPLIT|NOFRAME, $0
 	MOVD $865, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6920(SB)/8, $callbackasm_entry_865(SB)
+
+TEXT callbackasm_entry_866(SB), NOSPLIT|NOFRAME, $0
 	MOVD $866, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6928(SB)/8, $callbackasm_entry_866(SB)
+
+TEXT callbackasm_entry_867(SB), NOSPLIT|NOFRAME, $0
 	MOVD $867, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6936(SB)/8, $callbackasm_entry_867(SB)
+
+TEXT callbackasm_entry_868(SB), NOSPLIT|NOFRAME, $0
 	MOVD $868, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6944(SB)/8, $callbackasm_entry_868(SB)
+
+TEXT callbackasm_entry_869(SB), NOSPLIT|NOFRAME, $0
 	MOVD $869, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6952(SB)/8, $callbackasm_entry_869(SB)
+
+TEXT callbackasm_entry_870(SB), NOSPLIT|NOFRAME, $0
 	MOVD $870, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6960(SB)/8, $callbackasm_entry_870(SB)
+
+TEXT callbackasm_entry_871(SB), NOSPLIT|NOFRAME, $0
 	MOVD $871, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6968(SB)/8, $callbackasm_entry_871(SB)
+
+TEXT callbackasm_entry_872(SB), NOSPLIT|NOFRAME, $0
 	MOVD $872, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6976(SB)/8, $callbackasm_entry_872(SB)
+
+TEXT callbackasm_entry_873(SB), NOSPLIT|NOFRAME, $0
 	MOVD $873, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6984(SB)/8, $callbackasm_entry_873(SB)
+
+TEXT callbackasm_entry_874(SB), NOSPLIT|NOFRAME, $0
 	MOVD $874, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+6992(SB)/8, $callbackasm_entry_874(SB)
+
+TEXT callbackasm_entry_875(SB), NOSPLIT|NOFRAME, $0
 	MOVD $875, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7000(SB)/8, $callbackasm_entry_875(SB)
+
+TEXT callbackasm_entry_876(SB), NOSPLIT|NOFRAME, $0
 	MOVD $876, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7008(SB)/8, $callbackasm_entry_876(SB)
+
+TEXT callbackasm_entry_877(SB), NOSPLIT|NOFRAME, $0
 	MOVD $877, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7016(SB)/8, $callbackasm_entry_877(SB)
+
+TEXT callbackasm_entry_878(SB), NOSPLIT|NOFRAME, $0
 	MOVD $878, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7024(SB)/8, $callbackasm_entry_878(SB)
+
+TEXT callbackasm_entry_879(SB), NOSPLIT|NOFRAME, $0
 	MOVD $879, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7032(SB)/8, $callbackasm_entry_879(SB)
+
+TEXT callbackasm_entry_880(SB), NOSPLIT|NOFRAME, $0
 	MOVD $880, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7040(SB)/8, $callbackasm_entry_880(SB)
+
+TEXT callbackasm_entry_881(SB), NOSPLIT|NOFRAME, $0
 	MOVD $881, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7048(SB)/8, $callbackasm_entry_881(SB)
+
+TEXT callbackasm_entry_882(SB), NOSPLIT|NOFRAME, $0
 	MOVD $882, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7056(SB)/8, $callbackasm_entry_882(SB)
+
+TEXT callbackasm_entry_883(SB), NOSPLIT|NOFRAME, $0
 	MOVD $883, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7064(SB)/8, $callbackasm_entry_883(SB)
+
+TEXT callbackasm_entry_884(SB), NOSPLIT|NOFRAME, $0
 	MOVD $884, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7072(SB)/8, $callbackasm_entry_884(SB)
+
+TEXT callbackasm_entry_885(SB), NOSPLIT|NOFRAME, $0
 	MOVD $885, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7080(SB)/8, $callbackasm_entry_885(SB)
+
+TEXT callbackasm_entry_886(SB), NOSPLIT|NOFRAME, $0
 	MOVD $886, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7088(SB)/8, $callbackasm_entry_886(SB)
+
+TEXT callbackasm_entry_887(SB), NOSPLIT|NOFRAME, $0
 	MOVD $887, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7096(SB)/8, $callbackasm_entry_887(SB)
+
+TEXT callbackasm_entry_888(SB), NOSPLIT|NOFRAME, $0
 	MOVD $888, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7104(SB)/8, $callbackasm_entry_888(SB)
+
+TEXT callbackasm_entry_889(SB), NOSPLIT|NOFRAME, $0
 	MOVD $889, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7112(SB)/8, $callbackasm_entry_889(SB)
+
+TEXT callbackasm_entry_890(SB), NOSPLIT|NOFRAME, $0
 	MOVD $890, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7120(SB)/8, $callbackasm_entry_890(SB)
+
+TEXT callbackasm_entry_891(SB), NOSPLIT|NOFRAME, $0
 	MOVD $891, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7128(SB)/8, $callbackasm_entry_891(SB)
+
+TEXT callbackasm_entry_892(SB), NOSPLIT|NOFRAME, $0
 	MOVD $892, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7136(SB)/8, $callbackasm_entry_892(SB)
+
+TEXT callbackasm_entry_893(SB), NOSPLIT|NOFRAME, $0
 	MOVD $893, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7144(SB)/8, $callbackasm_entry_893(SB)
+
+TEXT callbackasm_entry_894(SB), NOSPLIT|NOFRAME, $0
 	MOVD $894, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7152(SB)/8, $callbackasm_entry_894(SB)
+
+TEXT callbackasm_entry_895(SB), NOSPLIT|NOFRAME, $0
 	MOVD $895, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7160(SB)/8, $callbackasm_entry_895(SB)
+
+TEXT callbackasm_entry_896(SB), NOSPLIT|NOFRAME, $0
 	MOVD $896, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7168(SB)/8, $callbackasm_entry_896(SB)
+
+TEXT callbackasm_entry_897(SB), NOSPLIT|NOFRAME, $0
 	MOVD $897, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7176(SB)/8, $callbackasm_entry_897(SB)
+
+TEXT callbackasm_entry_898(SB), NOSPLIT|NOFRAME, $0
 	MOVD $898, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7184(SB)/8, $callbackasm_entry_898(SB)
+
+TEXT callbackasm_entry_899(SB), NOSPLIT|NOFRAME, $0
 	MOVD $899, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7192(SB)/8, $callbackasm_entry_899(SB)
+
+TEXT callbackasm_entry_900(SB), NOSPLIT|NOFRAME, $0
 	MOVD $900, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7200(SB)/8, $callbackasm_entry_900(SB)
+
+TEXT callbackasm_entry_901(SB), NOSPLIT|NOFRAME, $0
 	MOVD $901, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7208(SB)/8, $callbackasm_entry_901(SB)
+
+TEXT callbackasm_entry_902(SB), NOSPLIT|NOFRAME, $0
 	MOVD $902, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7216(SB)/8, $callbackasm_entry_902(SB)
+
+TEXT callbackasm_entry_903(SB), NOSPLIT|NOFRAME, $0
 	MOVD $903, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7224(SB)/8, $callbackasm_entry_903(SB)
+
+TEXT callbackasm_entry_904(SB), NOSPLIT|NOFRAME, $0
 	MOVD $904, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7232(SB)/8, $callbackasm_entry_904(SB)
+
+TEXT callbackasm_entry_905(SB), NOSPLIT|NOFRAME, $0
 	MOVD $905, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7240(SB)/8, $callbackasm_entry_905(SB)
+
+TEXT callbackasm_entry_906(SB), NOSPLIT|NOFRAME, $0
 	MOVD $906, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7248(SB)/8, $callbackasm_entry_906(SB)
+
+TEXT callbackasm_entry_907(SB), NOSPLIT|NOFRAME, $0
 	MOVD $907, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7256(SB)/8, $callbackasm_entry_907(SB)
+
+TEXT callbackasm_entry_908(SB), NOSPLIT|NOFRAME, $0
 	MOVD $908, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7264(SB)/8, $callbackasm_entry_908(SB)
+
+TEXT callbackasm_entry_909(SB), NOSPLIT|NOFRAME, $0
 	MOVD $909, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7272(SB)/8, $callbackasm_entry_909(SB)
+
+TEXT callbackasm_entry_910(SB), NOSPLIT|NOFRAME, $0
 	MOVD $910, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7280(SB)/8, $callbackasm_entry_910(SB)
+
+TEXT callbackasm_entry_911(SB), NOSPLIT|NOFRAME, $0
 	MOVD $911, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7288(SB)/8, $callbackasm_entry_911(SB)
+
+TEXT callbackasm_entry_912(SB), NOSPLIT|NOFRAME, $0
 	MOVD $912, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7296(SB)/8, $callbackasm_entry_912(SB)
+
+TEXT callbackasm_entry_913(SB), NOSPLIT|NOFRAME, $0
 	MOVD $913, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7304(SB)/8, $callbackasm_entry_913(SB)
+
+TEXT callbackasm_entry_914(SB), NOSPLIT|NOFRAME, $0
 	MOVD $914, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7312(SB)/8, $callbackasm_entry_914(SB)
+
+TEXT callbackasm_entry_915(SB), NOSPLIT|NOFRAME, $0
 	MOVD $915, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7320(SB)/8, $callbackasm_entry_915(SB)
+
+TEXT callbackasm_entry_916(SB), NOSPLIT|NOFRAME, $0
 	MOVD $916, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7328(SB)/8, $callbackasm_entry_916(SB)
+
+TEXT callbackasm_entry_917(SB), NOSPLIT|NOFRAME, $0
 	MOVD $917, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7336(SB)/8, $callbackasm_entry_917(SB)
+
+TEXT callbackasm_entry_918(SB), NOSPLIT|NOFRAME, $0
 	MOVD $918, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7344(SB)/8, $callbackasm_entry_918(SB)
+
+TEXT callbackasm_entry_919(SB), NOSPLIT|NOFRAME, $0
 	MOVD $919, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7352(SB)/8, $callbackasm_entry_919(SB)
+
+TEXT callbackasm_entry_920(SB), NOSPLIT|NOFRAME, $0
 	MOVD $920, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7360(SB)/8, $callbackasm_entry_920(SB)
+
+TEXT callbackasm_entry_921(SB), NOSPLIT|NOFRAME, $0
 	MOVD $921, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7368(SB)/8, $callbackasm_entry_921(SB)
+
+TEXT callbackasm_entry_922(SB), NOSPLIT|NOFRAME, $0
 	MOVD $922, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7376(SB)/8, $callbackasm_entry_922(SB)
+
+TEXT callbackasm_entry_923(SB), NOSPLIT|NOFRAME, $0
 	MOVD $923, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7384(SB)/8, $callbackasm_entry_923(SB)
+
+TEXT callbackasm_entry_924(SB), NOSPLIT|NOFRAME, $0
 	MOVD $924, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7392(SB)/8, $callbackasm_entry_924(SB)
+
+TEXT callbackasm_entry_925(SB), NOSPLIT|NOFRAME, $0
 	MOVD $925, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7400(SB)/8, $callbackasm_entry_925(SB)
+
+TEXT callbackasm_entry_926(SB), NOSPLIT|NOFRAME, $0
 	MOVD $926, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7408(SB)/8, $callbackasm_entry_926(SB)
+
+TEXT callbackasm_entry_927(SB), NOSPLIT|NOFRAME, $0
 	MOVD $927, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7416(SB)/8, $callbackasm_entry_927(SB)
+
+TEXT callbackasm_entry_928(SB), NOSPLIT|NOFRAME, $0
 	MOVD $928, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7424(SB)/8, $callbackasm_entry_928(SB)
+
+TEXT callbackasm_entry_929(SB), NOSPLIT|NOFRAME, $0
 	MOVD $929, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7432(SB)/8, $callbackasm_entry_929(SB)
+
+TEXT callbackasm_entry_930(SB), NOSPLIT|NOFRAME, $0
 	MOVD $930, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7440(SB)/8, $callbackasm_entry_930(SB)
+
+TEXT callbackasm_entry_931(SB), NOSPLIT|NOFRAME, $0
 	MOVD $931, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7448(SB)/8, $callbackasm_entry_931(SB)
+
+TEXT callbackasm_entry_932(SB), NOSPLIT|NOFRAME, $0
 	MOVD $932, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7456(SB)/8, $callbackasm_entry_932(SB)
+
+TEXT callbackasm_entry_933(SB), NOSPLIT|NOFRAME, $0
 	MOVD $933, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7464(SB)/8, $callbackasm_entry_933(SB)
+
+TEXT callbackasm_entry_934(SB), NOSPLIT|NOFRAME, $0
 	MOVD $934, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7472(SB)/8, $callbackasm_entry_934(SB)
+
+TEXT callbackasm_entry_935(SB), NOSPLIT|NOFRAME, $0
 	MOVD $935, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7480(SB)/8, $callbackasm_entry_935(SB)
+
+TEXT callbackasm_entry_936(SB), NOSPLIT|NOFRAME, $0
 	MOVD $936, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7488(SB)/8, $callbackasm_entry_936(SB)
+
+TEXT callbackasm_entry_937(SB), NOSPLIT|NOFRAME, $0
 	MOVD $937, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7496(SB)/8, $callbackasm_entry_937(SB)
+
+TEXT callbackasm_entry_938(SB), NOSPLIT|NOFRAME, $0
 	MOVD $938, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7504(SB)/8, $callbackasm_entry_938(SB)
+
+TEXT callbackasm_entry_939(SB), NOSPLIT|NOFRAME, $0
 	MOVD $939, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7512(SB)/8, $callbackasm_entry_939(SB)
+
+TEXT callbackasm_entry_940(SB), NOSPLIT|NOFRAME, $0
 	MOVD $940, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7520(SB)/8, $callbackasm_entry_940(SB)
+
+TEXT callbackasm_entry_941(SB), NOSPLIT|NOFRAME, $0
 	MOVD $941, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7528(SB)/8, $callbackasm_entry_941(SB)
+
+TEXT callbackasm_entry_942(SB), NOSPLIT|NOFRAME, $0
 	MOVD $942, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7536(SB)/8, $callbackasm_entry_942(SB)
+
+TEXT callbackasm_entry_943(SB), NOSPLIT|NOFRAME, $0
 	MOVD $943, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7544(SB)/8, $callbackasm_entry_943(SB)
+
+TEXT callbackasm_entry_944(SB), NOSPLIT|NOFRAME, $0
 	MOVD $944, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7552(SB)/8, $callbackasm_entry_944(SB)
+
+TEXT callbackasm_entry_945(SB), NOSPLIT|NOFRAME, $0
 	MOVD $945, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7560(SB)/8, $callbackasm_entry_945(SB)
+
+TEXT callbackasm_entry_946(SB), NOSPLIT|NOFRAME, $0
 	MOVD $946, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7568(SB)/8, $callbackasm_entry_946(SB)
+
+TEXT callbackasm_entry_947(SB), NOSPLIT|NOFRAME, $0
 	MOVD $947, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7576(SB)/8, $callbackasm_entry_947(SB)
+
+TEXT callbackasm_entry_948(SB), NOSPLIT|NOFRAME, $0
 	MOVD $948, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7584(SB)/8, $callbackasm_entry_948(SB)
+
+TEXT callbackasm_entry_949(SB), NOSPLIT|NOFRAME, $0
 	MOVD $949, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7592(SB)/8, $callbackasm_entry_949(SB)
+
+TEXT callbackasm_entry_950(SB), NOSPLIT|NOFRAME, $0
 	MOVD $950, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7600(SB)/8, $callbackasm_entry_950(SB)
+
+TEXT callbackasm_entry_951(SB), NOSPLIT|NOFRAME, $0
 	MOVD $951, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7608(SB)/8, $callbackasm_entry_951(SB)
+
+TEXT callbackasm_entry_952(SB), NOSPLIT|NOFRAME, $0
 	MOVD $952, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7616(SB)/8, $callbackasm_entry_952(SB)
+
+TEXT callbackasm_entry_953(SB), NOSPLIT|NOFRAME, $0
 	MOVD $953, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7624(SB)/8, $callbackasm_entry_953(SB)
+
+TEXT callbackasm_entry_954(SB), NOSPLIT|NOFRAME, $0
 	MOVD $954, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7632(SB)/8, $callbackasm_entry_954(SB)
+
+TEXT callbackasm_entry_955(SB), NOSPLIT|NOFRAME, $0
 	MOVD $955, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7640(SB)/8, $callbackasm_entry_955(SB)
+
+TEXT callbackasm_entry_956(SB), NOSPLIT|NOFRAME, $0
 	MOVD $956, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7648(SB)/8, $callbackasm_entry_956(SB)
+
+TEXT callbackasm_entry_957(SB), NOSPLIT|NOFRAME, $0
 	MOVD $957, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7656(SB)/8, $callbackasm_entry_957(SB)
+
+TEXT callbackasm_entry_958(SB), NOSPLIT|NOFRAME, $0
 	MOVD $958, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7664(SB)/8, $callbackasm_entry_958(SB)
+
+TEXT callbackasm_entry_959(SB), NOSPLIT|NOFRAME, $0
 	MOVD $959, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7672(SB)/8, $callbackasm_entry_959(SB)
+
+TEXT callbackasm_entry_960(SB), NOSPLIT|NOFRAME, $0
 	MOVD $960, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7680(SB)/8, $callbackasm_entry_960(SB)
+
+TEXT callbackasm_entry_961(SB), NOSPLIT|NOFRAME, $0
 	MOVD $961, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7688(SB)/8, $callbackasm_entry_961(SB)
+
+TEXT callbackasm_entry_962(SB), NOSPLIT|NOFRAME, $0
 	MOVD $962, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7696(SB)/8, $callbackasm_entry_962(SB)
+
+TEXT callbackasm_entry_963(SB), NOSPLIT|NOFRAME, $0
 	MOVD $963, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7704(SB)/8, $callbackasm_entry_963(SB)
+
+TEXT callbackasm_entry_964(SB), NOSPLIT|NOFRAME, $0
 	MOVD $964, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7712(SB)/8, $callbackasm_entry_964(SB)
+
+TEXT callbackasm_entry_965(SB), NOSPLIT|NOFRAME, $0
 	MOVD $965, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7720(SB)/8, $callbackasm_entry_965(SB)
+
+TEXT callbackasm_entry_966(SB), NOSPLIT|NOFRAME, $0
 	MOVD $966, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7728(SB)/8, $callbackasm_entry_966(SB)
+
+TEXT callbackasm_entry_967(SB), NOSPLIT|NOFRAME, $0
 	MOVD $967, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7736(SB)/8, $callbackasm_entry_967(SB)
+
+TEXT callbackasm_entry_968(SB), NOSPLIT|NOFRAME, $0
 	MOVD $968, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7744(SB)/8, $callbackasm_entry_968(SB)
+
+TEXT callbackasm_entry_969(SB), NOSPLIT|NOFRAME, $0
 	MOVD $969, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7752(SB)/8, $callbackasm_entry_969(SB)
+
+TEXT callbackasm_entry_970(SB), NOSPLIT|NOFRAME, $0
 	MOVD $970, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7760(SB)/8, $callbackasm_entry_970(SB)
+
+TEXT callbackasm_entry_971(SB), NOSPLIT|NOFRAME, $0
 	MOVD $971, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7768(SB)/8, $callbackasm_entry_971(SB)
+
+TEXT callbackasm_entry_972(SB), NOSPLIT|NOFRAME, $0
 	MOVD $972, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7776(SB)/8, $callbackasm_entry_972(SB)
+
+TEXT callbackasm_entry_973(SB), NOSPLIT|NOFRAME, $0
 	MOVD $973, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7784(SB)/8, $callbackasm_entry_973(SB)
+
+TEXT callbackasm_entry_974(SB), NOSPLIT|NOFRAME, $0
 	MOVD $974, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7792(SB)/8, $callbackasm_entry_974(SB)
+
+TEXT callbackasm_entry_975(SB), NOSPLIT|NOFRAME, $0
 	MOVD $975, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7800(SB)/8, $callbackasm_entry_975(SB)
+
+TEXT callbackasm_entry_976(SB), NOSPLIT|NOFRAME, $0
 	MOVD $976, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7808(SB)/8, $callbackasm_entry_976(SB)
+
+TEXT callbackasm_entry_977(SB), NOSPLIT|NOFRAME, $0
 	MOVD $977, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7816(SB)/8, $callbackasm_entry_977(SB)
+
+TEXT callbackasm_entry_978(SB), NOSPLIT|NOFRAME, $0
 	MOVD $978, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7824(SB)/8, $callbackasm_entry_978(SB)
+
+TEXT callbackasm_entry_979(SB), NOSPLIT|NOFRAME, $0
 	MOVD $979, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7832(SB)/8, $callbackasm_entry_979(SB)
+
+TEXT callbackasm_entry_980(SB), NOSPLIT|NOFRAME, $0
 	MOVD $980, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7840(SB)/8, $callbackasm_entry_980(SB)
+
+TEXT callbackasm_entry_981(SB), NOSPLIT|NOFRAME, $0
 	MOVD $981, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7848(SB)/8, $callbackasm_entry_981(SB)
+
+TEXT callbackasm_entry_982(SB), NOSPLIT|NOFRAME, $0
 	MOVD $982, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7856(SB)/8, $callbackasm_entry_982(SB)
+
+TEXT callbackasm_entry_983(SB), NOSPLIT|NOFRAME, $0
 	MOVD $983, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7864(SB)/8, $callbackasm_entry_983(SB)
+
+TEXT callbackasm_entry_984(SB), NOSPLIT|NOFRAME, $0
 	MOVD $984, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7872(SB)/8, $callbackasm_entry_984(SB)
+
+TEXT callbackasm_entry_985(SB), NOSPLIT|NOFRAME, $0
 	MOVD $985, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7880(SB)/8, $callbackasm_entry_985(SB)
+
+TEXT callbackasm_entry_986(SB), NOSPLIT|NOFRAME, $0
 	MOVD $986, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7888(SB)/8, $callbackasm_entry_986(SB)
+
+TEXT callbackasm_entry_987(SB), NOSPLIT|NOFRAME, $0
 	MOVD $987, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7896(SB)/8, $callbackasm_entry_987(SB)
+
+TEXT callbackasm_entry_988(SB), NOSPLIT|NOFRAME, $0
 	MOVD $988, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7904(SB)/8, $callbackasm_entry_988(SB)
+
+TEXT callbackasm_entry_989(SB), NOSPLIT|NOFRAME, $0
 	MOVD $989, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7912(SB)/8, $callbackasm_entry_989(SB)
+
+TEXT callbackasm_entry_990(SB), NOSPLIT|NOFRAME, $0
 	MOVD $990, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7920(SB)/8, $callbackasm_entry_990(SB)
+
+TEXT callbackasm_entry_991(SB), NOSPLIT|NOFRAME, $0
 	MOVD $991, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7928(SB)/8, $callbackasm_entry_991(SB)
+
+TEXT callbackasm_entry_992(SB), NOSPLIT|NOFRAME, $0
 	MOVD $992, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7936(SB)/8, $callbackasm_entry_992(SB)
+
+TEXT callbackasm_entry_993(SB), NOSPLIT|NOFRAME, $0
 	MOVD $993, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7944(SB)/8, $callbackasm_entry_993(SB)
+
+TEXT callbackasm_entry_994(SB), NOSPLIT|NOFRAME, $0
 	MOVD $994, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7952(SB)/8, $callbackasm_entry_994(SB)
+
+TEXT callbackasm_entry_995(SB), NOSPLIT|NOFRAME, $0
 	MOVD $995, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7960(SB)/8, $callbackasm_entry_995(SB)
+
+TEXT callbackasm_entry_996(SB), NOSPLIT|NOFRAME, $0
 	MOVD $996, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7968(SB)/8, $callbackasm_entry_996(SB)
+
+TEXT callbackasm_entry_997(SB), NOSPLIT|NOFRAME, $0
 	MOVD $997, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7976(SB)/8, $callbackasm_entry_997(SB)
+
+TEXT callbackasm_entry_998(SB), NOSPLIT|NOFRAME, $0
 	MOVD $998, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7984(SB)/8, $callbackasm_entry_998(SB)
+
+TEXT callbackasm_entry_999(SB), NOSPLIT|NOFRAME, $0
 	MOVD $999, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+7992(SB)/8, $callbackasm_entry_999(SB)
+
+TEXT callbackasm_entry_1000(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1000, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8000(SB)/8, $callbackasm_entry_1000(SB)
+
+TEXT callbackasm_entry_1001(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1001, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8008(SB)/8, $callbackasm_entry_1001(SB)
+
+TEXT callbackasm_entry_1002(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1002, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8016(SB)/8, $callbackasm_entry_1002(SB)
+
+TEXT callbackasm_entry_1003(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1003, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8024(SB)/8, $callbackasm_entry_1003(SB)
+
+TEXT callbackasm_entry_1004(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1004, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8032(SB)/8, $callbackasm_entry_1004(SB)
+
+TEXT callbackasm_entry_1005(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1005, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8040(SB)/8, $callbackasm_entry_1005(SB)
+
+TEXT callbackasm_entry_1006(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1006, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8048(SB)/8, $callbackasm_entry_1006(SB)
+
+TEXT callbackasm_entry_1007(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1007, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8056(SB)/8, $callbackasm_entry_1007(SB)
+
+TEXT callbackasm_entry_1008(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1008, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8064(SB)/8, $callbackasm_entry_1008(SB)
+
+TEXT callbackasm_entry_1009(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1009, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8072(SB)/8, $callbackasm_entry_1009(SB)
+
+TEXT callbackasm_entry_1010(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1010, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8080(SB)/8, $callbackasm_entry_1010(SB)
+
+TEXT callbackasm_entry_1011(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1011, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8088(SB)/8, $callbackasm_entry_1011(SB)
+
+TEXT callbackasm_entry_1012(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1012, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8096(SB)/8, $callbackasm_entry_1012(SB)
+
+TEXT callbackasm_entry_1013(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1013, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8104(SB)/8, $callbackasm_entry_1013(SB)
+
+TEXT callbackasm_entry_1014(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1014, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8112(SB)/8, $callbackasm_entry_1014(SB)
+
+TEXT callbackasm_entry_1015(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1015, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8120(SB)/8, $callbackasm_entry_1015(SB)
+
+TEXT callbackasm_entry_1016(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1016, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8128(SB)/8, $callbackasm_entry_1016(SB)
+
+TEXT callbackasm_entry_1017(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1017, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8136(SB)/8, $callbackasm_entry_1017(SB)
+
+TEXT callbackasm_entry_1018(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1018, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8144(SB)/8, $callbackasm_entry_1018(SB)
+
+TEXT callbackasm_entry_1019(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1019, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8152(SB)/8, $callbackasm_entry_1019(SB)
+
+TEXT callbackasm_entry_1020(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1020, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8160(SB)/8, $callbackasm_entry_1020(SB)
+
+TEXT callbackasm_entry_1021(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1021, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8168(SB)/8, $callbackasm_entry_1021(SB)
+
+TEXT callbackasm_entry_1022(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1022, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8176(SB)/8, $callbackasm_entry_1022(SB)
+
+TEXT callbackasm_entry_1023(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1023, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8184(SB)/8, $callbackasm_entry_1023(SB)
+
+TEXT callbackasm_entry_1024(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1024, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8192(SB)/8, $callbackasm_entry_1024(SB)
+
+TEXT callbackasm_entry_1025(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1025, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8200(SB)/8, $callbackasm_entry_1025(SB)
+
+TEXT callbackasm_entry_1026(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1026, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8208(SB)/8, $callbackasm_entry_1026(SB)
+
+TEXT callbackasm_entry_1027(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1027, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8216(SB)/8, $callbackasm_entry_1027(SB)
+
+TEXT callbackasm_entry_1028(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1028, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8224(SB)/8, $callbackasm_entry_1028(SB)
+
+TEXT callbackasm_entry_1029(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1029, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8232(SB)/8, $callbackasm_entry_1029(SB)
+
+TEXT callbackasm_entry_1030(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1030, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8240(SB)/8, $callbackasm_entry_1030(SB)
+
+TEXT callbackasm_entry_1031(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1031, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8248(SB)/8, $callbackasm_entry_1031(SB)
+
+TEXT callbackasm_entry_1032(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1032, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8256(SB)/8, $callbackasm_entry_1032(SB)
+
+TEXT callbackasm_entry_1033(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1033, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8264(SB)/8, $callbackasm_entry_1033(SB)
+
+TEXT callbackasm_entry_1034(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1034, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8272(SB)/8, $callbackasm_entry_1034(SB)
+
+TEXT callbackasm_entry_1035(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1035, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8280(SB)/8, $callbackasm_entry_1035(SB)
+
+TEXT callbackasm_entry_1036(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1036, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8288(SB)/8, $callbackasm_entry_1036(SB)
+
+TEXT callbackasm_entry_1037(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1037, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8296(SB)/8, $callbackasm_entry_1037(SB)
+
+TEXT callbackasm_entry_1038(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1038, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8304(SB)/8, $callbackasm_entry_1038(SB)
+
+TEXT callbackasm_entry_1039(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1039, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8312(SB)/8, $callbackasm_entry_1039(SB)
+
+TEXT callbackasm_entry_1040(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1040, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8320(SB)/8, $callbackasm_entry_1040(SB)
+
+TEXT callbackasm_entry_1041(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1041, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8328(SB)/8, $callbackasm_entry_1041(SB)
+
+TEXT callbackasm_entry_1042(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1042, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8336(SB)/8, $callbackasm_entry_1042(SB)
+
+TEXT callbackasm_entry_1043(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1043, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8344(SB)/8, $callbackasm_entry_1043(SB)
+
+TEXT callbackasm_entry_1044(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1044, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8352(SB)/8, $callbackasm_entry_1044(SB)
+
+TEXT callbackasm_entry_1045(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1045, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8360(SB)/8, $callbackasm_entry_1045(SB)
+
+TEXT callbackasm_entry_1046(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1046, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8368(SB)/8, $callbackasm_entry_1046(SB)
+
+TEXT callbackasm_entry_1047(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1047, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8376(SB)/8, $callbackasm_entry_1047(SB)
+
+TEXT callbackasm_entry_1048(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1048, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8384(SB)/8, $callbackasm_entry_1048(SB)
+
+TEXT callbackasm_entry_1049(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1049, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8392(SB)/8, $callbackasm_entry_1049(SB)
+
+TEXT callbackasm_entry_1050(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1050, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8400(SB)/8, $callbackasm_entry_1050(SB)
+
+TEXT callbackasm_entry_1051(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1051, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8408(SB)/8, $callbackasm_entry_1051(SB)
+
+TEXT callbackasm_entry_1052(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1052, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8416(SB)/8, $callbackasm_entry_1052(SB)
+
+TEXT callbackasm_entry_1053(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1053, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8424(SB)/8, $callbackasm_entry_1053(SB)
+
+TEXT callbackasm_entry_1054(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1054, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8432(SB)/8, $callbackasm_entry_1054(SB)
+
+TEXT callbackasm_entry_1055(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1055, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8440(SB)/8, $callbackasm_entry_1055(SB)
+
+TEXT callbackasm_entry_1056(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1056, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8448(SB)/8, $callbackasm_entry_1056(SB)
+
+TEXT callbackasm_entry_1057(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1057, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8456(SB)/8, $callbackasm_entry_1057(SB)
+
+TEXT callbackasm_entry_1058(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1058, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8464(SB)/8, $callbackasm_entry_1058(SB)
+
+TEXT callbackasm_entry_1059(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1059, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8472(SB)/8, $callbackasm_entry_1059(SB)
+
+TEXT callbackasm_entry_1060(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1060, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8480(SB)/8, $callbackasm_entry_1060(SB)
+
+TEXT callbackasm_entry_1061(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1061, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8488(SB)/8, $callbackasm_entry_1061(SB)
+
+TEXT callbackasm_entry_1062(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1062, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8496(SB)/8, $callbackasm_entry_1062(SB)
+
+TEXT callbackasm_entry_1063(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1063, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8504(SB)/8, $callbackasm_entry_1063(SB)
+
+TEXT callbackasm_entry_1064(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1064, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8512(SB)/8, $callbackasm_entry_1064(SB)
+
+TEXT callbackasm_entry_1065(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1065, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8520(SB)/8, $callbackasm_entry_1065(SB)
+
+TEXT callbackasm_entry_1066(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1066, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8528(SB)/8, $callbackasm_entry_1066(SB)
+
+TEXT callbackasm_entry_1067(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1067, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8536(SB)/8, $callbackasm_entry_1067(SB)
+
+TEXT callbackasm_entry_1068(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1068, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8544(SB)/8, $callbackasm_entry_1068(SB)
+
+TEXT callbackasm_entry_1069(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1069, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8552(SB)/8, $callbackasm_entry_1069(SB)
+
+TEXT callbackasm_entry_1070(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1070, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8560(SB)/8, $callbackasm_entry_1070(SB)
+
+TEXT callbackasm_entry_1071(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1071, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8568(SB)/8, $callbackasm_entry_1071(SB)
+
+TEXT callbackasm_entry_1072(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1072, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8576(SB)/8, $callbackasm_entry_1072(SB)
+
+TEXT callbackasm_entry_1073(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1073, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8584(SB)/8, $callbackasm_entry_1073(SB)
+
+TEXT callbackasm_entry_1074(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1074, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8592(SB)/8, $callbackasm_entry_1074(SB)
+
+TEXT callbackasm_entry_1075(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1075, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8600(SB)/8, $callbackasm_entry_1075(SB)
+
+TEXT callbackasm_entry_1076(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1076, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8608(SB)/8, $callbackasm_entry_1076(SB)
+
+TEXT callbackasm_entry_1077(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1077, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8616(SB)/8, $callbackasm_entry_1077(SB)
+
+TEXT callbackasm_entry_1078(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1078, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8624(SB)/8, $callbackasm_entry_1078(SB)
+
+TEXT callbackasm_entry_1079(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1079, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8632(SB)/8, $callbackasm_entry_1079(SB)
+
+TEXT callbackasm_entry_1080(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1080, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8640(SB)/8, $callbackasm_entry_1080(SB)
+
+TEXT callbackasm_entry_1081(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1081, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8648(SB)/8, $callbackasm_entry_1081(SB)
+
+TEXT callbackasm_entry_1082(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1082, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8656(SB)/8, $callbackasm_entry_1082(SB)
+
+TEXT callbackasm_entry_1083(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1083, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8664(SB)/8, $callbackasm_entry_1083(SB)
+
+TEXT callbackasm_entry_1084(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1084, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8672(SB)/8, $callbackasm_entry_1084(SB)
+
+TEXT callbackasm_entry_1085(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1085, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8680(SB)/8, $callbackasm_entry_1085(SB)
+
+TEXT callbackasm_entry_1086(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1086, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8688(SB)/8, $callbackasm_entry_1086(SB)
+
+TEXT callbackasm_entry_1087(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1087, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8696(SB)/8, $callbackasm_entry_1087(SB)
+
+TEXT callbackasm_entry_1088(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1088, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8704(SB)/8, $callbackasm_entry_1088(SB)
+
+TEXT callbackasm_entry_1089(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1089, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8712(SB)/8, $callbackasm_entry_1089(SB)
+
+TEXT callbackasm_entry_1090(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1090, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8720(SB)/8, $callbackasm_entry_1090(SB)
+
+TEXT callbackasm_entry_1091(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1091, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8728(SB)/8, $callbackasm_entry_1091(SB)
+
+TEXT callbackasm_entry_1092(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1092, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8736(SB)/8, $callbackasm_entry_1092(SB)
+
+TEXT callbackasm_entry_1093(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1093, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8744(SB)/8, $callbackasm_entry_1093(SB)
+
+TEXT callbackasm_entry_1094(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1094, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8752(SB)/8, $callbackasm_entry_1094(SB)
+
+TEXT callbackasm_entry_1095(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1095, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8760(SB)/8, $callbackasm_entry_1095(SB)
+
+TEXT callbackasm_entry_1096(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1096, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8768(SB)/8, $callbackasm_entry_1096(SB)
+
+TEXT callbackasm_entry_1097(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1097, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8776(SB)/8, $callbackasm_entry_1097(SB)
+
+TEXT callbackasm_entry_1098(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1098, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8784(SB)/8, $callbackasm_entry_1098(SB)
+
+TEXT callbackasm_entry_1099(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1099, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8792(SB)/8, $callbackasm_entry_1099(SB)
+
+TEXT callbackasm_entry_1100(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1100, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8800(SB)/8, $callbackasm_entry_1100(SB)
+
+TEXT callbackasm_entry_1101(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1101, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8808(SB)/8, $callbackasm_entry_1101(SB)
+
+TEXT callbackasm_entry_1102(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1102, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8816(SB)/8, $callbackasm_entry_1102(SB)
+
+TEXT callbackasm_entry_1103(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1103, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8824(SB)/8, $callbackasm_entry_1103(SB)
+
+TEXT callbackasm_entry_1104(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1104, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8832(SB)/8, $callbackasm_entry_1104(SB)
+
+TEXT callbackasm_entry_1105(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1105, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8840(SB)/8, $callbackasm_entry_1105(SB)
+
+TEXT callbackasm_entry_1106(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1106, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8848(SB)/8, $callbackasm_entry_1106(SB)
+
+TEXT callbackasm_entry_1107(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1107, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8856(SB)/8, $callbackasm_entry_1107(SB)
+
+TEXT callbackasm_entry_1108(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1108, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8864(SB)/8, $callbackasm_entry_1108(SB)
+
+TEXT callbackasm_entry_1109(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1109, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8872(SB)/8, $callbackasm_entry_1109(SB)
+
+TEXT callbackasm_entry_1110(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1110, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8880(SB)/8, $callbackasm_entry_1110(SB)
+
+TEXT callbackasm_entry_1111(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1111, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8888(SB)/8, $callbackasm_entry_1111(SB)
+
+TEXT callbackasm_entry_1112(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1112, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8896(SB)/8, $callbackasm_entry_1112(SB)
+
+TEXT callbackasm_entry_1113(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1113, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8904(SB)/8, $callbackasm_entry_1113(SB)
+
+TEXT callbackasm_entry_1114(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1114, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8912(SB)/8, $callbackasm_entry_1114(SB)
+
+TEXT callbackasm_entry_1115(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1115, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8920(SB)/8, $callbackasm_entry_1115(SB)
+
+TEXT callbackasm_entry_1116(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1116, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8928(SB)/8, $callbackasm_entry_1116(SB)
+
+TEXT callbackasm_entry_1117(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1117, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8936(SB)/8, $callbackasm_entry_1117(SB)
+
+TEXT callbackasm_entry_1118(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1118, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8944(SB)/8, $callbackasm_entry_1118(SB)
+
+TEXT callbackasm_entry_1119(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1119, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8952(SB)/8, $callbackasm_entry_1119(SB)
+
+TEXT callbackasm_entry_1120(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1120, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8960(SB)/8, $callbackasm_entry_1120(SB)
+
+TEXT callbackasm_entry_1121(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1121, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8968(SB)/8, $callbackasm_entry_1121(SB)
+
+TEXT callbackasm_entry_1122(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1122, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8976(SB)/8, $callbackasm_entry_1122(SB)
+
+TEXT callbackasm_entry_1123(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1123, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8984(SB)/8, $callbackasm_entry_1123(SB)
+
+TEXT callbackasm_entry_1124(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1124, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+8992(SB)/8, $callbackasm_entry_1124(SB)
+
+TEXT callbackasm_entry_1125(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1125, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9000(SB)/8, $callbackasm_entry_1125(SB)
+
+TEXT callbackasm_entry_1126(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1126, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9008(SB)/8, $callbackasm_entry_1126(SB)
+
+TEXT callbackasm_entry_1127(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1127, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9016(SB)/8, $callbackasm_entry_1127(SB)
+
+TEXT callbackasm_entry_1128(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1128, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9024(SB)/8, $callbackasm_entry_1128(SB)
+
+TEXT callbackasm_entry_1129(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1129, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9032(SB)/8, $callbackasm_entry_1129(SB)
+
+TEXT callbackasm_entry_1130(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1130, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9040(SB)/8, $callbackasm_entry_1130(SB)
+
+TEXT callbackasm_entry_1131(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1131, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9048(SB)/8, $callbackasm_entry_1131(SB)
+
+TEXT callbackasm_entry_1132(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1132, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9056(SB)/8, $callbackasm_entry_1132(SB)
+
+TEXT callbackasm_entry_1133(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1133, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9064(SB)/8, $callbackasm_entry_1133(SB)
+
+TEXT callbackasm_entry_1134(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1134, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9072(SB)/8, $callbackasm_entry_1134(SB)
+
+TEXT callbackasm_entry_1135(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1135, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9080(SB)/8, $callbackasm_entry_1135(SB)
+
+TEXT callbackasm_entry_1136(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1136, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9088(SB)/8, $callbackasm_entry_1136(SB)
+
+TEXT callbackasm_entry_1137(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1137, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9096(SB)/8, $callbackasm_entry_1137(SB)
+
+TEXT callbackasm_entry_1138(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1138, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9104(SB)/8, $callbackasm_entry_1138(SB)
+
+TEXT callbackasm_entry_1139(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1139, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9112(SB)/8, $callbackasm_entry_1139(SB)
+
+TEXT callbackasm_entry_1140(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1140, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9120(SB)/8, $callbackasm_entry_1140(SB)
+
+TEXT callbackasm_entry_1141(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1141, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9128(SB)/8, $callbackasm_entry_1141(SB)
+
+TEXT callbackasm_entry_1142(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1142, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9136(SB)/8, $callbackasm_entry_1142(SB)
+
+TEXT callbackasm_entry_1143(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1143, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9144(SB)/8, $callbackasm_entry_1143(SB)
+
+TEXT callbackasm_entry_1144(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1144, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9152(SB)/8, $callbackasm_entry_1144(SB)
+
+TEXT callbackasm_entry_1145(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1145, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9160(SB)/8, $callbackasm_entry_1145(SB)
+
+TEXT callbackasm_entry_1146(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1146, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9168(SB)/8, $callbackasm_entry_1146(SB)
+
+TEXT callbackasm_entry_1147(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1147, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9176(SB)/8, $callbackasm_entry_1147(SB)
+
+TEXT callbackasm_entry_1148(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1148, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9184(SB)/8, $callbackasm_entry_1148(SB)
+
+TEXT callbackasm_entry_1149(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1149, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9192(SB)/8, $callbackasm_entry_1149(SB)
+
+TEXT callbackasm_entry_1150(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1150, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9200(SB)/8, $callbackasm_entry_1150(SB)
+
+TEXT callbackasm_entry_1151(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1151, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9208(SB)/8, $callbackasm_entry_1151(SB)
+
+TEXT callbackasm_entry_1152(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1152, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9216(SB)/8, $callbackasm_entry_1152(SB)
+
+TEXT callbackasm_entry_1153(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1153, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9224(SB)/8, $callbackasm_entry_1153(SB)
+
+TEXT callbackasm_entry_1154(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1154, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9232(SB)/8, $callbackasm_entry_1154(SB)
+
+TEXT callbackasm_entry_1155(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1155, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9240(SB)/8, $callbackasm_entry_1155(SB)
+
+TEXT callbackasm_entry_1156(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1156, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9248(SB)/8, $callbackasm_entry_1156(SB)
+
+TEXT callbackasm_entry_1157(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1157, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9256(SB)/8, $callbackasm_entry_1157(SB)
+
+TEXT callbackasm_entry_1158(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1158, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9264(SB)/8, $callbackasm_entry_1158(SB)
+
+TEXT callbackasm_entry_1159(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1159, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9272(SB)/8, $callbackasm_entry_1159(SB)
+
+TEXT callbackasm_entry_1160(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1160, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9280(SB)/8, $callbackasm_entry_1160(SB)
+
+TEXT callbackasm_entry_1161(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1161, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9288(SB)/8, $callbackasm_entry_1161(SB)
+
+TEXT callbackasm_entry_1162(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1162, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9296(SB)/8, $callbackasm_entry_1162(SB)
+
+TEXT callbackasm_entry_1163(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1163, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9304(SB)/8, $callbackasm_entry_1163(SB)
+
+TEXT callbackasm_entry_1164(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1164, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9312(SB)/8, $callbackasm_entry_1164(SB)
+
+TEXT callbackasm_entry_1165(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1165, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9320(SB)/8, $callbackasm_entry_1165(SB)
+
+TEXT callbackasm_entry_1166(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1166, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9328(SB)/8, $callbackasm_entry_1166(SB)
+
+TEXT callbackasm_entry_1167(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1167, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9336(SB)/8, $callbackasm_entry_1167(SB)
+
+TEXT callbackasm_entry_1168(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1168, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9344(SB)/8, $callbackasm_entry_1168(SB)
+
+TEXT callbackasm_entry_1169(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1169, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9352(SB)/8, $callbackasm_entry_1169(SB)
+
+TEXT callbackasm_entry_1170(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1170, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9360(SB)/8, $callbackasm_entry_1170(SB)
+
+TEXT callbackasm_entry_1171(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1171, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9368(SB)/8, $callbackasm_entry_1171(SB)
+
+TEXT callbackasm_entry_1172(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1172, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9376(SB)/8, $callbackasm_entry_1172(SB)
+
+TEXT callbackasm_entry_1173(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1173, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9384(SB)/8, $callbackasm_entry_1173(SB)
+
+TEXT callbackasm_entry_1174(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1174, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9392(SB)/8, $callbackasm_entry_1174(SB)
+
+TEXT callbackasm_entry_1175(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1175, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9400(SB)/8, $callbackasm_entry_1175(SB)
+
+TEXT callbackasm_entry_1176(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1176, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9408(SB)/8, $callbackasm_entry_1176(SB)
+
+TEXT callbackasm_entry_1177(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1177, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9416(SB)/8, $callbackasm_entry_1177(SB)
+
+TEXT callbackasm_entry_1178(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1178, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9424(SB)/8, $callbackasm_entry_1178(SB)
+
+TEXT callbackasm_entry_1179(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1179, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9432(SB)/8, $callbackasm_entry_1179(SB)
+
+TEXT callbackasm_entry_1180(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1180, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9440(SB)/8, $callbackasm_entry_1180(SB)
+
+TEXT callbackasm_entry_1181(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1181, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9448(SB)/8, $callbackasm_entry_1181(SB)
+
+TEXT callbackasm_entry_1182(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1182, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9456(SB)/8, $callbackasm_entry_1182(SB)
+
+TEXT callbackasm_entry_1183(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1183, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9464(SB)/8, $callbackasm_entry_1183(SB)
+
+TEXT callbackasm_entry_1184(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1184, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9472(SB)/8, $callbackasm_entry_1184(SB)
+
+TEXT callbackasm_entry_1185(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1185, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9480(SB)/8, $callbackasm_entry_1185(SB)
+
+TEXT callbackasm_entry_1186(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1186, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9488(SB)/8, $callbackasm_entry_1186(SB)
+
+TEXT callbackasm_entry_1187(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1187, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9496(SB)/8, $callbackasm_entry_1187(SB)
+
+TEXT callbackasm_entry_1188(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1188, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9504(SB)/8, $callbackasm_entry_1188(SB)
+
+TEXT callbackasm_entry_1189(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1189, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9512(SB)/8, $callbackasm_entry_1189(SB)
+
+TEXT callbackasm_entry_1190(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1190, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9520(SB)/8, $callbackasm_entry_1190(SB)
+
+TEXT callbackasm_entry_1191(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1191, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9528(SB)/8, $callbackasm_entry_1191(SB)
+
+TEXT callbackasm_entry_1192(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1192, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9536(SB)/8, $callbackasm_entry_1192(SB)
+
+TEXT callbackasm_entry_1193(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1193, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9544(SB)/8, $callbackasm_entry_1193(SB)
+
+TEXT callbackasm_entry_1194(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1194, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9552(SB)/8, $callbackasm_entry_1194(SB)
+
+TEXT callbackasm_entry_1195(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1195, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9560(SB)/8, $callbackasm_entry_1195(SB)
+
+TEXT callbackasm_entry_1196(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1196, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9568(SB)/8, $callbackasm_entry_1196(SB)
+
+TEXT callbackasm_entry_1197(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1197, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9576(SB)/8, $callbackasm_entry_1197(SB)
+
+TEXT callbackasm_entry_1198(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1198, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9584(SB)/8, $callbackasm_entry_1198(SB)
+
+TEXT callbackasm_entry_1199(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1199, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9592(SB)/8, $callbackasm_entry_1199(SB)
+
+TEXT callbackasm_entry_1200(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1200, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9600(SB)/8, $callbackasm_entry_1200(SB)
+
+TEXT callbackasm_entry_1201(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1201, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9608(SB)/8, $callbackasm_entry_1201(SB)
+
+TEXT callbackasm_entry_1202(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1202, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9616(SB)/8, $callbackasm_entry_1202(SB)
+
+TEXT callbackasm_entry_1203(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1203, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9624(SB)/8, $callbackasm_entry_1203(SB)
+
+TEXT callbackasm_entry_1204(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1204, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9632(SB)/8, $callbackasm_entry_1204(SB)
+
+TEXT callbackasm_entry_1205(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1205, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9640(SB)/8, $callbackasm_entry_1205(SB)
+
+TEXT callbackasm_entry_1206(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1206, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9648(SB)/8, $callbackasm_entry_1206(SB)
+
+TEXT callbackasm_entry_1207(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1207, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9656(SB)/8, $callbackasm_entry_1207(SB)
+
+TEXT callbackasm_entry_1208(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1208, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9664(SB)/8, $callbackasm_entry_1208(SB)
+
+TEXT callbackasm_entry_1209(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1209, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9672(SB)/8, $callbackasm_entry_1209(SB)
+
+TEXT callbackasm_entry_1210(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1210, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9680(SB)/8, $callbackasm_entry_1210(SB)
+
+TEXT callbackasm_entry_1211(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1211, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9688(SB)/8, $callbackasm_entry_1211(SB)
+
+TEXT callbackasm_entry_1212(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1212, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9696(SB)/8, $callbackasm_entry_1212(SB)
+
+TEXT callbackasm_entry_1213(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1213, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9704(SB)/8, $callbackasm_entry_1213(SB)
+
+TEXT callbackasm_entry_1214(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1214, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9712(SB)/8, $callbackasm_entry_1214(SB)
+
+TEXT callbackasm_entry_1215(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1215, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9720(SB)/8, $callbackasm_entry_1215(SB)
+
+TEXT callbackasm_entry_1216(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1216, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9728(SB)/8, $callbackasm_entry_1216(SB)
+
+TEXT callbackasm_entry_1217(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1217, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9736(SB)/8, $callbackasm_entry_1217(SB)
+
+TEXT callbackasm_entry_1218(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1218, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9744(SB)/8, $callbackasm_entry_1218(SB)
+
+TEXT callbackasm_entry_1219(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1219, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9752(SB)/8, $callbackasm_entry_1219(SB)
+
+TEXT callbackasm_entry_1220(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1220, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9760(SB)/8, $callbackasm_entry_1220(SB)
+
+TEXT callbackasm_entry_1221(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1221, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9768(SB)/8, $callbackasm_entry_1221(SB)
+
+TEXT callbackasm_entry_1222(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1222, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9776(SB)/8, $callbackasm_entry_1222(SB)
+
+TEXT callbackasm_entry_1223(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1223, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9784(SB)/8, $callbackasm_entry_1223(SB)
+
+TEXT callbackasm_entry_1224(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1224, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9792(SB)/8, $callbackasm_entry_1224(SB)
+
+TEXT callbackasm_entry_1225(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1225, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9800(SB)/8, $callbackasm_entry_1225(SB)
+
+TEXT callbackasm_entry_1226(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1226, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9808(SB)/8, $callbackasm_entry_1226(SB)
+
+TEXT callbackasm_entry_1227(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1227, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9816(SB)/8, $callbackasm_entry_1227(SB)
+
+TEXT callbackasm_entry_1228(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1228, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9824(SB)/8, $callbackasm_entry_1228(SB)
+
+TEXT callbackasm_entry_1229(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1229, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9832(SB)/8, $callbackasm_entry_1229(SB)
+
+TEXT callbackasm_entry_1230(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1230, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9840(SB)/8, $callbackasm_entry_1230(SB)
+
+TEXT callbackasm_entry_1231(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1231, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9848(SB)/8, $callbackasm_entry_1231(SB)
+
+TEXT callbackasm_entry_1232(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1232, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9856(SB)/8, $callbackasm_entry_1232(SB)
+
+TEXT callbackasm_entry_1233(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1233, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9864(SB)/8, $callbackasm_entry_1233(SB)
+
+TEXT callbackasm_entry_1234(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1234, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9872(SB)/8, $callbackasm_entry_1234(SB)
+
+TEXT callbackasm_entry_1235(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1235, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9880(SB)/8, $callbackasm_entry_1235(SB)
+
+TEXT callbackasm_entry_1236(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1236, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9888(SB)/8, $callbackasm_entry_1236(SB)
+
+TEXT callbackasm_entry_1237(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1237, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9896(SB)/8, $callbackasm_entry_1237(SB)
+
+TEXT callbackasm_entry_1238(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1238, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9904(SB)/8, $callbackasm_entry_1238(SB)
+
+TEXT callbackasm_entry_1239(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1239, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9912(SB)/8, $callbackasm_entry_1239(SB)
+
+TEXT callbackasm_entry_1240(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1240, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9920(SB)/8, $callbackasm_entry_1240(SB)
+
+TEXT callbackasm_entry_1241(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1241, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9928(SB)/8, $callbackasm_entry_1241(SB)
+
+TEXT callbackasm_entry_1242(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1242, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9936(SB)/8, $callbackasm_entry_1242(SB)
+
+TEXT callbackasm_entry_1243(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1243, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9944(SB)/8, $callbackasm_entry_1243(SB)
+
+TEXT callbackasm_entry_1244(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1244, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9952(SB)/8, $callbackasm_entry_1244(SB)
+
+TEXT callbackasm_entry_1245(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1245, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9960(SB)/8, $callbackasm_entry_1245(SB)
+
+TEXT callbackasm_entry_1246(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1246, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9968(SB)/8, $callbackasm_entry_1246(SB)
+
+TEXT callbackasm_entry_1247(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1247, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9976(SB)/8, $callbackasm_entry_1247(SB)
+
+TEXT callbackasm_entry_1248(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1248, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9984(SB)/8, $callbackasm_entry_1248(SB)
+
+TEXT callbackasm_entry_1249(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1249, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+9992(SB)/8, $callbackasm_entry_1249(SB)
+
+TEXT callbackasm_entry_1250(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1250, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10000(SB)/8, $callbackasm_entry_1250(SB)
+
+TEXT callbackasm_entry_1251(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1251, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10008(SB)/8, $callbackasm_entry_1251(SB)
+
+TEXT callbackasm_entry_1252(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1252, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10016(SB)/8, $callbackasm_entry_1252(SB)
+
+TEXT callbackasm_entry_1253(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1253, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10024(SB)/8, $callbackasm_entry_1253(SB)
+
+TEXT callbackasm_entry_1254(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1254, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10032(SB)/8, $callbackasm_entry_1254(SB)
+
+TEXT callbackasm_entry_1255(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1255, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10040(SB)/8, $callbackasm_entry_1255(SB)
+
+TEXT callbackasm_entry_1256(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1256, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10048(SB)/8, $callbackasm_entry_1256(SB)
+
+TEXT callbackasm_entry_1257(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1257, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10056(SB)/8, $callbackasm_entry_1257(SB)
+
+TEXT callbackasm_entry_1258(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1258, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10064(SB)/8, $callbackasm_entry_1258(SB)
+
+TEXT callbackasm_entry_1259(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1259, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10072(SB)/8, $callbackasm_entry_1259(SB)
+
+TEXT callbackasm_entry_1260(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1260, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10080(SB)/8, $callbackasm_entry_1260(SB)
+
+TEXT callbackasm_entry_1261(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1261, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10088(SB)/8, $callbackasm_entry_1261(SB)
+
+TEXT callbackasm_entry_1262(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1262, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10096(SB)/8, $callbackasm_entry_1262(SB)
+
+TEXT callbackasm_entry_1263(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1263, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10104(SB)/8, $callbackasm_entry_1263(SB)
+
+TEXT callbackasm_entry_1264(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1264, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10112(SB)/8, $callbackasm_entry_1264(SB)
+
+TEXT callbackasm_entry_1265(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1265, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10120(SB)/8, $callbackasm_entry_1265(SB)
+
+TEXT callbackasm_entry_1266(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1266, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10128(SB)/8, $callbackasm_entry_1266(SB)
+
+TEXT callbackasm_entry_1267(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1267, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10136(SB)/8, $callbackasm_entry_1267(SB)
+
+TEXT callbackasm_entry_1268(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1268, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10144(SB)/8, $callbackasm_entry_1268(SB)
+
+TEXT callbackasm_entry_1269(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1269, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10152(SB)/8, $callbackasm_entry_1269(SB)
+
+TEXT callbackasm_entry_1270(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1270, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10160(SB)/8, $callbackasm_entry_1270(SB)
+
+TEXT callbackasm_entry_1271(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1271, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10168(SB)/8, $callbackasm_entry_1271(SB)
+
+TEXT callbackasm_entry_1272(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1272, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10176(SB)/8, $callbackasm_entry_1272(SB)
+
+TEXT callbackasm_entry_1273(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1273, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10184(SB)/8, $callbackasm_entry_1273(SB)
+
+TEXT callbackasm_entry_1274(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1274, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10192(SB)/8, $callbackasm_entry_1274(SB)
+
+TEXT callbackasm_entry_1275(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1275, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10200(SB)/8, $callbackasm_entry_1275(SB)
+
+TEXT callbackasm_entry_1276(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1276, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10208(SB)/8, $callbackasm_entry_1276(SB)
+
+TEXT callbackasm_entry_1277(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1277, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10216(SB)/8, $callbackasm_entry_1277(SB)
+
+TEXT callbackasm_entry_1278(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1278, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10224(SB)/8, $callbackasm_entry_1278(SB)
+
+TEXT callbackasm_entry_1279(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1279, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10232(SB)/8, $callbackasm_entry_1279(SB)
+
+TEXT callbackasm_entry_1280(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1280, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10240(SB)/8, $callbackasm_entry_1280(SB)
+
+TEXT callbackasm_entry_1281(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1281, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10248(SB)/8, $callbackasm_entry_1281(SB)
+
+TEXT callbackasm_entry_1282(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1282, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10256(SB)/8, $callbackasm_entry_1282(SB)
+
+TEXT callbackasm_entry_1283(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1283, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10264(SB)/8, $callbackasm_entry_1283(SB)
+
+TEXT callbackasm_entry_1284(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1284, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10272(SB)/8, $callbackasm_entry_1284(SB)
+
+TEXT callbackasm_entry_1285(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1285, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10280(SB)/8, $callbackasm_entry_1285(SB)
+
+TEXT callbackasm_entry_1286(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1286, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10288(SB)/8, $callbackasm_entry_1286(SB)
+
+TEXT callbackasm_entry_1287(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1287, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10296(SB)/8, $callbackasm_entry_1287(SB)
+
+TEXT callbackasm_entry_1288(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1288, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10304(SB)/8, $callbackasm_entry_1288(SB)
+
+TEXT callbackasm_entry_1289(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1289, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10312(SB)/8, $callbackasm_entry_1289(SB)
+
+TEXT callbackasm_entry_1290(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1290, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10320(SB)/8, $callbackasm_entry_1290(SB)
+
+TEXT callbackasm_entry_1291(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1291, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10328(SB)/8, $callbackasm_entry_1291(SB)
+
+TEXT callbackasm_entry_1292(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1292, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10336(SB)/8, $callbackasm_entry_1292(SB)
+
+TEXT callbackasm_entry_1293(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1293, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10344(SB)/8, $callbackasm_entry_1293(SB)
+
+TEXT callbackasm_entry_1294(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1294, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10352(SB)/8, $callbackasm_entry_1294(SB)
+
+TEXT callbackasm_entry_1295(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1295, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10360(SB)/8, $callbackasm_entry_1295(SB)
+
+TEXT callbackasm_entry_1296(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1296, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10368(SB)/8, $callbackasm_entry_1296(SB)
+
+TEXT callbackasm_entry_1297(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1297, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10376(SB)/8, $callbackasm_entry_1297(SB)
+
+TEXT callbackasm_entry_1298(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1298, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10384(SB)/8, $callbackasm_entry_1298(SB)
+
+TEXT callbackasm_entry_1299(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1299, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10392(SB)/8, $callbackasm_entry_1299(SB)
+
+TEXT callbackasm_entry_1300(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1300, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10400(SB)/8, $callbackasm_entry_1300(SB)
+
+TEXT callbackasm_entry_1301(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1301, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10408(SB)/8, $callbackasm_entry_1301(SB)
+
+TEXT callbackasm_entry_1302(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1302, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10416(SB)/8, $callbackasm_entry_1302(SB)
+
+TEXT callbackasm_entry_1303(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1303, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10424(SB)/8, $callbackasm_entry_1303(SB)
+
+TEXT callbackasm_entry_1304(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1304, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10432(SB)/8, $callbackasm_entry_1304(SB)
+
+TEXT callbackasm_entry_1305(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1305, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10440(SB)/8, $callbackasm_entry_1305(SB)
+
+TEXT callbackasm_entry_1306(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1306, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10448(SB)/8, $callbackasm_entry_1306(SB)
+
+TEXT callbackasm_entry_1307(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1307, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10456(SB)/8, $callbackasm_entry_1307(SB)
+
+TEXT callbackasm_entry_1308(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1308, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10464(SB)/8, $callbackasm_entry_1308(SB)
+
+TEXT callbackasm_entry_1309(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1309, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10472(SB)/8, $callbackasm_entry_1309(SB)
+
+TEXT callbackasm_entry_1310(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1310, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10480(SB)/8, $callbackasm_entry_1310(SB)
+
+TEXT callbackasm_entry_1311(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1311, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10488(SB)/8, $callbackasm_entry_1311(SB)
+
+TEXT callbackasm_entry_1312(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1312, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10496(SB)/8, $callbackasm_entry_1312(SB)
+
+TEXT callbackasm_entry_1313(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1313, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10504(SB)/8, $callbackasm_entry_1313(SB)
+
+TEXT callbackasm_entry_1314(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1314, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10512(SB)/8, $callbackasm_entry_1314(SB)
+
+TEXT callbackasm_entry_1315(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1315, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10520(SB)/8, $callbackasm_entry_1315(SB)
+
+TEXT callbackasm_entry_1316(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1316, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10528(SB)/8, $callbackasm_entry_1316(SB)
+
+TEXT callbackasm_entry_1317(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1317, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10536(SB)/8, $callbackasm_entry_1317(SB)
+
+TEXT callbackasm_entry_1318(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1318, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10544(SB)/8, $callbackasm_entry_1318(SB)
+
+TEXT callbackasm_entry_1319(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1319, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10552(SB)/8, $callbackasm_entry_1319(SB)
+
+TEXT callbackasm_entry_1320(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1320, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10560(SB)/8, $callbackasm_entry_1320(SB)
+
+TEXT callbackasm_entry_1321(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1321, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10568(SB)/8, $callbackasm_entry_1321(SB)
+
+TEXT callbackasm_entry_1322(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1322, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10576(SB)/8, $callbackasm_entry_1322(SB)
+
+TEXT callbackasm_entry_1323(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1323, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10584(SB)/8, $callbackasm_entry_1323(SB)
+
+TEXT callbackasm_entry_1324(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1324, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10592(SB)/8, $callbackasm_entry_1324(SB)
+
+TEXT callbackasm_entry_1325(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1325, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10600(SB)/8, $callbackasm_entry_1325(SB)
+
+TEXT callbackasm_entry_1326(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1326, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10608(SB)/8, $callbackasm_entry_1326(SB)
+
+TEXT callbackasm_entry_1327(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1327, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10616(SB)/8, $callbackasm_entry_1327(SB)
+
+TEXT callbackasm_entry_1328(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1328, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10624(SB)/8, $callbackasm_entry_1328(SB)
+
+TEXT callbackasm_entry_1329(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1329, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10632(SB)/8, $callbackasm_entry_1329(SB)
+
+TEXT callbackasm_entry_1330(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1330, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10640(SB)/8, $callbackasm_entry_1330(SB)
+
+TEXT callbackasm_entry_1331(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1331, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10648(SB)/8, $callbackasm_entry_1331(SB)
+
+TEXT callbackasm_entry_1332(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1332, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10656(SB)/8, $callbackasm_entry_1332(SB)
+
+TEXT callbackasm_entry_1333(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1333, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10664(SB)/8, $callbackasm_entry_1333(SB)
+
+TEXT callbackasm_entry_1334(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1334, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10672(SB)/8, $callbackasm_entry_1334(SB)
+
+TEXT callbackasm_entry_1335(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1335, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10680(SB)/8, $callbackasm_entry_1335(SB)
+
+TEXT callbackasm_entry_1336(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1336, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10688(SB)/8, $callbackasm_entry_1336(SB)
+
+TEXT callbackasm_entry_1337(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1337, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10696(SB)/8, $callbackasm_entry_1337(SB)
+
+TEXT callbackasm_entry_1338(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1338, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10704(SB)/8, $callbackasm_entry_1338(SB)
+
+TEXT callbackasm_entry_1339(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1339, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10712(SB)/8, $callbackasm_entry_1339(SB)
+
+TEXT callbackasm_entry_1340(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1340, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10720(SB)/8, $callbackasm_entry_1340(SB)
+
+TEXT callbackasm_entry_1341(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1341, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10728(SB)/8, $callbackasm_entry_1341(SB)
+
+TEXT callbackasm_entry_1342(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1342, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10736(SB)/8, $callbackasm_entry_1342(SB)
+
+TEXT callbackasm_entry_1343(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1343, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10744(SB)/8, $callbackasm_entry_1343(SB)
+
+TEXT callbackasm_entry_1344(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1344, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10752(SB)/8, $callbackasm_entry_1344(SB)
+
+TEXT callbackasm_entry_1345(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1345, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10760(SB)/8, $callbackasm_entry_1345(SB)
+
+TEXT callbackasm_entry_1346(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1346, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10768(SB)/8, $callbackasm_entry_1346(SB)
+
+TEXT callbackasm_entry_1347(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1347, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10776(SB)/8, $callbackasm_entry_1347(SB)
+
+TEXT callbackasm_entry_1348(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1348, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10784(SB)/8, $callbackasm_entry_1348(SB)
+
+TEXT callbackasm_entry_1349(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1349, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10792(SB)/8, $callbackasm_entry_1349(SB)
+
+TEXT callbackasm_entry_1350(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1350, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10800(SB)/8, $callbackasm_entry_1350(SB)
+
+TEXT callbackasm_entry_1351(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1351, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10808(SB)/8, $callbackasm_entry_1351(SB)
+
+TEXT callbackasm_entry_1352(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1352, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10816(SB)/8, $callbackasm_entry_1352(SB)
+
+TEXT callbackasm_entry_1353(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1353, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10824(SB)/8, $callbackasm_entry_1353(SB)
+
+TEXT callbackasm_entry_1354(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1354, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10832(SB)/8, $callbackasm_entry_1354(SB)
+
+TEXT callbackasm_entry_1355(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1355, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10840(SB)/8, $callbackasm_entry_1355(SB)
+
+TEXT callbackasm_entry_1356(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1356, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10848(SB)/8, $callbackasm_entry_1356(SB)
+
+TEXT callbackasm_entry_1357(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1357, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10856(SB)/8, $callbackasm_entry_1357(SB)
+
+TEXT callbackasm_entry_1358(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1358, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10864(SB)/8, $callbackasm_entry_1358(SB)
+
+TEXT callbackasm_entry_1359(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1359, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10872(SB)/8, $callbackasm_entry_1359(SB)
+
+TEXT callbackasm_entry_1360(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1360, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10880(SB)/8, $callbackasm_entry_1360(SB)
+
+TEXT callbackasm_entry_1361(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1361, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10888(SB)/8, $callbackasm_entry_1361(SB)
+
+TEXT callbackasm_entry_1362(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1362, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10896(SB)/8, $callbackasm_entry_1362(SB)
+
+TEXT callbackasm_entry_1363(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1363, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10904(SB)/8, $callbackasm_entry_1363(SB)
+
+TEXT callbackasm_entry_1364(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1364, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10912(SB)/8, $callbackasm_entry_1364(SB)
+
+TEXT callbackasm_entry_1365(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1365, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10920(SB)/8, $callbackasm_entry_1365(SB)
+
+TEXT callbackasm_entry_1366(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1366, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10928(SB)/8, $callbackasm_entry_1366(SB)
+
+TEXT callbackasm_entry_1367(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1367, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10936(SB)/8, $callbackasm_entry_1367(SB)
+
+TEXT callbackasm_entry_1368(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1368, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10944(SB)/8, $callbackasm_entry_1368(SB)
+
+TEXT callbackasm_entry_1369(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1369, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10952(SB)/8, $callbackasm_entry_1369(SB)
+
+TEXT callbackasm_entry_1370(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1370, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10960(SB)/8, $callbackasm_entry_1370(SB)
+
+TEXT callbackasm_entry_1371(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1371, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10968(SB)/8, $callbackasm_entry_1371(SB)
+
+TEXT callbackasm_entry_1372(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1372, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10976(SB)/8, $callbackasm_entry_1372(SB)
+
+TEXT callbackasm_entry_1373(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1373, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10984(SB)/8, $callbackasm_entry_1373(SB)
+
+TEXT callbackasm_entry_1374(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1374, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+10992(SB)/8, $callbackasm_entry_1374(SB)
+
+TEXT callbackasm_entry_1375(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1375, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11000(SB)/8, $callbackasm_entry_1375(SB)
+
+TEXT callbackasm_entry_1376(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1376, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11008(SB)/8, $callbackasm_entry_1376(SB)
+
+TEXT callbackasm_entry_1377(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1377, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11016(SB)/8, $callbackasm_entry_1377(SB)
+
+TEXT callbackasm_entry_1378(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1378, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11024(SB)/8, $callbackasm_entry_1378(SB)
+
+TEXT callbackasm_entry_1379(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1379, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11032(SB)/8, $callbackasm_entry_1379(SB)
+
+TEXT callbackasm_entry_1380(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1380, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11040(SB)/8, $callbackasm_entry_1380(SB)
+
+TEXT callbackasm_entry_1381(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1381, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11048(SB)/8, $callbackasm_entry_1381(SB)
+
+TEXT callbackasm_entry_1382(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1382, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11056(SB)/8, $callbackasm_entry_1382(SB)
+
+TEXT callbackasm_entry_1383(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1383, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11064(SB)/8, $callbackasm_entry_1383(SB)
+
+TEXT callbackasm_entry_1384(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1384, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11072(SB)/8, $callbackasm_entry_1384(SB)
+
+TEXT callbackasm_entry_1385(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1385, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11080(SB)/8, $callbackasm_entry_1385(SB)
+
+TEXT callbackasm_entry_1386(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1386, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11088(SB)/8, $callbackasm_entry_1386(SB)
+
+TEXT callbackasm_entry_1387(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1387, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11096(SB)/8, $callbackasm_entry_1387(SB)
+
+TEXT callbackasm_entry_1388(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1388, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11104(SB)/8, $callbackasm_entry_1388(SB)
+
+TEXT callbackasm_entry_1389(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1389, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11112(SB)/8, $callbackasm_entry_1389(SB)
+
+TEXT callbackasm_entry_1390(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1390, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11120(SB)/8, $callbackasm_entry_1390(SB)
+
+TEXT callbackasm_entry_1391(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1391, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11128(SB)/8, $callbackasm_entry_1391(SB)
+
+TEXT callbackasm_entry_1392(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1392, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11136(SB)/8, $callbackasm_entry_1392(SB)
+
+TEXT callbackasm_entry_1393(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1393, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11144(SB)/8, $callbackasm_entry_1393(SB)
+
+TEXT callbackasm_entry_1394(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1394, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11152(SB)/8, $callbackasm_entry_1394(SB)
+
+TEXT callbackasm_entry_1395(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1395, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11160(SB)/8, $callbackasm_entry_1395(SB)
+
+TEXT callbackasm_entry_1396(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1396, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11168(SB)/8, $callbackasm_entry_1396(SB)
+
+TEXT callbackasm_entry_1397(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1397, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11176(SB)/8, $callbackasm_entry_1397(SB)
+
+TEXT callbackasm_entry_1398(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1398, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11184(SB)/8, $callbackasm_entry_1398(SB)
+
+TEXT callbackasm_entry_1399(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1399, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11192(SB)/8, $callbackasm_entry_1399(SB)
+
+TEXT callbackasm_entry_1400(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1400, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11200(SB)/8, $callbackasm_entry_1400(SB)
+
+TEXT callbackasm_entry_1401(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1401, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11208(SB)/8, $callbackasm_entry_1401(SB)
+
+TEXT callbackasm_entry_1402(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1402, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11216(SB)/8, $callbackasm_entry_1402(SB)
+
+TEXT callbackasm_entry_1403(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1403, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11224(SB)/8, $callbackasm_entry_1403(SB)
+
+TEXT callbackasm_entry_1404(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1404, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11232(SB)/8, $callbackasm_entry_1404(SB)
+
+TEXT callbackasm_entry_1405(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1405, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11240(SB)/8, $callbackasm_entry_1405(SB)
+
+TEXT callbackasm_entry_1406(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1406, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11248(SB)/8, $callbackasm_entry_1406(SB)
+
+TEXT callbackasm_entry_1407(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1407, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11256(SB)/8, $callbackasm_entry_1407(SB)
+
+TEXT callbackasm_entry_1408(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1408, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11264(SB)/8, $callbackasm_entry_1408(SB)
+
+TEXT callbackasm_entry_1409(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1409, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11272(SB)/8, $callbackasm_entry_1409(SB)
+
+TEXT callbackasm_entry_1410(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1410, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11280(SB)/8, $callbackasm_entry_1410(SB)
+
+TEXT callbackasm_entry_1411(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1411, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11288(SB)/8, $callbackasm_entry_1411(SB)
+
+TEXT callbackasm_entry_1412(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1412, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11296(SB)/8, $callbackasm_entry_1412(SB)
+
+TEXT callbackasm_entry_1413(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1413, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11304(SB)/8, $callbackasm_entry_1413(SB)
+
+TEXT callbackasm_entry_1414(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1414, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11312(SB)/8, $callbackasm_entry_1414(SB)
+
+TEXT callbackasm_entry_1415(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1415, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11320(SB)/8, $callbackasm_entry_1415(SB)
+
+TEXT callbackasm_entry_1416(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1416, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11328(SB)/8, $callbackasm_entry_1416(SB)
+
+TEXT callbackasm_entry_1417(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1417, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11336(SB)/8, $callbackasm_entry_1417(SB)
+
+TEXT callbackasm_entry_1418(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1418, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11344(SB)/8, $callbackasm_entry_1418(SB)
+
+TEXT callbackasm_entry_1419(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1419, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11352(SB)/8, $callbackasm_entry_1419(SB)
+
+TEXT callbackasm_entry_1420(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1420, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11360(SB)/8, $callbackasm_entry_1420(SB)
+
+TEXT callbackasm_entry_1421(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1421, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11368(SB)/8, $callbackasm_entry_1421(SB)
+
+TEXT callbackasm_entry_1422(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1422, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11376(SB)/8, $callbackasm_entry_1422(SB)
+
+TEXT callbackasm_entry_1423(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1423, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11384(SB)/8, $callbackasm_entry_1423(SB)
+
+TEXT callbackasm_entry_1424(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1424, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11392(SB)/8, $callbackasm_entry_1424(SB)
+
+TEXT callbackasm_entry_1425(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1425, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11400(SB)/8, $callbackasm_entry_1425(SB)
+
+TEXT callbackasm_entry_1426(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1426, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11408(SB)/8, $callbackasm_entry_1426(SB)
+
+TEXT callbackasm_entry_1427(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1427, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11416(SB)/8, $callbackasm_entry_1427(SB)
+
+TEXT callbackasm_entry_1428(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1428, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11424(SB)/8, $callbackasm_entry_1428(SB)
+
+TEXT callbackasm_entry_1429(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1429, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11432(SB)/8, $callbackasm_entry_1429(SB)
+
+TEXT callbackasm_entry_1430(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1430, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11440(SB)/8, $callbackasm_entry_1430(SB)
+
+TEXT callbackasm_entry_1431(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1431, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11448(SB)/8, $callbackasm_entry_1431(SB)
+
+TEXT callbackasm_entry_1432(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1432, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11456(SB)/8, $callbackasm_entry_1432(SB)
+
+TEXT callbackasm_entry_1433(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1433, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11464(SB)/8, $callbackasm_entry_1433(SB)
+
+TEXT callbackasm_entry_1434(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1434, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11472(SB)/8, $callbackasm_entry_1434(SB)
+
+TEXT callbackasm_entry_1435(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1435, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11480(SB)/8, $callbackasm_entry_1435(SB)
+
+TEXT callbackasm_entry_1436(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1436, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11488(SB)/8, $callbackasm_entry_1436(SB)
+
+TEXT callbackasm_entry_1437(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1437, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11496(SB)/8, $callbackasm_entry_1437(SB)
+
+TEXT callbackasm_entry_1438(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1438, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11504(SB)/8, $callbackasm_entry_1438(SB)
+
+TEXT callbackasm_entry_1439(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1439, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11512(SB)/8, $callbackasm_entry_1439(SB)
+
+TEXT callbackasm_entry_1440(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1440, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11520(SB)/8, $callbackasm_entry_1440(SB)
+
+TEXT callbackasm_entry_1441(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1441, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11528(SB)/8, $callbackasm_entry_1441(SB)
+
+TEXT callbackasm_entry_1442(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1442, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11536(SB)/8, $callbackasm_entry_1442(SB)
+
+TEXT callbackasm_entry_1443(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1443, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11544(SB)/8, $callbackasm_entry_1443(SB)
+
+TEXT callbackasm_entry_1444(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1444, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11552(SB)/8, $callbackasm_entry_1444(SB)
+
+TEXT callbackasm_entry_1445(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1445, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11560(SB)/8, $callbackasm_entry_1445(SB)
+
+TEXT callbackasm_entry_1446(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1446, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11568(SB)/8, $callbackasm_entry_1446(SB)
+
+TEXT callbackasm_entry_1447(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1447, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11576(SB)/8, $callbackasm_entry_1447(SB)
+
+TEXT callbackasm_entry_1448(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1448, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11584(SB)/8, $callbackasm_entry_1448(SB)
+
+TEXT callbackasm_entry_1449(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1449, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11592(SB)/8, $callbackasm_entry_1449(SB)
+
+TEXT callbackasm_entry_1450(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1450, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11600(SB)/8, $callbackasm_entry_1450(SB)
+
+TEXT callbackasm_entry_1451(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1451, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11608(SB)/8, $callbackasm_entry_1451(SB)
+
+TEXT callbackasm_entry_1452(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1452, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11616(SB)/8, $callbackasm_entry_1452(SB)
+
+TEXT callbackasm_entry_1453(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1453, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11624(SB)/8, $callbackasm_entry_1453(SB)
+
+TEXT callbackasm_entry_1454(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1454, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11632(SB)/8, $callbackasm_entry_1454(SB)
+
+TEXT callbackasm_entry_1455(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1455, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11640(SB)/8, $callbackasm_entry_1455(SB)
+
+TEXT callbackasm_entry_1456(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1456, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11648(SB)/8, $callbackasm_entry_1456(SB)
+
+TEXT callbackasm_entry_1457(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1457, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11656(SB)/8, $callbackasm_entry_1457(SB)
+
+TEXT callbackasm_entry_1458(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1458, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11664(SB)/8, $callbackasm_entry_1458(SB)
+
+TEXT callbackasm_entry_1459(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1459, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11672(SB)/8, $callbackasm_entry_1459(SB)
+
+TEXT callbackasm_entry_1460(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1460, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11680(SB)/8, $callbackasm_entry_1460(SB)
+
+TEXT callbackasm_entry_1461(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1461, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11688(SB)/8, $callbackasm_entry_1461(SB)
+
+TEXT callbackasm_entry_1462(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1462, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11696(SB)/8, $callbackasm_entry_1462(SB)
+
+TEXT callbackasm_entry_1463(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1463, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11704(SB)/8, $callbackasm_entry_1463(SB)
+
+TEXT callbackasm_entry_1464(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1464, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11712(SB)/8, $callbackasm_entry_1464(SB)
+
+TEXT callbackasm_entry_1465(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1465, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11720(SB)/8, $callbackasm_entry_1465(SB)
+
+TEXT callbackasm_entry_1466(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1466, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11728(SB)/8, $callbackasm_entry_1466(SB)
+
+TEXT callbackasm_entry_1467(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1467, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11736(SB)/8, $callbackasm_entry_1467(SB)
+
+TEXT callbackasm_entry_1468(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1468, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11744(SB)/8, $callbackasm_entry_1468(SB)
+
+TEXT callbackasm_entry_1469(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1469, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11752(SB)/8, $callbackasm_entry_1469(SB)
+
+TEXT callbackasm_entry_1470(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1470, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11760(SB)/8, $callbackasm_entry_1470(SB)
+
+TEXT callbackasm_entry_1471(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1471, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11768(SB)/8, $callbackasm_entry_1471(SB)
+
+TEXT callbackasm_entry_1472(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1472, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11776(SB)/8, $callbackasm_entry_1472(SB)
+
+TEXT callbackasm_entry_1473(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1473, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11784(SB)/8, $callbackasm_entry_1473(SB)
+
+TEXT callbackasm_entry_1474(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1474, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11792(SB)/8, $callbackasm_entry_1474(SB)
+
+TEXT callbackasm_entry_1475(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1475, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11800(SB)/8, $callbackasm_entry_1475(SB)
+
+TEXT callbackasm_entry_1476(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1476, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11808(SB)/8, $callbackasm_entry_1476(SB)
+
+TEXT callbackasm_entry_1477(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1477, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11816(SB)/8, $callbackasm_entry_1477(SB)
+
+TEXT callbackasm_entry_1478(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1478, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11824(SB)/8, $callbackasm_entry_1478(SB)
+
+TEXT callbackasm_entry_1479(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1479, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11832(SB)/8, $callbackasm_entry_1479(SB)
+
+TEXT callbackasm_entry_1480(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1480, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11840(SB)/8, $callbackasm_entry_1480(SB)
+
+TEXT callbackasm_entry_1481(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1481, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11848(SB)/8, $callbackasm_entry_1481(SB)
+
+TEXT callbackasm_entry_1482(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1482, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11856(SB)/8, $callbackasm_entry_1482(SB)
+
+TEXT callbackasm_entry_1483(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1483, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11864(SB)/8, $callbackasm_entry_1483(SB)
+
+TEXT callbackasm_entry_1484(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1484, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11872(SB)/8, $callbackasm_entry_1484(SB)
+
+TEXT callbackasm_entry_1485(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1485, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11880(SB)/8, $callbackasm_entry_1485(SB)
+
+TEXT callbackasm_entry_1486(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1486, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11888(SB)/8, $callbackasm_entry_1486(SB)
+
+TEXT callbackasm_entry_1487(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1487, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11896(SB)/8, $callbackasm_entry_1487(SB)
+
+TEXT callbackasm_entry_1488(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1488, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11904(SB)/8, $callbackasm_entry_1488(SB)
+
+TEXT callbackasm_entry_1489(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1489, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11912(SB)/8, $callbackasm_entry_1489(SB)
+
+TEXT callbackasm_entry_1490(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1490, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11920(SB)/8, $callbackasm_entry_1490(SB)
+
+TEXT callbackasm_entry_1491(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1491, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11928(SB)/8, $callbackasm_entry_1491(SB)
+
+TEXT callbackasm_entry_1492(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1492, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11936(SB)/8, $callbackasm_entry_1492(SB)
+
+TEXT callbackasm_entry_1493(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1493, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11944(SB)/8, $callbackasm_entry_1493(SB)
+
+TEXT callbackasm_entry_1494(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1494, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11952(SB)/8, $callbackasm_entry_1494(SB)
+
+TEXT callbackasm_entry_1495(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1495, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11960(SB)/8, $callbackasm_entry_1495(SB)
+
+TEXT callbackasm_entry_1496(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1496, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11968(SB)/8, $callbackasm_entry_1496(SB)
+
+TEXT callbackasm_entry_1497(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1497, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11976(SB)/8, $callbackasm_entry_1497(SB)
+
+TEXT callbackasm_entry_1498(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1498, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11984(SB)/8, $callbackasm_entry_1498(SB)
+
+TEXT callbackasm_entry_1499(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1499, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+11992(SB)/8, $callbackasm_entry_1499(SB)
+
+TEXT callbackasm_entry_1500(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1500, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12000(SB)/8, $callbackasm_entry_1500(SB)
+
+TEXT callbackasm_entry_1501(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1501, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12008(SB)/8, $callbackasm_entry_1501(SB)
+
+TEXT callbackasm_entry_1502(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1502, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12016(SB)/8, $callbackasm_entry_1502(SB)
+
+TEXT callbackasm_entry_1503(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1503, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12024(SB)/8, $callbackasm_entry_1503(SB)
+
+TEXT callbackasm_entry_1504(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1504, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12032(SB)/8, $callbackasm_entry_1504(SB)
+
+TEXT callbackasm_entry_1505(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1505, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12040(SB)/8, $callbackasm_entry_1505(SB)
+
+TEXT callbackasm_entry_1506(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1506, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12048(SB)/8, $callbackasm_entry_1506(SB)
+
+TEXT callbackasm_entry_1507(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1507, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12056(SB)/8, $callbackasm_entry_1507(SB)
+
+TEXT callbackasm_entry_1508(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1508, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12064(SB)/8, $callbackasm_entry_1508(SB)
+
+TEXT callbackasm_entry_1509(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1509, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12072(SB)/8, $callbackasm_entry_1509(SB)
+
+TEXT callbackasm_entry_1510(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1510, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12080(SB)/8, $callbackasm_entry_1510(SB)
+
+TEXT callbackasm_entry_1511(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1511, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12088(SB)/8, $callbackasm_entry_1511(SB)
+
+TEXT callbackasm_entry_1512(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1512, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12096(SB)/8, $callbackasm_entry_1512(SB)
+
+TEXT callbackasm_entry_1513(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1513, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12104(SB)/8, $callbackasm_entry_1513(SB)
+
+TEXT callbackasm_entry_1514(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1514, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12112(SB)/8, $callbackasm_entry_1514(SB)
+
+TEXT callbackasm_entry_1515(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1515, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12120(SB)/8, $callbackasm_entry_1515(SB)
+
+TEXT callbackasm_entry_1516(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1516, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12128(SB)/8, $callbackasm_entry_1516(SB)
+
+TEXT callbackasm_entry_1517(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1517, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12136(SB)/8, $callbackasm_entry_1517(SB)
+
+TEXT callbackasm_entry_1518(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1518, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12144(SB)/8, $callbackasm_entry_1518(SB)
+
+TEXT callbackasm_entry_1519(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1519, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12152(SB)/8, $callbackasm_entry_1519(SB)
+
+TEXT callbackasm_entry_1520(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1520, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12160(SB)/8, $callbackasm_entry_1520(SB)
+
+TEXT callbackasm_entry_1521(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1521, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12168(SB)/8, $callbackasm_entry_1521(SB)
+
+TEXT callbackasm_entry_1522(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1522, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12176(SB)/8, $callbackasm_entry_1522(SB)
+
+TEXT callbackasm_entry_1523(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1523, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12184(SB)/8, $callbackasm_entry_1523(SB)
+
+TEXT callbackasm_entry_1524(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1524, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12192(SB)/8, $callbackasm_entry_1524(SB)
+
+TEXT callbackasm_entry_1525(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1525, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12200(SB)/8, $callbackasm_entry_1525(SB)
+
+TEXT callbackasm_entry_1526(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1526, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12208(SB)/8, $callbackasm_entry_1526(SB)
+
+TEXT callbackasm_entry_1527(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1527, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12216(SB)/8, $callbackasm_entry_1527(SB)
+
+TEXT callbackasm_entry_1528(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1528, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12224(SB)/8, $callbackasm_entry_1528(SB)
+
+TEXT callbackasm_entry_1529(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1529, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12232(SB)/8, $callbackasm_entry_1529(SB)
+
+TEXT callbackasm_entry_1530(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1530, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12240(SB)/8, $callbackasm_entry_1530(SB)
+
+TEXT callbackasm_entry_1531(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1531, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12248(SB)/8, $callbackasm_entry_1531(SB)
+
+TEXT callbackasm_entry_1532(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1532, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12256(SB)/8, $callbackasm_entry_1532(SB)
+
+TEXT callbackasm_entry_1533(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1533, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12264(SB)/8, $callbackasm_entry_1533(SB)
+
+TEXT callbackasm_entry_1534(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1534, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12272(SB)/8, $callbackasm_entry_1534(SB)
+
+TEXT callbackasm_entry_1535(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1535, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12280(SB)/8, $callbackasm_entry_1535(SB)
+
+TEXT callbackasm_entry_1536(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1536, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12288(SB)/8, $callbackasm_entry_1536(SB)
+
+TEXT callbackasm_entry_1537(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1537, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12296(SB)/8, $callbackasm_entry_1537(SB)
+
+TEXT callbackasm_entry_1538(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1538, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12304(SB)/8, $callbackasm_entry_1538(SB)
+
+TEXT callbackasm_entry_1539(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1539, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12312(SB)/8, $callbackasm_entry_1539(SB)
+
+TEXT callbackasm_entry_1540(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1540, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12320(SB)/8, $callbackasm_entry_1540(SB)
+
+TEXT callbackasm_entry_1541(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1541, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12328(SB)/8, $callbackasm_entry_1541(SB)
+
+TEXT callbackasm_entry_1542(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1542, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12336(SB)/8, $callbackasm_entry_1542(SB)
+
+TEXT callbackasm_entry_1543(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1543, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12344(SB)/8, $callbackasm_entry_1543(SB)
+
+TEXT callbackasm_entry_1544(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1544, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12352(SB)/8, $callbackasm_entry_1544(SB)
+
+TEXT callbackasm_entry_1545(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1545, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12360(SB)/8, $callbackasm_entry_1545(SB)
+
+TEXT callbackasm_entry_1546(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1546, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12368(SB)/8, $callbackasm_entry_1546(SB)
+
+TEXT callbackasm_entry_1547(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1547, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12376(SB)/8, $callbackasm_entry_1547(SB)
+
+TEXT callbackasm_entry_1548(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1548, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12384(SB)/8, $callbackasm_entry_1548(SB)
+
+TEXT callbackasm_entry_1549(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1549, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12392(SB)/8, $callbackasm_entry_1549(SB)
+
+TEXT callbackasm_entry_1550(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1550, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12400(SB)/8, $callbackasm_entry_1550(SB)
+
+TEXT callbackasm_entry_1551(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1551, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12408(SB)/8, $callbackasm_entry_1551(SB)
+
+TEXT callbackasm_entry_1552(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1552, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12416(SB)/8, $callbackasm_entry_1552(SB)
+
+TEXT callbackasm_entry_1553(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1553, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12424(SB)/8, $callbackasm_entry_1553(SB)
+
+TEXT callbackasm_entry_1554(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1554, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12432(SB)/8, $callbackasm_entry_1554(SB)
+
+TEXT callbackasm_entry_1555(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1555, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12440(SB)/8, $callbackasm_entry_1555(SB)
+
+TEXT callbackasm_entry_1556(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1556, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12448(SB)/8, $callbackasm_entry_1556(SB)
+
+TEXT callbackasm_entry_1557(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1557, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12456(SB)/8, $callbackasm_entry_1557(SB)
+
+TEXT callbackasm_entry_1558(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1558, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12464(SB)/8, $callbackasm_entry_1558(SB)
+
+TEXT callbackasm_entry_1559(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1559, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12472(SB)/8, $callbackasm_entry_1559(SB)
+
+TEXT callbackasm_entry_1560(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1560, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12480(SB)/8, $callbackasm_entry_1560(SB)
+
+TEXT callbackasm_entry_1561(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1561, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12488(SB)/8, $callbackasm_entry_1561(SB)
+
+TEXT callbackasm_entry_1562(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1562, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12496(SB)/8, $callbackasm_entry_1562(SB)
+
+TEXT callbackasm_entry_1563(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1563, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12504(SB)/8, $callbackasm_entry_1563(SB)
+
+TEXT callbackasm_entry_1564(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1564, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12512(SB)/8, $callbackasm_entry_1564(SB)
+
+TEXT callbackasm_entry_1565(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1565, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12520(SB)/8, $callbackasm_entry_1565(SB)
+
+TEXT callbackasm_entry_1566(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1566, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12528(SB)/8, $callbackasm_entry_1566(SB)
+
+TEXT callbackasm_entry_1567(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1567, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12536(SB)/8, $callbackasm_entry_1567(SB)
+
+TEXT callbackasm_entry_1568(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1568, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12544(SB)/8, $callbackasm_entry_1568(SB)
+
+TEXT callbackasm_entry_1569(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1569, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12552(SB)/8, $callbackasm_entry_1569(SB)
+
+TEXT callbackasm_entry_1570(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1570, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12560(SB)/8, $callbackasm_entry_1570(SB)
+
+TEXT callbackasm_entry_1571(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1571, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12568(SB)/8, $callbackasm_entry_1571(SB)
+
+TEXT callbackasm_entry_1572(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1572, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12576(SB)/8, $callbackasm_entry_1572(SB)
+
+TEXT callbackasm_entry_1573(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1573, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12584(SB)/8, $callbackasm_entry_1573(SB)
+
+TEXT callbackasm_entry_1574(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1574, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12592(SB)/8, $callbackasm_entry_1574(SB)
+
+TEXT callbackasm_entry_1575(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1575, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12600(SB)/8, $callbackasm_entry_1575(SB)
+
+TEXT callbackasm_entry_1576(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1576, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12608(SB)/8, $callbackasm_entry_1576(SB)
+
+TEXT callbackasm_entry_1577(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1577, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12616(SB)/8, $callbackasm_entry_1577(SB)
+
+TEXT callbackasm_entry_1578(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1578, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12624(SB)/8, $callbackasm_entry_1578(SB)
+
+TEXT callbackasm_entry_1579(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1579, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12632(SB)/8, $callbackasm_entry_1579(SB)
+
+TEXT callbackasm_entry_1580(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1580, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12640(SB)/8, $callbackasm_entry_1580(SB)
+
+TEXT callbackasm_entry_1581(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1581, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12648(SB)/8, $callbackasm_entry_1581(SB)
+
+TEXT callbackasm_entry_1582(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1582, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12656(SB)/8, $callbackasm_entry_1582(SB)
+
+TEXT callbackasm_entry_1583(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1583, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12664(SB)/8, $callbackasm_entry_1583(SB)
+
+TEXT callbackasm_entry_1584(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1584, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12672(SB)/8, $callbackasm_entry_1584(SB)
+
+TEXT callbackasm_entry_1585(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1585, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12680(SB)/8, $callbackasm_entry_1585(SB)
+
+TEXT callbackasm_entry_1586(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1586, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12688(SB)/8, $callbackasm_entry_1586(SB)
+
+TEXT callbackasm_entry_1587(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1587, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12696(SB)/8, $callbackasm_entry_1587(SB)
+
+TEXT callbackasm_entry_1588(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1588, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12704(SB)/8, $callbackasm_entry_1588(SB)
+
+TEXT callbackasm_entry_1589(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1589, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12712(SB)/8, $callbackasm_entry_1589(SB)
+
+TEXT callbackasm_entry_1590(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1590, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12720(SB)/8, $callbackasm_entry_1590(SB)
+
+TEXT callbackasm_entry_1591(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1591, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12728(SB)/8, $callbackasm_entry_1591(SB)
+
+TEXT callbackasm_entry_1592(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1592, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12736(SB)/8, $callbackasm_entry_1592(SB)
+
+TEXT callbackasm_entry_1593(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1593, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12744(SB)/8, $callbackasm_entry_1593(SB)
+
+TEXT callbackasm_entry_1594(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1594, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12752(SB)/8, $callbackasm_entry_1594(SB)
+
+TEXT callbackasm_entry_1595(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1595, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12760(SB)/8, $callbackasm_entry_1595(SB)
+
+TEXT callbackasm_entry_1596(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1596, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12768(SB)/8, $callbackasm_entry_1596(SB)
+
+TEXT callbackasm_entry_1597(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1597, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12776(SB)/8, $callbackasm_entry_1597(SB)
+
+TEXT callbackasm_entry_1598(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1598, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12784(SB)/8, $callbackasm_entry_1598(SB)
+
+TEXT callbackasm_entry_1599(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1599, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12792(SB)/8, $callbackasm_entry_1599(SB)
+
+TEXT callbackasm_entry_1600(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1600, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12800(SB)/8, $callbackasm_entry_1600(SB)
+
+TEXT callbackasm_entry_1601(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1601, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12808(SB)/8, $callbackasm_entry_1601(SB)
+
+TEXT callbackasm_entry_1602(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1602, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12816(SB)/8, $callbackasm_entry_1602(SB)
+
+TEXT callbackasm_entry_1603(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1603, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12824(SB)/8, $callbackasm_entry_1603(SB)
+
+TEXT callbackasm_entry_1604(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1604, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12832(SB)/8, $callbackasm_entry_1604(SB)
+
+TEXT callbackasm_entry_1605(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1605, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12840(SB)/8, $callbackasm_entry_1605(SB)
+
+TEXT callbackasm_entry_1606(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1606, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12848(SB)/8, $callbackasm_entry_1606(SB)
+
+TEXT callbackasm_entry_1607(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1607, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12856(SB)/8, $callbackasm_entry_1607(SB)
+
+TEXT callbackasm_entry_1608(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1608, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12864(SB)/8, $callbackasm_entry_1608(SB)
+
+TEXT callbackasm_entry_1609(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1609, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12872(SB)/8, $callbackasm_entry_1609(SB)
+
+TEXT callbackasm_entry_1610(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1610, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12880(SB)/8, $callbackasm_entry_1610(SB)
+
+TEXT callbackasm_entry_1611(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1611, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12888(SB)/8, $callbackasm_entry_1611(SB)
+
+TEXT callbackasm_entry_1612(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1612, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12896(SB)/8, $callbackasm_entry_1612(SB)
+
+TEXT callbackasm_entry_1613(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1613, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12904(SB)/8, $callbackasm_entry_1613(SB)
+
+TEXT callbackasm_entry_1614(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1614, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12912(SB)/8, $callbackasm_entry_1614(SB)
+
+TEXT callbackasm_entry_1615(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1615, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12920(SB)/8, $callbackasm_entry_1615(SB)
+
+TEXT callbackasm_entry_1616(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1616, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12928(SB)/8, $callbackasm_entry_1616(SB)
+
+TEXT callbackasm_entry_1617(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1617, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12936(SB)/8, $callbackasm_entry_1617(SB)
+
+TEXT callbackasm_entry_1618(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1618, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12944(SB)/8, $callbackasm_entry_1618(SB)
+
+TEXT callbackasm_entry_1619(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1619, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12952(SB)/8, $callbackasm_entry_1619(SB)
+
+TEXT callbackasm_entry_1620(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1620, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12960(SB)/8, $callbackasm_entry_1620(SB)
+
+TEXT callbackasm_entry_1621(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1621, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12968(SB)/8, $callbackasm_entry_1621(SB)
+
+TEXT callbackasm_entry_1622(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1622, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12976(SB)/8, $callbackasm_entry_1622(SB)
+
+TEXT callbackasm_entry_1623(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1623, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12984(SB)/8, $callbackasm_entry_1623(SB)
+
+TEXT callbackasm_entry_1624(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1624, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+12992(SB)/8, $callbackasm_entry_1624(SB)
+
+TEXT callbackasm_entry_1625(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1625, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13000(SB)/8, $callbackasm_entry_1625(SB)
+
+TEXT callbackasm_entry_1626(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1626, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13008(SB)/8, $callbackasm_entry_1626(SB)
+
+TEXT callbackasm_entry_1627(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1627, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13016(SB)/8, $callbackasm_entry_1627(SB)
+
+TEXT callbackasm_entry_1628(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1628, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13024(SB)/8, $callbackasm_entry_1628(SB)
+
+TEXT callbackasm_entry_1629(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1629, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13032(SB)/8, $callbackasm_entry_1629(SB)
+
+TEXT callbackasm_entry_1630(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1630, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13040(SB)/8, $callbackasm_entry_1630(SB)
+
+TEXT callbackasm_entry_1631(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1631, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13048(SB)/8, $callbackasm_entry_1631(SB)
+
+TEXT callbackasm_entry_1632(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1632, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13056(SB)/8, $callbackasm_entry_1632(SB)
+
+TEXT callbackasm_entry_1633(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1633, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13064(SB)/8, $callbackasm_entry_1633(SB)
+
+TEXT callbackasm_entry_1634(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1634, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13072(SB)/8, $callbackasm_entry_1634(SB)
+
+TEXT callbackasm_entry_1635(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1635, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13080(SB)/8, $callbackasm_entry_1635(SB)
+
+TEXT callbackasm_entry_1636(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1636, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13088(SB)/8, $callbackasm_entry_1636(SB)
+
+TEXT callbackasm_entry_1637(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1637, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13096(SB)/8, $callbackasm_entry_1637(SB)
+
+TEXT callbackasm_entry_1638(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1638, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13104(SB)/8, $callbackasm_entry_1638(SB)
+
+TEXT callbackasm_entry_1639(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1639, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13112(SB)/8, $callbackasm_entry_1639(SB)
+
+TEXT callbackasm_entry_1640(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1640, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13120(SB)/8, $callbackasm_entry_1640(SB)
+
+TEXT callbackasm_entry_1641(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1641, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13128(SB)/8, $callbackasm_entry_1641(SB)
+
+TEXT callbackasm_entry_1642(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1642, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13136(SB)/8, $callbackasm_entry_1642(SB)
+
+TEXT callbackasm_entry_1643(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1643, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13144(SB)/8, $callbackasm_entry_1643(SB)
+
+TEXT callbackasm_entry_1644(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1644, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13152(SB)/8, $callbackasm_entry_1644(SB)
+
+TEXT callbackasm_entry_1645(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1645, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13160(SB)/8, $callbackasm_entry_1645(SB)
+
+TEXT callbackasm_entry_1646(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1646, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13168(SB)/8, $callbackasm_entry_1646(SB)
+
+TEXT callbackasm_entry_1647(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1647, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13176(SB)/8, $callbackasm_entry_1647(SB)
+
+TEXT callbackasm_entry_1648(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1648, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13184(SB)/8, $callbackasm_entry_1648(SB)
+
+TEXT callbackasm_entry_1649(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1649, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13192(SB)/8, $callbackasm_entry_1649(SB)
+
+TEXT callbackasm_entry_1650(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1650, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13200(SB)/8, $callbackasm_entry_1650(SB)
+
+TEXT callbackasm_entry_1651(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1651, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13208(SB)/8, $callbackasm_entry_1651(SB)
+
+TEXT callbackasm_entry_1652(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1652, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13216(SB)/8, $callbackasm_entry_1652(SB)
+
+TEXT callbackasm_entry_1653(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1653, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13224(SB)/8, $callbackasm_entry_1653(SB)
+
+TEXT callbackasm_entry_1654(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1654, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13232(SB)/8, $callbackasm_entry_1654(SB)
+
+TEXT callbackasm_entry_1655(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1655, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13240(SB)/8, $callbackasm_entry_1655(SB)
+
+TEXT callbackasm_entry_1656(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1656, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13248(SB)/8, $callbackasm_entry_1656(SB)
+
+TEXT callbackasm_entry_1657(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1657, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13256(SB)/8, $callbackasm_entry_1657(SB)
+
+TEXT callbackasm_entry_1658(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1658, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13264(SB)/8, $callbackasm_entry_1658(SB)
+
+TEXT callbackasm_entry_1659(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1659, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13272(SB)/8, $callbackasm_entry_1659(SB)
+
+TEXT callbackasm_entry_1660(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1660, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13280(SB)/8, $callbackasm_entry_1660(SB)
+
+TEXT callbackasm_entry_1661(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1661, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13288(SB)/8, $callbackasm_entry_1661(SB)
+
+TEXT callbackasm_entry_1662(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1662, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13296(SB)/8, $callbackasm_entry_1662(SB)
+
+TEXT callbackasm_entry_1663(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1663, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13304(SB)/8, $callbackasm_entry_1663(SB)
+
+TEXT callbackasm_entry_1664(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1664, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13312(SB)/8, $callbackasm_entry_1664(SB)
+
+TEXT callbackasm_entry_1665(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1665, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13320(SB)/8, $callbackasm_entry_1665(SB)
+
+TEXT callbackasm_entry_1666(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1666, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13328(SB)/8, $callbackasm_entry_1666(SB)
+
+TEXT callbackasm_entry_1667(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1667, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13336(SB)/8, $callbackasm_entry_1667(SB)
+
+TEXT callbackasm_entry_1668(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1668, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13344(SB)/8, $callbackasm_entry_1668(SB)
+
+TEXT callbackasm_entry_1669(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1669, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13352(SB)/8, $callbackasm_entry_1669(SB)
+
+TEXT callbackasm_entry_1670(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1670, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13360(SB)/8, $callbackasm_entry_1670(SB)
+
+TEXT callbackasm_entry_1671(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1671, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13368(SB)/8, $callbackasm_entry_1671(SB)
+
+TEXT callbackasm_entry_1672(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1672, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13376(SB)/8, $callbackasm_entry_1672(SB)
+
+TEXT callbackasm_entry_1673(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1673, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13384(SB)/8, $callbackasm_entry_1673(SB)
+
+TEXT callbackasm_entry_1674(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1674, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13392(SB)/8, $callbackasm_entry_1674(SB)
+
+TEXT callbackasm_entry_1675(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1675, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13400(SB)/8, $callbackasm_entry_1675(SB)
+
+TEXT callbackasm_entry_1676(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1676, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13408(SB)/8, $callbackasm_entry_1676(SB)
+
+TEXT callbackasm_entry_1677(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1677, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13416(SB)/8, $callbackasm_entry_1677(SB)
+
+TEXT callbackasm_entry_1678(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1678, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13424(SB)/8, $callbackasm_entry_1678(SB)
+
+TEXT callbackasm_entry_1679(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1679, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13432(SB)/8, $callbackasm_entry_1679(SB)
+
+TEXT callbackasm_entry_1680(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1680, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13440(SB)/8, $callbackasm_entry_1680(SB)
+
+TEXT callbackasm_entry_1681(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1681, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13448(SB)/8, $callbackasm_entry_1681(SB)
+
+TEXT callbackasm_entry_1682(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1682, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13456(SB)/8, $callbackasm_entry_1682(SB)
+
+TEXT callbackasm_entry_1683(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1683, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13464(SB)/8, $callbackasm_entry_1683(SB)
+
+TEXT callbackasm_entry_1684(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1684, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13472(SB)/8, $callbackasm_entry_1684(SB)
+
+TEXT callbackasm_entry_1685(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1685, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13480(SB)/8, $callbackasm_entry_1685(SB)
+
+TEXT callbackasm_entry_1686(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1686, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13488(SB)/8, $callbackasm_entry_1686(SB)
+
+TEXT callbackasm_entry_1687(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1687, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13496(SB)/8, $callbackasm_entry_1687(SB)
+
+TEXT callbackasm_entry_1688(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1688, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13504(SB)/8, $callbackasm_entry_1688(SB)
+
+TEXT callbackasm_entry_1689(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1689, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13512(SB)/8, $callbackasm_entry_1689(SB)
+
+TEXT callbackasm_entry_1690(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1690, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13520(SB)/8, $callbackasm_entry_1690(SB)
+
+TEXT callbackasm_entry_1691(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1691, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13528(SB)/8, $callbackasm_entry_1691(SB)
+
+TEXT callbackasm_entry_1692(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1692, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13536(SB)/8, $callbackasm_entry_1692(SB)
+
+TEXT callbackasm_entry_1693(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1693, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13544(SB)/8, $callbackasm_entry_1693(SB)
+
+TEXT callbackasm_entry_1694(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1694, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13552(SB)/8, $callbackasm_entry_1694(SB)
+
+TEXT callbackasm_entry_1695(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1695, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13560(SB)/8, $callbackasm_entry_1695(SB)
+
+TEXT callbackasm_entry_1696(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1696, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13568(SB)/8, $callbackasm_entry_1696(SB)
+
+TEXT callbackasm_entry_1697(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1697, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13576(SB)/8, $callbackasm_entry_1697(SB)
+
+TEXT callbackasm_entry_1698(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1698, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13584(SB)/8, $callbackasm_entry_1698(SB)
+
+TEXT callbackasm_entry_1699(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1699, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13592(SB)/8, $callbackasm_entry_1699(SB)
+
+TEXT callbackasm_entry_1700(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1700, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13600(SB)/8, $callbackasm_entry_1700(SB)
+
+TEXT callbackasm_entry_1701(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1701, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13608(SB)/8, $callbackasm_entry_1701(SB)
+
+TEXT callbackasm_entry_1702(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1702, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13616(SB)/8, $callbackasm_entry_1702(SB)
+
+TEXT callbackasm_entry_1703(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1703, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13624(SB)/8, $callbackasm_entry_1703(SB)
+
+TEXT callbackasm_entry_1704(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1704, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13632(SB)/8, $callbackasm_entry_1704(SB)
+
+TEXT callbackasm_entry_1705(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1705, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13640(SB)/8, $callbackasm_entry_1705(SB)
+
+TEXT callbackasm_entry_1706(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1706, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13648(SB)/8, $callbackasm_entry_1706(SB)
+
+TEXT callbackasm_entry_1707(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1707, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13656(SB)/8, $callbackasm_entry_1707(SB)
+
+TEXT callbackasm_entry_1708(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1708, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13664(SB)/8, $callbackasm_entry_1708(SB)
+
+TEXT callbackasm_entry_1709(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1709, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13672(SB)/8, $callbackasm_entry_1709(SB)
+
+TEXT callbackasm_entry_1710(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1710, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13680(SB)/8, $callbackasm_entry_1710(SB)
+
+TEXT callbackasm_entry_1711(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1711, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13688(SB)/8, $callbackasm_entry_1711(SB)
+
+TEXT callbackasm_entry_1712(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1712, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13696(SB)/8, $callbackasm_entry_1712(SB)
+
+TEXT callbackasm_entry_1713(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1713, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13704(SB)/8, $callbackasm_entry_1713(SB)
+
+TEXT callbackasm_entry_1714(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1714, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13712(SB)/8, $callbackasm_entry_1714(SB)
+
+TEXT callbackasm_entry_1715(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1715, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13720(SB)/8, $callbackasm_entry_1715(SB)
+
+TEXT callbackasm_entry_1716(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1716, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13728(SB)/8, $callbackasm_entry_1716(SB)
+
+TEXT callbackasm_entry_1717(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1717, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13736(SB)/8, $callbackasm_entry_1717(SB)
+
+TEXT callbackasm_entry_1718(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1718, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13744(SB)/8, $callbackasm_entry_1718(SB)
+
+TEXT callbackasm_entry_1719(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1719, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13752(SB)/8, $callbackasm_entry_1719(SB)
+
+TEXT callbackasm_entry_1720(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1720, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13760(SB)/8, $callbackasm_entry_1720(SB)
+
+TEXT callbackasm_entry_1721(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1721, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13768(SB)/8, $callbackasm_entry_1721(SB)
+
+TEXT callbackasm_entry_1722(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1722, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13776(SB)/8, $callbackasm_entry_1722(SB)
+
+TEXT callbackasm_entry_1723(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1723, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13784(SB)/8, $callbackasm_entry_1723(SB)
+
+TEXT callbackasm_entry_1724(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1724, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13792(SB)/8, $callbackasm_entry_1724(SB)
+
+TEXT callbackasm_entry_1725(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1725, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13800(SB)/8, $callbackasm_entry_1725(SB)
+
+TEXT callbackasm_entry_1726(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1726, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13808(SB)/8, $callbackasm_entry_1726(SB)
+
+TEXT callbackasm_entry_1727(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1727, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13816(SB)/8, $callbackasm_entry_1727(SB)
+
+TEXT callbackasm_entry_1728(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1728, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13824(SB)/8, $callbackasm_entry_1728(SB)
+
+TEXT callbackasm_entry_1729(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1729, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13832(SB)/8, $callbackasm_entry_1729(SB)
+
+TEXT callbackasm_entry_1730(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1730, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13840(SB)/8, $callbackasm_entry_1730(SB)
+
+TEXT callbackasm_entry_1731(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1731, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13848(SB)/8, $callbackasm_entry_1731(SB)
+
+TEXT callbackasm_entry_1732(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1732, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13856(SB)/8, $callbackasm_entry_1732(SB)
+
+TEXT callbackasm_entry_1733(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1733, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13864(SB)/8, $callbackasm_entry_1733(SB)
+
+TEXT callbackasm_entry_1734(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1734, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13872(SB)/8, $callbackasm_entry_1734(SB)
+
+TEXT callbackasm_entry_1735(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1735, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13880(SB)/8, $callbackasm_entry_1735(SB)
+
+TEXT callbackasm_entry_1736(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1736, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13888(SB)/8, $callbackasm_entry_1736(SB)
+
+TEXT callbackasm_entry_1737(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1737, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13896(SB)/8, $callbackasm_entry_1737(SB)
+
+TEXT callbackasm_entry_1738(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1738, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13904(SB)/8, $callbackasm_entry_1738(SB)
+
+TEXT callbackasm_entry_1739(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1739, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13912(SB)/8, $callbackasm_entry_1739(SB)
+
+TEXT callbackasm_entry_1740(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1740, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13920(SB)/8, $callbackasm_entry_1740(SB)
+
+TEXT callbackasm_entry_1741(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1741, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13928(SB)/8, $callbackasm_entry_1741(SB)
+
+TEXT callbackasm_entry_1742(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1742, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13936(SB)/8, $callbackasm_entry_1742(SB)
+
+TEXT callbackasm_entry_1743(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1743, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13944(SB)/8, $callbackasm_entry_1743(SB)
+
+TEXT callbackasm_entry_1744(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1744, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13952(SB)/8, $callbackasm_entry_1744(SB)
+
+TEXT callbackasm_entry_1745(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1745, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13960(SB)/8, $callbackasm_entry_1745(SB)
+
+TEXT callbackasm_entry_1746(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1746, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13968(SB)/8, $callbackasm_entry_1746(SB)
+
+TEXT callbackasm_entry_1747(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1747, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13976(SB)/8, $callbackasm_entry_1747(SB)
+
+TEXT callbackasm_entry_1748(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1748, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13984(SB)/8, $callbackasm_entry_1748(SB)
+
+TEXT callbackasm_entry_1749(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1749, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+13992(SB)/8, $callbackasm_entry_1749(SB)
+
+TEXT callbackasm_entry_1750(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1750, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14000(SB)/8, $callbackasm_entry_1750(SB)
+
+TEXT callbackasm_entry_1751(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1751, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14008(SB)/8, $callbackasm_entry_1751(SB)
+
+TEXT callbackasm_entry_1752(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1752, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14016(SB)/8, $callbackasm_entry_1752(SB)
+
+TEXT callbackasm_entry_1753(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1753, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14024(SB)/8, $callbackasm_entry_1753(SB)
+
+TEXT callbackasm_entry_1754(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1754, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14032(SB)/8, $callbackasm_entry_1754(SB)
+
+TEXT callbackasm_entry_1755(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1755, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14040(SB)/8, $callbackasm_entry_1755(SB)
+
+TEXT callbackasm_entry_1756(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1756, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14048(SB)/8, $callbackasm_entry_1756(SB)
+
+TEXT callbackasm_entry_1757(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1757, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14056(SB)/8, $callbackasm_entry_1757(SB)
+
+TEXT callbackasm_entry_1758(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1758, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14064(SB)/8, $callbackasm_entry_1758(SB)
+
+TEXT callbackasm_entry_1759(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1759, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14072(SB)/8, $callbackasm_entry_1759(SB)
+
+TEXT callbackasm_entry_1760(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1760, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14080(SB)/8, $callbackasm_entry_1760(SB)
+
+TEXT callbackasm_entry_1761(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1761, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14088(SB)/8, $callbackasm_entry_1761(SB)
+
+TEXT callbackasm_entry_1762(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1762, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14096(SB)/8, $callbackasm_entry_1762(SB)
+
+TEXT callbackasm_entry_1763(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1763, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14104(SB)/8, $callbackasm_entry_1763(SB)
+
+TEXT callbackasm_entry_1764(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1764, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14112(SB)/8, $callbackasm_entry_1764(SB)
+
+TEXT callbackasm_entry_1765(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1765, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14120(SB)/8, $callbackasm_entry_1765(SB)
+
+TEXT callbackasm_entry_1766(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1766, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14128(SB)/8, $callbackasm_entry_1766(SB)
+
+TEXT callbackasm_entry_1767(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1767, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14136(SB)/8, $callbackasm_entry_1767(SB)
+
+TEXT callbackasm_entry_1768(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1768, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14144(SB)/8, $callbackasm_entry_1768(SB)
+
+TEXT callbackasm_entry_1769(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1769, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14152(SB)/8, $callbackasm_entry_1769(SB)
+
+TEXT callbackasm_entry_1770(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1770, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14160(SB)/8, $callbackasm_entry_1770(SB)
+
+TEXT callbackasm_entry_1771(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1771, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14168(SB)/8, $callbackasm_entry_1771(SB)
+
+TEXT callbackasm_entry_1772(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1772, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14176(SB)/8, $callbackasm_entry_1772(SB)
+
+TEXT callbackasm_entry_1773(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1773, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14184(SB)/8, $callbackasm_entry_1773(SB)
+
+TEXT callbackasm_entry_1774(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1774, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14192(SB)/8, $callbackasm_entry_1774(SB)
+
+TEXT callbackasm_entry_1775(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1775, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14200(SB)/8, $callbackasm_entry_1775(SB)
+
+TEXT callbackasm_entry_1776(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1776, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14208(SB)/8, $callbackasm_entry_1776(SB)
+
+TEXT callbackasm_entry_1777(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1777, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14216(SB)/8, $callbackasm_entry_1777(SB)
+
+TEXT callbackasm_entry_1778(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1778, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14224(SB)/8, $callbackasm_entry_1778(SB)
+
+TEXT callbackasm_entry_1779(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1779, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14232(SB)/8, $callbackasm_entry_1779(SB)
+
+TEXT callbackasm_entry_1780(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1780, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14240(SB)/8, $callbackasm_entry_1780(SB)
+
+TEXT callbackasm_entry_1781(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1781, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14248(SB)/8, $callbackasm_entry_1781(SB)
+
+TEXT callbackasm_entry_1782(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1782, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14256(SB)/8, $callbackasm_entry_1782(SB)
+
+TEXT callbackasm_entry_1783(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1783, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14264(SB)/8, $callbackasm_entry_1783(SB)
+
+TEXT callbackasm_entry_1784(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1784, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14272(SB)/8, $callbackasm_entry_1784(SB)
+
+TEXT callbackasm_entry_1785(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1785, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14280(SB)/8, $callbackasm_entry_1785(SB)
+
+TEXT callbackasm_entry_1786(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1786, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14288(SB)/8, $callbackasm_entry_1786(SB)
+
+TEXT callbackasm_entry_1787(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1787, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14296(SB)/8, $callbackasm_entry_1787(SB)
+
+TEXT callbackasm_entry_1788(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1788, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14304(SB)/8, $callbackasm_entry_1788(SB)
+
+TEXT callbackasm_entry_1789(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1789, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14312(SB)/8, $callbackasm_entry_1789(SB)
+
+TEXT callbackasm_entry_1790(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1790, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14320(SB)/8, $callbackasm_entry_1790(SB)
+
+TEXT callbackasm_entry_1791(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1791, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14328(SB)/8, $callbackasm_entry_1791(SB)
+
+TEXT callbackasm_entry_1792(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1792, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14336(SB)/8, $callbackasm_entry_1792(SB)
+
+TEXT callbackasm_entry_1793(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1793, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14344(SB)/8, $callbackasm_entry_1793(SB)
+
+TEXT callbackasm_entry_1794(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1794, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14352(SB)/8, $callbackasm_entry_1794(SB)
+
+TEXT callbackasm_entry_1795(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1795, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14360(SB)/8, $callbackasm_entry_1795(SB)
+
+TEXT callbackasm_entry_1796(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1796, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14368(SB)/8, $callbackasm_entry_1796(SB)
+
+TEXT callbackasm_entry_1797(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1797, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14376(SB)/8, $callbackasm_entry_1797(SB)
+
+TEXT callbackasm_entry_1798(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1798, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14384(SB)/8, $callbackasm_entry_1798(SB)
+
+TEXT callbackasm_entry_1799(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1799, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14392(SB)/8, $callbackasm_entry_1799(SB)
+
+TEXT callbackasm_entry_1800(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1800, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14400(SB)/8, $callbackasm_entry_1800(SB)
+
+TEXT callbackasm_entry_1801(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1801, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14408(SB)/8, $callbackasm_entry_1801(SB)
+
+TEXT callbackasm_entry_1802(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1802, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14416(SB)/8, $callbackasm_entry_1802(SB)
+
+TEXT callbackasm_entry_1803(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1803, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14424(SB)/8, $callbackasm_entry_1803(SB)
+
+TEXT callbackasm_entry_1804(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1804, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14432(SB)/8, $callbackasm_entry_1804(SB)
+
+TEXT callbackasm_entry_1805(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1805, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14440(SB)/8, $callbackasm_entry_1805(SB)
+
+TEXT callbackasm_entry_1806(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1806, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14448(SB)/8, $callbackasm_entry_1806(SB)
+
+TEXT callbackasm_entry_1807(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1807, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14456(SB)/8, $callbackasm_entry_1807(SB)
+
+TEXT callbackasm_entry_1808(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1808, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14464(SB)/8, $callbackasm_entry_1808(SB)
+
+TEXT callbackasm_entry_1809(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1809, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14472(SB)/8, $callbackasm_entry_1809(SB)
+
+TEXT callbackasm_entry_1810(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1810, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14480(SB)/8, $callbackasm_entry_1810(SB)
+
+TEXT callbackasm_entry_1811(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1811, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14488(SB)/8, $callbackasm_entry_1811(SB)
+
+TEXT callbackasm_entry_1812(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1812, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14496(SB)/8, $callbackasm_entry_1812(SB)
+
+TEXT callbackasm_entry_1813(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1813, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14504(SB)/8, $callbackasm_entry_1813(SB)
+
+TEXT callbackasm_entry_1814(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1814, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14512(SB)/8, $callbackasm_entry_1814(SB)
+
+TEXT callbackasm_entry_1815(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1815, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14520(SB)/8, $callbackasm_entry_1815(SB)
+
+TEXT callbackasm_entry_1816(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1816, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14528(SB)/8, $callbackasm_entry_1816(SB)
+
+TEXT callbackasm_entry_1817(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1817, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14536(SB)/8, $callbackasm_entry_1817(SB)
+
+TEXT callbackasm_entry_1818(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1818, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14544(SB)/8, $callbackasm_entry_1818(SB)
+
+TEXT callbackasm_entry_1819(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1819, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14552(SB)/8, $callbackasm_entry_1819(SB)
+
+TEXT callbackasm_entry_1820(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1820, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14560(SB)/8, $callbackasm_entry_1820(SB)
+
+TEXT callbackasm_entry_1821(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1821, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14568(SB)/8, $callbackasm_entry_1821(SB)
+
+TEXT callbackasm_entry_1822(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1822, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14576(SB)/8, $callbackasm_entry_1822(SB)
+
+TEXT callbackasm_entry_1823(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1823, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14584(SB)/8, $callbackasm_entry_1823(SB)
+
+TEXT callbackasm_entry_1824(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1824, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14592(SB)/8, $callbackasm_entry_1824(SB)
+
+TEXT callbackasm_entry_1825(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1825, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14600(SB)/8, $callbackasm_entry_1825(SB)
+
+TEXT callbackasm_entry_1826(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1826, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14608(SB)/8, $callbackasm_entry_1826(SB)
+
+TEXT callbackasm_entry_1827(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1827, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14616(SB)/8, $callbackasm_entry_1827(SB)
+
+TEXT callbackasm_entry_1828(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1828, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14624(SB)/8, $callbackasm_entry_1828(SB)
+
+TEXT callbackasm_entry_1829(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1829, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14632(SB)/8, $callbackasm_entry_1829(SB)
+
+TEXT callbackasm_entry_1830(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1830, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14640(SB)/8, $callbackasm_entry_1830(SB)
+
+TEXT callbackasm_entry_1831(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1831, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14648(SB)/8, $callbackasm_entry_1831(SB)
+
+TEXT callbackasm_entry_1832(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1832, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14656(SB)/8, $callbackasm_entry_1832(SB)
+
+TEXT callbackasm_entry_1833(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1833, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14664(SB)/8, $callbackasm_entry_1833(SB)
+
+TEXT callbackasm_entry_1834(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1834, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14672(SB)/8, $callbackasm_entry_1834(SB)
+
+TEXT callbackasm_entry_1835(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1835, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14680(SB)/8, $callbackasm_entry_1835(SB)
+
+TEXT callbackasm_entry_1836(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1836, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14688(SB)/8, $callbackasm_entry_1836(SB)
+
+TEXT callbackasm_entry_1837(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1837, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14696(SB)/8, $callbackasm_entry_1837(SB)
+
+TEXT callbackasm_entry_1838(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1838, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14704(SB)/8, $callbackasm_entry_1838(SB)
+
+TEXT callbackasm_entry_1839(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1839, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14712(SB)/8, $callbackasm_entry_1839(SB)
+
+TEXT callbackasm_entry_1840(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1840, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14720(SB)/8, $callbackasm_entry_1840(SB)
+
+TEXT callbackasm_entry_1841(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1841, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14728(SB)/8, $callbackasm_entry_1841(SB)
+
+TEXT callbackasm_entry_1842(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1842, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14736(SB)/8, $callbackasm_entry_1842(SB)
+
+TEXT callbackasm_entry_1843(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1843, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14744(SB)/8, $callbackasm_entry_1843(SB)
+
+TEXT callbackasm_entry_1844(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1844, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14752(SB)/8, $callbackasm_entry_1844(SB)
+
+TEXT callbackasm_entry_1845(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1845, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14760(SB)/8, $callbackasm_entry_1845(SB)
+
+TEXT callbackasm_entry_1846(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1846, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14768(SB)/8, $callbackasm_entry_1846(SB)
+
+TEXT callbackasm_entry_1847(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1847, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14776(SB)/8, $callbackasm_entry_1847(SB)
+
+TEXT callbackasm_entry_1848(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1848, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14784(SB)/8, $callbackasm_entry_1848(SB)
+
+TEXT callbackasm_entry_1849(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1849, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14792(SB)/8, $callbackasm_entry_1849(SB)
+
+TEXT callbackasm_entry_1850(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1850, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14800(SB)/8, $callbackasm_entry_1850(SB)
+
+TEXT callbackasm_entry_1851(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1851, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14808(SB)/8, $callbackasm_entry_1851(SB)
+
+TEXT callbackasm_entry_1852(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1852, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14816(SB)/8, $callbackasm_entry_1852(SB)
+
+TEXT callbackasm_entry_1853(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1853, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14824(SB)/8, $callbackasm_entry_1853(SB)
+
+TEXT callbackasm_entry_1854(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1854, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14832(SB)/8, $callbackasm_entry_1854(SB)
+
+TEXT callbackasm_entry_1855(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1855, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14840(SB)/8, $callbackasm_entry_1855(SB)
+
+TEXT callbackasm_entry_1856(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1856, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14848(SB)/8, $callbackasm_entry_1856(SB)
+
+TEXT callbackasm_entry_1857(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1857, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14856(SB)/8, $callbackasm_entry_1857(SB)
+
+TEXT callbackasm_entry_1858(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1858, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14864(SB)/8, $callbackasm_entry_1858(SB)
+
+TEXT callbackasm_entry_1859(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1859, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14872(SB)/8, $callbackasm_entry_1859(SB)
+
+TEXT callbackasm_entry_1860(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1860, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14880(SB)/8, $callbackasm_entry_1860(SB)
+
+TEXT callbackasm_entry_1861(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1861, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14888(SB)/8, $callbackasm_entry_1861(SB)
+
+TEXT callbackasm_entry_1862(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1862, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14896(SB)/8, $callbackasm_entry_1862(SB)
+
+TEXT callbackasm_entry_1863(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1863, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14904(SB)/8, $callbackasm_entry_1863(SB)
+
+TEXT callbackasm_entry_1864(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1864, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14912(SB)/8, $callbackasm_entry_1864(SB)
+
+TEXT callbackasm_entry_1865(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1865, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14920(SB)/8, $callbackasm_entry_1865(SB)
+
+TEXT callbackasm_entry_1866(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1866, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14928(SB)/8, $callbackasm_entry_1866(SB)
+
+TEXT callbackasm_entry_1867(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1867, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14936(SB)/8, $callbackasm_entry_1867(SB)
+
+TEXT callbackasm_entry_1868(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1868, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14944(SB)/8, $callbackasm_entry_1868(SB)
+
+TEXT callbackasm_entry_1869(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1869, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14952(SB)/8, $callbackasm_entry_1869(SB)
+
+TEXT callbackasm_entry_1870(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1870, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14960(SB)/8, $callbackasm_entry_1870(SB)
+
+TEXT callbackasm_entry_1871(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1871, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14968(SB)/8, $callbackasm_entry_1871(SB)
+
+TEXT callbackasm_entry_1872(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1872, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14976(SB)/8, $callbackasm_entry_1872(SB)
+
+TEXT callbackasm_entry_1873(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1873, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14984(SB)/8, $callbackasm_entry_1873(SB)
+
+TEXT callbackasm_entry_1874(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1874, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+14992(SB)/8, $callbackasm_entry_1874(SB)
+
+TEXT callbackasm_entry_1875(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1875, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15000(SB)/8, $callbackasm_entry_1875(SB)
+
+TEXT callbackasm_entry_1876(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1876, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15008(SB)/8, $callbackasm_entry_1876(SB)
+
+TEXT callbackasm_entry_1877(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1877, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15016(SB)/8, $callbackasm_entry_1877(SB)
+
+TEXT callbackasm_entry_1878(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1878, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15024(SB)/8, $callbackasm_entry_1878(SB)
+
+TEXT callbackasm_entry_1879(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1879, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15032(SB)/8, $callbackasm_entry_1879(SB)
+
+TEXT callbackasm_entry_1880(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1880, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15040(SB)/8, $callbackasm_entry_1880(SB)
+
+TEXT callbackasm_entry_1881(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1881, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15048(SB)/8, $callbackasm_entry_1881(SB)
+
+TEXT callbackasm_entry_1882(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1882, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15056(SB)/8, $callbackasm_entry_1882(SB)
+
+TEXT callbackasm_entry_1883(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1883, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15064(SB)/8, $callbackasm_entry_1883(SB)
+
+TEXT callbackasm_entry_1884(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1884, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15072(SB)/8, $callbackasm_entry_1884(SB)
+
+TEXT callbackasm_entry_1885(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1885, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15080(SB)/8, $callbackasm_entry_1885(SB)
+
+TEXT callbackasm_entry_1886(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1886, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15088(SB)/8, $callbackasm_entry_1886(SB)
+
+TEXT callbackasm_entry_1887(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1887, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15096(SB)/8, $callbackasm_entry_1887(SB)
+
+TEXT callbackasm_entry_1888(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1888, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15104(SB)/8, $callbackasm_entry_1888(SB)
+
+TEXT callbackasm_entry_1889(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1889, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15112(SB)/8, $callbackasm_entry_1889(SB)
+
+TEXT callbackasm_entry_1890(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1890, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15120(SB)/8, $callbackasm_entry_1890(SB)
+
+TEXT callbackasm_entry_1891(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1891, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15128(SB)/8, $callbackasm_entry_1891(SB)
+
+TEXT callbackasm_entry_1892(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1892, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15136(SB)/8, $callbackasm_entry_1892(SB)
+
+TEXT callbackasm_entry_1893(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1893, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15144(SB)/8, $callbackasm_entry_1893(SB)
+
+TEXT callbackasm_entry_1894(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1894, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15152(SB)/8, $callbackasm_entry_1894(SB)
+
+TEXT callbackasm_entry_1895(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1895, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15160(SB)/8, $callbackasm_entry_1895(SB)
+
+TEXT callbackasm_entry_1896(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1896, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15168(SB)/8, $callbackasm_entry_1896(SB)
+
+TEXT callbackasm_entry_1897(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1897, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15176(SB)/8, $callbackasm_entry_1897(SB)
+
+TEXT callbackasm_entry_1898(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1898, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15184(SB)/8, $callbackasm_entry_1898(SB)
+
+TEXT callbackasm_entry_1899(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1899, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15192(SB)/8, $callbackasm_entry_1899(SB)
+
+TEXT callbackasm_entry_1900(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1900, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15200(SB)/8, $callbackasm_entry_1900(SB)
+
+TEXT callbackasm_entry_1901(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1901, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15208(SB)/8, $callbackasm_entry_1901(SB)
+
+TEXT callbackasm_entry_1902(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1902, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15216(SB)/8, $callbackasm_entry_1902(SB)
+
+TEXT callbackasm_entry_1903(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1903, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15224(SB)/8, $callbackasm_entry_1903(SB)
+
+TEXT callbackasm_entry_1904(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1904, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15232(SB)/8, $callbackasm_entry_1904(SB)
+
+TEXT callbackasm_entry_1905(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1905, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15240(SB)/8, $callbackasm_entry_1905(SB)
+
+TEXT callbackasm_entry_1906(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1906, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15248(SB)/8, $callbackasm_entry_1906(SB)
+
+TEXT callbackasm_entry_1907(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1907, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15256(SB)/8, $callbackasm_entry_1907(SB)
+
+TEXT callbackasm_entry_1908(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1908, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15264(SB)/8, $callbackasm_entry_1908(SB)
+
+TEXT callbackasm_entry_1909(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1909, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15272(SB)/8, $callbackasm_entry_1909(SB)
+
+TEXT callbackasm_entry_1910(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1910, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15280(SB)/8, $callbackasm_entry_1910(SB)
+
+TEXT callbackasm_entry_1911(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1911, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15288(SB)/8, $callbackasm_entry_1911(SB)
+
+TEXT callbackasm_entry_1912(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1912, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15296(SB)/8, $callbackasm_entry_1912(SB)
+
+TEXT callbackasm_entry_1913(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1913, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15304(SB)/8, $callbackasm_entry_1913(SB)
+
+TEXT callbackasm_entry_1914(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1914, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15312(SB)/8, $callbackasm_entry_1914(SB)
+
+TEXT callbackasm_entry_1915(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1915, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15320(SB)/8, $callbackasm_entry_1915(SB)
+
+TEXT callbackasm_entry_1916(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1916, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15328(SB)/8, $callbackasm_entry_1916(SB)
+
+TEXT callbackasm_entry_1917(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1917, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15336(SB)/8, $callbackasm_entry_1917(SB)
+
+TEXT callbackasm_entry_1918(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1918, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15344(SB)/8, $callbackasm_entry_1918(SB)
+
+TEXT callbackasm_entry_1919(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1919, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15352(SB)/8, $callbackasm_entry_1919(SB)
+
+TEXT callbackasm_entry_1920(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1920, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15360(SB)/8, $callbackasm_entry_1920(SB)
+
+TEXT callbackasm_entry_1921(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1921, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15368(SB)/8, $callbackasm_entry_1921(SB)
+
+TEXT callbackasm_entry_1922(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1922, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15376(SB)/8, $callbackasm_entry_1922(SB)
+
+TEXT callbackasm_entry_1923(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1923, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15384(SB)/8, $callbackasm_entry_1923(SB)
+
+TEXT callbackasm_entry_1924(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1924, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15392(SB)/8, $callbackasm_entry_1924(SB)
+
+TEXT callbackasm_entry_1925(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1925, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15400(SB)/8, $callbackasm_entry_1925(SB)
+
+TEXT callbackasm_entry_1926(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1926, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15408(SB)/8, $callbackasm_entry_1926(SB)
+
+TEXT callbackasm_entry_1927(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1927, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15416(SB)/8, $callbackasm_entry_1927(SB)
+
+TEXT callbackasm_entry_1928(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1928, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15424(SB)/8, $callbackasm_entry_1928(SB)
+
+TEXT callbackasm_entry_1929(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1929, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15432(SB)/8, $callbackasm_entry_1929(SB)
+
+TEXT callbackasm_entry_1930(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1930, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15440(SB)/8, $callbackasm_entry_1930(SB)
+
+TEXT callbackasm_entry_1931(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1931, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15448(SB)/8, $callbackasm_entry_1931(SB)
+
+TEXT callbackasm_entry_1932(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1932, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15456(SB)/8, $callbackasm_entry_1932(SB)
+
+TEXT callbackasm_entry_1933(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1933, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15464(SB)/8, $callbackasm_entry_1933(SB)
+
+TEXT callbackasm_entry_1934(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1934, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15472(SB)/8, $callbackasm_entry_1934(SB)
+
+TEXT callbackasm_entry_1935(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1935, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15480(SB)/8, $callbackasm_entry_1935(SB)
+
+TEXT callbackasm_entry_1936(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1936, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15488(SB)/8, $callbackasm_entry_1936(SB)
+
+TEXT callbackasm_entry_1937(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1937, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15496(SB)/8, $callbackasm_entry_1937(SB)
+
+TEXT callbackasm_entry_1938(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1938, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15504(SB)/8, $callbackasm_entry_1938(SB)
+
+TEXT callbackasm_entry_1939(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1939, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15512(SB)/8, $callbackasm_entry_1939(SB)
+
+TEXT callbackasm_entry_1940(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1940, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15520(SB)/8, $callbackasm_entry_1940(SB)
+
+TEXT callbackasm_entry_1941(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1941, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15528(SB)/8, $callbackasm_entry_1941(SB)
+
+TEXT callbackasm_entry_1942(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1942, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15536(SB)/8, $callbackasm_entry_1942(SB)
+
+TEXT callbackasm_entry_1943(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1943, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15544(SB)/8, $callbackasm_entry_1943(SB)
+
+TEXT callbackasm_entry_1944(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1944, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15552(SB)/8, $callbackasm_entry_1944(SB)
+
+TEXT callbackasm_entry_1945(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1945, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15560(SB)/8, $callbackasm_entry_1945(SB)
+
+TEXT callbackasm_entry_1946(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1946, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15568(SB)/8, $callbackasm_entry_1946(SB)
+
+TEXT callbackasm_entry_1947(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1947, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15576(SB)/8, $callbackasm_entry_1947(SB)
+
+TEXT callbackasm_entry_1948(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1948, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15584(SB)/8, $callbackasm_entry_1948(SB)
+
+TEXT callbackasm_entry_1949(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1949, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15592(SB)/8, $callbackasm_entry_1949(SB)
+
+TEXT callbackasm_entry_1950(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1950, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15600(SB)/8, $callbackasm_entry_1950(SB)
+
+TEXT callbackasm_entry_1951(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1951, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15608(SB)/8, $callbackasm_entry_1951(SB)
+
+TEXT callbackasm_entry_1952(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1952, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15616(SB)/8, $callbackasm_entry_1952(SB)
+
+TEXT callbackasm_entry_1953(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1953, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15624(SB)/8, $callbackasm_entry_1953(SB)
+
+TEXT callbackasm_entry_1954(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1954, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15632(SB)/8, $callbackasm_entry_1954(SB)
+
+TEXT callbackasm_entry_1955(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1955, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15640(SB)/8, $callbackasm_entry_1955(SB)
+
+TEXT callbackasm_entry_1956(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1956, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15648(SB)/8, $callbackasm_entry_1956(SB)
+
+TEXT callbackasm_entry_1957(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1957, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15656(SB)/8, $callbackasm_entry_1957(SB)
+
+TEXT callbackasm_entry_1958(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1958, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15664(SB)/8, $callbackasm_entry_1958(SB)
+
+TEXT callbackasm_entry_1959(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1959, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15672(SB)/8, $callbackasm_entry_1959(SB)
+
+TEXT callbackasm_entry_1960(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1960, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15680(SB)/8, $callbackasm_entry_1960(SB)
+
+TEXT callbackasm_entry_1961(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1961, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15688(SB)/8, $callbackasm_entry_1961(SB)
+
+TEXT callbackasm_entry_1962(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1962, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15696(SB)/8, $callbackasm_entry_1962(SB)
+
+TEXT callbackasm_entry_1963(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1963, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15704(SB)/8, $callbackasm_entry_1963(SB)
+
+TEXT callbackasm_entry_1964(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1964, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15712(SB)/8, $callbackasm_entry_1964(SB)
+
+TEXT callbackasm_entry_1965(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1965, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15720(SB)/8, $callbackasm_entry_1965(SB)
+
+TEXT callbackasm_entry_1966(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1966, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15728(SB)/8, $callbackasm_entry_1966(SB)
+
+TEXT callbackasm_entry_1967(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1967, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15736(SB)/8, $callbackasm_entry_1967(SB)
+
+TEXT callbackasm_entry_1968(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1968, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15744(SB)/8, $callbackasm_entry_1968(SB)
+
+TEXT callbackasm_entry_1969(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1969, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15752(SB)/8, $callbackasm_entry_1969(SB)
+
+TEXT callbackasm_entry_1970(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1970, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15760(SB)/8, $callbackasm_entry_1970(SB)
+
+TEXT callbackasm_entry_1971(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1971, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15768(SB)/8, $callbackasm_entry_1971(SB)
+
+TEXT callbackasm_entry_1972(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1972, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15776(SB)/8, $callbackasm_entry_1972(SB)
+
+TEXT callbackasm_entry_1973(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1973, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15784(SB)/8, $callbackasm_entry_1973(SB)
+
+TEXT callbackasm_entry_1974(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1974, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15792(SB)/8, $callbackasm_entry_1974(SB)
+
+TEXT callbackasm_entry_1975(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1975, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15800(SB)/8, $callbackasm_entry_1975(SB)
+
+TEXT callbackasm_entry_1976(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1976, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15808(SB)/8, $callbackasm_entry_1976(SB)
+
+TEXT callbackasm_entry_1977(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1977, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15816(SB)/8, $callbackasm_entry_1977(SB)
+
+TEXT callbackasm_entry_1978(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1978, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15824(SB)/8, $callbackasm_entry_1978(SB)
+
+TEXT callbackasm_entry_1979(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1979, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15832(SB)/8, $callbackasm_entry_1979(SB)
+
+TEXT callbackasm_entry_1980(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1980, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15840(SB)/8, $callbackasm_entry_1980(SB)
+
+TEXT callbackasm_entry_1981(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1981, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15848(SB)/8, $callbackasm_entry_1981(SB)
+
+TEXT callbackasm_entry_1982(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1982, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15856(SB)/8, $callbackasm_entry_1982(SB)
+
+TEXT callbackasm_entry_1983(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1983, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15864(SB)/8, $callbackasm_entry_1983(SB)
+
+TEXT callbackasm_entry_1984(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1984, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15872(SB)/8, $callbackasm_entry_1984(SB)
+
+TEXT callbackasm_entry_1985(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1985, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15880(SB)/8, $callbackasm_entry_1985(SB)
+
+TEXT callbackasm_entry_1986(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1986, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15888(SB)/8, $callbackasm_entry_1986(SB)
+
+TEXT callbackasm_entry_1987(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1987, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15896(SB)/8, $callbackasm_entry_1987(SB)
+
+TEXT callbackasm_entry_1988(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1988, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15904(SB)/8, $callbackasm_entry_1988(SB)
+
+TEXT callbackasm_entry_1989(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1989, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15912(SB)/8, $callbackasm_entry_1989(SB)
+
+TEXT callbackasm_entry_1990(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1990, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15920(SB)/8, $callbackasm_entry_1990(SB)
+
+TEXT callbackasm_entry_1991(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1991, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15928(SB)/8, $callbackasm_entry_1991(SB)
+
+TEXT callbackasm_entry_1992(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1992, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15936(SB)/8, $callbackasm_entry_1992(SB)
+
+TEXT callbackasm_entry_1993(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1993, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15944(SB)/8, $callbackasm_entry_1993(SB)
+
+TEXT callbackasm_entry_1994(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1994, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15952(SB)/8, $callbackasm_entry_1994(SB)
+
+TEXT callbackasm_entry_1995(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1995, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15960(SB)/8, $callbackasm_entry_1995(SB)
+
+TEXT callbackasm_entry_1996(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1996, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15968(SB)/8, $callbackasm_entry_1996(SB)
+
+TEXT callbackasm_entry_1997(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1997, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15976(SB)/8, $callbackasm_entry_1997(SB)
+
+TEXT callbackasm_entry_1998(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1998, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15984(SB)/8, $callbackasm_entry_1998(SB)
+
+TEXT callbackasm_entry_1999(SB), NOSPLIT|NOFRAME, $0
 	MOVD $1999, R11
 	BR   callbackasm1(SB)
+DATA callbackasmAddrs+15992(SB)/8, $callbackasm_entry_1999(SB)
+
+GLOBL callbackasmAddrs(SB), RODATA, $16000

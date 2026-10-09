@@ -94,8 +94,17 @@ var templateTrampolinesStubs = template.Must(template.New("trampolines").Parse(
 
 // these stubs are here because it is not possible to go:linkname directly the C functions
 {{ range .Symbols }}
+{{- if $.Call }}
+TEXT _{{.Name}}(SB), NOSPLIT, $0-0
+	CALL purego_{{.Name}}(SB)
+	// The NOP is the TOC restore slot. The linker rewrites it to
+	// MOVD 24(R1), R2 when linking PIC code.
+	WORD $0x60000000
+	RET
+{{- else }}
 TEXT _{{.Name}}(SB), NOSPLIT|NOFRAME, $0-0
 	JMP purego_{{.Name}}(SB)
+{{- end }}
 {{ end -}}
 `))
 
@@ -240,9 +249,33 @@ type dynamicImport struct {
 }
 
 type fileContent struct {
+	Call           bool // Used only by templateTrampolinesStubs to avoid tail calls.
 	Tag            string
 	Symbols        []Symbol
 	DynamicImports []dynamicImport
+}
+
+var trampolineArchConstraints = map[string]string{
+	"linux": "!ppc64le",
+}
+
+func trampolineBuildTag(gooses []string) string {
+	tags := make([]string, len(gooses))
+	for i, goos := range gooses {
+		tags[i] = goos
+		if constraint := trampolineArchConstraints[goos]; constraint != "" {
+			tags[i] = "(" + goos + " && " + constraint + ")"
+		}
+	}
+	return strings.Join(tags, " || ")
+}
+
+func trampolineFileBuildTag(goos string) string {
+	tag := "!cgo"
+	if constraint := trampolineArchConstraints[goos]; constraint != "" {
+		tag += " && " + constraint
+	}
+	return tag
 }
 
 func run() error {
@@ -254,7 +287,9 @@ func run() error {
 	if err := execute(templateSymbols, "zsymbols.go", goosAgnosticContent); err != nil {
 		return err
 	}
-	if err := execute(templateTrampolinesStubs, "ztrampolines_stubs.s", goosAgnosticContent); err != nil {
+	goosAgnosticTrampolines := goosAgnosticContent
+	goosAgnosticTrampolines.Tag = "!cgo && (" + trampolineBuildTag(GOOSes) + ")"
+	if err := execute(templateTrampolinesStubs, "ztrampolines_stubs.s", goosAgnosticTrampolines); err != nil {
 		return err
 	}
 	goosAgnosticLibCSymbols := filterSymbols(libcSymbols, "")
@@ -290,10 +325,23 @@ func run() error {
 			return err
 		}
 		if len(goosSymbols) != 0 {
+			located.Tag = trampolineFileBuildTag(goos)
 			if err := execute(templateTrampolinesStubs, fmt.Sprintf("ztrampolines_%s.s", goos), located); err != nil {
 				return err
 			}
 		}
+	}
+	ppc64leContent := fileContent{
+		Call:    true,
+		Symbols: filterSymbols(allSymbols, ""),
+		Tag:     "!cgo",
+	}
+	if err := execute(templateTrampolinesStubs, "ztrampolines_stubs_linux_ppc64le.s", ppc64leContent); err != nil {
+		return err
+	}
+	ppc64leContent.Symbols = filterSymbols(allSymbols, "linux")
+	if err := execute(templateTrampolinesStubs, "ztrampolines_linux_ppc64le.s", ppc64leContent); err != nil {
+		return err
 	}
 	return nil
 }
