@@ -15,6 +15,7 @@ import (
 	"unsafe"
 
 	"github.com/ebitengine/purego"
+	"github.com/ebitengine/purego/internal/testlib"
 )
 
 type encodeTypeTestStruct struct {
@@ -97,15 +98,8 @@ func TestEncodeType(t *testing.T) {
 // program that prints @encode for each C type in encodeTypeTests and checks
 // that the expected encodings are the ones the compiler actually produces.
 func TestEncodeTypeMatchesClang(t *testing.T) {
-	out, err := exec.Command("go", "env", "CC").Output()
+	compiler, err := testlib.Compiler("CC")
 	if err != nil {
-		t.Fatalf("go env CC: %v", err)
-	}
-	compiler := strings.TrimSpace(string(out))
-	if compiler == "" {
-		t.Skip("no C compiler to use as an @encode oracle")
-	}
-	if _, err := exec.LookPath(compiler); err != nil {
 		t.Skipf("no C compiler to use as an @encode oracle: %v", err)
 	}
 
@@ -136,7 +130,7 @@ func TestEncodeTypeMatchesClang(t *testing.T) {
 		t.Fatalf("compile oracle: %v\n%q\n%s", err, cmd, out)
 	}
 
-	out, err = exec.Command(exeFile).Output()
+	out, err := exec.Command(exeFile).Output()
 	if err != nil {
 		t.Fatalf("run oracle: %v", err)
 	}

@@ -11,6 +11,7 @@ import (
 
 	"github.com/ebitengine/purego"
 	"github.com/ebitengine/purego/internal/load"
+	"github.com/ebitengine/purego/internal/testlib"
 )
 
 // BenchmarkCallingMethods compares RegisterFunc, SyscallN, and Callback methods
@@ -37,7 +38,7 @@ func BenchmarkCallingMethods(b *testing.B) {
 
 	// Build C library for benchmarking
 	libFileName := filepath.Join(b.TempDir(), "libbenchmark.so")
-	if err := buildSharedLib(b, "CC", libFileName, filepath.Join("testdata", "benchmarktest", "benchmark.c")); err != nil {
+	if err := testlib.BuildSharedLib(b, "CC", libFileName, filepath.Join("testdata", "benchmarktest", "benchmark.c")); err != nil {
 		b.Fatalf("Failed to build C library: %v", err)
 	}
 	b.Cleanup(func() {

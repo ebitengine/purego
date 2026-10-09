@@ -17,6 +17,7 @@ import (
 	"unsafe"
 
 	"github.com/ebitengine/purego"
+	"github.com/ebitengine/purego/internal/testlib"
 )
 
 func TestAllThreadsSyscall(t *testing.T) {
@@ -173,7 +174,7 @@ func compareStatus(filter, expect string) error {
 func TestDlopenThenAllThreadsSyscall(t *testing.T) {
 	// Step 1: Build and load a shared C library that calls back into Go.
 	libFileName := filepath.Join(t.TempDir(), "libcbtest.so")
-	if err := buildSharedLib(t, "CC", libFileName, filepath.Join("testdata", "libcbtest", "callback_test.c")); err != nil {
+	if err := testlib.BuildSharedLib(t, "CC", libFileName, filepath.Join("testdata", "libcbtest", "callback_test.c")); err != nil {
 		t.Fatal(err)
 	}
 	defer os.Remove(libFileName)
