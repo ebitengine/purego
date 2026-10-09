@@ -160,7 +160,7 @@ func TestBlockCopyAndBlockRelease(t *testing.T) {
 func loadBlockFixture(t testing.TB) uintptr {
 	t.Helper()
 	library := filepath.Join(t.TempDir(), "block.dylib")
-	if err := testlib.BuildSharedLib(t, "CC", library, filepath.Join("testdata", "block.m")); err != nil {
+	if err := testlib.BuildSharedLib(t, "CC", library, "-framework", "Foundation", filepath.Join("testdata", "block.m")); err != nil {
 		t.Fatal(err)
 	}
 	lib, err := purego.Dlopen(library, purego.RTLD_GLOBAL|purego.RTLD_NOW)

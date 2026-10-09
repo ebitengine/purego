@@ -59,7 +59,7 @@ func TestCallbackPreservesFloatRegisters(t *testing.T) {
 	}
 
 	libFileName := filepath.Join(t.TempDir(), "libcallback_fregs.so")
-	if err := buildSharedLib(t, "CC", libFileName, filepath.Join("testdata", "libcbtest", "callback_fregs_ppc64le.S")); err != nil {
+	if err := testlib.BuildSharedLib(t, "CC", libFileName, filepath.Join("testdata", "libcbtest", "callback_fregs_ppc64le.S")); err != nil {
 		t.Fatal(err)
 	}
 
@@ -91,7 +91,7 @@ func TestCallbackPreservesVectorRegisters(t *testing.T) {
 	}
 
 	libFileName := filepath.Join(t.TempDir(), "libcallback_vregs.so")
-	if err := buildSharedLib(t, "CC", libFileName, filepath.Join("testdata", "libcbtest", "callback_vregs_ppc64le.S")); err != nil {
+	if err := testlib.BuildSharedLib(t, "CC", libFileName, filepath.Join("testdata", "libcbtest", "callback_vregs_ppc64le.S")); err != nil {
 		t.Fatal(err)
 	}
 
