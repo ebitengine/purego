@@ -4,8 +4,10 @@
 package objc
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
+	"strings"
 	"structs"
 	"sync"
 	"unsafe"
@@ -217,9 +219,161 @@ func (b Block) Copy() Block {
 	return _Block_copy(b)
 }
 
-// Invoke calls the implementation of a block.
+// callForeign calls a block not created by [NewBlock]. The Blocks ABI passes the
+// block itself as the first argument: https://clang.llvm.org/docs/Block-ABI-Apple.html
+func (b Block) callForeign(resultType reflect.Type, args []any) ([]reflect.Value, error) {
+	if b == 0 {
+		return nil, errors.New("objc: cannot invoke a nil block")
+	}
+	invoke := (*(**blockLayout)(unsafe.Pointer(&b))).invoke
+	if invoke == 0 {
+		return nil, errors.New("objc: block has no invoke function")
+	}
+
+	key := foreignKey{invoke: invoke, result: resultType, nargs: len(args)}
+	reflectedArgs := make([]reflect.Value, len(args)+1)
+	reflectedArgs[0] = reflect.ValueOf(b)
+	for i, arg := range args {
+		if arg == nil {
+			return nil, fmt.Errorf("objc: argument %d to a block is nil; pass a typed value such as objc.ID(0)", i)
+		}
+		reflectedArgs[i+1] = reflect.ValueOf(arg)
+		if i < len(key.args) {
+			key.args[i] = reflectedArgs[i+1].Type()
+		}
+	}
+	if len(args) > len(key.args) {
+		key.typ = foreignFuncOf(reflectedArgs, resultType)
+	}
+	key.sig, key.hasSig = b.signature()
+
+	call, ok := foreignCalls.Load(key)
+	if !ok {
+		call = newForeignCall(key, reflectedArgs)
+		// key.sig refers to the block's descriptor, which may not outlive the block.
+		key.sig = strings.Clone(key.sig)
+		call, _ = foreignCalls.LoadOrStore(key, call)
+	}
+	if err := call.(*foreignCall).err; err != nil {
+		return nil, err
+	}
+	return call.(*foreignCall).fn.Call(reflectedArgs), nil
+}
+
+type foreignKey struct {
+	invoke uintptr
+	sig    string
+	hasSig bool
+	result reflect.Type
+	nargs  int
+	// args avoids building a func type with reflect.FuncOf, which allocates on every
+	// call. typ is used instead when there are more arguments than fit.
+	args [8]reflect.Type
+	typ  reflect.Type
+}
+
+type foreignCall struct {
+	fn  reflect.Value
+	err error
+}
+
+var foreignCalls sync.Map // map[foreignKey]*foreignCall
+
+func newForeignCall(key foreignKey, args []reflect.Value) *foreignCall {
+	typ := key.typ
+	if typ == nil {
+		typ = foreignFuncOf(args, key.result)
+	}
+	if err := checkForeign(key.sig, key.hasSig, typ); err != nil {
+		return &foreignCall{err: err}
+	}
+	fn := reflect.New(typ)
+	purego.RegisterFunc(fn.Interface(), key.invoke)
+	return &foreignCall{fn: fn.Elem()}
+}
+
+func foreignFuncOf(args []reflect.Value, result reflect.Type) reflect.Type {
+	in := make([]reflect.Type, len(args))
+	for i, arg := range args {
+		in[i] = arg.Type()
+	}
+	var out []reflect.Type
+	if result != nil {
+		out = []reflect.Type{result}
+	}
+	return reflect.FuncOf(in, out, false)
+}
+
+func checkForeign(sig string, hasSig bool, typ reflect.Type) error {
+	// goTypes follows the order of a type signature: result, block, parameters.
+	goTypes := make([]reflect.Type, 1, typ.NumIn()+1)
+	if typ.NumOut() > 0 {
+		goTypes[0] = typ.Out(0)
+	}
+	for i := range typ.NumIn() {
+		goTypes = append(goTypes, typ.In(i))
+	}
+	layouts := make([]abiLayout, len(goTypes))
+	for i, t := range goTypes {
+		if t == nil {
+			continue
+		}
+		var err error
+		if layouts[i], err = goLayout(t); err != nil {
+			return err
+		}
+	}
+	if !hasSig {
+		return nil
+	}
+
+	types, err := splitSignature(sig)
+	if err != nil || len(types) < 2 {
+		return fmt.Errorf("objc: malformed block signature %q", sig)
+	}
+	if len(types) != len(goTypes) {
+		return fmt.Errorf("objc: block callback expects %d arguments, got %d", len(types)-2, len(goTypes)-2)
+	}
+	if _, err := encodingLayout(types[0]); goTypes[0] == nil && (err != nil || types[0][0] == '{' || types[0][0] == '(') {
+		// The result may be returned in memory, which needs a buffer from the caller.
+		return fmt.Errorf("objc: block returns %s; use InvokeBlock to receive it", types[0])
+	}
+	for i, enc := range types {
+		if goTypes[i] == nil {
+			continue
+		}
+		what := "result"
+		if i > 0 {
+			what = fmt.Sprintf("argument %d", i-2)
+		}
+		want, err := encodingLayout(enc)
+		if err != nil {
+			return fmt.Errorf("objc: block %s %s: %w", what, enc, err)
+		}
+		if !want.matches(layouts[i]) {
+			return fmt.Errorf("objc: block %s is %s, which does not match %s", what, enc, goTypes[i])
+		}
+	}
+	return nil
+}
+
+// Invoke calls the implementation of a block, discarding any result.
+//
+// A block that was not created by [NewBlock], such as a completion handler
+// supplied by Objective-C, is called through the Blocks ABI. The Go type of each
+// argument must then match the block's C parameter type (for example, int32 for
+// an int), and is checked against the block's type signature when it has one.
+// Go func arguments are not supported; pass a pointer from [purego.NewCallback]
+// instead. Invoke panics on a mismatch. A block that returns a struct must be
+// called with [InvokeBlock].
 func (b Block) Invoke(args ...any) {
 	fn := theBlocksCache.Functions.Load(b)
+	if !fn.IsValid() {
+		if _, err := b.callForeign(nil, args); err != nil {
+			panic(err)
+		}
+		return
+	}
 
 	reflectedArgs := make([]reflect.Value, len(args)+1)
 	reflectedArgs[0] = reflect.ValueOf(b)
@@ -250,11 +404,27 @@ func NewBlock(fn any) Block {
 
 // InvokeBlock is a convenience method for calling the implementation of a block.
 // The block implementation must return 1 value.
+//
+// A block that was not created by [NewBlock] is called as described for
+// [Block.Invoke], with T as the type of its result. T must match the block's C
+// result type, and may be a struct. A mismatch returns an error instead of
+// calling the block.
 func InvokeBlock[T any](block Block, args ...any) (result T, err error) {
+	fn := theBlocksCache.Functions.Load(block)
+	if !fn.IsValid() {
+		// The block may be on the caller's stack, where Copy would return a different pointer.
+		out, err := block.callForeign(reflect.TypeFor[T](), args)
+		if err != nil {
+			return result, err
+		}
+		result, _ = reflect.TypeAssert[T](out[0])
+		return result, nil
+	}
+
+	// Blocks from NewBlock are on the heap, so Copy returns the same pointer.
 	block = block.Copy()
 	defer block.Release()
 
-	fn := theBlocksCache.Functions.Load(block)
 	if fn.Type().NumIn() != len(args)+1 {
 		return result, fmt.Errorf("objc: block callback expects %d arguments, got %d", fn.Type().NumIn()-1, len(args))
 	}

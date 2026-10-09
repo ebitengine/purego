@@ -508,7 +508,11 @@ func encodeTypeContext(typ reflect.Type, context encodingContext) (string, error
 		return encDouble, nil
 	case reflect.Pointer:
 		enc, err := encodeTypeContext(typ.Elem(), encodeInsidePointer)
-		return encPtr + enc, err
+		if err != nil {
+			// A pointer to a type that has no encoding, such as a slice, is opaque.
+			return encUnsafePtr, nil
+		}
+		return encPtr + enc, nil
 	case reflect.Struct:
 		if context == encodeInsidePointer {
 			return encStructBegin + typ.Name() + encStructEnd, nil
