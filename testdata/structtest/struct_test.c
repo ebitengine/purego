@@ -453,3 +453,132 @@ struct Mixed5Args {
 struct Mixed5Args IdentityMixed5Args(struct Mixed5Args s) {
     return s;
 }
+
+struct CharLong {
+    int8_t a;
+    int64_t b;
+};
+
+struct CharLong IdentityCharLong(struct CharLong s) {
+    return s;
+}
+
+struct CharLong IdentityCharLongBetweenPrims(int64_t x, struct CharLong s, int64_t y) {
+    (void) x;
+    (void) y;
+    return s;
+}
+
+struct CharInt {
+    int8_t a;
+    int32_t b;
+};
+
+struct CharInt IdentityCharInt(struct CharInt s) {
+    return s;
+}
+
+struct NestedSmallTail {
+    struct {
+        int8_t a;
+        int32_t b;
+    } i;
+    int8_t c;
+};
+
+struct NestedSmallTail IdentityNestedSmallTail(struct NestedSmallTail s) {
+    return s;
+}
+
+struct NestedIntsPlusOne {
+    struct {
+        int32_t x;
+        int32_t y;
+        int32_t z;
+    } a;
+    int32_t b;
+};
+
+int64_t SumNestedIntsPlusOne(struct NestedIntsPlusOne s) {
+    return (int64_t) s.a.x + s.a.y + s.a.z + s.b;
+}
+
+struct ArrayIntsPlusOne {
+    int32_t a[3];
+    int32_t b;
+};
+
+int64_t SumArrayIntsPlusOne(struct ArrayIntsPlusOne s) {
+    return (int64_t) s.a[0] + s.a[1] + s.a[2] + s.b;
+}
+
+struct NestedPadTail {
+    struct {
+        int32_t x;
+        int8_t y;
+    } a;
+    int8_t b;
+};
+
+int64_t SumNestedPadTail(struct NestedPadTail s) {
+    return (int64_t) s.a.x + s.a.y + s.b;
+}
+
+struct CharDouble {
+    int8_t a;
+    double b;
+};
+
+struct CharDouble IdentityCharDouble(struct CharDouble s) {
+    return s;
+}
+
+struct CharPointer {
+    int8_t a;
+    void * b;
+};
+
+struct CharPointer IdentityCharPointer(struct CharPointer s) {
+    return s;
+}
+
+struct NestedFloatAndInt {
+    struct { float x; } a;
+    int32_t b;
+};
+
+int32_t NestedFloatAndInt(struct NestedFloatAndInt s) {
+    return (int32_t)s.a.x * 10 + s.b;
+}
+
+struct NestedFloatsAndInt {
+    struct { float x, y; } pos;
+    int32_t id;
+};
+
+int32_t NestedFloatsAndInt(struct NestedFloatsAndInt s) {
+    return (int32_t)s.pos.x * 100 + (int32_t)s.pos.y * 10 + s.id;
+}
+
+struct FloatArrayAndInt {
+    float a[2];
+    int32_t id;
+};
+
+int32_t FloatArrayAndInt(struct FloatArrayAndInt s) {
+    return (int32_t)s.a[0] * 100 + (int32_t)s.a[1] * 10 + s.id;
+}
+
+struct FloatAndFloatArray {
+    float x;
+    float v[2];
+};
+
+int32_t FloatAndFloatArray(struct FloatAndFloatArray s) {
+    return (int32_t)s.x * 100 + (int32_t)s.v[0] * 10 + (int32_t)s.v[1];
+}
+
+int32_t CallFloatAndFloatArrayCallback(int32_t (*cb)(struct FloatAndFloatArray), float x, float y, float z) {
+    struct FloatAndFloatArray s = {x, {y, z}};
+    return cb(s);
+}

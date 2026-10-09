@@ -107,119 +107,39 @@ func placeRegisters(v reflect.Value, addFloat func(uintptr), addInt func(uintptr
 }
 
 func placeRegistersArm64(v reflect.Value, addFloat func(uintptr), addInt func(uintptr)) {
-	var val uint64
-	var shift byte
-	var flushed bool
-	class := _NO_CLASS
-	var place func(v reflect.Value)
-	place = func(v reflect.Value) {
-		var numFields int
-		if v.Kind() == reflect.Struct {
-			numFields = v.Type().NumField()
-		} else {
-			numFields = v.Type().Len()
-		}
-		for k := range numFields {
-			if v.Kind() == reflect.Struct && !isABIField(v.Type().Field(k)) {
-				continue
-			}
-			flushed = false
-			var f reflect.Value
-			if v.Kind() == reflect.Struct {
-				f = v.Field(k)
-			} else {
-				f = v.Index(k)
-			}
-			align := byte(f.Type().Align()*8 - 1)
-			shift = (shift + align) &^ align
-			if shift >= 64 {
-				shift = 0
-				flushed = true
-				if class == _FLOAT {
-					addFloat(uintptr(val))
-				} else {
-					addInt(uintptr(val))
-				}
-				val = 0
-				class = _NO_CLASS
-			}
-			switch f.Type().Kind() {
+	if isHFA(v.Type()) {
+		var place func(reflect.Value)
+		place = func(v reflect.Value) {
+			switch v.Kind() {
 			case reflect.Struct:
-				place(f)
-			case reflect.Bool:
-				if f.Bool() {
-					val |= 1 << shift
+				for i := range v.NumField() {
+					if isABIField(v.Type().Field(i)) {
+						place(v.Field(i))
+					}
 				}
-				shift += 8
-				class |= _INT
-			case reflect.Uint8:
-				val |= f.Uint() << shift
-				shift += 8
-				class |= _INT
-			case reflect.Uint16:
-				val |= f.Uint() << shift
-				shift += 16
-				class |= _INT
-			case reflect.Uint32:
-				val |= f.Uint() << shift
-				shift += 32
-				class |= _INT
-			case reflect.Uint64, reflect.Uint, reflect.Uintptr:
-				addInt(uintptr(f.Uint()))
-				shift = 0
-				flushed = true
-				class = _NO_CLASS
-			case reflect.Int8:
-				val |= uint64(f.Int()&0xFF) << shift
-				shift += 8
-				class |= _INT
-			case reflect.Int16:
-				val |= uint64(f.Int()&0xFFFF) << shift
-				shift += 16
-				class |= _INT
-			case reflect.Int32:
-				val |= uint64(f.Int()&0xFFFF_FFFF) << shift
-				shift += 32
-				class |= _INT
-			case reflect.Int64, reflect.Int:
-				addInt(uintptr(f.Int()))
-				shift = 0
-				flushed = true
-				class = _NO_CLASS
-			case reflect.Float32:
-				if class == _FLOAT {
-					addFloat(uintptr(val))
-					val = 0
-					shift = 0
-				}
-				val |= uint64(math.Float32bits(float32(f.Float()))) << shift
-				shift += 32
-				class |= _FLOAT
-			case reflect.Float64:
-				addFloat(uintptr(math.Float64bits(float64(f.Float()))))
-				shift = 0
-				flushed = true
-				class = _NO_CLASS
-			case reflect.Pointer, reflect.UnsafePointer:
-				addInt(f.Pointer())
-				shift = 0
-				flushed = true
-				class = _NO_CLASS
 			case reflect.Array:
-				place(f)
+				for i := range v.Len() {
+					place(v.Index(i))
+				}
+			case reflect.Float32:
+				addFloat(uintptr(math.Float32bits(float32(v.Float()))))
+			case reflect.Float64:
+				addFloat(uintptr(math.Float64bits(v.Float())))
 			default:
-				panic("purego: unsupported kind " + f.Kind().String())
+				panic("purego: unsupported HFA kind " + v.Kind().String())
 			}
 		}
+		place(v)
+		return
 	}
-	place(v)
-	if !flushed {
-		if class == _FLOAT {
-			addFloat(uintptr(val))
-		} else {
-			addInt(uintptr(val))
-		}
+
+	// Non-HFA composites use integer registers, including their padding.
+	if !v.CanAddr() {
+		addressable := reflect.New(v.Type()).Elem()
+		addressable.Set(v)
+		v = addressable
 	}
+	copyStruct8ByteChunks(v.Addr().UnsafePointer(), v.Type().Size(), addInt)
 }
 
 func placeStack(v reflect.Value, keepAlive []any, addInt func(uintptr)) []any {
@@ -239,38 +159,56 @@ func placeStack(v reflect.Value, keepAlive []any, addInt func(uintptr)) []any {
 //
 // [Arm64 Calling Convention]: https://github.com/ARM-software/abi-aa/blob/main/sysvabi64/sysvabi64.rst
 func isHFA(t reflect.Type) bool {
-	// round up struct size to nearest 8 see section B.4
-	structSize := roundUpTo8(t.Size())
-	numFields := numABIFields(t)
-	if structSize == 0 || numFields > 4 {
-		return false
-	}
-	first := abiField(t, 0)
-	switch first.Type.Kind() {
-	case reflect.Float32, reflect.Float64:
-		firstKind := first.Type.Kind()
-		for i := range numFields {
-			if abiField(t, i).Type.Kind() != firstKind {
+	var kind reflect.Kind
+	var n int
+	var walk func(reflect.Type) bool
+	walk = func(t reflect.Type) bool {
+		switch t.Kind() {
+		case reflect.Struct:
+			for i := range t.NumField() {
+				if f := t.Field(i); isABIField(f) && !walk(f.Type) {
+					return false
+				}
+			}
+			return true
+		case reflect.Array:
+			for range t.Len() {
+				if !walk(t.Elem()) {
+					return false
+				}
+			}
+			return true
+		case reflect.Float32, reflect.Float64:
+			if n > 0 && t.Kind() != kind {
 				return false
 			}
-		}
-		return true
-	case reflect.Array:
-		switch first.Type.Elem().Kind() {
-		case reflect.Float32, reflect.Float64:
-			return true
+			kind = t.Kind()
+			n++
+			return n <= 4
 		default:
 			return false
 		}
+	}
+	return walk(t) && n > 0
+}
+
+// numHFAMembers returns the number of floating-point members of an HFA.
+func numHFAMembers(t reflect.Type) int {
+	switch t.Kind() {
 	case reflect.Struct:
-		for range numABIFields(first.Type) {
-			if !isHFA(first.Type) {
-				return false
+		var n int
+		for i := range t.NumField() {
+			if f := t.Field(i); isABIField(f) {
+				n += numHFAMembers(f.Type)
 			}
 		}
-		return true
+		return n
+	case reflect.Array:
+		return t.Len() * numHFAMembers(t.Elem())
+	case reflect.Float32, reflect.Float64:
+		return 1
 	default:
-		return false
+		return 0
 	}
 }
 
@@ -311,11 +249,8 @@ func isHVA(t reflect.Type) bool {
 }
 
 // copyStruct8ByteChunks copies struct memory in 8-byte chunks to the provided callback.
-// This is used for Darwin ARM64's byte-level packing of non-HFA/HVA structs.
+// This preserves padding for non-HFA composites.
 func copyStruct8ByteChunks(ptr unsafe.Pointer, size uintptr, addChunk func(uintptr)) {
-	if !isDarwin {
-		panic("purego: should only be called on darwin")
-	}
 	for offset := uintptr(0); offset < size; offset += 8 {
 		var chunk uintptr
 		remaining := size - offset
@@ -332,37 +267,9 @@ func copyStruct8ByteChunks(ptr unsafe.Pointer, size uintptr, addChunk func(uintp
 	}
 }
 
-// placeRegisters implements Darwin ARM64 calling convention for struct arguments.
-//
-// For HFA/HVA structs, each element must go in a separate register (or stack slot for elements
-// that don't fit in registers). We use placeRegistersArm64 for this.
-//
-// For non-HFA/HVA structs, Darwin uses byte-level packing. We copy the struct memory in
-// 8-byte chunks, which works correctly for both register and stack placement.
+// placeRegistersDarwin uses the same register layout as other ARM64 platforms.
 func placeRegistersDarwin(v reflect.Value, addFloat func(uintptr), addInt func(uintptr)) {
-	if !isDarwin {
-		panic("purego: placeRegistersDarwin should only be called on darwin")
-	}
-	// Check if this is an HFA/HVA
-	hfa := isHFA(v.Type())
-	hva := isHVA(v.Type())
-
-	// For HFA/HVA structs, use the standard ARM64 logic which places each element separately
-	if hfa || hva {
-		placeRegistersArm64(v, addFloat, addInt)
-		return
-	}
-
-	// For non-HFA/HVA structs, use byte-level copying
-	// If the value is not addressable, create an addressable copy
-	if !v.CanAddr() {
-		addressable := reflect.New(v.Type()).Elem()
-		addressable.Set(v)
-		v = addressable
-	}
-	ptr := unsafe.Pointer(v.Addr().Pointer())
-	size := v.Type().Size()
-	copyStruct8ByteChunks(ptr, size, addInt)
+	placeRegistersArm64(v, addFloat, addInt)
 }
 
 // shouldBundleStackArgs determines if we need to start C-style packing for
@@ -587,7 +494,7 @@ func getCallbackStruct(inType reflect.Type, frame unsafe.Pointer, floatsN *int, 
 	f := (*[callbackMaxFrame]uintptr)(frame)
 
 	if isHFA(inType) {
-		_, numFloatFields := isAllSameFloat(inType)
+		numFloatFields := numHFAMembers(inType)
 		if *floatsN+numFloatFields <= numOfFloatRegisters() {
 			return readHFAFromRegisters(inType, f, floatsN, numFloatFields)
 		}
