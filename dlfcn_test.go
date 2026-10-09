@@ -8,10 +8,12 @@ package purego_test
 import (
 	"os"
 	"path/filepath"
+	"syscall"
 	"testing"
 	"unsafe"
 
 	"github.com/ebitengine/purego"
+	"github.com/ebitengine/purego/internal/testlib"
 )
 
 func TestSimpleDlsym(t *testing.T) {
@@ -24,7 +26,7 @@ func TestNestedDlopenCall(t *testing.T) {
 	libFileName := filepath.Join(t.TempDir(), "libdlnested.so")
 	t.Logf("Build %v", libFileName)
 
-	if err := buildSharedLib(t, "CXX", libFileName, filepath.Join("testdata", "libdlnested", "nested_test.cpp")); err != nil {
+	if err := testlib.BuildSharedLib(t, "CXX", libFileName, filepath.Join("testdata", "libdlnested", "nested_test.cpp")); err != nil {
 		t.Fatal(err)
 	}
 	defer os.Remove(libFileName)
@@ -46,5 +48,34 @@ func TestSyscallN(t *testing.T) {
 	r1, _, err2 := purego.SyscallN(dlsym, purego.RTLD_DEFAULT, uintptr(unsafe.Pointer(&[]byte("dlsym\x00")[0])))
 	if dlsym != r1 {
 		t.Fatalf("SyscallN didn't return the same result as purego.Dlsym: %d", err2)
+	}
+}
+
+func TestSyscallNErrnoIsNotAnInputArgument(t *testing.T) {
+	if errnoIsCaptured() {
+		t.Skip("this platform saves errno; see TestErrno")
+	}
+
+	openSym, err := purego.Dlsym(purego.RTLD_DEFAULT, "open")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	path, err := syscall.BytePtrFromString("_file_that_does_not_exist_")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// The third argument is non-zero so that echoing it back as errno is visible.
+	const third = uintptr(0o600)
+	r1, _, errno := purego.SyscallN(openSym,
+		uintptr(unsafe.Pointer(path)),
+		uintptr(os.O_RDWR),
+		third)
+	if int32(r1) != -1 {
+		t.Fatalf("open returned %d, wanted -1", r1)
+	}
+	if errno != 0 {
+		t.Errorf("SyscallN returned %d as errno where errno is not captured, wanted 0", errno)
 	}
 }

@@ -13,12 +13,21 @@ import (
 	"structs"
 	"testing"
 	"unsafe"
+
+	"github.com/ebitengine/purego/internal/testlib"
 )
 
 type encodeTypeTestStruct struct {
 	_ structs.HostLayout
 	A int32
 	B float64
+}
+
+type encodeTypeHandleTestStruct struct {
+	_              structs.HostLayout
+	Implementation IMP
+	Variable       Ivar
+	Metadata       Property
 }
 
 var encodeTypeTests = []struct {
@@ -37,6 +46,7 @@ var encodeTypeTests = []struct {
 	{reflect.TypeFor[uint64](), "unsigned long long", "Q"},
 	{reflect.TypeFor[int](), "long", "q"},
 	{reflect.TypeFor[uint](), "unsigned long", "Q"},
+	{reflect.TypeFor[uintptr](), "uintptr_t", "Q"},
 	{reflect.TypeFor[float32](), "float", "f"},
 	{reflect.TypeFor[float64](), "double", "d"},
 	{reflect.TypeFor[string](), "char *", "*"},
@@ -46,6 +56,13 @@ var encodeTypeTests = []struct {
 	{reflect.TypeFor[ID](), "id", "@"},
 	{reflect.TypeFor[Class](), "Class", "#"},
 	{reflect.TypeFor[SEL](), "SEL", ":"},
+	{reflect.TypeFor[IMP](), "IMP", "^?"},
+	{reflect.TypeFor[Ivar](), "Ivar", "^{objc_ivar=}"},
+	{reflect.TypeFor[Property](), "objc_property_t", "^{objc_property=}"},
+	{reflect.TypeFor[*Ivar](), "Ivar *", "^^{objc_ivar}"},
+	{reflect.TypeFor[*Property](), "objc_property_t *", "^^{objc_property}"},
+	{reflect.TypeFor[*IMP](), "IMP *", "^^?"},
+	{reflect.TypeFor[encodeTypeHandleTestStruct](), "struct encodeTypeHandleTestStruct", "{encodeTypeHandleTestStruct=^?^{objc_ivar}^{objc_property}}"},
 	{reflect.TypeFor[encodeTypeTestStruct](), "struct encodeTypeTestStruct", "{encodeTypeTestStruct=id}"},
 }
 
@@ -66,21 +83,15 @@ func TestEncodeType(t *testing.T) {
 // program that prints @encode for each C type in encodeTypeTests and checks
 // that the expected encodings are the ones the compiler actually produces.
 func TestEncodeTypeMatchesClang(t *testing.T) {
-	out, err := exec.Command("go", "env", "CC").Output()
+	compiler, err := testlib.Compiler("CC")
 	if err != nil {
-		t.Fatalf("go env CC: %v", err)
-	}
-	compiler := strings.TrimSpace(string(out))
-	if compiler == "" {
-		t.Skip("no C compiler to use as an @encode oracle")
-	}
-	if _, err := exec.LookPath(compiler); err != nil {
 		t.Skipf("no C compiler to use as an @encode oracle: %v", err)
 	}
 
 	var src strings.Builder
-	src.WriteString("#include <stdio.h>\n#include <objc/objc.h>\n")
+	src.WriteString("#include <stdio.h>\n#include <stdint.h>\n#include <objc/runtime.h>\n")
 	src.WriteString("struct encodeTypeTestStruct { int a; double b; };\n")
+	src.WriteString("struct encodeTypeHandleTestStruct { IMP implementation; Ivar variable; objc_property_t metadata; };\n")
 	src.WriteString("int main(void) {\n")
 	for _, tt := range encodeTypeTests {
 		fmt.Fprintf(&src, "\tprintf(\"%%s\\n\", @encode(%s));\n", tt.cType)
@@ -103,7 +114,7 @@ func TestEncodeTypeMatchesClang(t *testing.T) {
 		t.Fatalf("compile oracle: %v\n%q\n%s", err, cmd, out)
 	}
 
-	out, err = exec.Command(exeFile).Output()
+	out, err := exec.Command(exeFile).Output()
 	if err != nil {
 		t.Fatalf("run oracle: %v", err)
 	}
@@ -140,6 +151,11 @@ func TestEncodeFunc(t *testing.T) {
 			name: "value return, mixed integer kinds",
 			fn:   func(_ ID, _ SEL, a int, b int64, c uint, d uint64) int { return 0 },
 			want: "q@:qqQQ",
+		},
+		{
+			name: "uintptr preserves adjacent argument",
+			fn:   func(_ ID, _ SEL, p uintptr, n int32) uintptr { return 0 },
+			want: "Q@:Qi",
 		},
 		{
 			name: "no arguments",

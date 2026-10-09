@@ -496,12 +496,17 @@ func collectStackArgs(args []reflect.Value, startIdx int, numInts, numFloats int
 			tempNumFloats = newNumFloats
 			keepAlive = addValue(val, keepAlive, addInt, addFloat, addStack, pNumInts, pNumFloats, pNumStack)
 		} else {
-			// Convert strings to C strings before bundling
-			if val.Kind() == reflect.String {
+			// Convert Go values to C pointers before bundling.
+			switch val.Kind() {
+			case reflect.String:
 				ptr := strings.CString(val.String())
 				keepAlive = append(keepAlive, ptr)
 				val = reflect.ValueOf(ptr)
 				args[startIdx+j] = val
+			case reflect.Func:
+				val = reflect.ValueOf(NewCallback(val.Interface()))
+			case reflect.Slice:
+				val = reflect.ValueOf(unsafe.Pointer(val.Pointer()))
 			}
 			stackArgs = append(stackArgs, val)
 		}

@@ -20,13 +20,14 @@ import (
 
 	"github.com/ebitengine/purego"
 	"github.com/ebitengine/purego/internal/load"
+	"github.com/ebitengine/purego/internal/testlib"
 )
 
 func TestRegisterFunc_structArgs(t *testing.T) {
 	libFileName := filepath.Join(t.TempDir(), "structtest.so")
 	t.Logf("Build %v", libFileName)
 
-	if err := buildSharedLib(t, "CC", libFileName, filepath.Join("testdata", "structtest", "struct_test.c")); err != nil {
+	if err := testlib.BuildSharedLib(t, "CC", libFileName, filepath.Join("testdata", "structtest", "struct_test.c")); err != nil {
 		t.Fatal(err)
 	}
 	defer os.Remove(libFileName)
@@ -1002,7 +1003,7 @@ func TestRegisterFunc_structReturns(t *testing.T) {
 	libFileName := filepath.Join(t.TempDir(), "structreturntest.so")
 	t.Logf("Build %v", libFileName)
 
-	if err := buildSharedLib(t, "CC", libFileName, filepath.Join("testdata", "structtest", "structreturn_test.c")); err != nil {
+	if err := testlib.BuildSharedLib(t, "CC", libFileName, filepath.Join("testdata", "structtest", "structreturn_test.c")); err != nil {
 		t.Fatal(err)
 	}
 	defer os.Remove(libFileName)
@@ -1558,7 +1559,7 @@ func TestRegisterFunc_UnsupportedVariadicStructFields(t *testing.T) {
 		t.Skip("struct arguments unsupported")
 	}
 	libFileName := filepath.Join(t.TempDir(), "structtest.so")
-	if err := buildSharedLib(t, "CC", libFileName, filepath.Join("testdata", "structtest", "struct_test.c")); err != nil {
+	if err := testlib.BuildSharedLib(t, "CC", libFileName, filepath.Join("testdata", "structtest", "struct_test.c")); err != nil {
 		t.Fatal(err)
 	}
 	lib, err := load.OpenLibrary(libFileName)
