@@ -276,3 +276,42 @@ func ExampleAllocateProtocol() {
 	// accessibilityElement TB,GisBar
 	// isFoo B16@0:8
 }
+
+func TestRegisterClassUnsupportedArrayAccessors(t *testing.T) {
+	_, err := purego.Dlopen("/System/Library/Frameworks/Foundation.framework/Foundation", purego.RTLD_GLOBAL|purego.RTLD_NOW)
+	if err != nil {
+		t.Fatal(err)
+	}
+	type nestedArray struct {
+		_      structs.HostLayout
+		Values [2][3]int32
+	}
+	for _, tt := range []struct {
+		name      string
+		typ       reflect.Type
+		attribute objc.IvarAttrib
+	}{
+		{name: "ArrayReadOnly", typ: reflect.TypeFor[[3]int32](), attribute: objc.ReadOnly},
+		{name: "ArrayReadWrite", typ: reflect.TypeFor[[3]int32](), attribute: objc.ReadWrite},
+		{name: "NestedArrayReadOnly", typ: reflect.TypeFor[nestedArray](), attribute: objc.ReadOnly},
+		{name: "NestedArrayReadWrite", typ: reflect.TypeFor[nestedArray](), attribute: objc.ReadWrite},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r != nil {
+					t.Errorf("RegisterClass panicked: %v", r)
+				}
+			}()
+			class, err := objc.RegisterClass("PuregoUnsupported"+tt.name, objc.GetClass("NSObject"), nil, []objc.FieldDef{
+				{
+					Name:      "buffer",
+					Type:      tt.typ,
+					Attribute: tt.attribute,
+				},
+			}, nil)
+			if err == nil || class != 0 {
+				t.Errorf("RegisterClass = %v, %v; want zero class and error", class, err)
+			}
+		})
+	}
+}

@@ -301,14 +301,7 @@ func RegisterClass(name string, superClass Class, protocols []*Protocol, ivars [
 	}
 	// Add exported methods based on the selectors returned from ClassDef(string) SEL
 	for idx, def := range methods {
-		imp, err := func() (imp IMP, err error) {
-			defer func() {
-				if r := recover(); r != nil {
-					err = fmt.Errorf("objc: failed to create IMP: %s", r)
-				}
-			}()
-			return NewIMP(def.Fn), nil
-		}()
+		imp, err := newIMP(def.Fn)
 		if err != nil {
 			return 0, fmt.Errorf("objc: couldn't add Method at index %d: %w", idx, err)
 		}
@@ -346,7 +339,7 @@ func RegisterClass(name string, superClass Class, protocols []*Protocol, ivars [
 			)
 			var encoding string
 			if encoding, err = encodeFunc(reflect.New(ty).Elem().Interface()); err != nil {
-				return 0, fmt.Errorf("objc: failed to create read method for '%s': %w", ivar.Name, err)
+				return 0, fmt.Errorf("objc: failed to create write method for '%s': %w", ivar.Name, err)
 			}
 			val := reflect.MakeFunc(ty, func(args []reflect.Value) (results []reflect.Value) {
 				// on entry the first and second arguments are ID and SEL followed by the value
@@ -371,7 +364,11 @@ func RegisterClass(name string, superClass Class, protocols []*Protocol, ivars [
 			}).Interface()
 			// this code only works for ascii but that shouldn't be a problem
 			selector := "set" + string(unicode.ToUpper(rune(ivar.Name[0]))) + ivar.Name[1:] + ":\x00"
-			class.AddMethod(RegisterName(selector), NewIMP(val), encoding)
+			imp, err := newIMP(val)
+			if err != nil {
+				return 0, fmt.Errorf("objc: failed to create write method for '%s': %w", ivar.Name, err)
+			}
+			class.AddMethod(RegisterName(selector), imp, encoding)
 			fallthrough // also implement the read method
 		case ReadOnly:
 			ty := reflect.FuncOf(
@@ -401,7 +398,11 @@ func RegisterClass(name string, superClass Class, protocols []*Protocol, ivars [
 				// this code only works for ascii but that shouldn't be a problem
 				ivar.Name = "is" + string(unicode.ToUpper(rune(ivar.Name[0]))) + ivar.Name[1:]
 			}
-			class.AddMethod(RegisterName(ivar.Name), NewIMP(val), encoding)
+			imp, err := newIMP(val)
+			if err != nil {
+				return 0, fmt.Errorf("objc: failed to create read method for '%s': %w", ivar.Name, err)
+			}
+			class.AddMethod(RegisterName(ivar.Name), imp, encoding)
 		default:
 			return 0, fmt.Errorf("objc: unknown Ivar Attribute (%d)", ivar.Attribute)
 		}
@@ -428,6 +429,8 @@ const (
 	encVoid        = "v"
 	encPtr         = "^"
 	encCharPtr     = "*"
+	encArrayBegin  = "["
+	encArrayEnd    = "]"
 	encStructBegin = "{"
 	encStructEnd   = "}"
 	encUnsafePtr   = "^v"
@@ -509,6 +512,16 @@ func encodeTypeContext(typ reflect.Type, context encodingContext) (string, error
 	case reflect.Pointer:
 		enc, err := encodeTypeContext(typ.Elem(), encodeInsidePointer)
 		return encPtr + enc, err
+	case reflect.Array:
+		elemContext := context
+		if elemContext == encodeTopLevel {
+			elemContext = encodeStructField
+		}
+		enc, err := encodeTypeContext(typ.Elem(), elemContext)
+		if err != nil {
+			return "", err
+		}
+		return fmt.Sprintf("%s%d%s%s", encArrayBegin, typ.Len(), enc, encArrayEnd), nil
 	case reflect.Struct:
 		if context == encodeInsidePointer {
 			return encStructBegin + typ.Name() + encStructEnd, nil
@@ -555,7 +568,7 @@ func encodeFunc(fn any) (string, error) {
 	case 0:
 		encoding.WriteString(encVoid)
 	case 1:
-		tmp, err := encodeType(typ.Out(0), false)
+		tmp, err := encodeSignatureType(typ.Out(0))
 		if err != nil {
 			return "", err
 		}
@@ -571,7 +584,7 @@ func encodeFunc(fn any) (string, error) {
 	encoding.WriteString(encId)
 
 	for i := 1; i < typ.NumIn(); i++ {
-		tmp, err := encodeType(typ.In(i), false)
+		tmp, err := encodeSignatureType(typ.In(i))
 		if err != nil {
 			return "", err
 		}
@@ -742,6 +755,39 @@ type IMP uintptr
 // The function panics if an error occurs.
 // The function pointer is never deallocated.
 func NewIMP(fn any) IMP {
+	imp, err := newIMP(fn)
+	if err != nil {
+		// Preserve the original panic value for callers that recover it.
+		panic(err.(*impError).panicValue)
+	}
+	return imp
+}
+
+// encodeSignatureType is like encodeType for a function parameter or result type, but rejects arrays.
+func encodeSignatureType(typ reflect.Type) (string, error) {
+	if typ.Kind() == reflect.Array {
+		// C array parameters decay to pointers, whereas Go callbacks receive arrays by value.
+		return "", errors.New("top-level arrays are not supported in function signatures")
+	}
+	return encodeType(typ, false)
+}
+
+// impError retains the original panic value while reporting RegisterClass errors.
+type impError struct {
+	panicValue any
+}
+
+func (e *impError) Error() string {
+	return fmt.Sprintf("objc: failed to create IMP: %v", e.panicValue)
+}
+
+// newIMP is like NewIMP but returns an error instead of panicking.
+func newIMP(fn any) (imp IMP, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = &impError{panicValue: r}
+		}
+	}()
 	ty := reflect.TypeOf(fn)
 	if ty.Kind() != reflect.Func {
 		panic("objc: not a function")
@@ -756,5 +802,5 @@ func NewIMP(fn any) IMP {
 	case ty.In(1) != reflect.TypeFor[SEL]():
 		panic("objc: NewIMP must take a (id, SEL) as its first two arguments; got " + ty.String())
 	}
-	return IMP(purego.NewCallback(fn))
+	return IMP(purego.NewCallback(fn)), nil
 }

@@ -14,6 +14,7 @@ import (
 	"testing"
 	"unsafe"
 
+	"github.com/ebitengine/purego"
 	"github.com/ebitengine/purego/internal/testlib"
 )
 
@@ -21,6 +22,11 @@ type encodeTypeTestStruct struct {
 	_ structs.HostLayout
 	A int32
 	B float64
+}
+
+type encodeTypeArrayTestStruct struct {
+	_      structs.HostLayout
+	Values [3]int32
 }
 
 type encodeTypeHandleTestStruct struct {
@@ -64,6 +70,15 @@ var encodeTypeTests = []struct {
 	{reflect.TypeFor[*IMP](), "IMP *", "^^?"},
 	{reflect.TypeFor[encodeTypeHandleTestStruct](), "struct encodeTypeHandleTestStruct", "{encodeTypeHandleTestStruct=^?^{objc_ivar}^{objc_property}}"},
 	{reflect.TypeFor[encodeTypeTestStruct](), "struct encodeTypeTestStruct", "{encodeTypeTestStruct=id}"},
+	{reflect.TypeFor[[3]int32](), "int[3]", "[3i]"},
+	{reflect.TypeFor[[2][3]int32](), "int[2][3]", "[2[3i]]"},
+	{reflect.TypeFor[encodeTypeArrayTestStruct](), "struct encodeTypeArrayTestStruct", "{encodeTypeArrayTestStruct=[3i]}"},
+	{reflect.TypeFor[[0]uint8](), "unsigned char[0]", "[0C]"},
+	{reflect.TypeFor[[2]Ivar](), "Ivar[2]", "[2^{objc_ivar}]"},
+	{reflect.TypeFor[[2]Property](), "objc_property_t[2]", "[2^{objc_property}]"},
+	{reflect.TypeFor[[2][3]Ivar](), "Ivar[2][3]", "[2[3^{objc_ivar}]]"},
+	{reflect.TypeFor[[2]encodeTypeTestStruct](), "struct encodeTypeTestStruct[2]", "[2{encodeTypeTestStruct=id}]"},
+	{reflect.TypeFor[*[3]int32](), "int (*)[3]", "^[3i]"},
 }
 
 func TestEncodeType(t *testing.T) {
@@ -91,6 +106,7 @@ func TestEncodeTypeMatchesClang(t *testing.T) {
 	var src strings.Builder
 	src.WriteString("#include <stdio.h>\n#include <stdint.h>\n#include <objc/runtime.h>\n")
 	src.WriteString("struct encodeTypeTestStruct { int a; double b; };\n")
+	src.WriteString("struct encodeTypeArrayTestStruct { int values[3]; };\n")
 	src.WriteString("struct encodeTypeHandleTestStruct { IMP implementation; Ivar variable; objc_property_t metadata; };\n")
 	src.WriteString("int main(void) {\n")
 	for _, tt := range encodeTypeTests {
@@ -187,6 +203,8 @@ func TestEncodeFuncErrors(t *testing.T) {
 		fn   any
 	}{
 		{"not a func", 0},
+		{"array argument", func(_ ID, _ SEL, v [3]int32) {}},
+		{"array return", func(_ ID, _ SEL) [3]int32 { return [3]int32{} }},
 		{"too many return values", func(_ ID, _ SEL) (int, int) { return 0, 0 }},
 		{"missing self and _cmd", func() {}},
 		{"missing _cmd", func(_ ID) {}},
@@ -196,6 +214,78 @@ func TestEncodeFuncErrors(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got, err := encodeFunc(tt.fn); err == nil {
 				t.Errorf("encodeFunc = %q; want an error", got)
+			}
+		})
+	}
+}
+
+func TestEncodeArrayElementError(t *testing.T) {
+	if _, err := encodeType(reflect.TypeFor[[2]func()](), false); err == nil {
+		t.Error("want an error for an unencodable array element")
+	}
+}
+
+func TestBlockEncodeArrayErrors(t *testing.T) {
+	for _, typ := range []reflect.Type{reflect.TypeFor[func(Block, [3]int32)](), reflect.TypeFor[func(Block) [3]int32]()} {
+		t.Run(typ.String(), func(t *testing.T) {
+			defer func() {
+				if recover() == nil {
+					t.Error("want a panic for a top-level array")
+				}
+			}()
+			new(blockCache).encode(typ)
+		})
+	}
+}
+
+func TestIMPFailures(t *testing.T) {
+	var nilFunction func(ID, SEL)
+	tests := []struct {
+		name string
+		fn   any
+	}{
+		{name: "nil", fn: nil},
+		{name: "not a function", fn: 42},
+		{name: "missing arguments", fn: func() {}},
+		{name: "wrong self", fn: func(int, SEL) {}},
+		{name: "wrong selector", fn: func(ID, int) {}},
+		{name: "nil function", fn: nilFunction},
+		{name: "unsupported result", fn: func(ID, SEL) [3]int32 { return [3]int32{} }},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			func() {
+				defer func() {
+					if recover() == nil {
+						t.Error("NewIMP did not panic")
+					}
+				}()
+				NewIMP(tt.fn)
+			}()
+			if imp, err := newIMP(tt.fn); imp != 0 || err == nil {
+				t.Errorf("newIMP = %v, %v; want zero and error", imp, err)
+			}
+		})
+	}
+}
+
+func TestIMPInvocation(t *testing.T) {
+	for _, tt := range []struct {
+		name   string
+		create func(any) (IMP, error)
+	}{
+		{name: "public", create: func(fn any) (IMP, error) { return NewIMP(fn), nil }},
+		{name: "internal", create: newIMP},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			imp, err := tt.create(func(_ ID, _ SEL, value int32) int32 { return value + 1 })
+			if err != nil {
+				t.Fatal(err)
+			}
+			var call func(ID, SEL, int32) int32
+			purego.RegisterFunc(&call, uintptr(imp))
+			if got := call(0, 0, 41); got != 42 {
+				t.Errorf("IMP result = %d; want 42", got)
 			}
 		})
 	}
