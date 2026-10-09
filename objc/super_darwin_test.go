@@ -5,14 +5,13 @@ package objc_test
 
 import (
 	"fmt"
-	"os/exec"
 	"path/filepath"
-	"runtime"
 	"structs"
 	"sync/atomic"
 	"testing"
 
 	"github.com/ebitengine/purego"
+	"github.com/ebitengine/purego/internal/testlib"
 	"github.com/ebitengine/purego/objc"
 )
 
@@ -97,14 +96,9 @@ func TestSendSuperDispatch(t *testing.T) {
 }
 
 func TestSendSuperStruct(t *testing.T) {
-	arch := "arm64"
-	if runtime.GOARCH == "amd64" {
-		arch = "x86_64"
-	}
 	library := filepath.Join(t.TempDir(), "super.dylib")
-	cmd := exec.Command("clang", "-dynamiclib", "-arch", arch, "-framework", "Foundation", "-o", library, "testdata/super.m")
-	if out, err := cmd.CombinedOutput(); err != nil {
-		t.Fatalf("compile super fixture: %v\n%s", err, out)
+	if err := testlib.BuildSharedLib(t, "CC", library, "-framework", "Foundation", filepath.Join("testdata", "super.m")); err != nil {
+		t.Fatal(err)
 	}
 	// Objective-C retains the registered classes and their implementations.
 	if _, err := purego.Dlopen(library, purego.RTLD_GLOBAL|purego.RTLD_NOW); err != nil {
