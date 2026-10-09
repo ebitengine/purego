@@ -5,7 +5,6 @@
 package testlib
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -15,8 +14,22 @@ import (
 	"testing"
 )
 
-// BuildSharedLib builds sources with the compiler named by `go env compilerEnv`.
-func BuildSharedLib(tb testing.TB, compilerEnv, libFile string, sources ...string) error {
+// Compiler returns the path of the compiler named by `go env compilerEnv`, such as "CC".
+func Compiler(compilerEnv string) (string, error) {
+	out, err := exec.Command("go", "env", compilerEnv).Output()
+	if err != nil {
+		return "", fmt.Errorf("go env %s error: %w", compilerEnv, err)
+	}
+	compiler := strings.TrimSpace(string(out))
+	if compiler == "" {
+		return "", fmt.Errorf("go env %s is empty", compilerEnv)
+	}
+	return exec.LookPath(compiler)
+}
+
+// BuildSharedLib builds a shared library with the compiler from [Compiler].
+// args holds the sources and any extra compiler flags, such as -framework.
+func BuildSharedLib(tb testing.TB, compilerEnv, libFile string, args ...string) error {
 	tb.Helper()
 	// When PUREGO_TEST_PREBUILT_LIBDIR is set, the shared library has been
 	// cross-compiled ahead of time and placed in that directory under the
@@ -45,19 +58,14 @@ func BuildSharedLib(tb testing.TB, compilerEnv, libFile string, sources ...strin
 		}
 	}
 
-	out, err := exec.Command("go", "env", compilerEnv).Output()
+	compiler, err := Compiler(compilerEnv)
 	if err != nil {
-		return fmt.Errorf("go env %s error: %w", compilerEnv, err)
+		return err
 	}
 
-	compiler := strings.TrimSpace(string(out))
-	if compiler == "" {
-		return errors.New("compiler not found")
-	}
-
-	args := []string{"-shared", "-Wall", "-Werror", "-fPIC", "-o", libFile}
+	flags := []string{"-shared", "-Wall", "-Werror", "-fPIC", "-o", libFile}
 	if runtime.GOARCH == "386" {
-		args = append(args, "-m32")
+		flags = append(flags, "-m32")
 	}
 	// macOS arm64 can run amd64 tests through Rossetta.
 	// Build the shared library based on the GOARCH and not
@@ -72,15 +80,9 @@ func BuildSharedLib(tb testing.TB, compilerEnv, libFile string, sources ...strin
 		default:
 			return fmt.Errorf("unknown macOS architecture %s", runtime.GOARCH)
 		}
-		args = append(args, "-arch", arch)
+		flags = append(flags, "-arch", arch)
 	}
-	for _, src := range sources {
-		if filepath.Ext(src) == ".m" {
-			args = append(args, "-framework", "Foundation")
-			break
-		}
-	}
-	cmd := exec.Command(compiler, append(args, sources...)...)
+	cmd := exec.Command(compiler, append(flags, args...)...)
 	if out, err := cmd.CombinedOutput(); err != nil {
 		return fmt.Errorf("compile lib: %w\n%q\n%s", err, cmd, string(out))
 	}
