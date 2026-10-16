@@ -277,6 +277,9 @@ type foreignCall struct {
 	err error
 }
 
+// foreignCalls is never pruned. It holds an entry per block implementation, signature
+// and set of argument types, which is bounded for compiled blocks but grows with
+// invoke functions generated at run time, and keeps entries for unloaded libraries.
 var foreignCalls sync.Map // map[foreignKey]*foreignCall
 
 func newForeignCall(key foreignKey, args []reflect.Value) *foreignCall {
