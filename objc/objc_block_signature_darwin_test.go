@@ -6,6 +6,7 @@ package objc
 import (
 	"reflect"
 	"slices"
+	"strings"
 	"structs"
 	"testing"
 	"unsafe"
@@ -232,5 +233,14 @@ func TestCheckForeignUndecodedResult(t *testing.T) {
 	}
 	if err := checkForeign("v16@?0q8", true, invoke); err != nil {
 		t.Errorf("Invoke on a block returning void: %v", err)
+	}
+}
+
+func TestCheckForeignLiteralArgument(t *testing.T) {
+	invoke := reflect.FuncOf([]reflect.Type{reflect.TypeFor[Block](), reflect.TypeFor[int64]()}, nil, false)
+	// The block's own slot is a double rather than a block.
+	err := checkForeign("v16d0q8", true, invoke)
+	if err == nil || !strings.Contains(err.Error(), "literal argument") {
+		t.Errorf("got %v, want an error about the literal argument", err)
 	}
 }

@@ -342,8 +342,13 @@ func checkForeign(sig string, hasSig bool, typ reflect.Type) error {
 		if goTypes[i] == nil {
 			continue
 		}
-		what := "result"
-		if i > 0 {
+		var what string
+		switch i {
+		case 0:
+			what = "result"
+		case 1:
+			what = "literal argument"
+		default:
 			what = fmt.Sprintf("argument %d", i-2)
 		}
 		want, err := encodingLayout(enc)
