@@ -16,7 +16,8 @@ import (
 // encQualifiers are method type qualifiers, which do not affect the calling convention.
 const encQualifiers = "rnNoORV"
 
-// signature returns a string that refers to the block's descriptor; clone it to keep it.
+// signature returns a string that refers to the block's descriptor, so that the
+// common case of a cached call does not copy it.
 func (b Block) signature() (string, bool) {
 	layout := *(**blockLayout)(unsafe.Pointer(&b))
 	if layout.flags&blockHasSignature == 0 {

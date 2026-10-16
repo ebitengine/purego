@@ -249,9 +249,10 @@ func (b Block) callForeign(resultType reflect.Type, args []any) ([]reflect.Value
 
 	call, ok := foreignCalls.Load(key)
 	if !ok {
-		call = newForeignCall(key, reflectedArgs)
 		// key.sig refers to the block's descriptor, which may not outlive the block.
+		// Copy it before anything that is cached, the key or an error, can refer to it.
 		key.sig = strings.Clone(key.sig)
+		call = newForeignCall(key, reflectedArgs)
 		call, _ = foreignCalls.LoadOrStore(key, call)
 	}
 	if err := call.(*foreignCall).err; err != nil {
