@@ -8,6 +8,7 @@ import (
 	"log"
 	"reflect"
 	"structs"
+	"sync/atomic"
 	"testing"
 
 	"github.com/ebitengine/purego"
@@ -275,4 +276,41 @@ func ExampleAllocateProtocol() {
 	// NSObject
 	// accessibilityElement TB,GisBar
 	// isFoo B16@0:8
+}
+
+var opaquePointerClassID atomic.Uint64
+
+// A pointer to a Go type without an Objective-C encoding is passed as an
+// opaque pointer, so methods and blocks may take one.
+func TestOpaquePointerArgument(t *testing.T) {
+	t.Run("RegisterClass", func(t *testing.T) {
+		// A class can only be registered once per process, and tests may run repeatedly.
+		name := fmt.Sprintf("PuregoOpaquePointerArgument%d", opaquePointerClassID.Add(1))
+		class, err := objc.RegisterClass(name, objc.GetClass("NSObject"), nil, nil,
+			[]objc.MethodDef{{
+				Cmd: objc.RegisterName("appendTo:"),
+				Fn:  func(_ objc.ID, _ objc.SEL, s *[]int) { *s = append(*s, 1) },
+			}},
+		)
+		if err != nil {
+			t.Fatal(err)
+		}
+		object := objc.ID(class).Send(objc.RegisterName("new"))
+		defer object.Send(objc.RegisterName("release"))
+		var s []int
+		object.Send(objc.RegisterName("appendTo:"), &s)
+		if len(s) != 1 {
+			t.Errorf("got %v, want [1]", s)
+		}
+	})
+
+	t.Run("NewBlock", func(t *testing.T) {
+		block := objc.NewBlock(func(_ objc.Block, s *[]int) { *s = append(*s, 1) })
+		defer block.Release()
+		var s []int
+		block.Invoke(&s)
+		if len(s) != 1 {
+			t.Errorf("got %v, want [1]", s)
+		}
+	})
 }

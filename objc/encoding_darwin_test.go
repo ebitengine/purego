@@ -53,6 +53,8 @@ var encodeTypeTests = []struct {
 	{reflect.TypeFor[unsafe.Pointer](), "void *", "^v"},
 	{reflect.TypeFor[*int32](), "int *", "^i"},
 	{reflect.TypeFor[**int32](), "int **", "^^i"},
+	{reflect.TypeFor[*[]int](), "void *", "^v"},
+	{reflect.TypeFor[**map[int]int](), "void **", "^^v"},
 	{reflect.TypeFor[ID](), "id", "@"},
 	{reflect.TypeFor[Class](), "Class", "#"},
 	{reflect.TypeFor[SEL](), "SEL", ":"},
