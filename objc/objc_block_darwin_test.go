@@ -5,10 +5,12 @@ package objc_test
 
 import (
 	"fmt"
+	"path/filepath"
 	"structs"
 	"testing"
 
 	"github.com/ebitengine/purego"
+	"github.com/ebitengine/purego/internal/testlib"
 	"github.com/ebitengine/purego/objc"
 )
 
@@ -153,4 +155,268 @@ func TestBlockCopyAndBlockRelease(t *testing.T) {
 	if refCount != 1 {
 		t.Fatalf("refCount: %d != 1", refCount)
 	}
+}
+
+func loadBlockFixture(t testing.TB) uintptr {
+	t.Helper()
+	library := filepath.Join(t.TempDir(), "block.dylib")
+	if err := testlib.BuildSharedLib(t, "CC", library, "-framework", "Foundation", filepath.Join("testdata", "block.m")); err != nil {
+		t.Fatal(err)
+	}
+	lib, err := purego.Dlopen(library, purego.RTLD_GLOBAL|purego.RTLD_NOW)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return lib
+}
+
+func TestInvokeForeignBlock(t *testing.T) {
+	lib := loadBlockFixture(t)
+
+	check := func(t *testing.T, block objc.Block) {
+		t.Helper()
+		block.Invoke(int64(20), 3.5)
+		// base + i + int64(f)
+		got, err := objc.InvokeBlock[int64](block, int64(20), 3.5)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got != 123 {
+			t.Errorf("InvokeBlock = %d, want 123", got)
+		}
+	}
+
+	t.Run("heap", func(t *testing.T) {
+		var heapBlock func(base int64) objc.Block
+		purego.RegisterLibFunc(&heapBlock, lib, "purego_heap_block")
+		block := heapBlock(100)
+		defer block.Release()
+		check(t, block)
+	})
+
+	t.Run("stack", func(t *testing.T) {
+		var withStackBlock func(base int64, cb uintptr)
+		purego.RegisterLibFunc(&withStackBlock, lib, "purego_with_stack_block")
+		called := false
+		cb := purego.NewCallback(func(block objc.Block) {
+			called = true
+			check(t, block)
+		})
+		withStackBlock(100, cb)
+		if !called {
+			t.Fatal("callback was not called")
+		}
+	})
+}
+
+func TestInvokeForeignBlockMismatch(t *testing.T) {
+	lib := loadBlockFixture(t)
+	var heapBlock func(base int64) objc.Block
+	purego.RegisterLibFunc(&heapBlock, lib, "purego_heap_block")
+	block := heapBlock(100)
+	defer block.Release()
+
+	for range 2 { // the second call is answered from the cache
+		if _, err := objc.InvokeBlock[int64](block, int64(20)); err == nil {
+			t.Error("missing argument: expected an error")
+		}
+	}
+	if _, err := objc.InvokeBlock[int64](block, int64(20), int64(3)); err == nil {
+		t.Error("integer for a double argument: expected an error")
+	}
+	if _, err := objc.InvokeBlock[float64](block, int64(20), 3.5); err == nil {
+		t.Error("wrong result type: expected an error")
+	}
+	if _, err := objc.InvokeBlock[any](block, int64(20), 3.5); err == nil {
+		t.Error("unsupported result type: expected an error")
+	}
+	if _, err := objc.InvokeBlock[int32](block, int64(20), 3.5); err == nil {
+		t.Error("smaller result type: expected an error")
+	}
+	if _, err := objc.InvokeBlock[int64](block, 20, 3.5); err != nil {
+		t.Errorf("int for an int64_t argument: %v", err)
+	}
+	if _, err := objc.InvokeBlock[int64](block, int32(20), 3.5); err == nil {
+		t.Error("int32 for an int64_t argument: expected an error")
+	}
+	if _, err := objc.InvokeBlock[int64](block, nil, 3.5); err == nil {
+		t.Error("nil argument: expected an error")
+	}
+	if got, err := objc.InvokeBlock[int64](block, int64(20), 3.5); err != nil || got != 123 {
+		t.Errorf("InvokeBlock = %d, %v; want 123, nil", got, err)
+	}
+}
+
+func TestInvokeForeignBlockStruct(t *testing.T) {
+	lib := loadBlockFixture(t)
+	var bigBlock func() objc.Block
+	purego.RegisterLibFunc(&bigBlock, lib, "purego_big_block")
+	block := bigBlock()
+	defer block.Release()
+
+	type big struct {
+		_          structs.HostLayout
+		a, b, c, d int64
+	}
+	got, err := objc.InvokeBlock[big](block, int64(1))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := (big{a: 1, b: 2, c: 3, d: 4}); got != want {
+		t.Errorf("got %+v, want %+v", got, want)
+	}
+
+	type small struct {
+		_    structs.HostLayout
+		a, b int64
+	}
+	if _, err := objc.InvokeBlock[small](block, int64(1)); err == nil {
+		t.Error("smaller struct: expected an error")
+	}
+	type reordered struct {
+		_       structs.HostLayout
+		a, b, c int64
+		d       float64
+	}
+	if _, err := objc.InvokeBlock[reordered](block, int64(1)); err == nil {
+		t.Error("struct with a different field: expected an error")
+	}
+
+	defer func() {
+		if recover() == nil {
+			t.Error("Invoke on a block returning a struct: expected a panic")
+		}
+	}()
+	block.Invoke(int64(1))
+}
+
+func TestInvokeForeignBlockStructPadding(t *testing.T) {
+	lib := loadBlockFixture(t)
+	var boolFloatBlock func() objc.Block
+	purego.RegisterLibFunc(&boolFloatBlock, lib, "purego_boolfloat_block")
+	block := boolFloatBlock()
+	defer block.Release()
+
+	type boolFloat struct {
+		_ structs.HostLayout
+		b bool
+		_ [3]byte
+		f float32
+	}
+	got, err := objc.InvokeBlock[boolFloat](block, float32(1.5))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !got.b || got.f != 3 {
+		t.Errorf("got {%v %v}, want {true 3}", got.b, got.f)
+	}
+}
+
+func TestInvokeForeignBlockFuncArgument(t *testing.T) {
+	lib := loadBlockFixture(t)
+	var fnptrBlock func() objc.Block
+	purego.RegisterLibFunc(&fnptrBlock, lib, "purego_fnptr_block")
+	block := fnptrBlock()
+	defer block.Release()
+
+	if _, err := objc.InvokeBlock[objc.ID](block, func() {}); err == nil {
+		t.Error("expected an error for a func argument")
+	}
+
+	func() {
+		defer func() {
+			if recover() == nil {
+				t.Error("Invoke with a func argument: expected a panic")
+			}
+		}()
+		block.Invoke(func() {})
+	}()
+
+	called := 0
+	cb := purego.NewCallback(func() { called++ })
+	for range 5000 {
+		block.Invoke(cb)
+	}
+	if called != 5000 {
+		t.Errorf("called = %d, want 5000", called)
+	}
+}
+
+func TestInvokeForeignBlockBlockArgument(t *testing.T) {
+	lib := loadBlockFixture(t)
+	var blockArgBlock func() objc.Block
+	purego.RegisterLibFunc(&blockArgBlock, lib, "purego_blockarg_block")
+	block := blockArgBlock()
+	defer block.Release()
+
+	var got int64
+	handler := objc.NewBlock(func(_ objc.Block, x int64) { got = x })
+	defer handler.Release()
+
+	block.Invoke(handler, int64(41))
+	if got != 42 {
+		t.Errorf("got %d, want 42", got)
+	}
+}
+
+func BenchmarkInvokeForeignBlock(b *testing.B) {
+	lib := loadBlockFixture(b)
+	var heapBlock func(base int64) objc.Block
+	purego.RegisterLibFunc(&heapBlock, lib, "purego_heap_block")
+	block := heapBlock(100)
+	defer block.Release()
+
+	b.Run("Invoke", func(b *testing.B) {
+		b.ReportAllocs()
+		for b.Loop() {
+			block.Invoke(int64(20), 3.5)
+		}
+	})
+	b.Run("InvokeBlock", func(b *testing.B) {
+		b.ReportAllocs()
+		for b.Loop() {
+			if _, err := objc.InvokeBlock[int64](block, int64(20), 3.5); err != nil {
+				b.Fatal(err)
+			}
+		}
+	})
+}
+
+func TestInvokeForeignBlockManyArguments(t *testing.T) {
+	lib := loadBlockFixture(t)
+	var manyBlock func() objc.Block
+	purego.RegisterLibFunc(&manyBlock, lib, "purego_many_block")
+	block := manyBlock()
+	defer block.Release()
+
+	for range 2 { // the second call is answered from the cache
+		got, err := objc.InvokeBlock[int64](block, int64(1), int64(2), int64(3), int64(4), int64(5), int64(6), int64(7), int64(8), 9.5, int64(10))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got != 55 {
+			t.Errorf("got %d, want 55", got)
+		}
+		if _, err := objc.InvokeBlock[int64](block, int64(1), int64(2), int64(3), int64(4), int64(5), int64(6), int64(7), int64(8), 9.5, int32(10)); err == nil {
+			t.Error("int32 for the last int64_t argument: expected an error")
+		}
+	}
+}
+
+func TestInvokeForeignBlockUnknownResult(t *testing.T) {
+	lib := loadBlockFixture(t)
+	var vectorBlock func() objc.Block
+	purego.RegisterLibFunc(&vectorBlock, lib, "purego_vector_block")
+	block := vectorBlock()
+	defer block.Release()
+
+	if _, err := objc.InvokeBlock[int64](block, int64(1)); err == nil {
+		t.Error("InvokeBlock: expected an error")
+	}
+	defer func() {
+		if recover() == nil {
+			t.Error("Invoke: expected a panic")
+		}
+	}()
+	block.Invoke(int64(1))
 }
