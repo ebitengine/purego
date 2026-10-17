@@ -4,7 +4,6 @@
 package purego
 
 import (
-	"math"
 	"reflect"
 	"runtime"
 	"unsafe"
@@ -137,23 +136,10 @@ func addStruct(v reflect.Value, numInts, numFloats, numStack *int, addInt, addFl
 		return keepAlive
 	}
 
-	// if greater than 64 bytes place on stack
-	if v.Type().Size() > 8*8 {
+	if postMerger(v.Type()) {
 		placeStack(v, addStack)
-		return keepAlive
-	}
-	var (
-		savedNumFloats = *numFloats
-		savedNumInts   = *numInts
-		savedNumStack  = *numStack
-	)
-	placeOnStack := postMerger(v.Type()) || !tryPlaceRegister(v, addFloat, addInt)
-	if placeOnStack {
-		// reset any values placed in registers
-		*numFloats = savedNumFloats
-		*numInts = savedNumInts
-		*numStack = savedNumStack
-		placeStack(v, addStack)
+	} else {
+		tryPlaceRegister(v, addFloat, addInt)
 	}
 	return keepAlive
 }
@@ -191,122 +177,17 @@ func postMerger(t reflect.Type) (passInMemory bool) {
 	return true // Go does not have an SSE/SSEUP type so this is always true
 }
 
-func tryPlaceRegister(v reflect.Value, addFloat func(uintptr), addInt func(uintptr)) (ok bool) {
-	ok = true
-	var val uint64
-	var shift byte // # of bits to shift
-	var flushed bool
-	class := _NO_CLASS
-	flushIfNeeded := func() {
-		if flushed {
-			return
-		}
-		flushed = true
-		if class == _SSE {
-			addFloat(uintptr(val))
+// tryPlaceRegister passes a struct of at most two eightbytes in its ABI classes.
+func tryPlaceRegister(v reflect.Value, addFloat func(uintptr), addInt func(uintptr)) {
+	var buf [2]uintptr
+	reflect.NewAt(v.Type(), unsafe.Pointer(&buf[0])).Elem().Set(v)
+	for i := uintptr(0); i*8 < v.Type().Size(); i++ {
+		if classifyEightbyte(v.Type(), i*8, i*8+8) == _SSE {
+			addFloat(buf[i])
 		} else {
-			addInt(uintptr(val))
-		}
-		val = 0
-		shift = 0
-		class = _NO_CLASS
-	}
-	var place func(v reflect.Value)
-	place = func(v reflect.Value) {
-		var numFields int
-		if v.Kind() == reflect.Struct {
-			numFields = v.Type().NumField()
-		} else {
-			numFields = v.Type().Len()
-		}
-
-		for i := range numFields {
-			if v.Kind() == reflect.Struct && !isABIField(v.Type().Field(i)) {
-				continue
-			}
-			flushed = false
-			var f reflect.Value
-			if v.Kind() == reflect.Struct {
-				f = v.Field(i)
-			} else {
-				f = v.Index(i)
-			}
-			switch f.Kind() {
-			case reflect.Struct:
-				place(f)
-			case reflect.Bool:
-				if f.Bool() {
-					val |= 1 << shift
-				}
-				shift += 8
-				class |= _INTEGER
-			case reflect.Pointer, reflect.UnsafePointer:
-				val = uint64(f.Pointer())
-				shift = 64
-				class = _INTEGER
-			case reflect.Int8:
-				val |= uint64(f.Int()&0xFF) << shift
-				shift += 8
-				class |= _INTEGER
-			case reflect.Int16:
-				val |= uint64(f.Int()&0xFFFF) << shift
-				shift += 16
-				class |= _INTEGER
-			case reflect.Int32:
-				val |= uint64(f.Int()&0xFFFF_FFFF) << shift
-				shift += 32
-				class |= _INTEGER
-			case reflect.Int64, reflect.Int:
-				val = uint64(f.Int())
-				shift = 64
-				class = _INTEGER
-			case reflect.Uint8:
-				val |= f.Uint() << shift
-				shift += 8
-				class |= _INTEGER
-			case reflect.Uint16:
-				val |= f.Uint() << shift
-				shift += 16
-				class |= _INTEGER
-			case reflect.Uint32:
-				val |= f.Uint() << shift
-				shift += 32
-				class |= _INTEGER
-			case reflect.Uint64, reflect.Uint, reflect.Uintptr:
-				val = f.Uint()
-				shift = 64
-				class = _INTEGER
-			case reflect.Float32:
-				val |= uint64(math.Float32bits(float32(f.Float()))) << shift
-				shift += 32
-				class |= _SSE
-			case reflect.Float64:
-				if v.Type().Size() > 16 {
-					ok = false
-					return
-				}
-				val = uint64(math.Float64bits(f.Float()))
-				shift = 64
-				class = _SSE
-			case reflect.Array:
-				place(f)
-			default:
-				panic("purego: unsupported kind " + f.Kind().String())
-			}
-
-			if shift == 64 {
-				flushIfNeeded()
-			} else if shift > 64 {
-				// Should never happen, but may if we forget to reset shift after flush (or forget to flush),
-				// better fall apart here, than corrupt arguments.
-				panic("purego: tryPlaceRegisters shift > 64")
-			}
+			addInt(buf[i])
 		}
 	}
-
-	place(v)
-	flushIfNeeded()
-	return ok
 }
 
 func placeStack(v reflect.Value, addStack func(uintptr)) {
