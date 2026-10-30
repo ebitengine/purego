@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2022 The Ebitengine Authors
 
-//go:build darwin || freebsd || linux || netbsd || windows
+//go:build darwin || freebsd || illumos || linux || netbsd || windows
 
 package main
 
@@ -18,6 +18,8 @@ func getSystemLibrary() string {
 		return "/usr/lib/libSystem.B.dylib"
 	case "freebsd":
 		return "libc.so.7"
+	case "illumos":
+		return "libc.so.1"
 	case "linux":
 		return "libc.so.6"
 	case "netbsd":

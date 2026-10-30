@@ -42,6 +42,7 @@ Tier 2 platforms are supported by PureGo on a best-effort basis. Critical bugs o
 
 - **Android**: 386<sup>1,3</sup>, arm<sup>1,3</sup>
 - **FreeBSD**: amd64<sup>3,4</sup>, arm64<sup>3,4</sup>
+- **illumos**: amd64<sup>3</sup>
 - **Linux**: 386<sup>3</sup>, arm<sup>3</sup>, loong64<sup>2</sup>, ppc64le<sup>2</sup>, riscv64<sup>3</sup>, s390x<sup>3, 5</sup>
 - **NetBSD**: amd64<sup>3</sup>, arm64<sup>3</sup>
 - **Windows**: 386<sup>3,6</sup>, arm<sup>3,6,7</sup>
@@ -118,6 +119,7 @@ This is a list of the copied files:
 * `internal/fakecgo/linux.go` from package `runtime/cgo`
 
 The `internal/fakecgo/go_GOOS.go` files were modified from `runtime/cgo/gcc_GOOS_GOARCH.go`.
+The `internal/fakecgo/go_illumos.go` file was modified from `runtime/cgo/gcc_unix.c` and `runtime/cgo/pthread_unix.c`.
 The `internal/fakecgo/linux.go` file is a combination of `runtime/cgo/linux.go` and `runtime/cgo/linux_syscall.c`.
 
 The files `abi_*.h` and `internal/fakecgo/abi_*.h` are the same because Bazel does not support cross-package use of

@@ -17,6 +17,7 @@ body:
       - label: macOS
       - label: Linux
       - label: FreeBSD
+      - label: illumos
       - label: NetBSD
       - label: Android
       - label: iOS
