@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: 2025 The Ebitengine Authors
 
-# BSD tests run within QEMU on Ubuntu.
+# BSD and illumos tests run within QEMU on Ubuntu.
 # vmactions/*-vm only supports a single "step" where it
 # brings down the VM at the end of the step, so all
 # the commands to run need to be put into this single block.
