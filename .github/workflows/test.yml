@@ -346,9 +346,11 @@ jobs:
           # The -build image ships a C compiler for the CGO_ENABLED=1 tests.
           release: r151058-build
           prepare: |
+            # The native tar does not understand the PAX headers in Go's
+            # tarballs, so use GNU tar. pkg exits with 4 if it is installed.
+            pkg install archiver/gnu-tar || [ $? -eq 4 ]
             curl -sSfLO https://go.dev/dl/go${{matrix.go}}.illumos-amd64.tar.gz
             mkdir -p /usr/local
-            # The native tar does not understand the PAX headers in Go's tarballs.
             rm -fr /usr/local/go && gtar -C /usr/local -xzf go${{matrix.go}}.illumos-amd64.tar.gz
             chmod +x $GITHUB_WORKSPACE/.github/scripts/bsd_tests.sh
           run: $GITHUB_WORKSPACE/.github/scripts/bsd_tests.sh
