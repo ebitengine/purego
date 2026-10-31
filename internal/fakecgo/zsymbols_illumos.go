@@ -20,6 +20,7 @@ import "unsafe"
 //go:cgo_import_dynamic purego_pthread_create pthread_create "libc.so"
 //go:cgo_import_dynamic purego_pthread_detach pthread_detach "libc.so"
 //go:cgo_import_dynamic purego_pthread_sigmask pthread_sigmask "libc.so"
+//go:cgo_import_dynamic purego_pthread_attr_destroy pthread_attr_destroy "libc.so"
 //go:cgo_import_dynamic purego_pthread_mutex_lock pthread_mutex_lock "libc.so"
 //go:cgo_import_dynamic purego_pthread_mutex_unlock pthread_mutex_unlock "libc.so"
 //go:cgo_import_dynamic purego_pthread_cond_broadcast pthread_cond_broadcast "libc.so"
@@ -27,7 +28,6 @@ import "unsafe"
 //go:cgo_import_dynamic purego_pthread_self pthread_self "libc.so"
 //go:cgo_import_dynamic purego_pthread_attr_getstacksize pthread_attr_getstacksize "libc.so"
 //go:cgo_import_dynamic purego_pthread_attr_setstacksize pthread_attr_setstacksize "libc.so"
-//go:cgo_import_dynamic purego_pthread_attr_destroy pthread_attr_destroy "libc.so"
 //go:cgo_import_dynamic purego_pthread_attr_get_np pthread_attr_get_np "libc.so"
 //go:cgo_import_dynamic purego_pthread_attr_getstack pthread_attr_getstack "libc.so"
 
@@ -47,12 +47,6 @@ func pthread_attr_getstacksize(attr *pthread_attr_t, stacksize *size_t) int32 {
 //go:norace
 func pthread_attr_setstacksize(attr *pthread_attr_t, size size_t) int32 {
 	return int32(call5(pthread_attr_setstacksizeABI0, uintptr(unsafe.Pointer(attr)), uintptr(size), 0, 0, 0))
-}
-
-//go:nosplit
-//go:norace
-func pthread_attr_destroy(attr *pthread_attr_t) int32 {
-	return int32(call5(pthread_attr_destroyABI0, uintptr(unsafe.Pointer(attr)), 0, 0, 0, 0))
 }
 
 //go:nosplit
@@ -78,10 +72,6 @@ var pthread_attr_getstacksizeABI0 = uintptr(unsafe.Pointer(&_pthread_attr_getsta
 //go:linkname _pthread_attr_setstacksize _pthread_attr_setstacksize
 var _pthread_attr_setstacksize uint8
 var pthread_attr_setstacksizeABI0 = uintptr(unsafe.Pointer(&_pthread_attr_setstacksize))
-
-//go:linkname _pthread_attr_destroy _pthread_attr_destroy
-var _pthread_attr_destroy uint8
-var pthread_attr_destroyABI0 = uintptr(unsafe.Pointer(&_pthread_attr_destroy))
 
 //go:linkname _pthread_attr_get_np _pthread_attr_get_np
 var _pthread_attr_get_np uint8

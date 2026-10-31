@@ -42,6 +42,9 @@ TEXT _pthread_detach(SB), NOSPLIT|NOFRAME, $0-0
 TEXT _pthread_sigmask(SB), NOSPLIT|NOFRAME, $0-0
 	JMP purego_pthread_sigmask(SB)
 
+TEXT _pthread_attr_destroy(SB), NOSPLIT|NOFRAME, $0-0
+	JMP purego_pthread_attr_destroy(SB)
+
 TEXT _pthread_mutex_lock(SB), NOSPLIT|NOFRAME, $0-0
 	JMP purego_pthread_mutex_lock(SB)
 

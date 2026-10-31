@@ -150,7 +150,7 @@ var (
 		{"pthread_get_stacksize_np", [5]Arg{{"thread", "pthread_t"}}, "size_t", []string{"darwin"}},
 		{"pthread_attr_getstacksize", [5]Arg{{"attr", "*pthread_attr_t"}, {"stacksize", "*size_t"}}, "int32", []string{"linux", "freebsd", "illumos", "netbsd"}},
 		{"pthread_attr_setstacksize", [5]Arg{{"attr", "*pthread_attr_t"}, {"size", "size_t"}}, "int32", []string{"darwin", "illumos"}},
-		{"pthread_attr_destroy", [5]Arg{{"attr", "*pthread_attr_t"}}, "int32", []string{"linux", "freebsd", "illumos", "netbsd"}},
+		{"pthread_attr_destroy", [5]Arg{{"attr", "*pthread_attr_t"}}, "int32", nil},
 		{"pthread_attr_get_np", [5]Arg{{"thread", "pthread_t"}, {"attr", "*pthread_attr_t"}}, "int32", []string{"illumos"}},
 		{"pthread_attr_getstack", [5]Arg{{"attr", "*pthread_attr_t"}, {"stackaddr", "*uintptr"}, {"stacksize", "*size_t"}}, "int32", []string{"illumos"}},
 		{"pthread_mutex_lock", [5]Arg{{"mutex", "*pthread_mutex_t"}}, "int32", nil},

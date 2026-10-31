@@ -85,10 +85,3 @@ TEXT _pthread_attr_getstacksize(SB), NOSPLIT, $0-0
 	// MOVD 24(R1), R2 when linking PIC code.
 	WORD $0x60000000
 	RET
-
-TEXT _pthread_attr_destroy(SB), NOSPLIT, $0-0
-	CALL purego_pthread_attr_destroy(SB)
-	// The NOP is the TOC restore slot. The linker rewrites it to
-	// MOVD 24(R1), R2 when linking PIC code.
-	WORD $0x60000000
-	RET
