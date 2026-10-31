@@ -32,8 +32,6 @@ func _cgo_sys_thread_start(ts *ThreadStart) {
 	ts.g.stackhi = uintptr(size)
 
 	err = _cgo_try_pthread_create(&p, &attr, unsafe.Pointer(threadentry_trampolineABI0), ts)
-
-	// pthread_attr_t holds a pointer to memory allocated by pthread_attr_init.
 	pthread_attr_destroy(&attr)
 
 	pthread_sigmask(SIG_SETMASK, &oset, nil)
@@ -45,26 +43,8 @@ func _cgo_sys_thread_start(ts *ThreadStart) {
 	}
 }
 
-// threadentry_trampolineABI0 maps the C ABI to Go ABI then calls the Go function
-//
-//go:linkname x_threadentry_trampoline threadentry_trampoline
-var x_threadentry_trampoline byte
-var threadentry_trampolineABI0 = &x_threadentry_trampoline
-
 //go:nosplit
-func threadentry(v unsafe.Pointer) unsafe.Pointer {
-	ts := *(*ThreadStart)(v)
-	free(v)
-
-	setg_trampoline(setg_func, uintptr(unsafe.Pointer(ts.g)))
-
-	callThreadEntryFn(ts.fn)
-
-	return nil
-}
-
-// setg_func is the setg_gcc function passed to x_cgo_init.
-var setg_func uintptr
+func threadentry_platform() {}
 
 // x_cgo_init(G *g, void (*setg)(void*)) (runtime/cgo/gcc_unix.c)
 // is called during startup. It saves setg_gcc and sets g0's stacklo. Because
