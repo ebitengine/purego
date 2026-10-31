@@ -45,8 +45,12 @@ const (
 
 // Source: https://github.com/illumos/illumos-gate/blob/master/usr/src/head/pthread.h
 var (
-	PTHREAD_COND_INITIALIZER  = pthread_cond_t{magic: _COND_MAGIC}
-	PTHREAD_MUTEX_INITIALIZER = pthread_mutex_t{magic: _MUTEX_MAGIC}
+	PTHREAD_COND_INITIALIZER = pthread_cond_t{
+		magic: _COND_MAGIC,
+	}
+	PTHREAD_MUTEX_INITIALIZER = pthread_mutex_t{
+		magic: _MUTEX_MAGIC,
+	}
 )
 
 // Source: https://github.com/illumos/illumos-gate/blob/master/usr/src/uts/common/sys/iso/signal_iso.h

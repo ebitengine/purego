@@ -348,7 +348,8 @@ jobs:
           prepare: |
             curl -sSfLO https://go.dev/dl/go${{matrix.go}}.illumos-amd64.tar.gz
             mkdir -p /usr/local
-            rm -fr /usr/local/go && gzip -dc go${{matrix.go}}.illumos-amd64.tar.gz | (cd /usr/local && tar xf -)
+            # The native tar does not understand the PAX headers in Go's tarballs.
+            rm -fr /usr/local/go && gtar -C /usr/local -xzf go${{matrix.go}}.illumos-amd64.tar.gz
             chmod +x $GITHUB_WORKSPACE/.github/scripts/bsd_tests.sh
           run: $GITHUB_WORKSPACE/.github/scripts/bsd_tests.sh
 
