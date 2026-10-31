@@ -63,13 +63,13 @@ func threadentry(v unsafe.Pointer) unsafe.Pointer {
 	return nil
 }
 
-// here we will store a pointer to the provided setg func
+// setg_func is the setg_gcc function passed to x_cgo_init.
 var setg_func uintptr
 
 // x_cgo_init(G *g, void (*setg)(void*)) (runtime/cgo/gcc_unix.c)
-// This gets called during startup, adjusts stacklo, and provides a pointer to setg_gcc for us.
-// Additionally, if we set _cgo_init to non-null, go won't do its own TLS setup.
-// This function can't be go:systemstack since go is not in a state where the systemcheck would work.
+// is called during startup. It saves setg_gcc and sets g0's stacklo. Because
+// _cgo_init is non-nil, the runtime skips its own TLS setup. It can't be
+// go:systemstack because the runtime is not set up far enough for that check.
 //
 // The stack bounds come from pthread_attr_get_np, like x_cgo_getstackbound
 // in runtime/cgo/pthread_unix.c, because the default attributes report a

@@ -79,7 +79,8 @@ env CGO_ENABLED=0 go test "-gcflags=all=-N -l -std" -v ./...
 echo "=> go test CGO_ENABLED=1 w/o optimization"
 env CGO_ENABLED=1 go test "-gcflags=all=-N -l" -v ./...
 
-if [ -z "$(go version | grep '^1.1')" ]; then
+# The race detector is not supported on illumos.
+if [ "$(go env GOOS)" != "illumos" ]; then
   echo "=> go test race"
   go test -race -shuffle=on -v -count=10 ./...
 fi
