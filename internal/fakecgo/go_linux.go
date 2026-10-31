@@ -25,8 +25,9 @@ func _cgo_sys_thread_start(ts *ThreadStart) {
 	// Leave stacklo=0 and set stackhi=size; mstart will do the rest.
 	ts.g.stackhi = uintptr(size)
 
+	// No pthread_attr_destroy: glibc's pthread_attr_init does not allocate, and
+	// the extra call puts the nosplit chain over the limit on s390x.
 	err = _cgo_try_pthread_create(&p, &attr, unsafe.Pointer(threadentry_trampolineABI0), ts)
-	pthread_attr_destroy(&attr)
 
 	pthread_sigmask(SIG_SETMASK, &oset, nil)
 
