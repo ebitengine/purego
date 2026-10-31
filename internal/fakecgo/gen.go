@@ -146,11 +146,13 @@ var (
 		{"pthread_create", [5]Arg{{"thread", "*pthread_t"}, {"attr", "*pthread_attr_t"}, {"start", "unsafe.Pointer"}, {"arg", "unsafe.Pointer"}}, "int32", nil},
 		{"pthread_detach", [5]Arg{{"thread", "pthread_t"}}, "int32", nil},
 		{"pthread_sigmask", [5]Arg{{"how", "sighow"}, {"ign", "*sigset_t"}, {"oset", "*sigset_t"}}, "int32", nil},
-		{"pthread_self", [5]Arg{}, "pthread_t", []string{"darwin"}},
+		{"pthread_self", [5]Arg{}, "pthread_t", []string{"darwin", "illumos"}},
 		{"pthread_get_stacksize_np", [5]Arg{{"thread", "pthread_t"}}, "size_t", []string{"darwin"}},
-		{"pthread_attr_getstacksize", [5]Arg{{"attr", "*pthread_attr_t"}, {"stacksize", "*size_t"}}, "int32", []string{"linux", "freebsd", "netbsd"}},
-		{"pthread_attr_setstacksize", [5]Arg{{"attr", "*pthread_attr_t"}, {"size", "size_t"}}, "int32", []string{"darwin"}},
-		{"pthread_attr_destroy", [5]Arg{{"attr", "*pthread_attr_t"}}, "int32", []string{"linux", "freebsd", "netbsd"}},
+		{"pthread_attr_getstacksize", [5]Arg{{"attr", "*pthread_attr_t"}, {"stacksize", "*size_t"}}, "int32", []string{"linux", "freebsd", "illumos", "netbsd"}},
+		{"pthread_attr_setstacksize", [5]Arg{{"attr", "*pthread_attr_t"}, {"size", "size_t"}}, "int32", []string{"darwin", "illumos"}},
+		{"pthread_attr_destroy", [5]Arg{{"attr", "*pthread_attr_t"}}, "int32", nil},
+		{"pthread_attr_get_np", [5]Arg{{"thread", "pthread_t"}, {"attr", "*pthread_attr_t"}}, "int32", []string{"illumos"}},
+		{"pthread_attr_getstack", [5]Arg{{"attr", "*pthread_attr_t"}, {"stackaddr", "*uintptr"}, {"stacksize", "*size_t"}}, "int32", []string{"illumos"}},
 		{"pthread_mutex_lock", [5]Arg{{"mutex", "*pthread_mutex_t"}}, "int32", nil},
 		{"pthread_mutex_unlock", [5]Arg{{"mutex", "*pthread_mutex_t"}}, "int32", nil},
 		{"pthread_cond_broadcast", [5]Arg{{"cond", "*pthread_cond_t"}}, "int32", nil},
@@ -163,7 +165,7 @@ var funcs = map[string]any{
 	"imports":   imports,
 }
 
-var GOOSes = []string{"darwin", "freebsd", "linux", "netbsd"}
+var GOOSes = []string{"darwin", "freebsd", "illumos", "linux", "netbsd"}
 
 func imports(symbols []Symbol) string {
 	if len(symbols) == 0 {
@@ -304,6 +306,10 @@ func run() error {
 		case "freebsd":
 			libcSO = "libc.so.7"
 			pthreadSO = "libthr.so.3"
+		case "illumos":
+			// pthreads are part of libc. Same name as the runtime uses.
+			libcSO = "libc.so"
+			pthreadSO = "libc.so"
 		case "linux":
 			libcSO = "libc.so.6"
 			pthreadSO = "libpthread.so.0"

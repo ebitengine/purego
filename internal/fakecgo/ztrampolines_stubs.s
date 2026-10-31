@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2022 The Ebitengine Authors
 
-//go:build !cgo && (darwin || freebsd || (linux && !ppc64le) || netbsd)
+//go:build !cgo && (darwin || freebsd || illumos || (linux && !ppc64le) || netbsd)
 
 #include "textflag.h"
 
@@ -41,6 +41,9 @@ TEXT _pthread_detach(SB), NOSPLIT|NOFRAME, $0-0
 
 TEXT _pthread_sigmask(SB), NOSPLIT|NOFRAME, $0-0
 	JMP purego_pthread_sigmask(SB)
+
+TEXT _pthread_attr_destroy(SB), NOSPLIT|NOFRAME, $0-0
+	JMP purego_pthread_attr_destroy(SB)
 
 TEXT _pthread_mutex_lock(SB), NOSPLIT|NOFRAME, $0-0
 	JMP purego_pthread_mutex_lock(SB)

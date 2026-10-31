@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: 2025 The Ebitengine Authors
 
-# BSD tests run within QEMU on Ubuntu.
+# BSD and illumos tests run within QEMU on Ubuntu.
 # vmactions/*-vm only supports a single "step" where it
 # brings down the VM at the end of the step, so all
 # the commands to run need to be put into this single block.
@@ -38,6 +38,9 @@ env GOOS=linux GOARCH=arm64 go build -v ./...
 # Check cross-compiling FreeBSD binaries.
 env GOOS=freebsd GOARCH=amd64 go build -gcflags="github.com/ebitengine/purego/internal/fakecgo=-std" -v ./...
 env GOOS=freebsd GOARCH=arm64 go build -gcflags="github.com/ebitengine/purego/internal/fakecgo=-std" -v ./...
+
+# Check cross-compiling illumos binaries.
+env GOOS=illumos GOARCH=amd64 go build -v ./...
 
 # Check cross-compiling NetBSD binaries.
 env GOOS=netbsd GOARCH=amd64 go build -v ./...
@@ -76,7 +79,8 @@ env CGO_ENABLED=0 go test "-gcflags=all=-N -l -std" -v ./...
 echo "=> go test CGO_ENABLED=1 w/o optimization"
 env CGO_ENABLED=1 go test "-gcflags=all=-N -l" -v ./...
 
-if [ -z "$(go version | grep '^1.1')" ]; then
+# The race detector is not supported on illumos.
+if [ "$(go env GOOS)" != "illumos" ]; then
   echo "=> go test race"
   go test -race -shuffle=on -v -count=10 ./...
 fi

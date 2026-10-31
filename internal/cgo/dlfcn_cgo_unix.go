@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2024 The Ebitengine Authors
 
-//go:build freebsd || linux || netbsd
+//go:build freebsd || illumos || linux || netbsd
 
 package cgo
 
 /*
-#cgo !netbsd LDFLAGS: -ldl
+#cgo !illumos,!netbsd LDFLAGS: -ldl
 
 #include <dlfcn.h>
 #include <stdlib.h>

@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2022 The Ebitengine Authors
 
-//go:build !cgo && (darwin || freebsd || linux || netbsd)
+//go:build !cgo && (darwin || freebsd || illumos || linux || netbsd)
 
 package fakecgo
 
@@ -82,6 +82,12 @@ func pthread_sigmask(how sighow, ign *sigset_t, oset *sigset_t) int32 {
 
 //go:nosplit
 //go:norace
+func pthread_attr_destroy(attr *pthread_attr_t) int32 {
+	return int32(call5(pthread_attr_destroyABI0, uintptr(unsafe.Pointer(attr)), 0, 0, 0, 0))
+}
+
+//go:nosplit
+//go:norace
 func pthread_mutex_lock(mutex *pthread_mutex_t) int32 {
 	return int32(call5(pthread_mutex_lockABI0, uintptr(unsafe.Pointer(mutex)), 0, 0, 0, 0))
 }
@@ -147,6 +153,10 @@ var pthread_detachABI0 = uintptr(unsafe.Pointer(&_pthread_detach))
 //go:linkname _pthread_sigmask _pthread_sigmask
 var _pthread_sigmask uint8
 var pthread_sigmaskABI0 = uintptr(unsafe.Pointer(&_pthread_sigmask))
+
+//go:linkname _pthread_attr_destroy _pthread_attr_destroy
+var _pthread_attr_destroy uint8
+var pthread_attr_destroyABI0 = uintptr(unsafe.Pointer(&_pthread_attr_destroy))
 
 //go:linkname _pthread_mutex_lock _pthread_mutex_lock
 var _pthread_mutex_lock uint8

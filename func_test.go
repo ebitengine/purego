@@ -30,6 +30,8 @@ func getSystemLibrary() (string, error) {
 		return "/usr/lib/libSystem.B.dylib", nil
 	case "freebsd":
 		return "libc.so.7", nil
+	case "illumos":
+		return "libc.so.1", nil
 	case "linux":
 		return "libc.so.6", nil
 	case "netbsd":
