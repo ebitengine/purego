@@ -112,20 +112,22 @@ skipfprest:
 
 	RET
 
-TEXT ·call5(SB), NOSPLIT, $8-28
+TEXT ·call5(SB), NOSPLIT, $0-28
 	MOVW fn+0(FP), R12
 	MOVW a1+4(FP), R0
 	MOVW a2+8(FP), R1
 	MOVW a3+12(FP), R2
 	MOVW a4+16(FP), R3
-	MOVW a5+20(FP), R4
+	MOVW a5+20(FP), R5
 
-	// Store 5th arg below SP (in local frame area)
-	MOVW R4, arg5-8(SP)
+	MOVW R13, R4    // save SP inside R4 bc R4 is callee-saved
+	SUB  $8, R13    // allocate space for the 5th argument
+	BIC  $7, R13    // align on 8 bytes as the ARM AAPCS requires
+	MOVW R5, 0(R13) // the 5th argument is passed on the stack
 
-	// Align SP to 8 bytes for call (required by ARM AAPCS)
-	SUB  $8, R13
 	CALL (R12)
-	ADD  $8, R13
-	MOVW R0, r1+24(FP)
+
+	MOVW R4, R13 // get SP back
+
+	MOVW R0, ret+24(FP)
 	RET
