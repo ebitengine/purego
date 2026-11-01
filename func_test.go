@@ -181,6 +181,30 @@ func TestRegisterLibFunc_Bool(t *testing.T) {
 	}
 }
 
+func TestRegisterFunc_StackAlignment(t *testing.T) {
+	if runtime.GOARCH != "amd64" && (runtime.GOOS != "linux" || runtime.GOARCH != "386") {
+		t.Skip("stack alignment is checked only on amd64 and linux/386")
+	}
+	libFileName := filepath.Join(t.TempDir(), "abitest.so")
+	if err := buildSharedLib(t, "CC", libFileName, filepath.Join("testdata", "abitest", "abi_test.c")); err != nil {
+		t.Fatal(err)
+	}
+	lib, err := load.OpenLibrary(libFileName)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		if err := load.CloseLibrary(lib); err != nil {
+			t.Error(err)
+		}
+	}()
+	var fn func() uint32
+	purego.RegisterLibFunc(&fn, lib, "stack_misalignment")
+	if got := fn(); got != 0 {
+		t.Errorf("stack pointer modulo 16 at the C call: got %d, want 0", got)
+	}
+}
+
 func TestABI(t *testing.T) {
 	libFileName := filepath.Join(t.TempDir(), "abitest.so")
 	t.Logf("Build %v", libFileName)
