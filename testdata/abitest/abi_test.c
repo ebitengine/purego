@@ -223,3 +223,21 @@ int32_t stack_slice(uintptr_t a1, uintptr_t a2, uintptr_t a3, uintptr_t a4,
                     const int32_t *p, int32_t x) {
     return p[0] + x;
 }
+
+#if defined(__i386__) || defined(__x86_64__)
+// stack_misalignment returns the caller's stack pointer modulo 16 at the call.
+// The i386 System V and x86-64 ABIs require it to be 0.
+__attribute__((naked)) uint32_t stack_misalignment(void) {
+#if defined(__i386__)
+    __asm__(
+        "leal 4(%esp), %eax\n\t"
+        "andl $15, %eax\n\t"
+        "ret");
+#else
+    __asm__(
+        "leaq 8(%rsp), %rax\n\t"
+        "andl $15, %eax\n\t"
+        "ret");
+#endif
+}
+#endif
