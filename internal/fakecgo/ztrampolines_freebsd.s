@@ -11,3 +11,6 @@
 
 TEXT _pthread_attr_getstacksize(SB), NOSPLIT|NOFRAME, $0-0
 	JMP purego_pthread_attr_getstacksize(SB)
+
+TEXT _pthread_attr_destroy(SB), NOSPLIT|NOFRAME, $0-0
+	JMP purego_pthread_attr_destroy(SB)
