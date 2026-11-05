@@ -10,6 +10,7 @@ import (
 	"reflect"
 	"runtime"
 	"sync"
+	"sync/atomic"
 	"unsafe"
 )
 
@@ -51,15 +52,12 @@ func NewCallback(fn any) uintptr {
 // only increase this if you have added more to the callbackasm function
 const maxCB = 2000
 
-type callback struct {
-	fn   reflect.Value
-	call func(*callbackArgs)
-}
+type callback func(*callbackArgs)
 
 var cbs struct {
 	lock  sync.Mutex
 	numFn int // the number of functions currently in cbs.funcs
-	funcs [maxCB]callback
+	funcs [maxCB]atomic.Pointer[callback]
 }
 
 func compileCallback(fn any) uintptr {
@@ -104,12 +102,18 @@ output:
 	case ty.NumOut() > 1:
 		panic("purego: callbacks can only have one return")
 	}
+	call := callback(compileWordCallback(fn))
+	if call == nil {
+		call = func(a *callbackArgs) { callbackWrapReflect(a, val) }
+	}
 	cbs.lock.Lock()
 	defer cbs.lock.Unlock()
 	if cbs.numFn >= maxCB {
 		panic("purego: the maximum number of callbacks has been reached")
 	}
-	cbs.funcs[cbs.numFn] = callback{fn: val, call: compileWordCallback(fn)}
+	// Publish an immutable invoker before exposing its native address. Readers
+	// need no registration lock, and the slot keeps the Go closure alive.
+	cbs.funcs[cbs.numFn].Store(&call)
 	cbs.numFn++
 	return callbackasmAddr(cbs.numFn - 1)
 }
@@ -136,27 +140,24 @@ var callbackWrap_call = callbackWrap
 // callbackWrap is called by assembly code which determines which Go function to call.
 // This function takes the arguments and passes them to the Go function and returns the result.
 func callbackWrap(a *callbackArgs) {
-	cbs.lock.Lock()
-	cb := cbs.funcs[a.index]
-	cbs.lock.Unlock()
-	if cb.call != nil {
-		cb.call(a)
-		return
-	}
-	fn := cb.fn
+	(*cbs.funcs[a.index].Load())(a)
+}
+
+// integerRegister locates a saved integer register for both dispatch paths.
+func (a *callbackArgs) integerRegister(i int) unsafe.Pointer {
+	return unsafe.Add(a.args, uintptr(numOfFloatRegisters()+i)*ptrSize)
+}
+
+func callbackWrapReflect(a *callbackArgs, fn reflect.Value) {
 	fnType := fn.Type()
 	args := make([]reflect.Value, fnType.NumIn())
 	frame := (*[callbackMaxFrame]uintptr)(a.args)
 	// stackFrame points to stack-passed arguments. On most architectures this is
 	// contiguous with frame (after register args), but on ppc64le it's separate.
 	var stackFrame *[callbackMaxFrame]uintptr
-	var intFrame *[callbackMaxFrame]uintptr
 	if sf := a.stackFrame(); sf != nil {
 		// Only ppc64le uses separate stackArgs pointer due to NOSPLIT constraints
 		stackFrame = (*[callbackMaxFrame]uintptr)(sf)
-	}
-	if intf := a.intFrame(); intf != nil {
-		intFrame = (*[callbackMaxFrame]uintptr)(intf)
 	}
 	// floatsN and intsN track the number of register slots used, not argument count.
 	// This distinction matters on ARM32 where float64 uses 2 slots (32-bit registers).
@@ -280,17 +281,12 @@ func callbackWrap(a *callbackArgs) {
 					stackSlot += slots
 				}
 			} else {
-				if intFrame != nil {
-					args[i] = reflect.NewAt(inType, unsafe.Pointer(&intFrame[intsN])).Elem()
+				ptr := a.integerRegister(intsN)
+				if runtime.GOARCH == "s390x" {
+					// s390x big-endian: sub-8-byte values are right-justified in GPR slot.
+					args[i] = callbackArgFromSlotBigEndian(ptr, inType)
 				} else {
-					// the integers begin after the floats in frame
-					pos := intsN + numOfFloatRegisters()
-					if runtime.GOARCH == "s390x" {
-						// s390x big-endian: sub-8-byte values are right-justified in GPR slot
-						args[i] = callbackArgFromSlotBigEndian(unsafe.Pointer(&frame[pos]), inType)
-					} else {
-						args[i] = reflect.NewAt(inType, unsafe.Pointer(&frame[pos])).Elem()
-					}
+					args[i] = reflect.NewAt(inType, ptr).Elem()
 				}
 			}
 			intsN += slots

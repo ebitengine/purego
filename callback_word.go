@@ -18,67 +18,54 @@ func compileWordCallback(fn any) func(*callbackArgs) {
 		return func(a *callbackArgs) { a.result[0] = f() }
 	case func(uintptr) uintptr:
 		return func(a *callbackArgs) {
-			v := a.words(1)
-			a.result[0] = f(v[0])
+			a.result[0] = f(a.word(0))
 		}
 	case func(uintptr, uintptr) uintptr:
 		return func(a *callbackArgs) {
-			v := a.words(2)
-			a.result[0] = f(v[0], v[1])
+			a.result[0] = f(a.word(0), a.word(1))
 		}
 	case func(uintptr, uintptr, uintptr) uintptr:
 		return func(a *callbackArgs) {
-			v := a.words(3)
-			a.result[0] = f(v[0], v[1], v[2])
+			a.result[0] = f(a.word(0), a.word(1), a.word(2))
 		}
 	case func(uintptr, uintptr, uintptr, uintptr) uintptr:
 		return func(a *callbackArgs) {
-			v := a.words(4)
-			a.result[0] = f(v[0], v[1], v[2], v[3])
+			a.result[0] = f(a.word(0), a.word(1), a.word(2), a.word(3))
 		}
 	case func(uintptr, uintptr, uintptr, uintptr, uintptr) uintptr:
 		return func(a *callbackArgs) {
-			v := a.words(5)
-			a.result[0] = f(v[0], v[1], v[2], v[3], v[4])
+			a.result[0] = f(a.word(0), a.word(1), a.word(2), a.word(3), a.word(4))
 		}
 	case func(uintptr, uintptr, uintptr, uintptr, uintptr, uintptr) uintptr:
 		return func(a *callbackArgs) {
-			v := a.words(6)
-			a.result[0] = f(v[0], v[1], v[2], v[3], v[4], v[5])
+			a.result[0] = f(a.word(0), a.word(1), a.word(2), a.word(3), a.word(4), a.word(5))
 		}
 	case func(uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr) uintptr:
 		return func(a *callbackArgs) {
-			v := a.words(7)
-			a.result[0] = f(v[0], v[1], v[2], v[3], v[4], v[5], v[6])
+			a.result[0] = f(a.word(0), a.word(1), a.word(2), a.word(3), a.word(4), a.word(5), a.word(6))
 		}
 	case func(uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr) uintptr:
 		return func(a *callbackArgs) {
-			v := a.words(8)
-			a.result[0] = f(v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7])
+			a.result[0] = f(a.word(0), a.word(1), a.word(2), a.word(3), a.word(4), a.word(5), a.word(6), a.word(7))
 		}
 	case func(uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr) uintptr:
 		return func(a *callbackArgs) {
-			v := a.words(9)
-			a.result[0] = f(v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7], v[8])
+			a.result[0] = f(a.word(0), a.word(1), a.word(2), a.word(3), a.word(4), a.word(5), a.word(6), a.word(7), a.word(8))
 		}
 	default:
 		return nil
 	}
 }
 
-// words copies only pointer-sized integer arguments from the saved C frame.
+// word reads a pointer-sized integer argument from the saved C frame.
 // Such arguments occupy one full slot even on big-endian targets and Apple's
 // packed stack ABI. PPC64 and S390X keep stack arguments in a separate block.
-// Keep scratch space on this invocation's stack for concurrent/nested callbacks.
-func (a *callbackArgs) words(count int) (values [9]uintptr) {
-	frame := (*[callbackMaxFrame]uintptr)(a.args)
-	stack := a.stackFrame()
-	for i := range count {
-		if i >= numOfIntegerRegisters() && stack != nil {
-			values[i] = *(*uintptr)(unsafe.Add(stack, uintptr(i-numOfIntegerRegisters())*ptrSize))
-		} else {
-			values[i] = frame[numOfFloatRegisters()+i]
-		}
+func (a *callbackArgs) word(i int) uintptr {
+	if i < numOfIntegerRegisters() {
+		return *(*uintptr)(a.integerRegister(i))
 	}
-	return values
+	if stack := a.stackFrame(); stack != nil {
+		return *(*uintptr)(unsafe.Add(stack, uintptr(i-numOfIntegerRegisters())*ptrSize))
+	}
+	return *(*uintptr)(unsafe.Add(a.args, uintptr(numOfFloatRegisters()+i)*ptrSize))
 }
