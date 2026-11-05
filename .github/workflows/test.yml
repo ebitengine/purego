@@ -417,7 +417,7 @@ jobs:
           # "prebuilt lib ... no such file" failure on the emulator.
           "$CC" -shared -Wall -Werror -fPIC -o prebuilt/structtest.so testdata/structtest/struct_test.c
           "$CC" -shared -Wall -Werror -fPIC -o prebuilt/structreturntest.so testdata/structtest/structreturn_test.c
-          "$CC" -shared -Wall -Werror -fPIC -o prebuilt/libcbtest.so testdata/libcbtest/callback_test.c
+          "$CC" -shared -Wall -Werror -fPIC -pthread -o prebuilt/libcbtest.so testdata/libcbtest/callback_test.c
           "$CC" -shared -Wall -Werror -fPIC -o prebuilt/abitest.so testdata/abitest/abi_test.c
           env GOOS=android GOARCH=amd64 CGO_ENABLED=1 CC="$CC" go test -c -o purego.test .
 

@@ -51,10 +51,15 @@ func NewCallback(fn any) uintptr {
 // only increase this if you have added more to the callbackasm function
 const maxCB = 2000
 
+type callback struct {
+	fn   reflect.Value
+	call func(*callbackArgs)
+}
+
 var cbs struct {
 	lock  sync.Mutex
-	numFn int                  // the number of functions currently in cbs.funcs
-	funcs [maxCB]reflect.Value // the saved callbacks
+	numFn int // the number of functions currently in cbs.funcs
+	funcs [maxCB]callback
 }
 
 func compileCallback(fn any) uintptr {
@@ -104,7 +109,7 @@ output:
 	if cbs.numFn >= maxCB {
 		panic("purego: the maximum number of callbacks has been reached")
 	}
-	cbs.funcs[cbs.numFn] = val
+	cbs.funcs[cbs.numFn] = callback{fn: val, call: compileWordCallback(fn)}
 	cbs.numFn++
 	return callbackasmAddr(cbs.numFn - 1)
 }
@@ -132,8 +137,13 @@ var callbackWrap_call = callbackWrap
 // This function takes the arguments and passes them to the Go function and returns the result.
 func callbackWrap(a *callbackArgs) {
 	cbs.lock.Lock()
-	fn := cbs.funcs[a.index]
+	cb := cbs.funcs[a.index]
 	cbs.lock.Unlock()
+	if cb.call != nil {
+		cb.call(a)
+		return
+	}
+	fn := cb.fn
 	fnType := fn.Type()
 	args := make([]reflect.Value, fnType.NumIn())
 	frame := (*[callbackMaxFrame]uintptr)(a.args)
