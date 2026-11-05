@@ -18,10 +18,16 @@ import (
 
 type wordCallbackCaller func(uintptr, int32, *uintptr, uintptr) uintptr
 
-func loadWordCallbackLibrary(t testing.TB) (wordCallbackCaller, func(uintptr, *uintptr) int32) {
+type wordCallbackLibrary struct {
+	call   wordCallbackCaller
+	thread func(uintptr, *uintptr) int32
+	caller uintptr
+}
+
+func loadWordCallbackLibrary(t testing.TB) wordCallbackLibrary {
 	t.Helper()
-	path := filepath.Join(t.TempDir(), "libcbtest.so")
-	if err := testlib.BuildSharedLib(t, "CC", path, "testdata/libcbtest/callback_test.c", "-pthread"); err != nil {
+	path := filepath.Join(t.TempDir(), "libwordcbtest.so")
+	if err := testlib.BuildSharedLib(t, "CC", path, "testdata/libcbtest/word_callback_test.c", "-pthread"); err != nil {
 		t.Fatal(err)
 	}
 	library, err := purego.Dlopen(path, purego.RTLD_NOW|purego.RTLD_LOCAL)
@@ -33,11 +39,14 @@ func loadWordCallbackLibrary(t testing.TB) (wordCallbackCaller, func(uintptr, *u
 			t.Error(err)
 		}
 	})
-	var call wordCallbackCaller
-	purego.RegisterLibFunc(&call, library, "callWordCallback")
-	var thread func(uintptr, *uintptr) int32
-	purego.RegisterLibFunc(&thread, library, "callWordCallbackOnThread")
-	return call, thread
+	caller, err := purego.Dlsym(library, "callWordCallback")
+	if err != nil {
+		t.Fatal(err)
+	}
+	lib := wordCallbackLibrary{caller: caller}
+	purego.RegisterFunc(&lib.call, caller)
+	purego.RegisterLibFunc(&lib.thread, library, "callWordCallbackOnThread")
+	return lib
 }
 
 func hashWords(values ...uintptr) uintptr {
@@ -63,11 +72,20 @@ func wordCallbacks() []any {
 	}
 }
 
+// NewCallback owns its slots for the process lifetime. Reuse test callbacks
+// across tests, benchmark calibration, and repeated -count runs.
+var registeredWordCallbacks = sync.OnceValue(func() []uintptr {
+	var callbacks []uintptr
+	for _, fn := range wordCallbacks() {
+		callbacks = append(callbacks, purego.NewCallback(fn))
+	}
+	return callbacks
+})
+
 func TestWordCallbacks(t *testing.T) {
-	call, _ := loadWordCallbackLibrary(t)
-	for count, fn := range wordCallbacks() {
+	call := loadWordCallbackLibrary(t).call
+	for count, callback := range registeredWordCallbacks() {
 		t.Run(fmt.Sprintf("%dargs", count), func(t *testing.T) {
-			callback := purego.NewCallback(fn)
 			for _, highBits := range []uintptr{0, ^uintptr(0)} {
 				var args [9]uintptr
 				for i := range args {
@@ -83,35 +101,41 @@ func TestWordCallbacks(t *testing.T) {
 }
 
 func TestWordCallbackAllocations(t *testing.T) {
-	call, _ := loadWordCallbackLibrary(t)
+	call := loadWordCallbackLibrary(t).call
 	args := [9]uintptr{1, 2, 3, 4, 5, 6, 7, 8, 9}
 	const iterations = 64
-	for count, fn := range wordCallbacks() {
+	for count, callback := range registeredWordCallbacks() {
 		t.Run(fmt.Sprintf("%dargs", count), func(t *testing.T) {
-			callback := purego.NewCallback(fn)
 			want := hashWords(args[:count]...) * iterations
 			var got uintptr
+			baseline := testing.AllocsPerRun(10, func() { got = call(callback, int32(count), &args[0], 0) })
+			if got != 0 {
+				t.Fatalf("zero iterations: got %#x, want 0", got)
+			}
 			allocations := testing.AllocsPerRun(10, func() { got = call(callback, int32(count), &args[0], iterations) })
 			if got != want {
 				t.Fatalf("got %#x, want %#x", got, want)
 			}
-			// The single outgoing RegisterFunc call may allocate. The callbacks
-			// themselves must not allocate once for each C-to-Go transition.
-			if allocations >= iterations {
-				t.Fatalf("%.0f allocations for %d callbacks", allocations, iterations)
+			// Exclude the outgoing RegisterFunc call's fixed allocation cost.
+			if allocations != baseline {
+				t.Fatalf("allocations grew from %.0f to %.0f for %d callbacks", baseline, allocations, iterations)
 			}
 		})
 	}
 }
 
-func TestWordCallbackForeignThread(t *testing.T) {
-	_, thread := loadWordCallbackLibrary(t)
+var wordForeignThreadCallback = sync.OnceValue(func() uintptr {
 	data := make([]byte, 4096)
 	data[0], data[len(data)-1] = 17, 29
-	callback := purego.NewCallback(func() uintptr {
+	return purego.NewCallback(func() uintptr {
 		runtime.GC()
 		return uintptr(data[0]) + uintptr(data[len(data)-1])
 	})
+})
+
+func TestWordCallbackForeignThread(t *testing.T) {
+	thread := loadWordCallbackLibrary(t).thread
+	callback := wordForeignThreadCallback()
 	for range 5 {
 		var result uintptr
 		if rc := thread(callback, &result); rc != 0 {
@@ -123,79 +147,131 @@ func TestWordCallbackForeignThread(t *testing.T) {
 	}
 }
 
-func TestWordCallbackConcurrentAndNested(t *testing.T) {
-	call, _ := loadWordCallbackLibrary(t)
+var wordNestedCallback = sync.OnceValue(func() uintptr {
 	inner := purego.NewCallback(func(a uintptr) uintptr { return a + 1 })
-	outer := purego.NewCallback(func(a uintptr) uintptr {
+	register := sync.OnceValue(func() uintptr {
+		return purego.NewCallback(func() uintptr { return 0 })
+	})
+	return purego.NewCallback(func(caller, a uintptr) uintptr {
 		// Registration and nested native calls must not retain cbs.lock or
-		// share scratch argument storage with the outer callback.
-		_ = purego.NewCallback(func() uintptr { return 0 })
+		// share arguments with the outer callback. Pass the current library's
+		// address so a cached callback never retains an unloaded C function.
+		_ = register()
+		var call wordCallbackCaller
+		purego.RegisterFunc(&call, caller)
 		arg := a
 		return call(inner, 1, &arg, 1) + 1
 	})
+})
+
+func TestWordCallbackConcurrentAndNested(t *testing.T) {
+	lib := loadWordCallbackLibrary(t)
+	outer := wordNestedCallback()
 	var wg sync.WaitGroup
 	for i := range 8 {
 		wg.Go(func() {
-			arg := uintptr(i)
-			if got := call(outer, 1, &arg, 1); got != arg+2 {
-				t.Errorf("got %d, want %d", got, arg+2)
+			args := [2]uintptr{lib.caller, uintptr(i)}
+			if got := lib.call(outer, 2, &args[0], 1); got != uintptr(i)+2 {
+				t.Errorf("got %d, want %d", got, i+2)
 			}
 		})
 	}
 	wg.Wait()
 }
 
-func TestWordCallbackFallback(t *testing.T) {
+var wordRegistrationCallbacks = func() []func() uintptr {
+	var callbacks []func() uintptr
+	for i := range 16 {
+		callbacks = append(callbacks, sync.OnceValue(func() uintptr {
+			return purego.NewCallback(func(v uintptr) uintptr { return v + uintptr(i) })
+		}))
+	}
+	return callbacks
+}()
+
+func TestWordCallbackConcurrentRegistration(t *testing.T) {
+	call := loadWordCallbackLibrary(t).call
+	var wg sync.WaitGroup
+	start := make(chan struct{})
+	for i, register := range wordRegistrationCallbacks {
+		wg.Go(func() {
+			<-start
+			callback := register()
+			arg := uintptr(i)
+			// Call newly published entries while other goroutines register and
+			// invoke different callbacks in the same process-wide table.
+			for range 32 {
+				if got := call(callback, 1, &arg, 1); got != 2*arg {
+					t.Errorf("got %d, want %d", got, 2*arg)
+				}
+			}
+		})
+	}
+	close(start)
+	wg.Wait()
+}
+
+type wordCallbackFallbackCase struct {
+	name     string
+	fn       any
+	callback uintptr
+	invoke   func(uintptr) uintptr
+	want     uintptr
+}
+
+var wordCallbackFallbackCases = sync.OnceValue(func() []wordCallbackFallbackCase {
 	// These signatures are valid NewCallback inputs and must retain generic
 	// dispatch semantics: named types, CDecl, pointers, floats and narrow ints.
 	type word uintptr
 	type namedFunction func(uintptr) uintptr
-	cases := []struct {
-		name   string
-		fn     any
-		invoke func(uintptr) uintptr
-		want   uintptr
-	}{
-		{"NamedFunction", namedFunction(func(v uintptr) uintptr { return v + 1 }), func(p uintptr) uintptr {
+	cases := []wordCallbackFallbackCase{
+		{name: "NamedFunction", fn: namedFunction(func(v uintptr) uintptr { return v + 1 }), invoke: func(p uintptr) uintptr {
 			var f func(uintptr) uintptr
 			purego.RegisterFunc(&f, p)
 			return f(41)
-		}, 42},
-		{"NamedWord", func(v word) word { return v + 1 }, func(p uintptr) uintptr {
+		}, want: 42},
+		{name: "NamedWord", fn: func(v word) word { return v + 1 }, invoke: func(p uintptr) uintptr {
 			var f func(word) word
 			purego.RegisterFunc(&f, p)
 			return uintptr(f(41))
-		}, 42},
-		{"CDecl", func(_ purego.CDecl, v uintptr) uintptr { return v + 1 }, func(p uintptr) uintptr {
+		}, want: 42},
+		{name: "CDecl", fn: func(_ purego.CDecl, v uintptr) uintptr { return v + 1 }, invoke: func(p uintptr) uintptr {
 			var f func(uintptr) uintptr
 			purego.RegisterFunc(&f, p)
 			return f(41)
-		}, 42},
-		{"Pointer", func(p *uintptr) uintptr { return *p }, func(p uintptr) uintptr {
+		}, want: 42},
+		{name: "Pointer", fn: func(p *uintptr) uintptr { return *p }, invoke: func(p uintptr) uintptr {
 			var f func(*uintptr) uintptr
 			purego.RegisterFunc(&f, p)
 			v := uintptr(42)
 			return f(&v)
-		}, 42},
-		{"Float", func(v float64) uintptr { return uintptr(v * 2) }, func(p uintptr) uintptr {
+		}, want: 42},
+		{name: "Float", fn: func(v float64) uintptr { return uintptr(v * 2) }, invoke: func(p uintptr) uintptr {
 			var f func(float64) uintptr
 			purego.RegisterFunc(&f, p)
 			return f(21)
-		}, 42},
-		{"NarrowInteger", func(v int32) int32 { return v - 1 }, func(p uintptr) uintptr {
+		}, want: 42},
+		{name: "NarrowInteger", fn: func(v int32) int32 { return v - 1 }, invoke: func(p uintptr) uintptr {
 			var f func(int32) int32
 			purego.RegisterFunc(&f, p)
 			return uintptr(-f(-41))
-		}, 42},
-		{"TenArguments", func(a, b, c, d, e, f, g, h, i, j uintptr) uintptr { return a + b + c + d + e + f + g + h + i + j }, func(p uintptr) uintptr {
+		}, want: 42},
+		{name: "TenArguments", fn: func(a, b, c, d, e, f, g, h, i, j uintptr) uintptr { return a + b + c + d + e + f + g + h + i + j }, invoke: func(p uintptr) uintptr {
 			var f func(uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr) uintptr
 			purego.RegisterFunc(&f, p)
 			return f(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-		}, 55},
+		}, want: 55},
 	}
-	for _, tc := range cases {
+	for i := range cases {
+		cases[i].callback = purego.NewCallback(cases[i].fn)
+	}
+	return cases
+})
+
+func TestWordCallbackFallback(t *testing.T) {
+	for _, tc := range wordCallbackFallbackCases() {
 		t.Run(tc.name, func(t *testing.T) {
-			if got := tc.invoke(purego.NewCallback(tc.fn)); got != tc.want {
+			if got := tc.invoke(tc.callback); got != tc.want {
 				t.Fatalf("got %d, want %d", got, tc.want)
 			}
 		})
@@ -203,12 +279,11 @@ func TestWordCallbackFallback(t *testing.T) {
 }
 
 func BenchmarkWordCallback(b *testing.B) {
-	call, _ := loadWordCallbackLibrary(b)
+	call := loadWordCallbackLibrary(b).call
 	args := [9]uintptr{1, 2, 3, 4, 5, 6, 7, 8, 9}
 	const iterations = 256
-	for count, fn := range wordCallbacks() {
+	for count, callback := range registeredWordCallbacks() {
 		b.Run(fmt.Sprintf("%dargs", count), func(b *testing.B) {
-			callback := purego.NewCallback(fn)
 			want := hashWords(args[:count]...) * iterations
 			var got uintptr
 			b.ReportAllocs()
@@ -222,4 +297,25 @@ func BenchmarkWordCallback(b *testing.B) {
 			b.ReportMetric(float64(b.Elapsed().Nanoseconds())/float64(b.N)/iterations, "ns/callback")
 		})
 	}
+}
+
+func BenchmarkWordCallbackParallel(b *testing.B) {
+	call := loadWordCallbackLibrary(b).call
+	callback := registeredWordCallbacks()[5]
+	const iterations = 256
+	want := hashWords(1, 2, 3, 4, 5) * iterations
+	b.ReportAllocs()
+	b.ResetTimer()
+	b.RunParallel(func(pb *testing.PB) {
+		args := [5]uintptr{1, 2, 3, 4, 5}
+		for pb.Next() {
+			if got := call(callback, 5, &args[0], iterations); got != want {
+				b.Errorf("got %#x, want %#x", got, want)
+			}
+		}
+	})
+	b.StopTimer()
+	b.ReportMetric(iterations, "callbacks/op")
+	// This is aggregate throughput across workers, not individual latency.
+	b.ReportMetric(float64(b.Elapsed().Nanoseconds())/float64(b.N)/iterations, "ns/callback")
 }
