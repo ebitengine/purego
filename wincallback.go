@@ -91,7 +91,7 @@ func genasmArm() {
 TEXT callbackasm(SB), NOSPLIT|NOFRAME, $0
 `)
 	for i := range maxCallback {
-		// ARMv5 cannot encode every callback index in one MOVW instruction.
+		// Below ARMv7, MOVW cannot encode every callback index in one instruction.
 		// Splitting the index into two encodable immediates prevents literal
 		// pools from changing the fixed entry size assumed by callbackasmAddr.
 		fmt.Fprintf(&buf, "\tMOVW $%d, R12\n", i&0xff)
