@@ -9,6 +9,7 @@ import (
 	"errors"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"syscall"
 	"testing"
 
@@ -32,6 +33,20 @@ func TestCallbackEntries(t *testing.T) {
 	}
 	cmd := exec.Command(exe, "-test.run=^TestCallbackEntries$", "-test.v")
 	cmd.Env = append(os.Environ(), callbackEntriesChildEnv+"=1")
+	if prefix := os.Getenv("QEMU_LD_PREFIX"); prefix != "" {
+		// QEMU_LD_PREFIX only tells qemu-user where the target's shared
+		// libraries are. The child might not run under the same emulator:
+		// an arm64 host with AArch32 support runs a linux/arm binary natively,
+		// and the dynamic loader then searches the host's directories. Point
+		// the loader at the target's libraries directly so the child starts
+		// either way. Under qemu-user the path still resolves to the same
+		// libraries.
+		libs := filepath.Join(prefix, "lib")
+		if old := os.Getenv("LD_LIBRARY_PATH"); old != "" {
+			libs += string(filepath.ListSeparator) + old
+		}
+		cmd.Env = append(cmd.Env, "LD_LIBRARY_PATH="+libs)
+	}
 	out, err := cmd.CombinedOutput()
 	if errors.Is(err, syscall.ENOEXEC) {
 		// For example, the test binary runs under a user-mode emulator without
