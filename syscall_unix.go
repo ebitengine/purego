@@ -377,9 +377,7 @@ func callbackArgFromSlotBigEndian(slotPtr unsafe.Pointer, inType reflect.Type) r
 // and we want callback to arrive at
 // correspondent call instruction instead of start of
 // runtime.callbackasm.
-// On ARM, runtime.callbackasm is a series of mov and branch instructions.
-// R12 is loaded with the callback index. Each entry is two instructions,
-// hence 8 bytes.
+// On ARM, each entry loads R12 with MOVW and ORR before branching, hence 12 bytes.
 // On PPC64LE, every callback has a separate global-entry symbol so that an
 // external call initializes the TOC. callbackasmAddrs stores their addresses.
 func callbackasmAddr(i int) uintptr {
@@ -395,8 +393,10 @@ func callbackasmAddr(i int) uintptr {
 		entrySize = 10
 	case "ppc64le":
 		return callbackasmAddrs[i]
-	case "arm", "arm64", "loong64", "riscv64":
-		// On ARM, ARM64, Loong64 and RISCV64, each entry is a MOV instruction
+	case "arm":
+		entrySize = 12
+	case "arm64", "loong64", "riscv64":
+		// On ARM64, Loong64 and RISCV64, each entry is a MOV instruction
 		// followed by a branch instruction
 		entrySize = 8
 	case "s390x":

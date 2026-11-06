@@ -80,8 +80,8 @@ func genasmArm() {
 //go:build linux
 
 // External code calls into callbackasm at an offset corresponding
-// to the callback index. Callbackasm is a table of MOVW and B instructions.
-// The MOVW instruction loads R12 with the callback index, and the
+// to the callback index. Callbackasm is a table of MOVW, ORR and B instructions.
+// The MOVW and ORR instructions load R12 with the callback index, and the
 // B instruction branches to callbackasm1.
 // callbackasm1 takes the callback index from R12 and
 // indexes into an array that stores information about each callback.
@@ -91,7 +91,11 @@ func genasmArm() {
 TEXT callbackasm(SB), NOSPLIT|NOFRAME, $0
 `)
 	for i := range maxCallback {
-		fmt.Fprintf(&buf, "\tMOVW $%d, R12\n", i)
+		// ARMv5 cannot encode every callback index in one MOVW instruction.
+		// Splitting the index into two encodable immediates prevents literal
+		// pools from changing the fixed entry size assumed by callbackasmAddr.
+		fmt.Fprintf(&buf, "\tMOVW $%d, R12\n", i&0xff)
+		fmt.Fprintf(&buf, "\tORR  $%d, R12\n", i&^0xff)
 		buf.WriteString("\tB    callbackasm1(SB)\n")
 	}
 	if err := os.WriteFile("zcallback_arm.s", buf.Bytes(), 0644); err != nil {
