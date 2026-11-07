@@ -177,6 +177,10 @@ jobs:
 
           # Create symlink for the dynamic linker that QEMU expects
           sudo ln -sf /usr/arm-linux-gnueabihf/lib/ld-linux-armhf.so.3 /lib/ld-linux.so.3
+          # TestCallbackEntries re-executes the test binary, and this AArch32-capable
+          # host runs that child natively instead of under QEMU. Cgo binaries
+          # request this dynamic linker.
+          sudo ln -sf /usr/arm-linux-gnueabihf/lib/ld-linux-armhf.so.3 /lib/ld-linux-armhf.so.3
           go env -w CC=arm-linux-gnueabihf-gcc
           go env -w CXX=arm-linux-gnueabihf-g++
           env GOOS=linux GOARCH=arm CGO_ENABLED=0 go test -c -o=purego-test-nocgo .
@@ -265,8 +269,12 @@ jobs:
           go env -w CXX=loongarch64-linux-gnu-g++-14
           env GOOS=linux GOARCH=loong64 CGO_ENABLED=0 go test -c -o=purego-test-nocgo .
           env QEMU_LD_PREFIX=/usr/loongarch64-linux-gnu qemu-loongarch64 ./purego-test-nocgo -test.shuffle=on -test.v -test.count=10
+          # binfmt_misc is not registered here, so TestCallbackEntries cannot re-execute
+          # the test binary. Run its child mode directly.
+          env QEMU_LD_PREFIX=/usr/loongarch64-linux-gnu PUREGO_TEST_CALLBACK_ENTRIES_CHILD=1 qemu-loongarch64 ./purego-test-nocgo -test.run='^TestCallbackEntries$' -test.v
           env GOOS=linux GOARCH=loong64 CGO_ENABLED=1 go test -c -o=purego-test-cgo .
           env QEMU_LD_PREFIX=/usr/loongarch64-linux-gnu qemu-loongarch64 ./purego-test-cgo -test.shuffle=on -test.v -test.count=10
+          env QEMU_LD_PREFIX=/usr/loongarch64-linux-gnu PUREGO_TEST_CALLBACK_ENTRIES_CHILD=1 qemu-loongarch64 ./purego-test-cgo -test.run='^TestCallbackEntries$' -test.v
           go env -u CC
           go env -u CXX
 
@@ -276,10 +284,15 @@ jobs:
           go env -w CXX=powerpc64le-linux-gnu-g++
           env GOOS=linux GOARCH=ppc64le CGO_ENABLED=0 go test -c -o=purego-test-nocgo .
           env QEMU_LD_PREFIX=/usr/powerpc64le-linux-gnu qemu-ppc64le ./purego-test-nocgo -test.shuffle=on -test.v -test.count=10
+          # binfmt_misc is not registered here, so TestCallbackEntries cannot re-execute
+          # the test binary. Run its child mode directly.
+          env QEMU_LD_PREFIX=/usr/powerpc64le-linux-gnu PUREGO_TEST_CALLBACK_ENTRIES_CHILD=1 qemu-ppc64le ./purego-test-nocgo -test.run='^TestCallbackEntries$' -test.v
           env GOOS=linux GOARCH=ppc64le CGO_ENABLED=0 go test -c -buildmode=pie -ldflags=-linkmode=internal -o=purego-test-nocgo-pie .
           env QEMU_LD_PREFIX=/usr/powerpc64le-linux-gnu qemu-ppc64le ./purego-test-nocgo-pie -test.shuffle=on -test.v -test.count=10
+          env QEMU_LD_PREFIX=/usr/powerpc64le-linux-gnu PUREGO_TEST_CALLBACK_ENTRIES_CHILD=1 qemu-ppc64le ./purego-test-nocgo-pie -test.run='^TestCallbackEntries$' -test.v
           env GOOS=linux GOARCH=ppc64le CGO_ENABLED=1 go test -c -o=purego-test-cgo .
           env QEMU_LD_PREFIX=/usr/powerpc64le-linux-gnu qemu-ppc64le ./purego-test-cgo -test.shuffle=on -test.v -test.count=10
+          env QEMU_LD_PREFIX=/usr/powerpc64le-linux-gnu PUREGO_TEST_CALLBACK_ENTRIES_CHILD=1 qemu-ppc64le ./purego-test-cgo -test.run='^TestCallbackEntries$' -test.v
           go env -u CC
           go env -u CXX
 
@@ -291,8 +304,12 @@ jobs:
           sudo ln -sf /usr/riscv64-linux-gnu/lib/ld-linux-riscv64-lp64d.so.1 /lib/ld.so.1
           env GOOS=linux GOARCH=riscv64 CGO_ENABLED=0 go test -c -o=purego-test-nocgo .
           env QEMU_LD_PREFIX=/usr/riscv64-linux-gnu qemu-riscv64 ./purego-test-nocgo -test.shuffle=on -test.v -test.count=10
+          # binfmt_misc is not registered here, so TestCallbackEntries cannot re-execute
+          # the test binary. Run its child mode directly.
+          env QEMU_LD_PREFIX=/usr/riscv64-linux-gnu PUREGO_TEST_CALLBACK_ENTRIES_CHILD=1 qemu-riscv64 ./purego-test-nocgo -test.run='^TestCallbackEntries$' -test.v
           env GOOS=linux GOARCH=riscv64 CGO_ENABLED=1 go test -c -o=purego-test-cgo .
           env QEMU_LD_PREFIX=/usr/riscv64-linux-gnu qemu-riscv64 ./purego-test-cgo -test.shuffle=on -test.v -test.count=10
+          env QEMU_LD_PREFIX=/usr/riscv64-linux-gnu PUREGO_TEST_CALLBACK_ENTRIES_CHILD=1 qemu-riscv64 ./purego-test-cgo -test.run='^TestCallbackEntries$' -test.v
           go env -u CC
           go env -u CXX
 
@@ -304,9 +321,13 @@ jobs:
           if [[ "${{ matrix.go }}" != 1.25.* && "${{ matrix.go }}" != 1.26.* ]]; then
             env GOOS=linux GOARCH=s390x CGO_ENABLED=0 go test -c -o=purego-test-nocgo .
             env QEMU_LD_PREFIX=/usr/s390x-linux-gnu qemu-s390x ./purego-test-nocgo -test.shuffle=on -test.v -test.count=10
+            # binfmt_misc is not registered here, so TestCallbackEntries cannot re-execute
+            # the test binary. Run its child mode directly.
+            env QEMU_LD_PREFIX=/usr/s390x-linux-gnu PUREGO_TEST_CALLBACK_ENTRIES_CHILD=1 qemu-s390x ./purego-test-nocgo -test.run='^TestCallbackEntries$' -test.v
           fi
           env GOOS=linux GOARCH=s390x CGO_ENABLED=1 go test -c -o=purego-test-cgo .
           env QEMU_LD_PREFIX=/usr/s390x-linux-gnu qemu-s390x ./purego-test-cgo -test.shuffle=on -test.v -test.count=10
+          env QEMU_LD_PREFIX=/usr/s390x-linux-gnu PUREGO_TEST_CALLBACK_ENTRIES_CHILD=1 qemu-s390x ./purego-test-cgo -test.run='^TestCallbackEntries$' -test.v
           go env -u CC
           go env -u CXX
 
