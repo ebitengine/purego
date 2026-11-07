@@ -130,6 +130,19 @@ void stack_25_int64_exceeds(char *buf, size_t bufsize, int64_t a1, int64_t a2, i
              a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24, a25);
 }
 
+uintptr_t stack_0_uintptr(void) {
+    return 42;
+}
+
+uintptr_t stack_15_uintptr(
+    uintptr_t a1, uintptr_t a2, uintptr_t a3, uintptr_t a4, uintptr_t a5,
+    uintptr_t a6, uintptr_t a7, uintptr_t a8, uintptr_t a9, uintptr_t a10,
+    uintptr_t a11, uintptr_t a12, uintptr_t a13, uintptr_t a14, uintptr_t a15
+) {
+    return a1 + a2 + a3 + a4 + a5 + a6 + a7 + a8 + a9 + a10 +
+           a11 + a12 + a13 + a14 + a15;
+}
+
 uintptr_t stack_20_uintptr(
     uintptr_t a1, uintptr_t a2, uintptr_t a3, uintptr_t a4, uintptr_t a5,
     uintptr_t a6, uintptr_t a7, uintptr_t a8, uintptr_t a9, uintptr_t a10,
