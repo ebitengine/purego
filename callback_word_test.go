@@ -108,11 +108,15 @@ func TestWordCallbackAllocations(t *testing.T) {
 		t.Run(fmt.Sprintf("%dargs", count), func(t *testing.T) {
 			want := hashWords(args[:count]...) * iterations
 			var got uintptr
-			baseline := testing.AllocsPerRun(10, func() { got = call(callback, int32(count), &args[0], 0) })
+			baseline := testing.AllocsPerRun(10, func() {
+				got = call(callback, int32(count), &args[0], 0)
+			})
 			if got != 0 {
 				t.Fatalf("zero iterations: got %#x, want 0", got)
 			}
-			allocations := testing.AllocsPerRun(10, func() { got = call(callback, int32(count), &args[0], iterations) })
+			allocations := testing.AllocsPerRun(10, func() {
+				got = call(callback, int32(count), &args[0], iterations)
+			})
 			if got != want {
 				t.Fatalf("got %#x, want %#x", got, want)
 			}
@@ -225,42 +229,79 @@ var wordCallbackFallbackCases = sync.OnceValue(func() []wordCallbackFallbackCase
 	type word uintptr
 	type namedFunction func(uintptr) uintptr
 	cases := []wordCallbackFallbackCase{
-		{name: "NamedFunction", fn: namedFunction(func(v uintptr) uintptr { return v + 1 }), invoke: func(p uintptr) uintptr {
-			var f func(uintptr) uintptr
-			purego.RegisterFunc(&f, p)
-			return f(41)
-		}, want: 42},
-		{name: "NamedWord", fn: func(v word) word { return v + 1 }, invoke: func(p uintptr) uintptr {
-			var f func(word) word
-			purego.RegisterFunc(&f, p)
-			return uintptr(f(41))
-		}, want: 42},
-		{name: "CDecl", fn: func(_ purego.CDecl, v uintptr) uintptr { return v + 1 }, invoke: func(p uintptr) uintptr {
-			var f func(uintptr) uintptr
-			purego.RegisterFunc(&f, p)
-			return f(41)
-		}, want: 42},
-		{name: "Pointer", fn: func(p *uintptr) uintptr { return *p }, invoke: func(p uintptr) uintptr {
-			var f func(*uintptr) uintptr
-			purego.RegisterFunc(&f, p)
-			v := uintptr(42)
-			return f(&v)
-		}, want: 42},
-		{name: "Float", fn: func(v float64) uintptr { return uintptr(v * 2) }, invoke: func(p uintptr) uintptr {
-			var f func(float64) uintptr
-			purego.RegisterFunc(&f, p)
-			return f(21)
-		}, want: 42},
-		{name: "NarrowInteger", fn: func(v int32) int32 { return v - 1 }, invoke: func(p uintptr) uintptr {
-			var f func(int32) int32
-			purego.RegisterFunc(&f, p)
-			return uintptr(-f(-41))
-		}, want: 42},
-		{name: "TenArguments", fn: func(a, b, c, d, e, f, g, h, i, j uintptr) uintptr { return a + b + c + d + e + f + g + h + i + j }, invoke: func(p uintptr) uintptr {
-			var f func(uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr) uintptr
-			purego.RegisterFunc(&f, p)
-			return f(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-		}, want: 55},
+		{
+			name: "NamedFunction",
+			fn:   namedFunction(func(v uintptr) uintptr { return v + 1 }),
+			invoke: func(p uintptr) uintptr {
+				var f func(uintptr) uintptr
+				purego.RegisterFunc(&f, p)
+				return f(41)
+			},
+			want: 42,
+		},
+		{
+			name: "NamedWord",
+			fn:   func(v word) word { return v + 1 },
+			invoke: func(p uintptr) uintptr {
+				var f func(word) word
+				purego.RegisterFunc(&f, p)
+				return uintptr(f(41))
+			},
+			want: 42,
+		},
+		{
+			name: "CDecl",
+			fn:   func(_ purego.CDecl, v uintptr) uintptr { return v + 1 },
+			invoke: func(p uintptr) uintptr {
+				var f func(uintptr) uintptr
+				purego.RegisterFunc(&f, p)
+				return f(41)
+			},
+			want: 42,
+		},
+		{
+			name: "Pointer",
+			fn:   func(p *uintptr) uintptr { return *p },
+			invoke: func(p uintptr) uintptr {
+				var f func(*uintptr) uintptr
+				purego.RegisterFunc(&f, p)
+				v := uintptr(42)
+				return f(&v)
+			},
+			want: 42,
+		},
+		{
+			name: "Float",
+			fn:   func(v float64) uintptr { return uintptr(v * 2) },
+			invoke: func(p uintptr) uintptr {
+				var f func(float64) uintptr
+				purego.RegisterFunc(&f, p)
+				return f(21)
+			},
+			want: 42,
+		},
+		{
+			name: "NarrowInteger",
+			fn:   func(v int32) int32 { return v - 1 },
+			invoke: func(p uintptr) uintptr {
+				var f func(int32) int32
+				purego.RegisterFunc(&f, p)
+				return uintptr(-f(-41))
+			},
+			want: 42,
+		},
+		{
+			name: "TenArguments",
+			fn: func(a, b, c, d, e, f, g, h, i, j uintptr) uintptr {
+				return a + b + c + d + e + f + g + h + i + j
+			},
+			invoke: func(p uintptr) uintptr {
+				var f func(uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr) uintptr
+				purego.RegisterFunc(&f, p)
+				return f(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+			},
+			want: 55,
+		},
 	}
 	for i := range cases {
 		cases[i].callback = purego.NewCallback(cases[i].fn)

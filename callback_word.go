@@ -15,7 +15,9 @@ import "unsafe"
 func compileWordCallback(fn any) func(*callbackArgs) {
 	switch f := fn.(type) {
 	case func() uintptr:
-		return func(a *callbackArgs) { a.result[0] = f() }
+		return func(a *callbackArgs) {
+			a.result[0] = f()
+		}
 	case func(uintptr) uintptr:
 		return func(a *callbackArgs) {
 			a.result[0] = f(a.word(0))

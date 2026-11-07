@@ -104,7 +104,9 @@ output:
 	}
 	call := callback(compileWordCallback(fn))
 	if call == nil {
-		call = func(a *callbackArgs) { callbackWrapReflect(a, val) }
+		call = func(a *callbackArgs) {
+			callbackWrapReflect(a, val)
+		}
 	}
 	cbs.lock.Lock()
 	defer cbs.lock.Unlock()
