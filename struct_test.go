@@ -13,6 +13,7 @@ import (
 	"reflect"
 	"runtime"
 	"slices"
+	"strings"
 	"structs"
 	"testing"
 	"unsafe"
@@ -855,6 +856,35 @@ func TestRegisterFunc_structArgs(t *testing.T) {
 				}
 			}
 			{
+				// A mixed {int64; float64}: on arm64 both eightbytes
+				// must reach the callee in integer registers, never
+				// x0/v0 (AAPCS64); other ABIs split them by class.
+				type Int64AndDouble struct {
+					_ structs.HostLayout
+					A int64
+					B float64
+				}
+				var fn func(Int64AndDouble) Int64AndDouble
+				register(&fn, lib, "IdentityInt64AndDouble", func(s Int64AndDouble) Int64AndDouble {
+					return s
+				})
+				expected := Int64AndDouble{A: -1234, B: 5.25}
+				if ret := fn(expected); ret != expected {
+					t.Errorf("IdentityInt64AndDouble returned %+v wanted %+v", ret, expected)
+				}
+				if runtime.GOARCH == "arm64" {
+					// Only x7 is left, so the whole struct goes
+					// on the stack, also on Darwin.
+					var fn func(int64, int64, int64, int64, int64, int64, int64, Int64AndDouble) Int64AndDouble
+					register(&fn, lib, "IdentityInt64AndDoubleAfterRegisters", func(a, b, c, d, e, f, g int64, s Int64AndDouble) Int64AndDouble {
+						return s
+					})
+					if ret := fn(1, 2, 3, 4, 5, 6, 7, expected); ret != expected {
+						t.Errorf("IdentityInt64AndDoubleAfterRegisters returned %+v wanted %+v", ret, expected)
+					}
+				}
+			}
+			{
 				// Struct > 16 bytes: hidden pointer on amd64, pointer in int register on arm64.
 				type ThreeInt64 struct {
 					_       structs.HostLayout
@@ -1434,6 +1464,139 @@ func TestRegisterFunc_structReturns(t *testing.T) {
 				}
 				runtime.KeepAlive(a)
 				runtime.KeepAlive(b)
+			}
+		})
+	}
+}
+
+func TestRegisterFunc_UnsupportedStructFields(t *testing.T) {
+	if runtime.GOARCH != "arm64" && runtime.GOARCH != "amd64" {
+		t.Skip("struct arguments unsupported")
+	}
+	types := []reflect.Type{
+		reflect.TypeFor[struct{ S string }](),
+		reflect.TypeFor[struct{ S []byte }](),
+		reflect.TypeFor[struct{ S any }](),
+		reflect.TypeFor[struct{ S map[int]int }](),
+		reflect.TypeFor[struct{ S func() }](),
+		reflect.TypeFor[struct{ S complex64 }](),
+		reflect.TypeFor[struct{ S complex128 }](),
+		reflect.TypeFor[struct{ S struct{ X string } }](),
+		reflect.TypeFor[struct{ S [2]string }](),
+		reflect.TypeFor[struct{ S [2]struct{ X string } }](),
+		reflect.TypeFor[struct{ S [2][2]string }](),
+	}
+	for _, ty := range types {
+		t.Run(ty.String(), func(t *testing.T) {
+			defer func() {
+				if recover() == nil {
+					t.Error("RegisterFunc accepted unsupported struct field")
+				}
+			}()
+			fn := reflect.New(reflect.FuncOf([]reflect.Type{ty}, nil, false))
+			purego.RegisterFunc(fn.Interface(), 1)
+		})
+	}
+}
+
+func TestRegisterFunc_UnsupportedCompositeArrays(t *testing.T) {
+	if runtime.GOARCH != "arm64" && runtime.GOARCH != "amd64" {
+		t.Skip("struct arguments unsupported")
+	}
+	types := []reflect.Type{
+		reflect.TypeFor[struct {
+			_ structs.HostLayout
+			S [2]struct {
+				_ structs.HostLayout
+				X float32
+			}
+		}](),
+		reflect.TypeFor[struct {
+			_ structs.HostLayout
+			A [2][2]float32
+		}](),
+		reflect.TypeFor[struct {
+			_ structs.HostLayout
+			S [2]struct {
+				_ structs.HostLayout
+				X int32
+			}
+		}](),
+	}
+	for _, ty := range types {
+		t.Run(ty.String(), func(t *testing.T) {
+			for _, context := range []string{"argument", "return", "callback_argument", "callback_return"} {
+				t.Run(context, func(t *testing.T) {
+					if runtime.GOOS == "windows" && strings.HasPrefix(context, "callback") {
+						t.Skip("struct callbacks unsupported")
+					}
+					var inputs, outputs []reflect.Type
+					if strings.HasSuffix(context, "argument") {
+						inputs = []reflect.Type{ty}
+					} else {
+						outputs = []reflect.Type{ty}
+					}
+					fnType := reflect.FuncOf(inputs, outputs, false)
+					defer func() {
+						if recover() == nil {
+							t.Error("accepted unsupported composite array")
+						}
+					}()
+					if strings.HasPrefix(context, "callback") {
+						fn := reflect.MakeFunc(fnType, func([]reflect.Value) []reflect.Value { return nil })
+						purego.NewCallback(fn.Interface())
+					} else {
+						purego.RegisterFunc(reflect.New(fnType).Interface(), 1)
+					}
+				})
+			}
+		})
+	}
+}
+
+func TestRegisterFunc_UnsupportedVariadicStructFields(t *testing.T) {
+	if runtime.GOARCH != "arm64" && runtime.GOARCH != "amd64" {
+		t.Skip("struct arguments unsupported")
+	}
+	libFileName := filepath.Join(t.TempDir(), "structtest.so")
+	if err := testlib.BuildSharedLib(t, "CC", libFileName, filepath.Join("testdata", "structtest", "struct_test.c")); err != nil {
+		t.Fatal(err)
+	}
+	lib, err := load.OpenLibrary(libFileName)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		if err := load.CloseLibrary(lib); err != nil {
+			t.Error(err)
+		}
+	}()
+	var variadic func(int64, ...any) int64
+	var slice func(int64, []any) int64
+	purego.RegisterLibFunc(&variadic, lib, "IgnoreStructArgument")
+	purego.RegisterLibFunc(&slice, lib, "IgnoreStructArgument")
+	supported := struct{ A, B int64 }{
+		A: 7,
+		B: 9,
+	}
+	if got := variadic(5, supported); got != 5 {
+		t.Errorf("variadic got %d, want 5", got)
+	}
+	if got := slice(5, []any{supported}); got != 5 {
+		t.Errorf("slice got %d, want 5", got)
+	}
+	value := struct{ S string }{S: "x"}
+	for _, name := range []string{"variadic", "slice"} {
+		t.Run(name, func(t *testing.T) {
+			defer func() {
+				if recover() == nil {
+					t.Error("accepted unsupported struct field")
+				}
+			}()
+			if name == "variadic" {
+				variadic(5, value)
+			} else {
+				slice(5, []any{value})
 			}
 		})
 	}

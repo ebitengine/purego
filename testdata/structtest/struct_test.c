@@ -417,6 +417,19 @@ struct FloatAndInt IdentityFloatAndInt(struct FloatAndInt s) {
     return s;
 }
 
+struct Int64AndDouble {
+    int64_t a;
+    double b;
+};
+
+struct Int64AndDouble IdentityInt64AndDouble(struct Int64AndDouble s) {
+    return s;
+}
+
+struct Int64AndDouble IdentityInt64AndDoubleAfterRegisters(int64_t a, int64_t b, int64_t c, int64_t d, int64_t e, int64_t f, int64_t g, struct Int64AndDouble s) {
+    return s;
+}
+
 struct ThreeInt64 {
     int64_t a, b, c;
 };
@@ -452,4 +465,10 @@ struct Mixed5Args {
 
 struct Mixed5Args IdentityMixed5Args(struct Mixed5Args s) {
     return s;
+}
+
+int64_t IgnoreStructArgument(int64_t n, uintptr_t data, uintptr_t length) {
+    (void)data;
+    (void)length;
+    return n;
 }
