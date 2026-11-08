@@ -125,7 +125,7 @@ TEXT syscallX(SB), NOSPLIT, $STACK_SIZE
 #ifdef GOOS_darwin
 	CALL purego_error(SB)
 	MOVQ PTR_ADDRESS(SP), DI      // reload (DI clobbered by call)
-	MOVQ (AX), AX
+	MOVLQSX (AX), AX
 	MOVQ AX, syscallArgs_a3(DI) // save errno
 #else
 	MOVQ $0, syscallArgs_a3(DI) // no errno here: clear the input argument
