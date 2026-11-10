@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"syscall"
 	"testing"
 
 	"github.com/ebitengine/purego"
@@ -65,6 +66,9 @@ func TestErrno(t *testing.T) {
 	r1, _, errno := purego.SyscallN(setErrno)
 	if int32(r1) != -1 {
 		t.Errorf("setErrno returned %d, wanted -1", r1)
+	}
+	if syscall.Errno(errno) != syscall.ENOENT {
+		t.Errorf("SyscallN returned errno %#x, wanted %#x", errno, uintptr(syscall.ENOENT))
 	}
 
 	libcName, err := getSystemLibrary()
