@@ -28,102 +28,102 @@ import (
 // function in the package runs, so objc's init sees it whatever the file order.
 var _ = func() bool { bindRuntime = useRuntimeBindings; return true }()
 
-//cgo:binding C.object_getClass "/usr/lib/libobjc.A.dylib"
+//cgo:binding C.object_getClass "_"
 func c_object_getClass(obj uintptr) uintptr
 
-//cgo:binding C.objc_getClass "/usr/lib/libobjc.A.dylib"
+//cgo:binding C.objc_getClass "_"
 func c_objc_getClass(name *byte) uintptr
 
-//cgo:binding C.objc_getProtocol "/usr/lib/libobjc.A.dylib"
+//cgo:binding C.objc_getProtocol "_"
 func c_objc_getProtocol(name *byte) unsafe.Pointer
 
-//cgo:binding C.objc_allocateProtocol "/usr/lib/libobjc.A.dylib"
+//cgo:binding C.objc_allocateProtocol "_"
 func c_objc_allocateProtocol(name *byte) unsafe.Pointer
 
-//cgo:binding C.objc_registerProtocol "/usr/lib/libobjc.A.dylib"
+//cgo:binding C.objc_registerProtocol "_"
 func c_objc_registerProtocol(p unsafe.Pointer)
 
-//cgo:binding C.objc_allocateClassPair "/usr/lib/libobjc.A.dylib"
+//cgo:binding C.objc_allocateClassPair "_"
 func c_objc_allocateClassPair(super uintptr, name *byte, extraBytes uintptr) uintptr
 
-//cgo:binding C.objc_registerClassPair "/usr/lib/libobjc.A.dylib"
+//cgo:binding C.objc_registerClassPair "_"
 func c_objc_registerClassPair(class uintptr)
 
-//cgo:binding C.sel_registerName "/usr/lib/libobjc.A.dylib"
+//cgo:binding C.sel_registerName "_"
 func c_sel_registerName(name *byte) uintptr
 
-//cgo:binding C.class_getSuperclass "/usr/lib/libobjc.A.dylib"
+//cgo:binding C.class_getSuperclass "_"
 func c_class_getSuperclass(class uintptr) uintptr
 
-//cgo:binding C.class_getInstanceVariable "/usr/lib/libobjc.A.dylib"
+//cgo:binding C.class_getInstanceVariable "_"
 func c_class_getInstanceVariable(class uintptr, name *byte) uintptr
 
-//cgo:binding C.class_getInstanceSize "/usr/lib/libobjc.A.dylib"
+//cgo:binding C.class_getInstanceSize "_"
 func c_class_getInstanceSize(class uintptr) uintptr
 
-//cgo:binding C.class_addMethod "/usr/lib/libobjc.A.dylib"
+//cgo:binding C.class_addMethod "_"
 func c_class_addMethod(class, name, imp uintptr, types *byte) bool
 
-//cgo:binding C.class_addIvar "/usr/lib/libobjc.A.dylib"
+//cgo:binding C.class_addIvar "_"
 func c_class_addIvar(class uintptr, name *byte, size uintptr, alignment uint8, types *byte) bool
 
-//cgo:binding C.class_addProtocol "/usr/lib/libobjc.A.dylib"
+//cgo:binding C.class_addProtocol "_"
 func c_class_addProtocol(class uintptr, p unsafe.Pointer) bool
 
-//cgo:binding C.ivar_getOffset "/usr/lib/libobjc.A.dylib"
+//cgo:binding C.ivar_getOffset "_"
 func c_ivar_getOffset(ivar uintptr) uintptr
 
-//cgo:binding C.ivar_getName "/usr/lib/libobjc.A.dylib"
+//cgo:binding C.ivar_getName "_"
 func c_ivar_getName(ivar uintptr) *byte
 
-//cgo:binding C.object_getIvar "/usr/lib/libobjc.A.dylib"
+//cgo:binding C.object_getIvar "_"
 func c_object_getIvar(obj, ivar uintptr) uintptr
 
-//cgo:binding C.object_setIvar "/usr/lib/libobjc.A.dylib"
+//cgo:binding C.object_setIvar "_"
 func c_object_setIvar(obj, ivar, value uintptr)
 
-//cgo:binding C.protocol_getName "/usr/lib/libobjc.A.dylib"
+//cgo:binding C.protocol_getName "_"
 func c_protocol_getName(p unsafe.Pointer) *byte
 
-//cgo:binding C.protocol_isEqual "/usr/lib/libobjc.A.dylib"
+//cgo:binding C.protocol_isEqual "_"
 func c_protocol_isEqual(p, p2 unsafe.Pointer) bool
 
-//cgo:binding C.protocol_addMethodDescription "/usr/lib/libobjc.A.dylib"
+//cgo:binding C.protocol_addMethodDescription "_"
 func c_protocol_addMethodDescription(p unsafe.Pointer, name uintptr, types *byte, isRequiredMethod, isInstanceMethod bool)
 
-//cgo:binding C.protocol_copyMethodDescriptionList "/usr/lib/libobjc.A.dylib"
+//cgo:binding C.protocol_copyMethodDescriptionList "_"
 func c_protocol_copyMethodDescriptionList(p unsafe.Pointer, isRequiredMethod, isInstanceMethod bool, outCount *uint32) unsafe.Pointer
 
-//cgo:binding C.protocol_copyProtocolList "/usr/lib/libobjc.A.dylib"
+//cgo:binding C.protocol_copyProtocolList "_"
 func c_protocol_copyProtocolList(p unsafe.Pointer, outCount *uint32) unsafe.Pointer
 
-//cgo:binding C.protocol_copyPropertyList2 "/usr/lib/libobjc.A.dylib"
+//cgo:binding C.protocol_copyPropertyList2 "_"
 func c_protocol_copyPropertyList2(p unsafe.Pointer, outCount *uint32, isRequiredProperty, isInstanceProperty bool) unsafe.Pointer
 
-//cgo:binding C.protocol_addProtocol "/usr/lib/libobjc.A.dylib"
+//cgo:binding C.protocol_addProtocol "_"
 func c_protocol_addProtocol(p, p2 unsafe.Pointer)
 
 // attributes is passed as a uintptr: see the wrapper below.
 //
-//cgo:binding C.protocol_addProperty "/usr/lib/libobjc.A.dylib"
+//cgo:binding C.protocol_addProperty "_"
 func c_protocol_addProperty(p unsafe.Pointer, name *byte, attributes uintptr, attributeCount uint32, isRequiredProperty, isInstanceProperty bool)
 
-//cgo:binding C.property_getName "/usr/lib/libobjc.A.dylib"
+//cgo:binding C.property_getName "_"
 func c_property_getName(p uintptr) *byte
 
-//cgo:binding C.property_getAttributes "/usr/lib/libobjc.A.dylib"
+//cgo:binding C.property_getAttributes "_"
 func c_property_getAttributes(p uintptr) *byte
 
 // free, _Block_copy and _Block_release live in libSystem, which libobjc links
 // against. RegisterLibFunc found them through the libobjc handle and RTLD_DEFAULT.
 
-//cgo:binding C.free "/usr/lib/libSystem.B.dylib"
+//cgo:binding C.free "_"
 func c_free(ptr unsafe.Pointer)
 
-//cgo:binding C._Block_copy "/usr/lib/libSystem.B.dylib"
+//cgo:binding C._Block_copy "_"
 func c__Block_copy(block uintptr) uintptr
 
-//cgo:binding C._Block_release "/usr/lib/libSystem.B.dylib"
+//cgo:binding C._Block_release "_"
 func c__Block_release(block uintptr)
 
 func goString(p *byte) string { return strings.GoString(uintptr(unsafe.Pointer(p))) }

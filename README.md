@@ -67,7 +67,8 @@ When built with Go 1.28 or later, purego uses that wherever a C signature is fix
 - `Dlopen`, `Dlsym`, `Dlerror` and `Dlclose` (including on Android) call through bindings in `internal/cbind`
   instead of `RegisterFunc`.
 - On Linux architectures without a purego trampoline (mips, mips64, ppc64), calls go through a `//cgo:funcptr`
-  binding instead of C, so they no longer need a C compiler. Float arguments are still unsupported there.
+  binding instead of C, so purego no longer needs a C compiler there. Go itself still needs an external linker
+  for cgo on those architectures. Float arguments are still unsupported there.
 - The `objc` package's fixed-signature runtime functions (`objc_getClass`, `class_addMethod`, ...) are bindings.
 
 The parts that stay as they are can't be expressed as a fixed binding, because the signature is only known
