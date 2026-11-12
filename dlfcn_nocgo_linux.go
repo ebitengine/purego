@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2022 The Ebitengine Authors
 
-//go:build !cgo && !faketime
+//go:build (!cgo || (go1.28 && !android)) && !faketime
 
 package purego
 
-// if there is no Cgo we must link to each of the functions from dlfcn.h
+// if there is no Cgo (or on Go 1.28+, where purego no longer uses internal/cgo) we must link
+// to each of the functions from dlfcn.h
 // then the functions are called inside dlfcn_stubs.s
 
 //go:cgo_import_dynamic purego_dlopen dlopen "libdl.so.2"

@@ -92,6 +92,25 @@ func init() {
 		panic(fmt.Errorf("objc: %w", err))
 	}
 	purego.RegisterFunc(&objc_msgSendSuper2, objc_msgSendSuper2_fn)
+	// On Go 1.28+ the fixed-signature runtime functions come from cgo bindings
+	// when they were built (objc_runtime_bindings_darwin.go). objc_msgSend and
+	// objc_msgSendSuper2 always stay on RegisterFunc: every call site has its own
+	// signature, decided at run time from the Go argument types.
+	if bindRuntime != nil {
+		bindRuntime()
+	} else {
+		registerRuntime(objc)
+	}
+	theBlocksCache = newBlockCache()
+}
+
+// bindRuntime is set when the cgo bindings for the runtime functions are built.
+var bindRuntime func()
+
+// registerRuntime looks the runtime functions up with Dlsym and calls them
+// through RegisterLibFunc. It is the only path before Go 1.28 and the fallback
+// with CGO_ENABLED=0 after.
+func registerRuntime(objc uintptr) {
 	purego.RegisterLibFunc(&object_getClass, objc, "object_getClass")
 	purego.RegisterLibFunc(&objc_getClass, objc, "objc_getClass")
 	purego.RegisterLibFunc(&objc_getProtocol, objc, "objc_getProtocol")
@@ -121,10 +140,8 @@ func init() {
 	purego.RegisterLibFunc(&object_getIvar, objc, "object_getIvar")
 	purego.RegisterLibFunc(&object_setIvar, objc, "object_setIvar")
 	purego.RegisterLibFunc(&free, purego.RTLD_DEFAULT, "free")
-
 	purego.RegisterLibFunc(&_Block_copy, objc, "_Block_copy")
 	purego.RegisterLibFunc(&_Block_release, objc, "_Block_release")
-	theBlocksCache = newBlockCache()
 }
 
 // ID is an opaque pointer to some Objective-C object
