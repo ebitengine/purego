@@ -8,7 +8,6 @@ package purego
 import (
 	"runtime"
 	"structs"
-	"unsafe"
 )
 
 const (
@@ -47,7 +46,7 @@ func syscall_SyscallN(fn uintptr, sysargs []uintptr, floats []uintptr, r8 uintpt
 		f5: floats[4], f6: floats[5], f7: floats[6], f8: floats[7],
 		arm64_r8: r8,
 	}
-	runtime_cgocall(syscallXABI0, unsafe.Pointer(s))
+	syscall15X(s)
 	return s
 }
 

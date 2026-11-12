@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2026 The Ebitengine Authors
 
-//go:build !cgo && !faketime
+//go:build (!cgo || go1.28) && !faketime
 
 #include "textflag.h"
 

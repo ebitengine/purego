@@ -57,6 +57,27 @@ Tier 2 platforms are supported by PureGo on a best-effort basis. Critical bugs o
 6. These architectures only support `SyscallN` and `NewCallback`
 7. These architectures are no longer supported as of Go 1.26
 
+## Go 1.28 and cgo bindings
+
+Go 1.28 can build cgo packages that only bind to existing C libraries without a C compiler
+([golang/go#81450](https://github.com/golang/go/issues/81450)), and its `runtime/cgo` no longer contains C.
+When built with Go 1.28 or later, purego uses that wherever a C signature is fixed:
+
+- `runtime/cgo` replaces `internal/fakecgo` and the C-compiled `internal/cgo`, whatever `CGO_ENABLED` is set to.
+- `Dlopen`, `Dlsym`, `Dlerror` and `Dlclose` (including on Android) call through bindings in `internal/cbind`
+  instead of `RegisterFunc`.
+- On Linux architectures without a purego trampoline (mips, mips64, ppc64), calls go through a `//cgo:funcptr`
+  binding instead of C, so purego no longer needs a C compiler there. Go itself still needs an external linker
+  for cgo on those architectures. Float arguments are still unsupported there.
+- The `objc` package's fixed-signature runtime functions (`objc_getClass`, `class_addMethod`, ...) are bindings.
+
+The parts that stay as they are can't be expressed as a fixed binding, because the signature is only known
+at run time: `RegisterFunc`, `RegisterLibFunc`, `SyscallN`, `NewCallback`, and `objc.Send`.
+
+Bindings are left out of the build when `CGO_ENABLED=0` is set explicitly. purego then falls back to its own
+trampolines, except on Android and on the architectures above, which need the bindings. Builds with older
+Go releases are unchanged.
+
 ## Example
 
 The example below only showcases purego use for macOS and Linux. The other platforms require special handling which can
