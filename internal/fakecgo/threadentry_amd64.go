@@ -13,3 +13,9 @@ package fakecgo
 //go:nosplit
 //go:norace
 func callThreadEntryFn(fn uintptr)
+
+// callThreadEntryTrampoline calls threadentry_trampoline like a C caller that
+// passes arg in DI and keeps bx in BX across the call. It returns BX as the
+// trampoline leaves it.
+// It is only used by tests. Implemented in trampolines_amd64.s.
+func callThreadEntryTrampoline(arg, bx uintptr) uintptr
