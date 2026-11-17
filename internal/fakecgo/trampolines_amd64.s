@@ -78,7 +78,12 @@ TEXT threadentry_trampoline(SB), NOSPLIT, $0
 	MOVQ DI, AX
 	MOVQ ·threadentry_call(SB), R11
 	MOVQ (R11), R11
+	// threadentry is ABIInternal, so the caller reserves the spill slot for
+	// its register argument, as runtime·sigtramp does. The slot must not
+	// overlap the registers saved by PUSH_REGS_HOST_TO_ABI0.
+	ADJSP $8
 	CALL R11
+	ADJSP $-8
 
 	POP_REGS_HOST_TO_ABI0()
 	RET
@@ -98,6 +103,15 @@ TEXT ·callThreadEntryFn(SB), NOSPLIT, $0-8
 	CALL R11
 
 	POP_REGS_HOST_TO_ABI0()
+	RET
+
+// func callThreadEntryTrampoline(arg, bx uintptr) uintptr
+// Test helper; see threadentry_amd64_test.go.
+TEXT ·callThreadEntryTrampoline(SB), NOSPLIT, $0-24
+	MOVQ arg+0(FP), DI
+	MOVQ bx+8(FP), BX
+	CALL threadentry_trampoline(SB)
+	MOVQ BX, ret+16(FP)
 	RET
 
 TEXT ·call5(SB), NOSPLIT, $0-56
