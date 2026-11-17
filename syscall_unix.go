@@ -31,6 +31,10 @@ func syscall_syscallN(fn uintptr, args ...uintptr) (r1, r2, err uintptr) {
 // inside a loop (e.g. a qsort comparator) keeps consuming callbacks and eventually panics once they are exhausted.
 // The same happens when a func value is passed to a C function, as [RegisterFunc] creates a new callback for each
 // call. Create the callback once with NewCallback and reuse the returned pointer instead.
+//
+// As an optimization, a callback with zero to nine uintptr arguments and one uintptr result, such as
+// func(a, b uintptr) uintptr, is called without reflection and without allocating. The type has to match
+// exactly: a named function type, or any other argument or result type, goes through reflection.
 func NewCallback(fn any) uintptr {
 	ty := reflect.TypeOf(fn)
 	if ty == nil || ty.Kind() != reflect.Func {
