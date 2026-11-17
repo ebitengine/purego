@@ -207,7 +207,8 @@ var callbackasmAddrs [maxCB]uintptr
 var callbackWrap_call = callbackWrap
 
 // callbackWrap is called by assembly code which determines which Go function to call.
-// This function takes the arguments and passes them to the Go function and returns the result.
+// It dispatches to the invoker registered for a.index, which is either a typed fast
+// path from tryFastPath or callbackWrapReflect.
 func callbackWrap(a *callbackArgs) {
 	(*cbs.funcs[a.index].Load())(a)
 }
@@ -217,6 +218,8 @@ func (a *callbackArgs) integerRegister(i int) unsafe.Pointer {
 	return unsafe.Add(a.args, uintptr(numOfFloatRegisters()+i)*ptrSize)
 }
 
+// callbackWrapReflect reads the arguments from the saved C frame, calls fn through
+// reflection, and stores the result in a.
 func callbackWrapReflect(a *callbackArgs, fn reflect.Value) {
 	fnType := fn.Type()
 	args := make([]reflect.Value, fnType.NumIn())
