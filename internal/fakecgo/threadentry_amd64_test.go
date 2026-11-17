@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2026 The Ebitengine Authors
 
-//go:build !cgo && amd64 && (darwin || freebsd || illumos || linux || netbsd)
+//go:build !cgo && (darwin || freebsd || illumos || linux || netbsd)
 
 package fakecgo
 
@@ -46,9 +46,9 @@ func readAboveSlot(p *unsafe.Pointer) {
 
 // TestThreadEntryTrampolinePreservesBX checks that threadentry_trampoline
 // reserves the spill slot of threadentry's register argument. Without the
-// reservation, the slot is where the trampoline saved BX for its C caller, and on darwin/amd64
-// _pthread_start reads the thread's pthread_t from BX after threadentry
-// returns.
+// reservation, the slot is where the trampoline saved BX for its C caller,
+// and on darwin/amd64 _pthread_start reads the thread's pthread_t from BX
+// after threadentry returns.
 func TestThreadEntryTrampolinePreservesBX(t *testing.T) {
 	const bx uintptr = 0x0123456789abcdef
 	arg := uintptr(unsafe.Pointer(&spillProbeArg))
@@ -65,6 +65,6 @@ func TestThreadEntryTrampolinePreservesBX(t *testing.T) {
 	// not in that slot, because the compiler or the trampoline's layout changed,
 	// and this test checks nothing.
 	if spillProbeAbove != bx {
-		t.Fatalf("word above the spill slot = %#x, want the saved BX %#x: v is not in the reserved slot (the compiler or the trampoline's layout changed)", spillProbeAbove, bx)
+		t.Errorf("word above the spill slot = %#x, want the saved BX %#x: v is not in the reserved slot (the compiler or the trampoline's layout changed)", spillProbeAbove, bx)
 	}
 }

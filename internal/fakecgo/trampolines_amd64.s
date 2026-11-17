@@ -78,10 +78,9 @@ TEXT threadentry_trampoline(SB), NOSPLIT, $0
 	MOVQ DI, AX
 	MOVQ ·threadentry_call(SB), R11
 	MOVQ (R11), R11
-	// Reserve the spill slot for threadentry's register argument, as
-	// runtime·sigtramp does: threadentry is ABIInternal, which leaves that to
-	// the caller. Otherwise the slot is 0(SP), where PUSH_REGS_HOST_TO_ABI0
-	// saved BX, and threadentry built with -N overwrites it with v.
+	// threadentry is ABIInternal, so the caller reserves the spill slot for
+	// its register argument, as runtime·sigtramp does. The slot must not
+	// overlap the registers saved by PUSH_REGS_HOST_TO_ABI0.
 	ADJSP $8
 	CALL R11
 	ADJSP $-8
