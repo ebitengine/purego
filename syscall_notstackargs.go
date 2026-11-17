@@ -36,10 +36,6 @@ func (c *callbackArgs) stackFrame() unsafe.Pointer {
 	return nil
 }
 
-func (c *callbackArgs) intFrame() unsafe.Pointer {
-	return nil
-}
-
 func (c *callbackArgs) setInt64Result(result int64) {
 	c.result[0] = uintptr(result)
 	if unsafe.Sizeof(uintptr(0)) == 4 {
