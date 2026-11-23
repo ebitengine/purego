@@ -31,7 +31,7 @@ package fakecgo
 
 {{- range $di := .DynamicImports }}
 {{- range $sym := $di.Symbols }}
-//go:cgo_import_dynamic purego_{{ $sym }} {{ $sym }} "{{ $di.Name }}"
+//go:cgo_import_dynamic purego_{{ $sym }} {{ or (index $.Renames $sym) $sym }} "{{ $di.Name }}"
 {{- end }}
 {{- end }}
 
@@ -255,6 +255,7 @@ type fileContent struct {
 	Tag            string
 	Symbols        []Symbol
 	DynamicImports []dynamicImport
+	Renames        map[string]string // Maps a symbol to the name the library exports it as, if they differ.
 }
 
 var trampolineArchConstraints = map[string]string{
@@ -327,6 +328,10 @@ func run() error {
 			Symbols: goosSymbols,
 			Tag:     "!cgo",
 		}
+		if goos == "linux" {
+			// zsymbols_android.go provides these symbols on Android.
+			located.Tag = "!cgo && !android"
+		}
 		if err := execute(templateSymbols, fmt.Sprintf("zsymbols_%s.go", goos), located); err != nil {
 			return err
 		}
@@ -336,6 +341,20 @@ func run() error {
 				return err
 			}
 		}
+	}
+	// Android counts as linux for build constraints, so it uses the Linux symbols and ztrampolines_linux.s.
+	// Only the dynamic imports differ: Bionic has no versioned sonames, its pthreads are part of libc, and its __errno_location is named __errno.
+	androidContent := fileContent{
+		DynamicImports: []dynamicImport{
+			{"libc.so", symbolsNames(append(goosAgnosticLibCSymbols, filterSymbols(libcSymbols, "linux")...))},
+			{"libc.so", symbolsNames(append(goosAgnosticPthreadSymbols, filterSymbols(pthreadSymbols, "linux")...))},
+		},
+		Renames: map[string]string{"__errno_location": "__errno"},
+		Symbols: filterSymbols(allSymbols, "linux"),
+		Tag:     "!cgo",
+	}
+	if err := execute(templateSymbols, "zsymbols_android.go", androidContent); err != nil {
+		return err
 	}
 	ppc64leContent := fileContent{
 		Call:    true,

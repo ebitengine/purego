@@ -63,6 +63,10 @@ jobs:
           env GOOS=linux GOARCH=amd64 go build -v ./...
           env GOOS=linux GOARCH=arm64 go build -v ./...
 
+          # Check cross-compiling Android binaries without Cgo.
+          # Go links only android/arm64 internally; the other Android architectures require Cgo.
+          env GOOS=android GOARCH=arm64 CGO_ENABLED=0 go build -v ./...
+
           # Check cross-compiling FreeBSD binaries.
           # gcflags -std is necessary to make fakecgo the Cgo for
           # FreeBSD to add the symbols that libc.so depends on.

@@ -22,6 +22,16 @@ func TestSimpleDlsym(t *testing.T) {
 	}
 }
 
+func TestDlopenAndDlsymErrors(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "libnonexistent.so")
+	if _, err := purego.Dlopen(path, purego.RTLD_NOW); err == nil || err.Error() == "" {
+		t.Errorf("Dlopen(%q) returned error %v, want a non-empty error", path, err)
+	}
+	if _, err := purego.Dlsym(purego.RTLD_DEFAULT, "purego_nonexistent_symbol"); err == nil || err.Error() == "" {
+		t.Errorf("Dlsym of a nonexistent symbol returned error %v, want a non-empty error", err)
+	}
+}
+
 func TestNestedDlopenCall(t *testing.T) {
 	libFileName := filepath.Join(t.TempDir(), "libdlnested.so")
 	t.Logf("Build %v", libFileName)

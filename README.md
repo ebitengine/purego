@@ -30,7 +30,7 @@ except for float arguments and return values.
 
 Tier 1 platforms are the primary targets officially supported by PureGo. When a new version of PureGo is released, any critical bugs found on Tier 1 platforms are treated as release blockers. The release will be postponed until such issues are resolved.
 
-- **Android**: amd64<sup>1</sup>, arm64<sup>1</sup>
+- **Android**: amd64<sup>1</sup>, arm64<sup>8</sup>
 - **iOS**: amd64<sup>1</sup>, arm64<sup>1</sup>
 - **Linux**: amd64, arm64
 - **macOS**: amd64, arm64
@@ -56,6 +56,7 @@ Tier 2 platforms are supported by PureGo on a best-effort basis. Critical bugs o
 5. These architectures require CGO_ENABLED=1 to compile in versions before Go 1.27, but will be supported without Cgo in Go 1.27 and later
 6. These architectures only support `SyscallN` and `NewCallback`
 7. These architectures are no longer supported as of Go 1.26
+8. These architectures support CGO_ENABLED=0 only on Android 10 (API level 29) and later
 
 ## Example
 
