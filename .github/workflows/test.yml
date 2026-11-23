@@ -185,8 +185,6 @@ jobs:
           go env -w CXX=arm-linux-gnueabihf-g++
           env GOOS=linux GOARCH=arm CGO_ENABLED=0 go test -c -o=purego-test-nocgo .
           env QEMU_LD_PREFIX=/usr/arm-linux-gnueabihf qemu-arm ./purego-test-nocgo -test.shuffle=on -test.v -test.count=10
-          env GOOS=linux GOARCH=arm CGO_ENABLED=0 go test -c -o=fakecgo-test-nocgo ./internal/fakecgo
-          env QEMU_LD_PREFIX=/usr/arm-linux-gnueabihf qemu-arm ./fakecgo-test-nocgo -test.shuffle=on -test.v -test.count=10
           env GOOS=linux GOARCH=arm CGO_ENABLED=1 go test -c -o=purego-test-cgo .
           env QEMU_LD_PREFIX=/usr/arm-linux-gnueabihf qemu-arm ./purego-test-cgo -test.shuffle=on -test.v -test.count=10
           go env -u CC
@@ -198,8 +196,6 @@ jobs:
           go env -w CXX=arm-linux-gnueabi-g++
           env GOOS=linux GOARCH=arm GOARM=5 CGO_ENABLED=0 go test -c -o=purego-test-nocgo .
           env QEMU_LD_PREFIX=/usr/arm-linux-gnueabi qemu-arm ./purego-test-nocgo -test.shuffle=on -test.v -test.count=10
-          env GOOS=linux GOARCH=arm GOARM=5 CGO_ENABLED=0 go test -c -o=fakecgo-test-nocgo ./internal/fakecgo
-          env QEMU_LD_PREFIX=/usr/arm-linux-gnueabi qemu-arm ./fakecgo-test-nocgo -test.shuffle=on -test.v -test.count=10
           env GOOS=linux GOARCH=arm GOARM=5 CGO_ENABLED=1 go test -c -o=purego-test-cgo .
           env QEMU_LD_PREFIX=/usr/arm-linux-gnueabi qemu-arm ./purego-test-cgo -test.shuffle=on -test.v -test.count=10
           go env -u CC

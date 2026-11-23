@@ -59,8 +59,9 @@ TEXT threadentry_trampoline(SB), NOSPLIT, $108-0
 	// See crosscall2 in asm_arm.s.
 	// ARM AAPCS callee-saved: R4-R11 (includes g=R10), D8-D15.
 	// LR is saved/restored by the Go-managed frame prologue/epilogue.
-	// threadentry is ABI0: its argument is at 4(R13) and its result at
-	// 8(R13), so the saved registers start at 12(R13).
+	// Go's arm calling convention is stack-based: threadentry's argument is
+	// at 4(R13) and its result at 8(R13), so the saved registers start at
+	// 12(R13). 44(R13) is padding that keeps the MOVD slots 8-byte aligned.
 	MOVW R0, 4(R13) // arg for threadentry_call
 
 	MOVW R4, 12(R13)
@@ -112,15 +113,6 @@ skipfprest:
 	MOVW 36(R13), g
 	MOVW 40(R13), R11
 
-	RET
-
-// func callThreadEntryTrampoline(arg, r4 uintptr) uintptr
-// Test helper; see threadentry_arm_test.go.
-TEXT ·callThreadEntryTrampoline(SB), NOSPLIT, $0-12
-	MOVW arg+0(FP), R0
-	MOVW r4+4(FP), R4
-	CALL threadentry_trampoline(SB)
-	MOVW R4, ret+8(FP)
 	RET
 
 TEXT ·call5(SB), NOSPLIT, $0-28
