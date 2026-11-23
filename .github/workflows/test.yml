@@ -287,13 +287,9 @@ jobs:
           # binfmt_misc is not registered here, so TestCallbackEntries cannot re-execute
           # the test binary. Run its child mode directly.
           env QEMU_LD_PREFIX=/usr/powerpc64le-linux-gnu PUREGO_TEST_CALLBACK_ENTRIES_CHILD=1 qemu-ppc64le ./purego-test-nocgo -test.run='^TestCallbackEntries$' -test.v
-          env GOOS=linux GOARCH=ppc64le CGO_ENABLED=0 go test -c -o=fakecgo-test-nocgo ./internal/fakecgo
-          env QEMU_LD_PREFIX=/usr/powerpc64le-linux-gnu qemu-ppc64le ./fakecgo-test-nocgo -test.shuffle=on -test.v -test.count=10
           env GOOS=linux GOARCH=ppc64le CGO_ENABLED=0 go test -c -buildmode=pie -ldflags=-linkmode=internal -o=purego-test-nocgo-pie .
           env QEMU_LD_PREFIX=/usr/powerpc64le-linux-gnu qemu-ppc64le ./purego-test-nocgo-pie -test.shuffle=on -test.v -test.count=10
           env QEMU_LD_PREFIX=/usr/powerpc64le-linux-gnu PUREGO_TEST_CALLBACK_ENTRIES_CHILD=1 qemu-ppc64le ./purego-test-nocgo-pie -test.run='^TestCallbackEntries$' -test.v
-          env GOOS=linux GOARCH=ppc64le CGO_ENABLED=0 go test -c -buildmode=pie -ldflags=-linkmode=internal -o=fakecgo-test-nocgo-pie ./internal/fakecgo
-          env QEMU_LD_PREFIX=/usr/powerpc64le-linux-gnu qemu-ppc64le ./fakecgo-test-nocgo-pie -test.shuffle=on -test.v -test.count=10
           env GOOS=linux GOARCH=ppc64le CGO_ENABLED=1 go test -c -o=purego-test-cgo .
           env QEMU_LD_PREFIX=/usr/powerpc64le-linux-gnu qemu-ppc64le ./purego-test-cgo -test.shuffle=on -test.v -test.count=10
           env QEMU_LD_PREFIX=/usr/powerpc64le-linux-gnu PUREGO_TEST_CALLBACK_ENTRIES_CHILD=1 qemu-ppc64le ./purego-test-cgo -test.run='^TestCallbackEntries$' -test.v

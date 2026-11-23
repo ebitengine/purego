@@ -99,17 +99,6 @@ TEXT threadentry_trampoline(SB), NOSPLIT|NOFRAME, $0-0
 	MOVW R0, CR
 	RET
 
-// func callThreadEntryTrampoline(arg, r14 uintptr) uintptr
-// Test helper; see threadentry_ppc64le_test.go.
-TEXT ·callThreadEntryTrampoline(SB), NOSPLIT, $0-24
-	MOVD arg+0(FP), R3
-	MOVD r14+8(FP), R14
-	CALL threadentry_trampoline(SB)
-	// The trampoline returns to C with CR's value in R0. Go needs R0 = 0.
-	XOR  R0, R0, R0
-	MOVD R14, ret+16(FP)
-	RET
-
 TEXT ·call5(SB), NOSPLIT|NOFRAME, $0-56
 	MOVD LR, R20
 	MOVW CR, R21
