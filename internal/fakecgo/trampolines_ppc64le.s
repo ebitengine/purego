@@ -73,10 +73,13 @@ TEXT threadentry_trampoline(SB), NOSPLIT|NOFRAME, $0-0
 	MOVW CR, R0
 	MOVD R0, 8(R1)
 
-	MOVDU R1, -320(R1)
+	// threadentry is ABIInternal, so the caller reserves the spill slot for
+	// its register argument at 32(R1), after the fixed frame. The saved
+	// registers start at 40(R1), and the frame is rounded up to 16 bytes.
+	MOVDU R1, -336(R1)
 
-	SAVE_GPR(32)
-	SAVE_FPR(32+SAVE_GPR_SIZE)
+	SAVE_GPR(40)
+	SAVE_FPR(40+SAVE_GPR_SIZE)
 
 	MOVD $0, R0
 
@@ -85,10 +88,10 @@ TEXT threadentry_trampoline(SB), NOSPLIT|NOFRAME, $0-0
 	MOVD R12, CTR
 	CALL CTR
 
-	RESTORE_FPR(32+SAVE_GPR_SIZE)
-	RESTORE_GPR(32)
+	RESTORE_FPR(40+SAVE_GPR_SIZE)
+	RESTORE_GPR(40)
 
-	ADD $320, R1
+	ADD $336, R1
 
 	MOVD 16(R1), R0
 	MOVD R0, LR
