@@ -112,17 +112,22 @@ TEXT ·call5(SB), NOSPLIT|NOFRAME, $0-56
 	MOVD 64(R1), R6  // a4 → fourth C arg
 	MOVD 72(R1), R7  // a5 → fifth C arg
 
-	MOVDU R1, -32(R1)
+	// Go frames are only 8-byte aligned, but ELFv2 requires R1 to be 16-byte
+	// aligned at a call. Keep the original R1 in R22, a non-volatile register.
+	// The back chain is stored before R1 moves so that 0(R1) is always valid.
+	MOVD  R1, R22
+	RLDCR $0, R1, $~15, R10
+	MOVD  R22, -32(R10)
+	SUB   $32, R10, R1
 
 	MOVD R12, CTR
 	CALL CTR
 
-	// Store return value
-	// After MOVDU -32, original 80(R1) is now at 80+32=112(R1)
-	MOVD R3, (80+32)(R1)
-
 	// Deallocate frame
-	ADD $32, R1
+	MOVD R22, R1
+
+	// Store return value
+	MOVD R3, 80(R1)
 
 	// Clear R0 before returning to Go code.
 	// Go uses R0 as a constant 0 register for things like "std r0,X(r1)"
