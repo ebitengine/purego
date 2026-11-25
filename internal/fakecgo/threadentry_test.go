@@ -3,7 +3,7 @@
 
 // 386/arm are excluded: the standalone fakecgo test binary resolves pthread
 // from libpthread.so.0, which fails the dynamic symbol lookup on 32-bit linux.
-//go:build !cgo && !go1.28 && (linux || darwin || freebsd || illumos || netbsd) && !386 && !arm
+//go:build !cgo && !(go1.28 && goexperiment.runtimecgopurego) && !go1.29 && (linux || darwin || freebsd || illumos || netbsd) && !386 && !arm
 
 package fakecgo
 
