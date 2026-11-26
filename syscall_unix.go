@@ -10,6 +10,7 @@ import (
 	"reflect"
 	"runtime"
 	"sync"
+	"sync/atomic"
 	"unsafe"
 )
 
@@ -30,6 +31,10 @@ func syscall_syscallN(fn uintptr, args ...uintptr) (r1, r2, err uintptr) {
 // inside a loop (e.g. a qsort comparator) keeps consuming callbacks and eventually panics once they are exhausted.
 // The same happens when a func value is passed to a C function, as [RegisterFunc] creates a new callback for each
 // call. Create the callback once with NewCallback and reuse the returned pointer instead.
+//
+// As an optimization, a callback with zero to nine uintptr arguments and one uintptr result, such as
+// func(a, b uintptr) uintptr, is called without reflection and without allocating. The type has to match
+// exactly: a named function type, or any other argument or result type, goes through reflection.
 func NewCallback(fn any) uintptr {
 	ty := reflect.TypeOf(fn)
 	if ty == nil || ty.Kind() != reflect.Func {
@@ -53,8 +58,8 @@ const maxCB = 2000
 
 var cbs struct {
 	lock  sync.Mutex
-	numFn int                  // the number of functions currently in cbs.funcs
-	funcs [maxCB]reflect.Value // the saved callbacks
+	numFn int // the number of functions currently in cbs.funcs
+	funcs [maxCB]atomic.Pointer[func(*callbackArgs)]
 }
 
 func compileCallback(fn any) uintptr {
@@ -99,14 +104,87 @@ output:
 	case ty.NumOut() > 1:
 		panic("purego: callbacks can only have one return")
 	}
+	call := tryFastPath(fn)
+	if call == nil {
+		call = func(a *callbackArgs) {
+			callbackWrapReflect(a, val)
+		}
+	}
 	cbs.lock.Lock()
 	defer cbs.lock.Unlock()
 	if cbs.numFn >= maxCB {
 		panic("purego: the maximum number of callbacks has been reached")
 	}
-	cbs.funcs[cbs.numFn] = val
+	// Publish an immutable invoker before exposing its native address. Readers
+	// need no registration lock, and the slot keeps the Go closure alive.
+	cbs.funcs[cbs.numFn].Store(&call)
 	cbs.numFn++
 	return callbackasmAddr(cbs.numFn - 1)
+}
+
+// tryFastPath avoids reflect.Call for common callbacks whose arguments
+// and result are uintptr. Select the typed call once at registration, leaving
+// all other signatures on the existing reflection path. Do not reinterpret
+// function types: pointers require garbage collector metadata, and narrow
+// integers can have different ABI layouts.
+func tryFastPath(fn any) func(*callbackArgs) {
+	switch f := fn.(type) {
+	case func() uintptr:
+		return func(a *callbackArgs) {
+			a.result[0] = f()
+		}
+	case func(uintptr) uintptr:
+		return func(a *callbackArgs) {
+			a.result[0] = f(a.word(0))
+		}
+	case func(uintptr, uintptr) uintptr:
+		return func(a *callbackArgs) {
+			a.result[0] = f(a.word(0), a.word(1))
+		}
+	case func(uintptr, uintptr, uintptr) uintptr:
+		return func(a *callbackArgs) {
+			a.result[0] = f(a.word(0), a.word(1), a.word(2))
+		}
+	case func(uintptr, uintptr, uintptr, uintptr) uintptr:
+		return func(a *callbackArgs) {
+			a.result[0] = f(a.word(0), a.word(1), a.word(2), a.word(3))
+		}
+	case func(uintptr, uintptr, uintptr, uintptr, uintptr) uintptr:
+		return func(a *callbackArgs) {
+			a.result[0] = f(a.word(0), a.word(1), a.word(2), a.word(3), a.word(4))
+		}
+	case func(uintptr, uintptr, uintptr, uintptr, uintptr, uintptr) uintptr:
+		return func(a *callbackArgs) {
+			a.result[0] = f(a.word(0), a.word(1), a.word(2), a.word(3), a.word(4), a.word(5))
+		}
+	case func(uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr) uintptr:
+		return func(a *callbackArgs) {
+			a.result[0] = f(a.word(0), a.word(1), a.word(2), a.word(3), a.word(4), a.word(5), a.word(6))
+		}
+	case func(uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr) uintptr:
+		return func(a *callbackArgs) {
+			a.result[0] = f(a.word(0), a.word(1), a.word(2), a.word(3), a.word(4), a.word(5), a.word(6), a.word(7))
+		}
+	case func(uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr, uintptr) uintptr:
+		return func(a *callbackArgs) {
+			a.result[0] = f(a.word(0), a.word(1), a.word(2), a.word(3), a.word(4), a.word(5), a.word(6), a.word(7), a.word(8))
+		}
+	default:
+		return nil
+	}
+}
+
+// word reads a pointer-sized integer argument from the saved C frame.
+// Such arguments occupy one full slot even on big-endian targets and Apple's
+// packed stack ABI. PPC64 and S390X keep stack arguments in a separate block.
+func (a *callbackArgs) word(i int) uintptr {
+	if i < numOfIntegerRegisters() {
+		return *(*uintptr)(a.integerRegister(i))
+	}
+	if stack := a.stackFrame(); stack != nil {
+		return *(*uintptr)(unsafe.Add(stack, uintptr(i-numOfIntegerRegisters())*ptrSize))
+	}
+	return *(*uintptr)(unsafe.Add(a.args, uintptr(numOfFloatRegisters()+i)*ptrSize))
 }
 
 const ptrSize = unsafe.Sizeof((*int)(nil))
@@ -129,24 +207,29 @@ var callbackasmAddrs [maxCB]uintptr
 var callbackWrap_call = callbackWrap
 
 // callbackWrap is called by assembly code which determines which Go function to call.
-// This function takes the arguments and passes them to the Go function and returns the result.
+// It dispatches to the invoker registered for a.index, which is either a typed fast
+// path from tryFastPath or callbackWrapReflect.
 func callbackWrap(a *callbackArgs) {
-	cbs.lock.Lock()
-	fn := cbs.funcs[a.index]
-	cbs.lock.Unlock()
+	(*cbs.funcs[a.index].Load())(a)
+}
+
+// integerRegister locates a saved integer register for both dispatch paths.
+func (a *callbackArgs) integerRegister(i int) unsafe.Pointer {
+	return unsafe.Add(a.args, uintptr(numOfFloatRegisters()+i)*ptrSize)
+}
+
+// callbackWrapReflect reads the arguments from the saved C frame, calls fn through
+// reflection, and stores the result in a.
+func callbackWrapReflect(a *callbackArgs, fn reflect.Value) {
 	fnType := fn.Type()
 	args := make([]reflect.Value, fnType.NumIn())
 	frame := (*[callbackMaxFrame]uintptr)(a.args)
 	// stackFrame points to stack-passed arguments. On most architectures this is
 	// contiguous with frame (after register args), but on ppc64le it's separate.
 	var stackFrame *[callbackMaxFrame]uintptr
-	var intFrame *[callbackMaxFrame]uintptr
 	if sf := a.stackFrame(); sf != nil {
 		// Only ppc64le uses separate stackArgs pointer due to NOSPLIT constraints
 		stackFrame = (*[callbackMaxFrame]uintptr)(sf)
-	}
-	if intf := a.intFrame(); intf != nil {
-		intFrame = (*[callbackMaxFrame]uintptr)(intf)
 	}
 	// floatsN and intsN track the number of register slots used, not argument count.
 	// This distinction matters on ARM32 where float64 uses 2 slots (32-bit registers).
@@ -270,17 +353,12 @@ func callbackWrap(a *callbackArgs) {
 					stackSlot += slots
 				}
 			} else {
-				if intFrame != nil {
-					args[i] = reflect.NewAt(inType, unsafe.Pointer(&intFrame[intsN])).Elem()
+				ptr := a.integerRegister(intsN)
+				if runtime.GOARCH == "s390x" {
+					// s390x big-endian: sub-8-byte values are right-justified in GPR slot.
+					args[i] = callbackArgFromSlotBigEndian(ptr, inType)
 				} else {
-					// the integers begin after the floats in frame
-					pos := intsN + numOfFloatRegisters()
-					if runtime.GOARCH == "s390x" {
-						// s390x big-endian: sub-8-byte values are right-justified in GPR slot
-						args[i] = callbackArgFromSlotBigEndian(unsafe.Pointer(&frame[pos]), inType)
-					} else {
-						args[i] = reflect.NewAt(inType, unsafe.Pointer(&frame[pos])).Elem()
-					}
+					args[i] = reflect.NewAt(inType, ptr).Elem()
 				}
 			}
 			intsN += slots
