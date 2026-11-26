@@ -3,8 +3,6 @@
 
 package purego
 
-import "github.com/ebitengine/purego/internal/cgo"
-
 // Source for constants: https://android.googlesource.com/platform/bionic/+/refs/heads/main/libc/include/dlfcn.h
 
 const (
@@ -16,19 +14,3 @@ const (
 	RTLD_LOCAL   = 0x00000000
 	RTLD_GLOBAL  = is64bit*0x00100 | is32bit*0x00000002
 )
-
-func Dlopen(path string, mode int) (uintptr, error) {
-	return cgo.Dlopen(path, mode)
-}
-
-func Dlsym(handle uintptr, name string) (uintptr, error) {
-	return cgo.Dlsym(handle, name)
-}
-
-func Dlclose(handle uintptr) error {
-	return cgo.Dlclose(handle)
-}
-
-func loadSymbol(handle uintptr, name string) (uintptr, error) {
-	return Dlsym(handle, name)
-}
